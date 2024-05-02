@@ -5,12 +5,12 @@ import (
 	"log"
 	"net"
 
-	"orderService/database"
-	pb "orderService/genproto"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+
+	database "github.com/pongsathonn/food-delivery/src/order/data"
+	pb "github.com/pongsathonn/food-delivery/src/order/genproto"
 )
 
 // TODO: use environment variable instead
