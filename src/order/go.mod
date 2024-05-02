@@ -2,8 +2,6 @@ module github.com/pongsathonn/food-delivery/src/order
 
 go 1.22.2
 
-replace github.com/pongsathonn/food-delivery => ../..
-
 require (
 	go.mongodb.org/mongo-driver v1.15.0
 	google.golang.org/grpc v1.63.2

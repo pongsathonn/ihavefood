@@ -48,7 +48,7 @@ func (or *orderServer) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest
 		OrderCost: req.OrderCost,
 		Menus:     req.Menus,
 		Email:     req.Email,
-		Addr:      req.Address,
+		Address:   req.Address,
 	}
 
 	err := or.db.SavePlaceOrder()
