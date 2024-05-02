@@ -1,0 +1,263 @@
+syntax = "proto3";
+
+package foodDeliveryApp;
+
+// go_package specific where complied file are placed 
+option go_package =  "/genproto";
+
+// ---------- Order service ----------
+service OrderService {
+    rpc PlaceOrder(PlaceOrderRequest) returns(PlaceOrderResponse){}
+}
+
+message PlaceOrderRequest {
+    string username = 1;
+    string email = 2;
+
+    int32 order_cost = 3;
+    repeated Menu menus = 4;
+    DeliveryAddress address = 5;
+}
+
+message PlaceOrderResponse {
+    string order_id = 1;
+    string order_tracking_id = 2;
+}
+
+message DeliveryAddress {
+    string address_name = 1;
+    string address_info = 2;
+    string province = 3;
+}
+
+message ContactInfo {
+    string name = 1;
+    string phone_number = 2;
+}
+
+// ---------- Restaurant service ----------
+service RestaurantService {
+    rpc ListMenu(ListMenuRequest) returns(ListMenuResponse){}
+    rpc ListRestaurant(Empty) returns(ListRestaurantResponse){}
+}
+
+message ListMenuRequest{
+    string restaurant_name = 1;
+}
+
+message ListMenuResponse{
+    repeated Menu menus = 1;
+}
+
+message ListRestaurantResponse{
+    repeated Restaurant restaurants = 1;
+}
+
+message Restaurant {
+    string restaurant_name = 1;
+    repeated Menu menus = 2;
+}
+
+message Menu {
+    string food_name = 1;
+    string price = 2;
+}
+
+message Empty{} 
+
+// ---------- User service ----------
+service UserService {
+    rpc GetUser(GetUserRequest) returns(User){}
+    rpc ListUser(ListUserRequest) returns(ListUserResponse){}
+
+    rpc RegisterUser(RegisterUserRequest) returns(Empty){}
+    rpc LoginUser(LoginUserRequest) returns(Empty){}
+    rpc ForgotUserPassword(ForgotUserPasswordRequest) returns(Empty) {}
+
+    rpc ChangeUsername(ChangeUsernameRequest) returns(Empty){}
+    rpc ChangeEmail(ChangeEmailRequest) returns(Empty){}
+    rpc ChangePassword(ChangePasswordRequest) returns(Empty) {}
+
+    rpc DeleteUser(DeleteUserRequest) returns(Empty){}
+}
+
+message DeleteUserRequest {
+    string username = 1;
+}
+
+message ChangePasswordRequest {
+    string password= 1;
+    string new_password = 2;
+}
+
+message ChangeEmailRequest {
+    string email = 1;
+    string new_email = 2;
+}
+
+message ChangeUsernameRequest {
+    string username = 1;
+    string new_username = 2;
+}
+
+message ForgotUserPasswordRequest {
+    string username = 1;
+    string email = 2;
+}
+
+message LoginUserRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message RegisterUserRequest {
+    string username = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message ListUserResponse{
+    repeated User users = 1;
+}
+
+message ListUserRequest {
+}
+
+message GetUserRequest{
+    string username = 1;
+}
+
+message User {
+    string username = 1;
+    string email = 2;
+    string phone_number = 3;
+    DeliveryAddress address = 4;
+}
+
+// ---------- Coupon service ----------
+service CouponService {
+    rpc GetCoupon(GetCouponRequest) returns(Coupon) {}
+    rpc ListCoupon(Empty) returns(ListCouponResponse){}
+}
+
+message GetCouponRequest {
+    string code = 1;
+}
+
+message ListCouponResponse {
+    repeated Coupon coupons = 1;
+}
+
+
+message Coupon {
+    CouponType types = 1;
+    string code = 2;
+    int32 period = 3;
+    int32 amount = 4;
+}
+
+// PascalCase for enumtype , Capital with underscore for values names
+enum CouponType{
+    COUPON_TYPE_DISCOUNT = 0; 
+    COUPON_TYPE_FREE = 1; 
+    COUPON_TYPE_CASHBACK = 2; 
+}
+
+
+// ---------- Payment service ----------
+service PaymentService {
+    rpc Charge(ChargeRequest) returns (ChargeResponse) {}
+    rpc Cash(CashRequest) returns(CashResponse) {}
+}
+
+message CashResponse {
+    string resp = 1;
+}
+
+message CashRequest {
+    int32 amount = 1;
+}
+
+message ChargeRequest {
+    int32 amount = 1;
+    CreditCardInfo credit_card = 2;
+}
+
+message ChargeResponse {
+    string transaction_id = 1;
+}
+
+message CreditCardInfo {
+    string credit_card_number = 1;
+    int32 credit_card_cvv = 2;
+    int32 credit_card_expiration_year = 3;
+    int32 credit_card_expiration_month = 4;
+}
+
+/*
+enum PaymentMethod {
+    PAYMENT_METHOD_CASH = 0;
+    PAYMENT_METHOD_QR_PROMPTPAY = 1;
+    PAYMENT_METHOD_MOBILE_BANKING = 2;
+}
+*/
+
+// ---------- Review service ----------
+service ReviewService {
+    rpc AddOrderReview(AddOrderReviewRequest) returns(AddOrderReviewResponse){}
+    rpc UpdateOrderReview(UpdateOrderReviewRequest) returns(UpdateOrderReviewResponse){}
+    rpc DeleteOrderReview(DeleteOrderReviewRequest) returns(Empty){}
+}
+
+message DeleteOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+}
+
+message UpdateOrderReviewResponse {
+    string resp = 1;
+}
+
+message UpdateOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+
+    oneof new_order_review_field{
+        string new_rating = 3;
+        string new_topic = 4;
+        string new_body = 5;
+        Image new_image = 6;
+    }
+}
+
+message AddOrderReviewResponse {
+    string review_id= 1;
+}
+
+message AddOrderReviewRequest {
+    Review review  = 1;
+}
+
+message Review {
+    string username = 1;
+    string order_id =2;
+
+    string rating = 3;
+    string review_topic = 4;
+    string body = 5;
+    Image image = 6;
+}
+
+message Image {
+    bytes image = 1;
+}
+
+//TODO: 
+// ---------- Notify service ----------
+// Wihch one ? push notifycation ( real-time updates status changes ) , In app ( alert in app ) , 
+
+
+
+
+
+
