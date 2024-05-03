@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
@@ -14,7 +15,13 @@ import (
 )
 
 // TODO: use environment variable instead
-const urlx = "mongodb://kenmilez:mypassword@localhost:27017"
+var (
+	mongoPort = 27017
+	uri       = fmt.Sprintf("mongodb://kenmilez:mypassword@localhost:%d", mongoPort)
+
+	serverPort    = 4010
+	serverAddress = fmt.Sprintf("localhost:%d", serverPort)
+)
 
 type orderServer struct {
 	pb.UnimplementedOrderServiceServer
@@ -25,45 +32,25 @@ func NewOrderServer(db database.OrderDatabase) *orderServer {
 	return &orderServer{db: db}
 }
 
-type PlaceOrder struct {
-	Username  string
-	Email     string
-	OrderCost int32
-	Menus     []*pb.Menu
-	Address   *pb.DeliveryAddress
-}
+func (or *orderServer) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 
-/*
-TODO : write following this logic
-	1) receive PlaceOrder request with payload
-	2) save order to order_database
-	3) response order_id from database
-	4) create PlaceOrderEvent to event bus
-*/
-
-func (or *orderServer) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
-
-	_ = &PlaceOrder{
-		Username:  req.Username,
-		OrderCost: req.OrderCost,
-		Menus:     req.Menus,
-		Email:     req.Email,
-		Address:   req.Address,
-	}
-
-	err := or.db.SavePlaceOrder()
+	res, err := or.db.SavePlaceOrder(in)
 	if err != nil {
 		log.Println(err)
 	}
 
-	return nil, nil
+	/*
+		TODO
+		- publish CreatePlaceOrderEvent
+	*/
+
+	return res, nil
 }
 
 func initMongoConnection() *mongo.Client {
 
 	ctx := context.TODO()
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(urlx))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,22 +63,23 @@ func initMongoConnection() *mongo.Client {
 }
 
 func main() {
-	var srv *grpc.Server
-	srv = grpc.NewServer()
 
-	lis, err := net.Listen("tcp", "localhost:4010")
+	lis, err := net.Listen("tcp", serverAddress)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("listen on addr :", err)
 	}
 
 	// wire up
 	orderDB := database.NewOrderDatabase(initMongoConnection())
-	NewOrderServer(orderDB)
+	orSrv := NewOrderServer(orderDB)
 
-	pb.RegisterOrderServiceServer(srv, nil)
-	log.Println("server is running")
+	var srv *grpc.Server
+	srv = grpc.NewServer()
+
+	pb.RegisterOrderServiceServer(srv, orSrv)
+	log.Println("server is running on port :", serverPort)
 
 	if err := srv.Serve(lis); err != nil {
-		log.Fatal(err)
+		log.Println("err lis :", err)
 	}
 }
