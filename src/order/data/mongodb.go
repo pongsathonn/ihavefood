@@ -2,8 +2,7 @@ package data
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,69 +11,78 @@ import (
 	pb "github.com/pongsathonn/food-delivery/src/order/genproto"
 )
 
-type OrderDatabase interface {
+type OrderRepo interface {
+	ListPlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error)
 	SavePlaceOrder(*pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error)
-	FindPlaceOrder(username string) (string, error)
 }
 
-func NewOrderDatabase(conn *mongo.Client) OrderDatabase {
-	return &orderDatabase{conn: conn}
+func NewOrderRepo(conn *mongo.Client) OrderRepo {
+	return &orderRepo{conn: conn}
 }
 
-type orderDatabase struct {
+type orderRepo struct {
 	conn *mongo.Client
 }
 
+// this PlaceOrder use as model for "INSERT" to mongodb
+// to make this model match with protobuff json name should be same as bson name tag
+// if not omitempty at id Mongo will use zero as id ( when insert )
 type PlaceOrder struct {
-	OrderId         primitive.ObjectID  `bson:"_id"`
-	TrackingId      primitive.ObjectID  `bson:"tracking_id"`
+	OrderId         primitive.ObjectID  `bson:"_id,omitempty"`
+	TrackingId      primitive.ObjectID  `bson:"orderTrackingId" `
 	Username        string              `bson:"username"`
-	Email           string              `bson:"email"`
-	OrderCost       int32               `bson:"order_cost"`
+	Total           int32               `bson:"orderCost"`
+	CouponCode      string              `bson:"total"`
 	Menus           []*pb.Menu          `bson:"menus"`
-	DeliveryAddress *pb.DeliveryAddress `bson:"delivery_address"`
+	DeliveryAddress *pb.DeliveryAddress `bson:"address"`
+	ContactInfo     *pb.ContactInfo     `bson:"contactInfo"`
+	PaymentMethod   pb.PaymentMethod    `bson:"paymentMethod"`
+	PaymentStatus   pb.PaymentStatus    `bson:"paymentStatus"`
+	OrderStatus     pb.OrderStatus      `bson:"orderStatus"`
 }
 
-func (od *orderDatabase) FindPlaceOrder(username string) (string, error) {
+// list all user's placeorder by username ( like query placeorder history )
+func (od *orderRepo) ListPlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error) {
 
 	coll := od.conn.Database("order_database", nil).Collection("orderCollection")
 
-	// result will be this type
-	var res bson.M
-
-	// use this find data in mongo
-	x := bson.D{{"username", username}}
-	err := coll.FindOne(context.TODO(), x).Decode(&res)
-	if err == mongo.ErrNoDocuments {
-		return "", fmt.Errorf("documents not found")
-	}
+	filter := bson.D{{"username", username}}
+	cursor, err := coll.Find(context.TODO(), filter)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	jsonData, err := json.MarshalIndent(res, "", "    ")
-	if err != nil {
-		return "", err
+	var orders []*pb.Order
+
+	if err := cursor.All(context.TODO(), &orders); err != nil {
+		log.Fatal(err)
 	}
 
-	resp := fmt.Sprintf("%s\n", jsonData)
+	log.Println(orders)
 
-	return resp, nil
-
+	//FIXME  orderId (json ) shouldn't be empty. It shoule map with mongo _id
+	return &pb.ListUserPlaceOrderResponse{
+		Orders: orders,
+	}, nil
 }
 
-func (od *orderDatabase) SavePlaceOrder(po *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 
 	coll := od.conn.Database("order_database", nil).Collection("orderCollection")
 
+	// still need to send avaliable true
 	placeOrder := PlaceOrder{
 		OrderId:         primitive.NewObjectID(),
 		TrackingId:      primitive.NewObjectID(),
-		Username:        po.Username,
-		Email:           po.Email,
-		OrderCost:       po.OrderCost,
-		Menus:           po.Menus,
-		DeliveryAddress: po.Address,
+		Username:        in.Username,
+		Total:           in.Total,
+		Menus:           in.Menus,
+		CouponCode:      in.CouponCode,
+		DeliveryAddress: in.Address,
+		ContactInfo:     in.Contact,
+		PaymentMethod:   in.PaymentMethod,
+		PaymentStatus:   pb.PaymentStatus_UNPAID,
+		OrderStatus:     pb.OrderStatus_PENDING,
 	}
 
 	_, err := coll.InsertOne(context.TODO(), &placeOrder)
@@ -86,5 +94,4 @@ func (od *orderDatabase) SavePlaceOrder(po *pb.PlaceOrderRequest) (*pb.PlaceOrde
 		OrderId:         placeOrder.OrderId.Hex(),
 		OrderTrackingId: placeOrder.TrackingId.Hex(),
 	}, nil
-
 }

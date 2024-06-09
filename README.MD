@@ -1,3 +1,4 @@
+TODO use dirname pubsub
 
 Algorithm are used in this project
 - Dijkstra algorithm
@@ -37,12 +38,10 @@ When UpdatedEvent is created ( from command ) Our Read Database ( Mongo) Subscri
 And Logic should handle in API composition ( API Gateway) ?
 Tomorrow read more microservice blog
 
-
-
 " --------------------------
 
 
-title Food-delivery App
+title The Best Food-delivery App that have exists
 
 actor Client
 participant API Gateway
@@ -53,87 +52,102 @@ participant Payment
 participant Delivery
 participant Restaurant
 participant Coupon
-participant Notification
-participant Review
 participant User
 
-database Cache
 database DB
 
 lifelinestyle #grey:0.4
 
+==TODO NotificationService Long run connection==
 
-Client->>API Gateway:REST : PlaceOrderCommand \nPayload { Foods, Coupon, Address, Contact }
+==Process Order Food==
 activate API Gateway
-activate Event Bus #lightgrey
-API Gateway->Order:REST : PlaceOrderCommand
 
-activate Order
-Order->Restaurant:gRPC: ValidatePlaceOrder
+// Client send PlaceOrderRequest
+Client->>API Gateway:REST : PlaceOrderCommand \nPayload { Foods, Coupon, Address, Contact }
+
+//validate restaurant
+API Gateway->>Restaurant: CheckMenuAvaliable
 activate Restaurant
-Restaurant->DB:TODO:Call Cache, Save to DB
-Restaurant->DB:ValidateFoodExists
-activate DB
-DB-->Restaurant:Exists
-deactivate DB
-Restaurant-->Order:Valid
-deactivate Restaurant
-Order-->Event Bus:OrderFoodEvent
-deactivate Order
-Event Bus->>Payment:OrderFoodEvent
-activate Payment
-Payment->Payment:Send QRcode\nTo Client \nExpired 30 minutes
-
-Payment-->Event Bus:PaymentSuccessEvent
-deactivate Payment
-
-Event Bus->>Restaurant:OrderFoodEvent
-activate Restaurant
-Restaurant->Restaurant:Cooking
-Restaurant-->Event Bus:OnCookingEvent
+Restaurant->API Gateway: response
 deactivate Restaurant
 
-Event Bus->>Coupon:OrderFoodEvent
+//validate Coupon
+API Gateway->>Coupon: CheckCouponValid
 activate Coupon
-Coupon->DB:UpdateUsedCoupon
-activate DB
-DB-->Coupon:Successful
-deactivate DB
-Coupon-->Event Bus:UpdatedCoupon
+Coupon->API Gateway: response
 deactivate Coupon
-Event Bus->>Restaurant:OrderFoodEvent
-activate Restaurant
-Restaurant->DB:UpdateFood
+
+// Order Service
+API Gateway->Order: PlaceOrderCommand
+activate Order
+Order->DB:save place order
 activate DB
-DB-->Restaurant:Successful
+DB->Order: ok
 deactivate DB
-Restaurant-->Event Bus:Updated
-deactivate Restaurant
-Event Bus->>Delivery:OrderFoodEvent
+Order->API Gateway:Response order status\nPENDING \nPlaceOrderResponse : order_tracking_id
+API Gateway->Client: Notify Order Status\nPENDING
+
+// Order: OrderPlacedEvent
+Order-#red>Event Bus:OrderPlacedEvent
+deactivate Order
+activate Event Bus #lightgrey
+
+// Payment
+Event Bus-#red>>Payment:OrderPlacedEvent\n body {PAYMENT_METHOD} 
+activate Payment
+Payment->Payment: if promtpay send to User\nif Credit card do something
+Payment->DB:User : Paid\nSave Order payment transaction
+activate DB
+DB->Payment:saved transaction
+deactivate DB
+Payment-#blue>Event Bus:OrderPaidEvent
+Payment->API Gateway: payment status:PAID
+deactivate Payment
+API Gateway->Client:Notify Payment Status\nPAID
+
+// Order : update PaymentStatus
+Event Bus-#blue>Order:OrderPaidEvent
+activate Order
+Order->DB:updateOne: PaymentStatus:Paid
+activate DB
+DB->Order:updated
+deactivate DB
+deactivate Order
+
+// Order is confirmed by Restaurant
+Client-->API Gateway:Restaurant Received Order\nbody :order_id
+API Gateway->Order: OrderReceivedCommand
+activate Order
+Order->Order:Update Orderstatus\nPREPARING_ORDER
+Order->API Gateway: Respose Push notification
+deactivate Order
+API Gateway->Client:Notify Order Status \nPREPARING_ORDER
+
+
+// Delivery : find rider 
+Event Bus-#red>>Delivery: OrderPlacedEvent 
 activate Delivery
-Delivery->Delivery:NotifyToRider
+Delivery->Delivery:Find Rider
+Delivery->API Gateway:Send Push Notification
+API Gateway->Client:Notify Order Status\nFINDING_RIDER
+Delivery-#green>Event Bus: OrderAssignedEvent
 
-Delivery-->Event Bus: DeliveryOngoingEvent
-Delivery->Delivery:Client Confirmed\nReceived Order
-Delivery-->Event Bus:OrderReceivedEvent
+
+
+API Gateway->Delivery:send 
+
+Delivery->API Gateway:Found Rider\nOrder Status : WAITING_YOUR_RESTAURANT
 deactivate Delivery
+API Gateway->Client:Notify Order Status \nWAITING_YOUR_RESTAURANT
 
 
-Event Bus->>Notification:PaymentSuccessEvent
-activate Notification
-Notification->Notification:Notify:OrderHasPaid
-Event Bus->>Notification:OnCookingEvent
-Notification->Notification:Status:OnCooking
-Event Bus->>Notification: DeliveryOngoingEvent
-Notification->Notification:OngoingDeliver
-deactivate Notification
-
-Event Bus->Review:OrderReceivedEvent
-activate Review
-Review-->API Gateway: REST :OrderReviewForm
-deactivate Review
-API Gateway-->Client:OrderReviewForm
-
+Event Bus-#green>Order: OrderAssignedEvent
+activate Order
+Order->DB:updateOne status: ONGOING
+activate DB
+DB->Order:ok
+deactivate DB
 
 --------------------------------------------------------------
 
@@ -144,6 +158,111 @@ $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
 1) give permission to script file $ chmod +x genproto.sh  
 2) execute $ ./genproto.sh
+
+
+---------------------
+
+# cURL test
+
+curl =X POST \
+=d '{
+  "username": "ronaldo",
+  "order_cost": 150,
+  "menus": [
+    {"food_name": "Pad Thai", "price": "50","avaliable":true},
+    {"food_name": "Tom Yum Goong", "price": "70","avaliable":true}
+  ],
+  "coupon_code": "129dh012",
+  "address": {
+    "address_name": "home",
+    "address_info": "123 Sukhumvit Rd",
+    "province": "Bangkok"
+  },
+  "contact": {
+    "phone_number": "+668 1234 5678",
+    "email": "r7do@mail.com"
+  },
+  "payment_method":0
+}' http://localhost:12360/api/orders/place=order
+
+
+
+#---------------------------------------------------------------------
+
+Command,Query,Event
+
+Command = State can be change or not , Typically CREATE UPDATE DELETE
+Query = State not change , Typically GET
+Event = Occur after state has changed
+
+Command Example
+POST    http://foodDelivery.com/api/orders/place-order
+PUT     http://foodDelivery.com/api/orders/place-order/newmenu?menu=krapao
+DELETE  http://foodDelivery.com/api/orders/place-order/krapao
+
+Query Example
+GET    http://foodDelivery.com/api/orders/place-order
+GET     http://foodDelivery.com/api/orders/place-order/ronaldo
+
+
++================================================================================+
+|   exchange    | type   |   routing key                  |    queue             |
+|================================================================================|
+|   order       | topic  |   Order.Placed.Event           |    payment queue     |  create order transction
+|   order       | topic  |   Order.Placed.Event           |    coupon queue      |  update coupon
+|   order       | topic  |   Order.Placed.Event           |    delivery queue    |  finding rider
+|   order       | topic  |   Order.Confirmed.Event        |                      |  Order success
+|               |        |                                |                      |
+|   order       | topic  |   Order.Cancelled.Event        |    coupon queue      |   cancel coupon used  to avaliable
+|   order       | topic  |   Order.Cancelled.Event        |    delivery queue    |   Cancel delivery order
+|               |        |                                |                      |
+|               |        |                                |                      |
+|   Delivery    | topic  |   OnGoing.Order.Event          |    order queue       |   update order status ( ONGOING )
+|   Delivery    | topic  |   WaitingRestau.Order.Event    |    order queue       |   update order status ( WAITING_YOUR_RESTAURNT)
+|   Delivery    | topic  |   Order.Assigned.Event         |    order queue       |   
+|               |        |                                |                      |
+|               |        |                                |                      |
+|   Payment     | topic  |   Payment.Paid.Event           |    order queue       |   update order_payment status
+|   Payment     | topic  |   Payment.Failed.Event         |    order queue       |   
+|               |        |                                |                      |
+|               |        |                                |                      |
+|   User        | topic  |   User.Updated.Command         |    order queue       |   update username or email
+|   User        | topic  |   User.Deleted.Command         |    order queue       |   delete username or email
+|               |        |                                |                      |
+|   Restaurant  | topic  |   Restaurant.                  |                      |
+|               |        |                                |                      |
+|               |        |                                |                      |
+|               |        |                                |                      |
+|               |        |                                |                      |
++================================================================================+
+
+
+Routing Key 
+
+Order Event
+   < service > . < past verb > . < event >  
+   ie. Order.Placed.Event , Restaurant.Received.Event, Order.Assigened.Event, Order.Confirmed.Event 
+   Order.Cancelled.Event
+
+Order Status
+   < status > . < order > . < event >  
+   ie. OnGoing.Order.Event , Paid.Order.Event, Confirmed.Order.Event 
+
+
+User order food pseudo code
+
+1. Client send "PlaceOrderCommand" to OrderService
+2. OrderService response "PlaceOrderResponse" alongwith create "OrderPlacedEvent
+3. CouponService subscribe to "OrderPlaceEvent" and update coupon in database 
+4. DeliveryService subscribe to "OrderPlaceEvent" and then finding rider then publish "OnGoingOrderEvent" 
+5. PaymentService subscribe to "OrderPlaceEvent" and create order transaction  then publish "PaidOrderEvent"
+
+OrderService will subscribe to " *.Order.Event " i.e "OnGoing.Order.Event, "Paid.Order.Event"
+
+6. OrderService subscribe to "Paid.Order.Event" then update payment_status
+7. Rider or User received order then Client send OrderConfirmCommand to OrderService
+8. OrderService update order status then publish "OrderConfirmedEvent"
+
 
 
 

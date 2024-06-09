@@ -26,4 +26,3 @@ protoc -I $protodir --go_out=. --go-grpc_out=. --grpc-gateway_out=. $protodir/fo
 
        
 
-
