@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -44,7 +45,7 @@ func (or *orderServer) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 		return nil, status.Errorf(codes.InvalidArgument, "username shouldn't be empty")
 	}
 
-	resp, err := or.db.ListPlaceOrder(in.Username)
+	resp, err := or.db.PlaceOrder(in.Username)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -55,14 +56,22 @@ func (or *orderServer) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 
 func (or *orderServer) PreparePlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 
-	// validate input
 	if in.Username == "" || in.Address == nil {
-		return nil, fmt.Errorf("bad request")
+		return nil, status.Errorf(codes.InvalidArgument, "bad request ")
 	}
 
 	pm := in.PaymentMethod.String()
 	if _, ok := pb.PaymentMethod_value[pm]; !ok {
-		return nil, fmt.Errorf("bad request")
+		return nil, fmt.Errorf("bad request kuy")
+	}
+
+	var total int32
+	for _, mn := range in.Menus {
+		total += mn.Price
+	}
+
+	if in.Total != ((total + in.DeliveryFee) - in.CouponDiscount) {
+		return nil, errors.New("total invalid")
 	}
 
 	// save place order

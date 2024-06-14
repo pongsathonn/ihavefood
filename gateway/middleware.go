@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,13 +13,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
-func validatePlaceOrder(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		next.ServeHTTP(w, r)
-	})
-}
 
 func authn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -106,25 +100,29 @@ func createNewToken() (string, error) {
 }
 
 // Regenerate everytime when starting server
-func generateKey() {
+// storing key in Env variable for testing
+func generateKey() error {
 
-	key := os.Getenv("SIGNING_KEY")
+	sk := os.Getenv("SIGNING_KEY")
 
-	if key == "" {
+	if sk == "" {
 		key := make([]byte, 64)
 
-		_, err := rand.Read(key)
-		if err != nil {
-			log.Println("generate key failed")
-			return
+		if _, err := rand.Read(key); err != nil {
+			return errors.New("generate key failed")
 		}
 
-		os.Setenv("SIGNING_KEY", string(key))
-
-		ss := os.Getenv("SIGNING_KEY")
-		if ss != "" {
-			log.Println("new signing key is generated")
+		if err := os.Setenv("SIGNING_KEY", string(key)); err != nil {
+			return errors.New("error set signing key")
 		}
+
 	}
+
+	ss := os.Getenv("SIGNING_KEY")
+	if ss == "" {
+		return errors.New("signing key is empty")
+	}
+
+	return nil
 
 }

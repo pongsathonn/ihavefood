@@ -11,9 +11,10 @@ import "google/api/annotations.proto";
 
 // -----------------------------------
 
-enum AvaliStatus{
-    AVALIABLE = 0;
-    UNAVALIABLE = 1;
+// PascalCase for enumtype , Capital Letter with underscore for values names
+enum AvailStatus{
+    AVAILABLE = 0;
+    UNVAILABLE = 1;
     UNKNOWN = 2;
 }
 
@@ -33,27 +34,39 @@ service OrderService {
         };
 
     }
+    rpc TrackingPlaceOrder(TrackingPlaceOrderRequest) returns (stream TrackingPlaceOrderResponse){}
 }
 
 message ListUserPlaceOrderResponse {
-    repeated Order orders = 1;
+    repeated PlaceOrder place_orders = 1;
 }
 
 message ListUserPlaceOrderRequest {
     string username = 1;
 }
-message Order {
+
+message PlaceOrder {
     string order_id = 1 ;
     string order_tracking_id = 2;
 
     string username = 3;
-    int32 total = 4;
-    repeated Menu menus =5;
-    DeliveryAddress address = 6;
-    ContactInfo contact = 7;
-    PaymentMethod payment_method = 8;
-    PaymentStatus payment_status = 9;
-    OrderStatus order_status = 10;
+    string restaurant_name = 14;
+    repeated Menu menus = 4;
+    string coupon_code = 5;
+    int32 coupon_discount = 6;
+    int32 delivery_fee = 7;
+    int32 total = 8;
+
+    DeliveryAddress address = 9;
+    ContactInfo contact = 10;
+    PaymentMethod payment_method = 11;
+    PaymentStatus payment_status = 12;
+    OrderStatus order_status = 13;
+}
+
+enum PaymentMethod {
+    PAYMENT_METHOD_CASH = 0;
+    PAYMENT_METHOD_CREDIT_CARD = 1; 
 }
 
 enum PaymentStatus {
@@ -68,7 +81,7 @@ enum PaymentStatus {
 // DELIVERED = User or Rider confirmed order
 // CANCELLED = Restaurant, Order or User cancel order
 enum OrderStatus {
-    PENDING = 0;  
+    PENDING = 0;   
     PREPARING_ORDER =1;
     FINDING_RIDER =2;
     ONGOING = 3;
@@ -79,12 +92,16 @@ enum OrderStatus {
 message PlaceOrderRequest {
     string username = 1;
 
-    int32 total = 2;
+    string restaurant_name = 2;
     repeated Menu menus = 3;
-    string coupon_code = 4;
-    DeliveryAddress address = 5;
-    ContactInfo contact = 6;
-    PaymentMethod payment_method = 7;
+    int32 delivery_fee = 4;
+    string coupon_code = 5;
+    int32 coupon_discount = 6;
+    int32 total = 7;
+
+    DeliveryAddress address = 8;
+    ContactInfo contact = 9;
+    PaymentMethod payment_method = 10;
 }
 
 message PlaceOrderResponse {
@@ -105,52 +122,62 @@ message ContactInfo {
 
 // ---------- Restaurant service ----------
 service RestaurantService {
-    rpc CheckAvaliableMenu(CheckAvaliableMenuRequest) returns(CheckAvaliableMenuResponse){}
-    rpc ListMenu(ListMenuRequest) returns(ListMenuResponse){}
+    rpc CheckAvailableMenu(CheckAvailableMenuRequest) returns(CheckAvailableMenuResponse){}
+    rpc GetRestaurant(GetRestaurantRequest) returns(GetRestaurantResponse){
+        option (google.api.http) = {
+            get: "/api/restaurants/{restaurant_name}" 
+        };
+    }
     rpc ListRestaurant(Empty) returns(ListRestaurantResponse){
         option (google.api.http) = {
             get: "/api/restaurants" 
         };
     }
-    rpc NewRestaurant(NewRestaurantRequest) returns(NewRestaurantResponse){
+    rpc RegisterRestaurant(RegisterRestaurantRequest) returns(RegisterRestaurantResponse){
         option (google.api.http) = {
             post: "/api/restaurants" 
             body: "*"
         };
     }
+
+    //TODO DELETE MENU, UPDATE MENU
     rpc AddMenu(AddMenuRequest) returns(Empty){
         option (google.api.http) = {
-            put: "/api/restaurants/menus" 
+            post: "/api/restaurants/menus"
             body: "*"
         };
     }
 }
 
-message CheckAvaliableMenuResponse {
-    AvaliStatus avaliable = 1;
+message CheckAvailableMenuResponse {
+    AvailStatus available = 1;
 }
 
-message CheckAvaliableMenuRequest {
-    RestaurantNameMenus req = 1;
+message CheckAvailableMenuRequest {
+    string restaurant_name = 1;
+    repeated Menu menus = 2;
 }
 
 message AddMenuRequest {
-    RestaurantNameMenus req = 1;
+    string restaurant_name = 1;
+    repeated Menu menus = 2;
 }
 
-message NewRestaurantResponse {
+message RegisterRestaurantResponse {
     string restaurant_id = 1;
 }
 
-message NewRestaurantRequest {
-    RestaurantNameMenus req = 1;
+message RegisterRestaurantRequest {
+    string restaurant_name = 1;
+    repeated Menu menus = 2;
 }
 
-message ListMenuResponse{
-    RestaurantNameMenus resp = 1;
+message GetRestaurantResponse{
+    Restaurant restaurant = 1;
 }
 
-message ListMenuRequest{
+
+message GetRestaurantRequest{
     string restaurant_name = 1;
 }
 
@@ -158,10 +185,6 @@ message ListRestaurantResponse{
     repeated Restaurant restaurants = 1;
 }
 
-message RestaurantNameMenus{
-    string restaurant_name = 1;
-    repeated Menu menus = 2;
-}
 
 message Restaurant {
     string restaurant_id = 1;
@@ -171,8 +194,8 @@ message Restaurant {
 
 message Menu {
     string food_name = 1;
-    string price = 2;
-    AvaliStatus avaliable = 3;
+    int32 price = 2;
+    AvailStatus available = 3;
 }
 
 
@@ -246,16 +269,20 @@ message User {
 
 // ---------- Coupon service ----------
 service CouponService {
-    rpc GetCoupon(GetCouponRequest) returns(Coupon) {
+    rpc GetCoupon(GetCouponRequest) returns(GetCouponResponse) {
         option (google.api.http) = {
-            get: "/v1/coupons/{code}" 
+            get: "/api/coupons/{code}" 
         };
     }
     rpc ListCoupon(Empty) returns(ListCouponResponse){
         option (google.api.http) = {
-            get: "/v1/coupons" 
+            get: "/api/coupons" 
         };
     }
+}
+
+message GetCouponResponse {
+    Coupon coupon  = 1;
 }
 
 message GetCouponRequest {
@@ -270,57 +297,18 @@ message ListCouponResponse {
 message Coupon {
     CouponType types = 1;
     string code = 2;
-    int32 period = 3;
-    int32 amount = 4;
+    int32 discount = 3;
+    int32 period = 4;   //coupon expired when
+    int32 amount = 5;   // amount of coupons
 }
 
-// PascalCase for enumtype , Capital with underscore for values names
 enum CouponType{
     COUPON_TYPE_DISCOUNT = 0; 
-    COUPON_TYPE_FREE = 1; 
-    COUPON_TYPE_CASHBACK = 2; 
-}
-
-
-// ---------- Payment service ----------
-service PaymentService {
-    rpc Charge(ChargeRequest) returns (ChargeResponse) {}
-    rpc Cash(CashRequest) returns(CashResponse) {}
-}
-
-message CashResponse {
-    string resp = 1;
-}
-
-message CashRequest {
-    int32 amount = 1;
-}
-
-message ChargeRequest {
-    int32 amount = 1;
-    CreditCardInfo credit_card = 2;
-}
-
-message ChargeResponse {
-    string transaction_id = 1;
-}
-
-message CreditCardInfo {
-    string credit_card_number = 1;
-    int32 credit_card_cvv = 2;
-    int32 credit_card_expiration_year = 3;
-    int32 credit_card_expiration_month = 4;
-}
-
-enum PaymentMethod {
-    PAYMENT_METHOD_CASH = 0;
-    PAYMENT_METHOD_CREDIT_CARD = 1;
-    PAYMENT_METHOD_PROMPT_PAY = 2;
+    COUPON_TYPE_FREE_DELIVERY = 1; 
 }
 
 // ---------- Review service ---------- 
 
-//TODO might delete this service
 service ReviewService {
     rpc AddOrderReview(AddOrderReviewRequest) returns(AddOrderReviewResponse){}
     rpc UpdateOrderReview(UpdateOrderReviewRequest) returns(UpdateOrderReviewResponse){}
@@ -369,7 +357,3 @@ message Review {
 message Image {
     bytes image = 1;
 }
-
-//TODO: 
-// ---------- Notify service ----------
-// Wihch one ? push notifycation ( real-time updates status changes ) , In app ( alert in app ) , 

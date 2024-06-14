@@ -159,34 +159,6 @@ $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 1) give permission to script file $ chmod +x genproto.sh  
 2) execute $ ./genproto.sh
 
-
----------------------
-
-# cURL test
-
-curl =X POST \
-=d '{
-  "username": "ronaldo",
-  "order_cost": 150,
-  "menus": [
-    {"food_name": "Pad Thai", "price": "50","avaliable":true},
-    {"food_name": "Tom Yum Goong", "price": "70","avaliable":true}
-  ],
-  "coupon_code": "129dh012",
-  "address": {
-    "address_name": "home",
-    "address_info": "123 Sukhumvit Rd",
-    "province": "Bangkok"
-  },
-  "contact": {
-    "phone_number": "+668 1234 5678",
-    "email": "r7do@mail.com"
-  },
-  "payment_method":0
-}' http://localhost:12360/api/orders/place=order
-
-
-
 #---------------------------------------------------------------------
 
 Command,Query,Event
