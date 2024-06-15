@@ -40,36 +40,33 @@ GET    http://foodDelivery.com/api/orders/place-order
 GET     http://foodDelivery.com/api/orders/place-order/ronaldo
 
 
-+================================================================================+
-|   exchange    | type   |   routing key                  |    queue             |
-|================================================================================|
-|   order       | topic  |   Order.Placed.Event           |    payment queue     |  create order transction
-|   order       | topic  |   Order.Placed.Event           |    coupon queue      |  update coupon
-|   order       | topic  |   Order.Placed.Event           |    delivery queue    |  finding rider
-|   order       | topic  |   Order.Confirmed.Event        |                      |  Order success
-|               |        |                                |                      |
-|   order       | topic  |   Order.Cancelled.Event        |    coupon queue      |   cancel coupon used  to avaliable
-|   order       | topic  |   Order.Cancelled.Event        |    delivery queue    |   Cancel delivery order
-|               |        |                                |                      |
-|               |        |                                |                      |
-|   Delivery    | topic  |   OnGoing.Order.Event          |    order queue       |   update order status ( ONGOING )
-|   Delivery    | topic  |   WaitingRestau.Order.Event    |    order queue       |   update order status ( WAITING_YOUR_RESTAURNT)
-|   Delivery    | topic  |   Order.Assigned.Event         |    order queue       |   
-|               |        |                                |                      |
-|               |        |                                |                      |
-|   Payment     | topic  |   Payment.Paid.Event           |    order queue       |   update order_payment status
-|   Payment     | topic  |   Payment.Failed.Event         |    order queue       |   
-|               |        |                                |                      |
-|               |        |                                |                      |
-|   User        | topic  |   User.Updated.Command         |    order queue       |   update username or email
-|   User        | topic  |   User.Deleted.Command         |    order queue       |   delete username or email
-|               |        |                                |                      |
-|   Restaurant  | topic  |   Restaurant.                  |                      |
-|               |        |                                |                      |
-|               |        |                                |                      |
-|               |        |                                |                      |
-|               |        |                                |                      |
-+================================================================================+
++==========================================================================+
+|  exchange    | type   |   routing key               |    queue           |
+|==========================================================================|
+|  order       | topic  |   Order.Placed.Event        |    payment queue   |  create order transction
+|  order       | topic  |   Order.Placed.Event        |    coupon queue    |  update coupon
+|  order       | topic  |   Order.Placed.Event        |    delivery queue  |  finding rider
+|  order       | topic  |   Order.Confirmed.Event     |                    |  Order success
+|              |        |                             |                    |
+|  order       | topic  |   Order.Cancelled.Event     |    coupon queue    |   cancel coupon used  to avaliable
+|  order       | topic  |   Order.Cancelled.Event     |    delivery queue  |   Cancel delivery order
+|              |        |                             |                    |
+|              |        |                             |                    |
+|  Delivery    | topic  |   OnGoing.Order.Event       |    order queue     |   update order status ( ONGOING )
+|  Delivery    | topic  |   WaitingRestau.Order.Event |    order queue     |   update order status ( WAITING_YOUR_RESTAURNT)
+|  Delivery    | topic  |   Order.Assigned.Event      |    order queue     |   
+|              |        |                             |                    |
+|              |        |                             |                    |
+|  Payment     | topic  |   Payment.Paid.Event        |    order queue     |   update order_payment status
+|  Payment     | topic  |   Payment.Failed.Event      |    order queue     |   
+|              |        |                             |                    |
+|              |        |                             |                    |
+|  User        | topic  |   User.Updated.Command      |    order queue     |   update username or email
+|  User        | topic  |   User.Deleted.Command      |    order queue     |   delete username or email
+|              |        |                             |                    |
+|  Restaurant  | topic  |   Restaurant.               |                    |
+|              |        |                             |                    |
++==========================================================================+
 
 
 Routing Key 
