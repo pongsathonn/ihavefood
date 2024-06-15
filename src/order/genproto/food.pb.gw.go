@@ -791,7 +791,7 @@ func RegisterCouponServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.CouponService/GetCoupon", runtime.WithHTTPPathPattern("/v1/coupons/{code}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.CouponService/GetCoupon", runtime.WithHTTPPathPattern("/api/coupons/{code}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -816,7 +816,7 @@ func RegisterCouponServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.CouponService/ListCoupon", runtime.WithHTTPPathPattern("/v1/coupons"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.CouponService/ListCoupon", runtime.WithHTTPPathPattern("/api/coupons"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1301,7 +1301,7 @@ func RegisterCouponServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.CouponService/GetCoupon", runtime.WithHTTPPathPattern("/v1/coupons/{code}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.CouponService/GetCoupon", runtime.WithHTTPPathPattern("/api/coupons/{code}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1323,7 +1323,7 @@ func RegisterCouponServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.CouponService/ListCoupon", runtime.WithHTTPPathPattern("/v1/coupons"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.CouponService/ListCoupon", runtime.WithHTTPPathPattern("/api/coupons"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1343,9 +1343,9 @@ func RegisterCouponServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_CouponService_GetCoupon_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "coupons", "code"}, ""))
+	pattern_CouponService_GetCoupon_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "coupons", "code"}, ""))
 
-	pattern_CouponService_ListCoupon_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "coupons"}, ""))
+	pattern_CouponService_ListCoupon_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "coupons"}, ""))
 )
 
 var (

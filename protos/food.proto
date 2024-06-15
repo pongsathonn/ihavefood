@@ -34,7 +34,6 @@ service OrderService {
         };
 
     }
-    rpc TrackingPlaceOrder(TrackingPlaceOrderRequest) returns (stream TrackingPlaceOrderResponse){}
 }
 
 message ListUserPlaceOrderResponse {
@@ -119,6 +118,7 @@ message ContactInfo {
     string phone_number = 1;
     string email = 2;
 }
+
 
 // ---------- Restaurant service ----------
 service RestaurantService {

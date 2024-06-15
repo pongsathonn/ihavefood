@@ -632,7 +632,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CouponServiceClient interface {
-	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
+	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*GetCouponResponse, error)
 	ListCoupon(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListCouponResponse, error)
 }
 
@@ -644,8 +644,8 @@ func NewCouponServiceClient(cc grpc.ClientConnInterface) CouponServiceClient {
 	return &couponServiceClient{cc}
 }
 
-func (c *couponServiceClient) GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*Coupon, error) {
-	out := new(Coupon)
+func (c *couponServiceClient) GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*GetCouponResponse, error) {
+	out := new(GetCouponResponse)
 	err := c.cc.Invoke(ctx, CouponService_GetCoupon_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -666,7 +666,7 @@ func (c *couponServiceClient) ListCoupon(ctx context.Context, in *Empty, opts ..
 // All implementations must embed UnimplementedCouponServiceServer
 // for forward compatibility
 type CouponServiceServer interface {
-	GetCoupon(context.Context, *GetCouponRequest) (*Coupon, error)
+	GetCoupon(context.Context, *GetCouponRequest) (*GetCouponResponse, error)
 	ListCoupon(context.Context, *Empty) (*ListCouponResponse, error)
 	mustEmbedUnimplementedCouponServiceServer()
 }
@@ -675,7 +675,7 @@ type CouponServiceServer interface {
 type UnimplementedCouponServiceServer struct {
 }
 
-func (UnimplementedCouponServiceServer) GetCoupon(context.Context, *GetCouponRequest) (*Coupon, error) {
+func (UnimplementedCouponServiceServer) GetCoupon(context.Context, *GetCouponRequest) (*GetCouponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoupon not implemented")
 }
 func (UnimplementedCouponServiceServer) ListCoupon(context.Context, *Empty) (*ListCouponResponse, error) {
@@ -744,133 +744,6 @@ var CouponService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCoupon",
 			Handler:    _CouponService_ListCoupon_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "food.proto",
-}
-
-const (
-	PaymentService_Charge_FullMethodName = "/foodDeliveryApp.PaymentService/Charge"
-	PaymentService_Cash_FullMethodName   = "/foodDeliveryApp.PaymentService/Cash"
-)
-
-// PaymentServiceClient is the client API for PaymentService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PaymentServiceClient interface {
-	Charge(ctx context.Context, in *ChargeRequest, opts ...grpc.CallOption) (*ChargeResponse, error)
-	Cash(ctx context.Context, in *CashRequest, opts ...grpc.CallOption) (*CashResponse, error)
-}
-
-type paymentServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewPaymentServiceClient(cc grpc.ClientConnInterface) PaymentServiceClient {
-	return &paymentServiceClient{cc}
-}
-
-func (c *paymentServiceClient) Charge(ctx context.Context, in *ChargeRequest, opts ...grpc.CallOption) (*ChargeResponse, error) {
-	out := new(ChargeResponse)
-	err := c.cc.Invoke(ctx, PaymentService_Charge_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *paymentServiceClient) Cash(ctx context.Context, in *CashRequest, opts ...grpc.CallOption) (*CashResponse, error) {
-	out := new(CashResponse)
-	err := c.cc.Invoke(ctx, PaymentService_Cash_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// PaymentServiceServer is the server API for PaymentService service.
-// All implementations must embed UnimplementedPaymentServiceServer
-// for forward compatibility
-type PaymentServiceServer interface {
-	Charge(context.Context, *ChargeRequest) (*ChargeResponse, error)
-	Cash(context.Context, *CashRequest) (*CashResponse, error)
-	mustEmbedUnimplementedPaymentServiceServer()
-}
-
-// UnimplementedPaymentServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedPaymentServiceServer struct {
-}
-
-func (UnimplementedPaymentServiceServer) Charge(context.Context, *ChargeRequest) (*ChargeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Charge not implemented")
-}
-func (UnimplementedPaymentServiceServer) Cash(context.Context, *CashRequest) (*CashResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Cash not implemented")
-}
-func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
-
-// UnsafePaymentServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PaymentServiceServer will
-// result in compilation errors.
-type UnsafePaymentServiceServer interface {
-	mustEmbedUnimplementedPaymentServiceServer()
-}
-
-func RegisterPaymentServiceServer(s grpc.ServiceRegistrar, srv PaymentServiceServer) {
-	s.RegisterService(&PaymentService_ServiceDesc, srv)
-}
-
-func _PaymentService_Charge_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChargeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).Charge(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_Charge_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).Charge(ctx, req.(*ChargeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PaymentService_Cash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CashRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PaymentServiceServer).Cash(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PaymentService_Cash_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PaymentServiceServer).Cash(ctx, req.(*CashRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// PaymentService_ServiceDesc is the grpc.ServiceDesc for PaymentService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var PaymentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "foodDeliveryApp.PaymentService",
-	HandlerType: (*PaymentServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Charge",
-			Handler:    _PaymentService_Charge_Handler,
-		},
-		{
-			MethodName: "Cash",
-			Handler:    _PaymentService_Cash_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
