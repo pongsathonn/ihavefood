@@ -40,6 +40,7 @@ GET    http://foodDelivery.com/api/orders/place-order
 GET     http://foodDelivery.com/api/orders/place-order/ronaldo
 
 
+<pre>
 +==========================================================================+
 |  exchange    | type   |   routing key               |    queue           |
 |==========================================================================|
@@ -68,6 +69,7 @@ GET     http://foodDelivery.com/api/orders/place-order/ronaldo
 |              |        |                             |                    |
 +==========================================================================+
 
+</pre>
 
 Routing Key 
 
