@@ -1,3 +1,5 @@
+<pre>
+
 TODO use dirname pubsub
 
 Algorithm are used in this project
@@ -40,7 +42,6 @@ GET    http://foodDelivery.com/api/orders/place-order
 GET     http://foodDelivery.com/api/orders/place-order/ronaldo
 
 
-<pre>
 +==========================================================================+
 |  exchange    | type   |   routing key               |    queue           |
 |==========================================================================|
@@ -68,7 +69,6 @@ GET     http://foodDelivery.com/api/orders/place-order/ronaldo
 |  Restaurant  | topic  |   Restaurant.               |                    |
 |              |        |                             |                    |
 +==========================================================================+
-</pre>
 
 Routing Key 
 
@@ -97,5 +97,6 @@ OrderService will subscribe to " *.Order.Event " i.e "OnGoing.Order.Event, "Paid
 8. OrderService update order status then publish "OrderConfirmedEvent"
 
 
+</pre>
 
 
