@@ -1,0 +1,76 @@
+
+name: raiman
+services:
+  gateway:
+    build: gateway
+    ports:
+      - "180:180"
+    environment:
+      - GATEWAY_PORT=180
+      - ORDER_URI=order=1111
+    networks:
+      - truemoveh
+
+  order:
+    build: ./src/order
+    environment:
+      - ORDER_PORT=1111
+      - MONGO_USER=donkadmin
+      - MONGO_PASSWORD=donkpassword
+      - MONGO_HOST=order_db
+      - MONGO_PORT=27017
+      - AMQP_USER=donkadmin
+      - AMQP_PASSWORD=donkpassword
+      - AMQP_HOST=rabbitmqx
+      - AMQP_PORT=5672
+    networks:
+      - truemoveh
+
+  order_db:
+    image: mongo:latest
+    ports:
+      - "27052:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=donkadmin
+      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+    networks:
+      - truemoveh
+
+  restaurant:
+    build: ./src/restaurant
+    ports:
+      - "2222:2222"
+    environment:
+      - RESTAURANT_PORT=2222
+      - MONGO_USER=donkadmin
+      - MONGO_PASSWORD=donkpassword
+      - MONGO_HOST=restaurant_db
+      - MONGO_PORT=27017
+      - AMQP_USER=donkadmin
+      - AMQP_PASSWORD=donkpassword
+      - AMQP_HOST=rabbitmqx
+      - AMQP_PORT=5672
+    networks:
+      - truemoveh
+
+  restaurant_db:
+    image: mongo:latest
+    ports:
+      - "27051:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=donkadmin
+      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+    networks:
+      - truemoveh
+
+  rabbitmqx:
+    image: rabbitmq:3
+    environment:
+      - RABBITMQ_DEFAULT_USER=donkadmin
+      - RABBITMQ_DEFAULT_PASS=donkpassword
+    networks:
+      - truemoveh
+
+networks:
+  truemoveh:
+    driver: bridge
