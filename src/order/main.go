@@ -13,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/pongsathonn/food-delivery/src/order/data"
@@ -26,16 +25,12 @@ type orderServer struct {
 	pb.UnimplementedOrderServiceServer
 	db data.OrderRepo
 	ev event.Eventx
-
-	rsconn *grpc.ClientConn
 }
 
-func NewOrderServer(db data.OrderRepo, ev event.Eventx, rsconn *grpc.ClientConn) *orderServer {
+func NewOrderServer(db data.OrderRepo, ev event.Eventx) *orderServer {
 	return &orderServer{
 		db: db,
 		ev: ev,
-
-		rsconn: rsconn,
 	}
 }
 
@@ -92,29 +87,51 @@ func (or *orderServer) PreparePlaceOrder(ctx context.Context, in *pb.PlaceOrderR
 }
 
 func initRabbitMQ() *amqp.Connection {
-	amqpUri := os.Getenv("AMQP_URI")
 
-	conn, err := amqp.Dial(amqpUri)
+	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+		os.Getenv("ORDER_AMQP_USER"),
+		os.Getenv("ORDER_AMQP_PASS"),
+		os.Getenv("ORDER_AMQP_HOST"),
+		os.Getenv("ORDER_AMQP_PORT"),
+	)
+
+	//uri := "amqp://donkadmin:donkpassword@rabbitmqx:5672"
+	conn, err := amqp.Dial(uri)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(uri, err)
 	}
 
 	return conn
 }
 
 func initMongoClient() *mongo.Client {
-	mongoUri := os.Getenv("ORDER_DB_URI")
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoUri))
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/order_database?authSource=admin",
+		os.Getenv("ORDER_MONGO_USER"),
+		os.Getenv("ORDER_MONGO_PASS"),
+		os.Getenv("ORDER_MONGO_HOST"),
+		os.Getenv("ORDER_MONGO_PORT"),
+	)
+
+	//uri := "mongodb://donkadmin:donkpassword@orderdb:27017/order_database?authSource=admin"
+
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("AAA", err)
+	}
+
+	// Create collection if not exists
+	err = client.Database("order_database").CreateCollection(context.TODO(), "orderCollection")
+	if err != nil {
+		//TODO if exists pass
+		log.Fatal("yyyy", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal(err)
+		log.Fatal("BB", err)
 	}
 
 	return client
@@ -122,23 +139,22 @@ func initMongoClient() *mongo.Client {
 
 func failOnError(err error, msg string) {
 	if err != nil {
-		log.Panicf("%s: %s", msg, err)
+		log.Printf("%s: %s", msg, err)
 	}
 }
 
 func main() {
 
-	lis, err := net.Listen("tcp", os.Getenv("ORDER_URI"))
-	failOnError(err, "listen failed")
+	uri := fmt.Sprintf(":%s", os.Getenv("ORDER_SERVER_PORT"))
+	lis, err := net.Listen("tcp", uri)
+	if err != nil {
+		log.Fatal("listen failed", err)
+	}
 
 	db := data.NewOrderRepo(initMongoClient())
 	ev := event.NewEvent(initRabbitMQ())
 
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	rsconn, err := grpc.NewClient(os.Getenv("CONPON_URI"), opt)
-	failOnError(err, "failed to establish restaurant connection")
-
-	ors := NewOrderServer(db, ev, rsconn)
+	ors := NewOrderServer(db, ev)
 
 	s := grpc.NewServer()
 	pb.RegisterOrderServiceServer(s, ors)
@@ -147,6 +163,7 @@ func main() {
 		If this log not display when starting server it might be from
 		- Order Database not starting
 	*/
+
 	log.Println("order service is running")
 
 	log.Fatal(s.Serve(lis))

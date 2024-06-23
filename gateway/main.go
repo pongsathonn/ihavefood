@@ -46,18 +46,34 @@ func main() {
 	)
 
 	//TODO handle error from register
-	pb.RegisterUserServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("USER_URI"), opts)
-	pb.RegisterCouponServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("COUPON_URI"), opts)
-	pb.RegisterOrderServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("ORDER_URI"), opts)
-	pb.RegisterRestaurantServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("RESTAURANT_URI"), opts)
+	if err := pb.RegisterUserServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("USER_URI"), opts); err != nil {
+		log.Fatal("err connect to UserService", err)
+	}
+
+	if err := pb.RegisterCouponServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("COUPON_URI"), opts); err != nil {
+		log.Fatal("error connect to CouponService", err)
+	}
+
+	log.Println("order uri = ", os.Getenv("ORDER_URI"))
+	if err := pb.RegisterOrderServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("ORDER_URI"), opts); err != nil {
+		log.Fatal("err connect to OrderService ", err)
+	}
+
+	log.Println("restaurant uri = ", os.Getenv("RESTAURANT_URI"))
+	if err := pb.RegisterRestaurantServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("RESTAURANT_URI"), opts); err != nil {
+		log.Fatal("err connect to RestaurantService", err)
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("POST /api/orders/place-order", verifyPlaceOrder(gwmux))
 	mux.Handle("/", gwmux)
 
 	log.Println("gateway starting")
-	// FIXME: ListenAndServeTLS
-	log.Fatal(http.ListenAndServe(os.Getenv("GATEWAY_URI"), prettierJSON(mux)))
+
+	gwp := os.Getenv("GATEWAY_PORT")
+	log.Println("GATEWAY PORT =", gwp)
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", gwp), prettierJSON(mux)))
 }
 
 // TODO improve error handler and refactor code
@@ -105,9 +121,12 @@ func availableMenu(restauName string, menus []*pb.Menu) (bool, error) {
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
 	conn, err := grpc.NewClient(os.Getenv("RESTAURANT_URI"), opts)
 	if err != nil {
+		log.Println("error create restau client in gateway", err)
 		return false, err
 	}
 	client := pb.NewRestaurantServiceClient(conn)
+
+	log.Println("HEREEE")
 
 	check, err := client.CheckAvailableMenu(context.TODO(),
 		&pb.CheckAvailableMenuRequest{
@@ -115,6 +134,7 @@ func availableMenu(restauName string, menus []*pb.Menu) (bool, error) {
 			Menus:          menus,
 		})
 	if err != nil {
+		log.Println("AB@", err)
 		return false, err
 	}
 

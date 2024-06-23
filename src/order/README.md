@@ -1,4 +1,28 @@
 
+
+
+
+docker run -d -p 4010:9910 \
+--name donk --network mynet \
+-e MONGO_USER=donkadmin \
+-e MONGO_PASSWORD=donkpassword \
+-e MONGO_HOST=donkdb \
+-e MONGO_PORT=27017 \
+-e AMQP_USER=kenmilez \
+-e AMQP_PASSWORD=mypasswordrb \
+-e AMQP_HOST=broker-two \
+-e AMQP_PORT=5672 \
+order-image:v1.0
+
+
+
+
+
+
+
+
+
+---------------------------
 # cURL test
 
 curl -X POST http://localhost:12360/api/orders/place-order \

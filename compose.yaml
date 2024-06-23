@@ -1,32 +1,39 @@
 
 name: raiman
+
 services:
+
   gateway:
+    container_name: gateway
     build: gateway
     ports:
       - "180:180"
     environment:
-      - GATEWAY_PORT=180
-      - ORDER_URI=order=1111
+      GATEWAY_PORT: 180
+      ORDER_URI: order:1111
+      RESTAURANT_URI: restaurant:2222
     networks:
-      - truemoveh
+      - dtac
+    depends_on:
+      - order
+      - restaurant
 
   order:
+    container_name: order
     build: ./src/order
-    environment:
-      - ORDER_PORT=1111
-      - MONGO_USER=donkadmin
-      - MONGO_PASSWORD=donkpassword
-      - MONGO_HOST=order_db
-      - MONGO_PORT=27017
-      - AMQP_USER=donkadmin
-      - AMQP_PASSWORD=donkpassword
-      - AMQP_HOST=rabbitmqx
-      - AMQP_PORT=5672
+    env_file:
+      - path: ./src/order/.env
+    depends_on:
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+      orderdb:
+        condition: service_started
+        restart: true
     networks:
-      - truemoveh
-
-  order_db:
+      - dtac
+  orderdb:
+    container_name: orderdb
     image: mongo:latest
     ports:
       - "27052:27017"
@@ -34,26 +41,24 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=donkadmin
       - MONGO_INITDB_ROOT_PASSWORD=donkpassword
     networks:
-      - truemoveh
+      - dtac
 
   restaurant:
+    container_name: restaurant
     build: ./src/restaurant
-    ports:
-      - "2222:2222"
-    environment:
-      - RESTAURANT_PORT=2222
-      - MONGO_USER=donkadmin
-      - MONGO_PASSWORD=donkpassword
-      - MONGO_HOST=restaurant_db
-      - MONGO_PORT=27017
-      - AMQP_USER=donkadmin
-      - AMQP_PASSWORD=donkpassword
-      - AMQP_HOST=rabbitmqx
-      - AMQP_PORT=5672
+    env_file:
+      - path: ./src/restaurant/.env
     networks:
-      - truemoveh
-
-  restaurant_db:
+      - dtac
+    depends_on:
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+      restaurantdb:
+        condition: service_started
+        restart: true
+  restaurantdb:
+    container_name: restaurantdb
     image: mongo:latest
     ports:
       - "27051:27017"
@@ -61,16 +66,23 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=donkadmin
       - MONGO_INITDB_ROOT_PASSWORD=donkpassword
     networks:
-      - truemoveh
+      - dtac
 
   rabbitmqx:
+    container_name: rabbitmqx
     image: rabbitmq:3
     environment:
       - RABBITMQ_DEFAULT_USER=donkadmin
       - RABBITMQ_DEFAULT_PASS=donkpassword
+    healthcheck:
+      test: ["CMD","rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s 
+      timeout: 5s
+      retries: 3
     networks:
-      - truemoveh
+      - dtac
 
 networks:
-  truemoveh:
+  dtac:
     driver: bridge
+

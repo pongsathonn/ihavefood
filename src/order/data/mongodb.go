@@ -92,6 +92,7 @@ func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*pb.PlaceOrderRes
 
 	po := PlaceOrder{
 		TrackingId:      primitive.NewObjectID(),
+		RestaurantName:  in.RestaurantName,
 		Username:        in.Username,
 		CouponCode:      in.CouponCode,
 		CouponDiscount:  in.CouponDiscount,

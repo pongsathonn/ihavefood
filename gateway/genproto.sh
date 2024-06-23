@@ -1,6 +1,5 @@
 #!/bin/bash -eu
 
-
 <<comment
  -I = where protoc search for imports
  --go_out is  Destination directory
@@ -19,10 +18,13 @@ comment
 # ensure that you've set path for protoc
 PATH=$PATH:$GOPATH/bin
 
-# TODO: user absolute path for this 
 protodir=../protos # .proto file
 
-protoc -I $protodir --go_out=. --go-grpc_out=. --grpc-gateway_out=. $protodir/food.proto
+protoc -I $protodir \
+    --go_out=. \
+    --go-grpc_out=. \
+    --grpc-gateway_out=. \
+    $protodir/food.proto
 
        
 

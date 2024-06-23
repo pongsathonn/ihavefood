@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -116,13 +117,19 @@ func (s *restaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) 
 }
 
 func initMongoDB() *mongo.Client {
-	conn, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("RESTAURANT_DB_URI")))
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/restaurant_database?authSource=admin",
+		os.Getenv("RESTAURANT_MONGO_USER"),
+		os.Getenv("RESTAURANT_MONGO_PASS"),
+		os.Getenv("RESTAURANT_MONGO_HOST"),
+		os.Getenv("RESTAURANT_MONGO_PORT"),
+	)
+	conn, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("XD", err)
 	}
 
 	if err := conn.Ping(context.TODO(), nil); err != nil {
-		log.Fatal(err)
+		log.Fatal("XO", err)
 	}
 
 	coll := conn.Database("restaurant_database", nil).Collection("restaurantCollection")
@@ -134,15 +141,21 @@ func initMongoDB() *mongo.Client {
 
 	_, err = coll.Indexes().CreateOne(context.TODO(), indexModel)
 	if err != nil {
-		log.Println(err)
+		log.Fatal("XG", err)
 	}
 	return conn
 }
 
 func initRabbitMQ() *amqp.Connection {
-	conn, err := amqp.Dial(os.Getenv("AMQP_URI"))
+	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+		os.Getenv("RESTAURANT_AMQP_USER"),
+		os.Getenv("RESTAURANT_AMQP_PASS"),
+		os.Getenv("RESTAURANT_AMQP_HOST"),
+		os.Getenv("RESTAURANT_AMQP_PORT"),
+	)
+	conn, err := amqp.Dial(uri)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("h", err)
 	}
 
 	return conn
@@ -160,7 +173,8 @@ func main() {
 
 	log.Println("restaurant service is running")
 
-	lis, err := net.Listen("tcp", os.Getenv("RESTAURANT_URI"))
+	uri := fmt.Sprintf(":%s", os.Getenv("RESTAURANT_SERVER_PORT"))
+	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal(err)
 	}
