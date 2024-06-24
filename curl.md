@@ -14,6 +14,7 @@ AvailabilityStatus
 <b> Register </br>
 curl -X POST http://localhost:<port>/register \
 
+Login2
 <b> Login </br>
 curl -H "Authorization:<token>" http://localhost:<port>/login
 
