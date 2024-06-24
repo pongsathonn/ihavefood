@@ -15,7 +15,7 @@ Register
 curl -X POST http://localhost:<port>/register \
 -d '{ xxxxxx}'
 
-<b> Login </br>
+<b> Login </b>
 curl -H "Authorization:<token>" http://localhost:<port>/login
 
 </pre>
@@ -24,7 +24,7 @@ curl -H "Authorization:<token>" http://localhost:<port>/login
 # Order Service
 <pre>
 
-<b> Place Order </br>
+<b> Place Order </b>
 curl -X POST http://localhost:12360/api/orders/place-order \
 -d '{
   "username": "ronaldo",
