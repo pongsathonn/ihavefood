@@ -11,11 +11,11 @@ AvailabilityStatus
 # User Service
 <pre>
 
-Register 
+<b>Register</b>
 curl -X POST http://localhost:<port>/register \
 -d '{ xxxxxx}'
 
-<b> Login </b>
+<b>Login</b>
 curl -H "Authorization:<token>" http://localhost:<port>/login
 
 </pre>
@@ -24,7 +24,7 @@ curl -H "Authorization:<token>" http://localhost:<port>/login
 # Order Service
 <pre>
 
-<b> Place Order </b>
+<b>Place Order</b>
 curl -X POST http://localhost:12360/api/orders/place-order \
 -d '{
   "username": "ronaldo",
@@ -55,7 +55,7 @@ curl -X POST http://localhost:12360/api/orders/place-order \
 
 <pre>
 
-<b> Register new restaurant </b>
+<b>Register new restaurant</b>
 
 curl -X POST http://localhost:12360/api/restaurants \
 -d '{
@@ -67,13 +67,13 @@ curl -X POST http://localhost:12360/api/restaurants \
   ]
 }'
 
-<b> List Restaurants</b>
+<b>List Restaurants</b>
 curl -X GET http://localhost:12360/api/restaurants 
 
-<b> List Menus</b>
+<b>List Menus</b>
 curl -X GET http://localhost:12360/api/restaurants/{restaurant_name}
 
-<b> Add Menu</b>
+<b>Add Menu</b>
 curl -X POST http://localhost:12360/api/restaurants/menus \
 -d '{
   "restaurant_name": "HaiDee",
