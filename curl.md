@@ -25,7 +25,7 @@ curl -H "Authorization:<token>" http://localhost:<port>/login
 <pre>
 
 <b>Place Order</b>
-curl -X POST http://localhost:12360/api/orders/place-order \
+curl -X POST http://localhost:180/api/orders/place-order \
 -d '{
   "username": "ronaldo",
   "restaurant_name":"HaiDee",
@@ -57,7 +57,7 @@ curl -X POST http://localhost:12360/api/orders/place-order \
 
 <b>Register new restaurant</b>
 
-curl -X POST http://localhost:12360/api/restaurants \
+curl -X POST http://localhost:180/api/restaurants \
 -d '{
   "restaurant_name": "HaiDee",
   "menus": [
@@ -68,13 +68,13 @@ curl -X POST http://localhost:12360/api/restaurants \
 }'
 
 <b>List Restaurants</b>
-curl -X GET http://localhost:12360/api/restaurants 
+curl -X GET http://localhost:180/api/restaurants 
 
 <b>List Menus</b>
-curl -X GET http://localhost:12360/api/restaurants/{restaurant_name}
+curl -X GET http://localhost:180/api/restaurants/{restaurant_name}
 
 <b>Add Menu</b>
-curl -X POST http://localhost:12360/api/restaurants/menus \
+curl -X POST http://localhost:180/api/restaurants/menus \
 -d '{
   "restaurant_name": "HaiDee",
   "menus": [
