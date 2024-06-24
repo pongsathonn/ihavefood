@@ -1,22 +1,29 @@
-<pre>
+
+# CURL TEST
+
+
 
 AvailabilityStatus
 0  = available
 1  = unavailiable
 2  = unknow
 
-# CURL TEST
+# User Service
+<pre>
 
-# register
+<b> Register </br>
 curl -X POST http://localhost:<port>/register \
 
-# login
+<b> Login </br>
 curl -H "Authorization:<token>" http://localhost:<port>/login
 
-----------------------------------------------------------------
-# Order
+</pre>
 
-## PlaceOrder 
+
+# Order Service
+<pre>
+
+<b> Place Order </br>
 curl -X POST http://localhost:12360/api/orders/place-order \
 -d '{
   "username": "ronaldo",
@@ -41,10 +48,14 @@ curl -X POST http://localhost:12360/api/orders/place-order \
   "payment_method":0
 }'
 
---------------------------------------------------------------
+</pre>
+
 # Restaurant 
 
-## Register new restaurant
+<pre>
+
+<b> Register new restaurant </b>
+
 curl -X POST http://localhost:12360/api/restaurants \
 -d '{
   "restaurant_name": "HaiDee",
@@ -55,15 +66,13 @@ curl -X POST http://localhost:12360/api/restaurants \
   ]
 }'
 
-## ListRestaurant
+<b> List Restaurants</b>
 curl -X GET http://localhost:12360/api/restaurants 
 
-## ListMenu
+<b> List Menus</b>
 curl -X GET http://localhost:12360/api/restaurants/{restaurant_name}
 
-
-
-##  AddMenu
+<b> Add Menu</b>
 curl -X POST http://localhost:12360/api/restaurants/menus \
 -d '{
   "restaurant_name": "HaiDee",
@@ -72,15 +81,6 @@ curl -X POST http://localhost:12360/api/restaurants/menus \
   ]
 }'
 
-
----------------------------------------------------------------
-# Coupon
-
-
-
-
-
-
-
-
 </pre>
+
+
