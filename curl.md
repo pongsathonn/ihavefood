@@ -49,6 +49,13 @@ curl -X POST http://localhost:180/api/orders/place-order \
   "payment_method":0
 }'
 
+
+<b>User Order History</b>
+curl -X GET http://localhost:180/api/orders/{username}
+
+<b> </b>
+
+
 </pre>
 
 # Restaurant 
