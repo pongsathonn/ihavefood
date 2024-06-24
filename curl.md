@@ -11,10 +11,10 @@ AvailabilityStatus
 # User Service
 <pre>
 
-<b> Register </br>
+Register 
 curl -X POST http://localhost:<port>/register \
+-d '{ xxxxxx}'
 
-Login2
 <b> Login </br>
 curl -H "Authorization:<token>" http://localhost:<port>/login
 
