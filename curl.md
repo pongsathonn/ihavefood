@@ -1,3 +1,4 @@
+<pre>
 
 AvailabilityStatus
 0  = available
@@ -82,3 +83,4 @@ curl -X POST http://localhost:12360/api/restaurants/menus \
 
 
 
+</pre>
