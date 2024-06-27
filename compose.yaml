@@ -12,6 +12,7 @@ services:
       GATEWAY_PORT: 180
       ORDER_URI: order:1111
       RESTAURANT_URI: restaurant:2222
+      USER_URI: user:3333
     networks:
       - dtac
     depends_on:
@@ -68,6 +69,36 @@ services:
     networks:
       - dtac
 
+  user:
+    container_name: user
+    build: ./src/user
+    env_file:
+      - path: ./src/user/.env
+    networks:
+      - dtac
+    depends_on:
+      userdb:
+        condition: service_healthy
+        restart: true
+  userdb:
+    container_name: userdb
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./src/user/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    environment:
+      - POSTGRES_USER=donkadmin
+      - POSTGRES_PASSWORD=donkpassword
+      - POSTGRES_DATABASE=user_database
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U donkadmin"]
+      interval: 5s 
+      timeout: 5s
+    networks:
+      - dtac
+    
+
   rabbitmqx:
     container_name: rabbitmqx
     image: rabbitmq:3
@@ -75,9 +106,9 @@ services:
       - RABBITMQ_DEFAULT_USER=donkadmin
       - RABBITMQ_DEFAULT_PASS=donkpassword
     healthcheck:
-      test: ["CMD","rabbitmq-diagnostics", "-q", "ping"]
-      interval: 30s 
-      timeout: 5s
+      test: ["CMD-SHELL","rabbitmq-diagnostics -q ping"]
+      interval: 15s 
+      timeout: 15s
       retries: 3
     networks:
       - dtac

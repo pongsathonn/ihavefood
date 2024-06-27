@@ -46,28 +46,14 @@ func main() {
 	)
 
 	//TODO handle error from register
-	if err := pb.RegisterUserServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("USER_URI"), opts); err != nil {
-		log.Fatal("err connect to UserService", err)
-	}
-
-	if err := pb.RegisterCouponServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("COUPON_URI"), opts); err != nil {
-		log.Fatal("error connect to CouponService", err)
-	}
-
-	log.Println("order uri = ", os.Getenv("ORDER_URI"))
-	if err := pb.RegisterOrderServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("ORDER_URI"), opts); err != nil {
-		log.Fatal("err connect to OrderService ", err)
-	}
-
-	log.Println("restaurant uri = ", os.Getenv("RESTAURANT_URI"))
-	if err := pb.RegisterRestaurantServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("RESTAURANT_URI"), opts); err != nil {
-		log.Fatal("err connect to RestaurantService", err)
-	}
+	pb.RegisterUserServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("USER_URI"), opts)
+	pb.RegisterCouponServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("COUPON_URI"), opts)
+	pb.RegisterOrderServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("ORDER_URI"), opts)
+	pb.RegisterRestaurantServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("RESTAURANT_URI"), opts)
 
 	mux := http.NewServeMux()
 	mux.Handle("POST /api/orders/place-order", verifyPlaceOrder(gwmux))
 	mux.Handle("/", gwmux)
-
 	log.Println("gateway starting")
 
 	gwp := os.Getenv("GATEWAY_PORT")
@@ -125,8 +111,6 @@ func availableMenu(restauName string, menus []*pb.Menu) (bool, error) {
 		return false, err
 	}
 	client := pb.NewRestaurantServiceClient(conn)
-
-	log.Println("HEREEE")
 
 	check, err := client.CheckAvailableMenu(context.TODO(),
 		&pb.CheckAvailableMenuRequest{

@@ -16,7 +16,17 @@ curl -X POST http://localhost:<port>/register \
 -d '{ xxxxxx}'
 
 <b>Login</b>
-curl -H "Authorization:<token>" http://localhost:<port>/login
+POST
+curl -H "Authorization:<token>" http://localhost:180/login \
+-d '{"username":"ken", "password":"secret"}'
+
+post /register
+
+get /api/users
+
+get /api/users/{username}
+
+delete /api/users/username
 
 </pre>
 
