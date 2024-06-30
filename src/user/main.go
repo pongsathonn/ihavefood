@@ -10,7 +10,6 @@ import (
 
 	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/food-delivery/src/user/genproto"
-	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,51 +25,27 @@ func NewUserService(db *sql.DB) *userService {
 	return &userService{db: db}
 }
 
-func (s *userService) LoginUser(ctx context.Context, in *pb.LoginUserRequest) (*pb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LoginUser not implemented")
+func (s *userService) UpdateUser(context.Context, *pb.Empty) (*pb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 
-func (s *userService) RegisterUser(ctx context.Context, in *pb.RegisterUserRequest) (*pb.Empty, error) {
-
-	if in.Username == "" || in.Email == "" || in.Password == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "failed xxx")
-	}
-
-	//TODO email validate ( regex ) , check username email exists, logging error
-
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(in.Password), 10)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed xxx")
-	}
-
-	_, err = s.db.Exec("INSERT INTO user_table(username, email, password) VALUES($1, $2, $3)",
-		in.Username,
-		in.Email,
-		string(hashedPass),
-	)
-
-	if err != nil {
-		log.Println("error create user :", err)
-		return nil, status.Errorf(codes.Internal, "failed xxx")
-	}
-
-	return nil, nil
+func (s *userService) CreateUser(context.Context, *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 
-func (s *userService) ListUser(ctx context.Context, in *pb.ListUserRequest) (*pb.ListUserResponse, error) {
+func (s *userService) ListUser(context.Context, *pb.ListUserRequest) (*pb.ListUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUser not implemented")
 }
-func (s *userService) GetUser(ctx context.Context, in *pb.GetUserRequest) (*pb.User, error) {
+
+func (s *userService) GetUser(context.Context, *pb.GetUserRequest) (*pb.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (s *userService) DeleteUser(ctx context.Context, in *pb.DeleteUserRequest) (*pb.Empty, error) {
+
+func (s *userService) DeleteUser(context.Context, *pb.DeleteUserRequest) (*pb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
 
 func initPostgres() *sql.DB {
-
-	// for development
-	//connStr := fmt.Sprintf("postgres://donkadmin:donkpassword@localhost:5432/user_database?sslmode=disable")
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/user_database?sslmode=disable",
 		os.Getenv("USER_POSTGRES_USER"),

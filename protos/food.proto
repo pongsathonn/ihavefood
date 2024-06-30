@@ -201,19 +201,14 @@ message Menu {
 
 // ---------- User service ----------
 service UserService {
-    rpc LoginUser(LoginUserRequest) returns(Empty){
-        option (google.api.http) = {
-            post: "/login" 
-            body: "*"
-        };
-    }
 
-    rpc RegisterUser(RegisterUserRequest) returns(Empty){
-        option (google.api.http) = {
-            post: "/register" 
-            body: "*"
-        };
-    }
+    // TODO
+    // update user's profile picture
+    // update name 
+
+    rpc UpdateUser(Empty) returns(Empty) {}
+
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
 
     rpc ListUser(ListUserRequest) returns(ListUserResponse){
         option (google.api.http) = {
@@ -234,19 +229,15 @@ service UserService {
     }
 }
 
+message CreateUserResponse {
+}
+
+message CreateUserRequest {
+    User user = 1;
+}
+
 message DeleteUserRequest {
     string username = 1;
-}
-
-message LoginUserRequest {
-    string username = 1;
-    string password = 2;
-}
-
-message RegisterUserRequest {
-    string username = 1;
-    string email = 2;
-    string password = 3;
 }
 
 message ListUserResponse{
@@ -266,6 +257,66 @@ message User {
     string phone_number = 3;
     DeliveryAddress address = 4;
 }
+
+// ---------- Auth service ----------
+service AuthService {
+
+    rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
+
+    rpc Register(RegisterRequest) returns(RegisterResponse) {
+        option (google.api.http) = {
+            post: "/register" 
+            body: "*"
+        };
+    }
+
+    rpc Login(LoginRequest) returns(LoginResponse){
+        option (google.api.http) = {
+            post: "/login" 
+            body: "*"
+        };
+    }
+
+    // TODO 
+    // rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
+}
+
+message IsValidTokenResponse {
+    bool is_valid = 1;
+}
+
+message IsValidTokenRequest {
+    string token = 1;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    int64 access_token_exp =2;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message RegisterResponse {
+}
+
+message RegisterRequest {
+   string username = 1;
+   string email = 2;
+   string password = 3;
+}
+
+// TODO add role
+message UserCredentials {
+    string username = 1;
+    string email = 2;
+    string password = 3;
+    string access_token = 4;
+    int64 access_token_exp = 5;
+}
+
 
 // ---------- Coupon service ----------
 service CouponService {
@@ -307,7 +358,9 @@ enum CouponType{
     COUPON_TYPE_FREE_DELIVERY = 1; 
 }
 
+
 // ---------- Review service ---------- 
+// TODO
 
 service ReviewService {
     rpc AddOrderReview(AddOrderReviewRequest) returns(AddOrderReviewResponse){}

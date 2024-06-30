@@ -102,7 +102,7 @@ curl -X POST http://localhost:180/api/restaurants/menus \
 
 # User Service
 <pre>
-<b> Get User <b>
+<b> Get User </b>
 curl -X GET http://localhost:180/api/users/{username} \
 -H "Authorization: Bearer <your_token_here>"
 

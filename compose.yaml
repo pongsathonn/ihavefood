@@ -13,11 +13,14 @@ services:
       ORDER_URI: order:1111
       RESTAURANT_URI: restaurant:2222
       USER_URI: user:3333
+      AUTH_URI: auth:4444
     networks:
       - dtac
     depends_on:
       - order
       - restaurant
+      - user
+      - auth
 
   order:
     container_name: order
@@ -97,6 +100,35 @@ services:
       timeout: 5s
     networks:
       - dtac
+
+  auth:
+    container_name: auth
+    build: ./src/auth
+    env_file:
+      - path: ./src/auth/.env
+    networks:
+      - dtac
+    depends_on:
+      authdb:
+        condition: service_healthy
+        restart: true
+  authdb:
+    container_name: authdb
+    image: postgres
+    ports:
+      - "5442:5432"
+    volumes:
+      - ./src/auth/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    environment:
+      - POSTGRES_USER=donkadmin
+      - POSTGRES_PASSWORD=donkpassword
+      - POSTGRES_DATABASE=auth_database
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U donkadmin"]
+      interval: 5s 
+      timeout: 5s
+    networks:
+      - dtac
     
 
   rabbitmqx:
@@ -107,8 +139,8 @@ services:
       - RABBITMQ_DEFAULT_PASS=donkpassword
     healthcheck:
       test: ["CMD-SHELL","rabbitmq-diagnostics -q ping"]
-      interval: 15s 
-      timeout: 15s
+      interval: 20s 
+      timeout: 20s
       retries: 3
     networks:
       - dtac

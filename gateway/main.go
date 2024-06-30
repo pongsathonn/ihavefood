@@ -51,15 +51,22 @@ func main() {
 	pb.RegisterOrderServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("ORDER_URI"), opts)
 	pb.RegisterRestaurantServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("RESTAURANT_URI"), opts)
 
+	err := pb.RegisterAuthServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("AUTH_URI"), opts)
+	if err != nil {
+		log.Println("can't registere auth ja", err)
+	}
+
 	mux := http.NewServeMux()
-	mux.Handle("POST /api/orders/place-order", verifyPlaceOrder(gwmux))
+	mux.Handle("/login", gwmux)
+	//mux.Handle("DELETE /api/*", authz(gwmux))
+	mux.Handle("POST /api/orders/place-order", authn(verifyPlaceOrder(gwmux)))
+	mux.Handle("/api/*", authn(gwmux))
 	mux.Handle("/", gwmux)
+
 	log.Println("gateway starting")
 
-	gwp := os.Getenv("GATEWAY_PORT")
-	log.Println("GATEWAY PORT =", gwp)
-
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", gwp), prettierJSON(mux)))
+	s := fmt.Sprintf(":%s", os.Getenv("GATEWAY_PORT"))
+	log.Fatal(http.ListenAndServe(s, prettierJSON(mux)))
 }
 
 // TODO improve error handler and refactor code

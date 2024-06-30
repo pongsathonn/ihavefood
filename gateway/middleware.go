@@ -1,47 +1,53 @@
 package main
 
 import (
-	"errors"
-	"fmt"
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
-	"crypto/rand"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/golang-jwt/jwt/v5"
+	pb "github.com/pongsathonn/food-delivery/gateway/genproto"
 )
 
+// authn ( authentication ) who are you
+// check token , user credentials correct blabla
 func authn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		if r.Header.Get("Content-Type") != "application/json" {
-			log.Println("invalid Content-Type")
-			return
-		}
-
 		h := r.Header.Get("Authorization")
+		if h == "" {
+			http.Error(w, "no aothorization in header", http.StatusBadRequest)
+			return
+		}
+
 		tk := strings.Split(h, " ")
+		token := tk[1]
 
-		var token string
-		token = tk[1]
-
-		if token != "2222" {
-			fmt.Println(token)
+		if valid, err := validateToken(token); !valid {
+			log.Println(err)
+			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
 
-		sk := os.Getenv("SIGNING_KEY")
+		//TODO
 
-		if sk == "" {
-			log.Println("singing_key not found or empty")
-			return
-		}
+		next.ServeHTTP(w, r)
 
-		if err := validateToken(token, []byte(sk)); err != nil {
-			log.Println("unauthorized", err)
+	})
+}
+
+// authz ( authorization  ) what are you allowed to do ?
+// check user permission for access resource
+// i.e User allowed to Delete this ?
+func authz(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Header.Get("Content-Type") != "application/json" {
+			http.Error(w, "invalid Content-Type", http.StatusBadRequest)
 			return
 		}
 
@@ -50,79 +56,29 @@ func authn(next http.Handler) http.Handler {
 	})
 }
 
-// TODO return error
-func validateToken(tokenString string, key []byte) error {
+// Call authService to validate token
+func validateToken(token string) (bool, error) {
 
-	//TODO how its work
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return key, nil
-	})
-
-	if !token.Valid {
-		return err
-	}
-
-	return nil
-}
-
-// Symmetric
-func createNewToken() (string, error) {
-
-	sk := os.Getenv("SIGNING_KEY")
-	if sk == "" {
-		return "", fmt.Errorf("signing key not found or empty")
-	}
-
-	// 300 sec is 5 minutes
-	unixNow := time.Now().Unix()
-	unixFiveMinutes := unixNow + 300
-
-	claims := &jwt.RegisteredClaims{
-		Subject:   "authentication",
-		Issuer:    "lineman wongnai team",
-		IssuedAt:  jwt.NewNumericDate(time.Unix(unixNow, 0)),
-		ExpiresAt: jwt.NewNumericDate(time.Unix(unixFiveMinutes, 0)),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// this ss from signedString used as share secret key
-	ss, err := token.SignedString([]byte(sk))
+	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.NewClient(os.Getenv("AUTH_URI"), opts)
 	if err != nil {
-		return "", fmt.Errorf("singing failed %v", err)
+		log.Println("error new auth client :", err)
+		return false, err
 	}
 
-	return ss, nil
+	client := pb.NewAuthServiceClient(conn)
 
-}
-
-// Regenerate everytime when starting server
-// storing key in Env variable for testing
-func generateKey() error {
-
-	sk := os.Getenv("SIGNING_KEY")
-
-	if sk == "" {
-		key := make([]byte, 64)
-
-		if _, err := rand.Read(key); err != nil {
-			return errors.New("generate key failed")
-		}
-
-		if err := os.Setenv("SIGNING_KEY", string(key)); err != nil {
-			return errors.New("error set signing key")
-		}
-
+	resp, err := client.IsValidToken(context.TODO(), &pb.IsValidTokenRequest{Token: token})
+	if err != nil {
+		log.Println("error not valid :", err)
+		return false, err
 	}
 
-	ss := os.Getenv("SIGNING_KEY")
-	if ss == "" {
-		return errors.New("signing key is empty")
+	if !resp.IsValid {
+		log.Println("token invalid ja ")
+		return false, err
 	}
 
-	return nil
+	return true, nil
 
 }
