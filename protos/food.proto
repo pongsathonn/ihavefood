@@ -22,12 +22,13 @@ message Empty{}
 
 // ---------- Order service ----------
 service OrderService {
-    rpc PreparePlaceOrder(PlaceOrderRequest) returns(PlaceOrderResponse){
+    rpc PlaceOrder(PlaceOrderRequest) returns(PlaceOrderResponse){
         option (google.api.http) = {
             post: "/api/orders/place-order" 
             body: "*"
         };
     }
+
     rpc ListUserPlaceOrder(ListUserPlaceOrderRequest) returns (ListUserPlaceOrderResponse){
         option (google.api.http) = {
             get: "/api/orders/{username}" 
@@ -35,32 +36,23 @@ service OrderService {
 
     }
 }
-
-message ListUserPlaceOrderResponse {
-    repeated PlaceOrder place_orders = 1;
-}
-
-message ListUserPlaceOrderRequest {
-    string username = 1;
-}
-
 message PlaceOrder {
     string order_id = 1 ;
     string order_tracking_id = 2;
 
     string username = 3;
-    string restaurant_name = 14;
-    repeated Menu menus = 4;
-    string coupon_code = 5;
-    int32 coupon_discount = 6;
-    int32 delivery_fee = 7;
-    int32 total = 8;
+    string restaurant_name = 4;
+    repeated Menu menus = 5;
+    string coupon_code = 6;
+    int32 coupon_discount = 7;
+    int32 delivery_fee = 8;
+    int32 total = 9;
 
-    DeliveryAddress address = 9;
-    ContactInfo contact = 10;
-    PaymentMethod payment_method = 11;
-    PaymentStatus payment_status = 12;
-    OrderStatus order_status = 13;
+    DeliveryAddress address = 10;
+    ContactInfo contact = 11;
+    PaymentMethod payment_method = 12;
+    PaymentStatus payment_status = 13;
+    OrderStatus order_status = 14;
 }
 
 enum PaymentMethod {
@@ -88,6 +80,18 @@ enum OrderStatus {
     CANCELLED =5;
 }
 
+
+message DeliveryAddress {
+    string address_name = 1;
+    string address_info = 2;
+    string province = 3;
+}
+
+message ContactInfo {
+    string phone_number = 1;
+    string email = 2;
+}
+
 message PlaceOrderRequest {
     string username = 1;
 
@@ -108,17 +112,40 @@ message PlaceOrderResponse {
     string order_tracking_id = 2;
 }
 
-message DeliveryAddress {
-    string address_name = 1;
-    string address_info = 2;
-    string province = 3;
+message ListUserPlaceOrderRequest {
+    string username = 1;
 }
 
-message ContactInfo {
-    string phone_number = 1;
-    string email = 2;
+message ListUserPlaceOrderResponse {
+    repeated PlaceOrder place_orders = 1;
 }
 
+
+
+// ---------- Delivery service ----------
+service DeliveryService {
+
+    // tracking rider's location ( update every 10s )
+    // OrderService should only call this
+    rpc TrackRiderLocation(TrackRiderLocationRequest) returns (TrackRiderLocationResponse) {}
+}
+
+message TrackRiderLocationRequest {
+    string order_id = 1;
+}
+
+message TrackRiderLocationResponse {
+    string rider_id = 1;
+    string rider_name = 2;
+
+    Location rider_location = 3;
+    int64 timestamp = 4;
+}
+
+message Location {
+    string latitude = 1;
+    string longtitude = 2;
+}
 
 // ---------- Restaurant service ----------
 service RestaurantService {
@@ -149,16 +176,28 @@ service RestaurantService {
     }
 }
 
-message CheckAvailableMenuResponse {
-    AvailStatus available = 1;
-}
-
 message CheckAvailableMenuRequest {
     string restaurant_name = 1;
     repeated Menu menus = 2;
 }
 
-message AddMenuRequest {
+message CheckAvailableMenuResponse {
+    AvailStatus available = 1;
+}
+
+message GetRestaurantRequest{
+    string restaurant_name = 1;
+}
+
+message GetRestaurantResponse{
+    Restaurant restaurant = 1;
+}
+
+message ListRestaurantResponse{
+    repeated Restaurant restaurants = 1;
+}
+
+message RegisterRestaurantRequest {
     string restaurant_name = 1;
     repeated Menu menus = 2;
 }
@@ -167,24 +206,10 @@ message RegisterRestaurantResponse {
     string restaurant_id = 1;
 }
 
-message RegisterRestaurantRequest {
+message AddMenuRequest {
     string restaurant_name = 1;
     repeated Menu menus = 2;
 }
-
-message GetRestaurantResponse{
-    Restaurant restaurant = 1;
-}
-
-
-message GetRestaurantRequest{
-    string restaurant_name = 1;
-}
-
-message ListRestaurantResponse{
-    repeated Restaurant restaurants = 1;
-}
-
 
 message Restaurant {
     string restaurant_id = 1;
@@ -210,17 +235,18 @@ service UserService {
 
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
 
+    rpc GetUser(GetUserRequest) returns(User){
+        option (google.api.http) = {
+            get: "/api/users/{username}" 
+        };
+    }
+
     rpc ListUser(ListUserRequest) returns(ListUserResponse){
         option (google.api.http) = {
             get: "/api/users" 
         };
     }
 
-    rpc GetUser(GetUserRequest) returns(User){
-        option (google.api.http) = {
-            get: "/api/users/{username}" 
-        };
-    }
 
     rpc DeleteUser(DeleteUserRequest) returns(Empty){
         option (google.api.http) = {
@@ -229,34 +255,35 @@ service UserService {
     }
 }
 
-message CreateUserResponse {
-}
-
-message CreateUserRequest {
-    User user = 1;
-}
-
-message DeleteUserRequest {
-    string username = 1;
-}
-
-message ListUserResponse{
-    repeated User users = 1;
-}
-
-message ListUserRequest {
-}
-
-message GetUserRequest{
-    string username = 1;
-}
-
 message User {
     string username = 1;
     string email = 2;
     string phone_number = 3;
     DeliveryAddress address = 4;
 }
+
+message CreateUserRequest {
+    User user = 1;
+}
+
+message CreateUserResponse {
+}
+
+message GetUserRequest{
+    string username = 1;
+}
+
+message ListUserRequest {
+}
+
+message ListUserResponse{
+    repeated User users = 1;
+}
+
+message DeleteUserRequest {
+    string username = 1;
+}
+
 
 // ---------- Auth service ----------
 service AuthService {
@@ -281,25 +308,21 @@ service AuthService {
     // rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
 }
 
-message IsValidTokenResponse {
-    bool is_valid = 1;
+// TODO add role
+message UserCredentials {
+    string username = 1;
+    string email = 2;
+    string password = 3;
+    string access_token = 4;
+    int64 access_token_exp = 5;
 }
 
 message IsValidTokenRequest {
     string token = 1;
 }
 
-message LoginResponse {
-    string access_token = 1;
-    int64 access_token_exp =2;
-}
-
-message LoginRequest {
-    string username = 1;
-    string password = 2;
-}
-
-message RegisterResponse {
+message IsValidTokenResponse {
+    bool is_valid = 1;
 }
 
 message RegisterRequest {
@@ -308,13 +331,17 @@ message RegisterRequest {
    string password = 3;
 }
 
-// TODO add role
-message UserCredentials {
+message RegisterResponse {
+}
+
+message LoginRequest {
     string username = 1;
-    string email = 2;
-    string password = 3;
-    string access_token = 4;
-    int64 access_token_exp = 5;
+    string password = 2;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    int64 access_token_exp =2;
 }
 
 
@@ -332,19 +359,6 @@ service CouponService {
     }
 }
 
-message GetCouponResponse {
-    Coupon coupon  = 1;
-}
-
-message GetCouponRequest {
-    string code = 1;
-}
-
-message ListCouponResponse {
-    repeated Coupon coupons = 1;
-}
-
-
 message Coupon {
     CouponType types = 1;
     string code = 2;
@@ -358,43 +372,26 @@ enum CouponType{
     COUPON_TYPE_FREE_DELIVERY = 1; 
 }
 
+message GetCouponRequest {
+    string code = 1;
+}
+
+message GetCouponResponse {
+    Coupon coupon  = 1;
+}
+
+
+message ListCouponResponse {
+    repeated Coupon coupons = 1;
+}
 
 // ---------- Review service ---------- 
-// TODO
+// not implement yet
 
 service ReviewService {
     rpc AddOrderReview(AddOrderReviewRequest) returns(AddOrderReviewResponse){}
     rpc UpdateOrderReview(UpdateOrderReviewRequest) returns(UpdateOrderReviewResponse){}
     rpc DeleteOrderReview(DeleteOrderReviewRequest) returns(Empty){}
-}
-
-message DeleteOrderReviewRequest {
-    string username = 1;
-    string review_id = 2;
-}
-
-message UpdateOrderReviewResponse {
-    string resp = 1;
-}
-
-message UpdateOrderReviewRequest {
-    string username = 1;
-    string review_id = 2;
-
-    oneof new_order_review_field{
-        string new_rating = 3;
-        string new_topic = 4;
-        string new_body = 5;
-        Image new_image = 6;
-    }
-}
-
-message AddOrderReviewResponse {
-    string review_id= 1;
-}
-
-message AddOrderReviewRequest {
-    Review review  = 1;
 }
 
 message Review {
@@ -410,3 +407,34 @@ message Review {
 message Image {
     bytes image = 1;
 }
+
+message AddOrderReviewRequest {
+    Review review  = 1;
+}
+
+message AddOrderReviewResponse {
+    string review_id= 1;
+}
+
+message UpdateOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+
+    oneof new_order_review_field{
+        string new_rating = 3;
+        string new_topic = 4;
+        string new_body = 5;
+        Image new_image = 6;
+    }
+}
+
+message UpdateOrderReviewResponse {
+    string resp = 1;
+}
+
+message DeleteOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+}
+
+
