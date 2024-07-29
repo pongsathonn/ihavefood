@@ -16,22 +16,41 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/pongsathonn/food-delivery/src/order/data"
-	"github.com/pongsathonn/food-delivery/src/order/event"
+	"github.com/pongsathonn/food-delivery/src/order/pubsub"
+
 	pb "github.com/pongsathonn/food-delivery/src/order/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type orderServer struct {
-	pb.UnimplementedOrderServiceServer
-	db data.OrderRepo
-	ev event.Eventx
+type PlaceOrderBody struct {
+	OrderId        string
+	TrackingId     string
+	Username       string
+	RestaurantName string
+	Menus          []*pb.Menu
+	CouponCode     string
+	CouponDiscount int32
+	DeliveryFee    int32
+	Total          int32
+	UserAddress    *pb.Address
+	ContactInfo    *pb.ContactInfo
+	PaymentMethod  pb.PaymentMethod
+	PaymentStatus  pb.PaymentStatus
+	OrderStatus    pb.OrderStatus
 }
 
-func NewOrderServer(db data.OrderRepo, ev event.Eventx) *orderServer {
+func NewOrderServer(db data.OrderRepo, ps pubsub.RabbitMQ) *orderServer {
 	return &orderServer{
 		db: db,
-		ev: ev,
+		ps: ps,
 	}
+}
+
+type orderServer struct {
+	pb.UnimplementedOrderServiceServer
+
+	db data.OrderRepo
+	ps pubsub.RabbitMQ
 }
 
 func (or *orderServer) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
@@ -49,7 +68,7 @@ func (or *orderServer) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 
 }
 
-func (or *orderServer) PreparePlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+func (or *orderServer) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 
 	if in.Username == "" || in.Address == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "bad request ")
@@ -75,15 +94,55 @@ func (or *orderServer) PreparePlaceOrder(ctx context.Context, in *pb.PlaceOrderR
 		return nil, fmt.Errorf("save failed %v", err)
 	}
 
+	/* THIS WORK
+	body := &PlaceOrderBody{
+		OrderId:         res.OrderId,
+		TrackingId:      res.OrderTrackingId,
+		Username:        in.Username,
+		RestaurantName:  in.RestaurantName,
+		Menus:           in.Menus,
+		CouponCode:      in.CouponCode,
+		CouponDiscount:  in.CouponDiscount,
+		DeliveryFee:     in.DeliveryFee,
+		Total:           in.Total,
+		DeliveryAddress: in.Address,
+		ContactInfo:     in.Contact,
+		PaymentMethod:   in.PaymentMethod,
+		PaymentStatus:   res.PaymentStatus,
+		OrderStatus:     res.OrderStatus,
+	}
+	*/
+
+	body := &pb.PlaceOrder{
+		OrderId:         res.OrderId,
+		OrderTrackingId: res.OrderTrackingId,
+		Username:        in.Username,
+		RestaurantName:  in.RestaurantName,
+		Menus:           in.Menus,
+		CouponCode:      in.CouponCode,
+		CouponDiscount:  in.CouponDiscount,
+		DeliveryFee:     in.DeliveryFee,
+		Total:           in.Total,
+		Address:         in.Address,
+		Contact:         in.Contact,
+		PaymentMethod:   in.PaymentMethod,
+		PaymentStatus:   res.PaymentStatus,
+		OrderStatus:     res.OrderStatus,
+	}
+
 	// publish event
 	routingKey := "order.placed.event"
-	err = or.ev.Publish(routingKey, []byte(res.OrderId))
+	err = or.ps.Publish(routingKey, body)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create event")
 	}
+	log.Printf("published with order id : %s\n", body.OrderId)
 
 	// response
-	return res, nil
+	return &pb.PlaceOrderResponse{
+		OrderId:         res.OrderId,
+		OrderTrackingId: res.OrderTrackingId,
+	}, nil
 }
 
 func initRabbitMQ() *amqp.Connection {
@@ -152,9 +211,9 @@ func main() {
 	}
 
 	db := data.NewOrderRepo(initMongoClient())
-	ev := event.NewEvent(initRabbitMQ())
+	ps := pubsub.NewRabbitMQ(initRabbitMQ())
 
-	ors := NewOrderServer(db, ev)
+	ors := NewOrderServer(db, ps)
 
 	s := grpc.NewServer()
 	pb.RegisterOrderServiceServer(s, ors)

@@ -1,31 +1,33 @@
-package event
+package pubsub
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Eventx interface {
-	Publish(routingKey string, body []byte) error
+type RabbitMQ interface {
+	Publish(routingKey string, body interface{}) error
 }
 
-type eventx struct {
+type rabbitMQ struct {
 	conn *amqp.Connection
 }
 
-func NewEvent(conn *amqp.Connection) Eventx {
-	return &eventx{conn: conn}
+func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
+	return &rabbitMQ{conn: conn}
 }
 
 // routing key example i.e Order.Created.Event
-func (e *eventx) Publish(routingKey string, body []byte) error {
+func (r *rabbitMQ) Publish(routingKey string, body interface{}) error {
 
-	ch, err := e.conn.Channel()
+	ch, err := r.conn.Channel()
 	if err != nil {
 		return fmt.Errorf("failed to establish channel :", err)
 	}
+
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
@@ -41,14 +43,19 @@ func (e *eventx) Publish(routingKey string, body []byte) error {
 		return fmt.Errorf("failed to declare exchange :", err)
 	}
 
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("marshal body to json failed :", err)
+	}
+
 	err = ch.PublishWithContext(context.TODO(),
 		"order",    // exchange
 		routingKey, // routing key
 		false,      // mandatory
 		false,      // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        body,
+			ContentType: "application/json",
+			Body:        jsonBody,
 		},
 	)
 	if err != nil {

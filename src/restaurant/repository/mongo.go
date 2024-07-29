@@ -16,7 +16,7 @@ type RestaurantRepo interface {
 	Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error)
 	Restaurants(context.Context) ([]*pb.Restaurant, error)
 	SaveRestaurant(ctx context.Context, restauName string, menus []*pb.Menu) (string, error)
-	SaveMenu(ctx context.Context, restauName string, menus []*pb.Menu) error
+	UpdateMenu(ctx context.Context, restauName string, menus []*pb.Menu) error
 }
 
 type RestaurantEntity struct {
@@ -40,8 +40,8 @@ func NewRestaurantRepo(db *mongo.Client) RestaurantRepo {
 	return &restaurantRepo{db: db}
 }
 
-func (rp *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string, menus []*pb.Menu) (bool, error) {
-	coll := rp.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+func (r *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string, menus []*pb.Menu) (bool, error) {
+	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	if len(menus) == 0 {
 		err := errors.New("menus is empty")
@@ -74,13 +74,13 @@ func (rp *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string
 	return true, nil
 }
 
-func (rp *restaurantRepo) Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error) {
+func (r *restaurantRepo) Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error) {
 
 	if restauName == "" {
 		return nil, errors.New("empty ja")
 	}
 
-	coll := rp.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	filter := bson.M{"restaurantName": restauName}
 
@@ -97,9 +97,9 @@ func (rp *restaurantRepo) Restaurant(ctx context.Context, restauName string) (*p
 	}, nil
 }
 
-func (rp *restaurantRepo) Restaurants(context.Context) ([]*pb.Restaurant, error) {
+func (r *restaurantRepo) Restaurants(context.Context) ([]*pb.Restaurant, error) {
 
-	coll := rp.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	filter := bson.D{{}}
 	cur, err := coll.Find(context.TODO(), filter)
@@ -128,9 +128,9 @@ func (rp *restaurantRepo) Restaurants(context.Context) ([]*pb.Restaurant, error)
 
 }
 
-func (rp *restaurantRepo) SaveRestaurant(ctx context.Context, restauName string, menus []*pb.Menu) (string, error) {
+func (r *restaurantRepo) SaveRestaurant(ctx context.Context, restauName string, menus []*pb.Menu) (string, error) {
 
-	coll := rp.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	restau := RestaurantEntity{
 		RestaurantId:   primitive.NewObjectID(),
@@ -155,14 +155,23 @@ func (rp *restaurantRepo) SaveRestaurant(ctx context.Context, restauName string,
 
 }
 
-func (rp *restaurantRepo) SaveMenu(ctx context.Context, restauName string, newMenus []*pb.Menu) error {
+func (r *restaurantRepo) UpdateMenu(ctx context.Context, restauName string, newMenus []*pb.Menu) error {
 
-	coll := rp.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	coll.Find(context.TODO(), nil)
 
-	filter := bson.D{{"restaurantName", restauName}}
-	update := bson.D{{"$push", bson.D{{"menus", bson.D{{"$each", newMenus}}}}}}
+	filter := bson.D{
+		{"restaurantName", restauName},
+	}
+
+	update := bson.D{
+		{"$push", bson.D{
+			{"menus", bson.D{
+				{"$each", newMenus},
+			}},
+		}},
+	}
 
 	_, err := coll.UpdateOne(context.TODO(), filter, update)
 	if err != nil {

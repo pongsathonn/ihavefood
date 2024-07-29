@@ -13,35 +13,42 @@ import (
 
 type OrderRepo interface {
 	PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error)
-	SavePlaceOrder(*pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error)
+	SavePlaceOrder(*pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error)
 }
 
 func NewOrderRepo(conn *mongo.Client) OrderRepo {
 	return &orderRepo{conn: conn}
 }
 
-type orderRepo struct {
-	conn *mongo.Client
-}
-
 // this PlaceOrder use as model for "INSERT" and "QUERY" with mongodb
 // to make this model match with protobuff json name should be same as bson name tag
 // if not omitempty at id Mongo will use zero as id ( when insert )
 type PlaceOrder struct {
-	OrderId         primitive.ObjectID  `bson:"_id,omitempty"`
-	TrackingId      primitive.ObjectID  `bson:"orderTrackingId" `
-	Username        string              `bson:"username"`
-	RestaurantName  string              `bson:"restaurantName"`
-	Menus           []*pb.Menu          `bson:"menus"`
-	CouponCode      string              `bson:"couponCode"`
-	CouponDiscount  int32               `bson:"couponDiscount"`
-	DeliveryFee     int32               `bson:"deliveryFee"`
-	Total           int32               `bson:"total"`
-	DeliveryAddress *pb.DeliveryAddress `bson:"address"`
-	ContactInfo     *pb.ContactInfo     `bson:"contactInfo"`
-	PaymentMethod   pb.PaymentMethod    `bson:"paymentMethod"`
-	PaymentStatus   pb.PaymentStatus    `bson:"paymentStatus"`
-	OrderStatus     pb.OrderStatus      `bson:"orderStatus"`
+	OrderId        primitive.ObjectID `bson:"_id,omitempty"`
+	TrackingId     primitive.ObjectID `bson:"orderTrackingId" `
+	Username       string             `bson:"username"`
+	RestaurantName string             `bson:"restaurantName"`
+	Menus          []*pb.Menu         `bson:"menus"`
+	CouponCode     string             `bson:"couponCode"`
+	CouponDiscount int32              `bson:"couponDiscount"`
+	DeliveryFee    int32              `bson:"deliveryFee"`
+	Total          int32              `bson:"total"`
+	UserAddress    *pb.Address        `bson:"userAddress"`
+	ContactInfo    *pb.ContactInfo    `bson:"contactInfo"`
+	PaymentMethod  pb.PaymentMethod   `bson:"paymentMethod"`
+	PaymentStatus  pb.PaymentStatus   `bson:"paymentStatus"`
+	OrderStatus    pb.OrderStatus     `bson:"orderStatus"`
+}
+
+type SavePlaceOrderResponse struct {
+	OrderId         string
+	OrderTrackingId string
+	PaymentStatus   pb.PaymentStatus
+	OrderStatus     pb.OrderStatus
+}
+
+type orderRepo struct {
+	conn *mongo.Client
 }
 
 // list all user's placeorder by username ( like query placeorder history )
@@ -73,7 +80,7 @@ func (od *orderRepo) PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse
 			CouponDiscount:  po.CouponDiscount,
 			DeliveryFee:     po.DeliveryFee,
 			Total:           po.Total,
-			Address:         po.DeliveryAddress,
+			Address:         po.UserAddress,
 			Contact:         po.ContactInfo,
 			PaymentMethod:   po.PaymentMethod,
 			PaymentStatus:   po.PaymentStatus,
@@ -86,24 +93,24 @@ func (od *orderRepo) PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse
 }
 
 // TODO generate tracking id
-func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error) {
 
 	coll := od.conn.Database("order_database", nil).Collection("orderCollection")
 
 	po := PlaceOrder{
-		TrackingId:      primitive.NewObjectID(),
-		RestaurantName:  in.RestaurantName,
-		Username:        in.Username,
-		CouponCode:      in.CouponCode,
-		CouponDiscount:  in.CouponDiscount,
-		Menus:           in.Menus,
-		DeliveryFee:     in.DeliveryFee,
-		Total:           in.Total,
-		DeliveryAddress: in.Address,
-		ContactInfo:     in.Contact,
-		PaymentMethod:   in.PaymentMethod,
-		PaymentStatus:   pb.PaymentStatus_UNPAID,
-		OrderStatus:     pb.OrderStatus_PENDING,
+		TrackingId:     primitive.NewObjectID(),
+		RestaurantName: in.RestaurantName,
+		Username:       in.Username,
+		CouponCode:     in.CouponCode,
+		CouponDiscount: in.CouponDiscount,
+		Menus:          in.Menus,
+		DeliveryFee:    in.DeliveryFee,
+		Total:          in.Total,
+		UserAddress:    in.Address,
+		ContactInfo:    in.Contact,
+		PaymentMethod:  in.PaymentMethod,
+		PaymentStatus:  pb.PaymentStatus_UNPAID,
+		OrderStatus:    pb.OrderStatus_PENDING,
 	}
 
 	res, err := coll.InsertOne(context.TODO(), &po)
@@ -116,9 +123,11 @@ func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*pb.PlaceOrderRes
 		return nil, errors.New("error assert type")
 	}
 
-	return &pb.PlaceOrderResponse{
+	return &SavePlaceOrderResponse{
 		OrderId:         orderId.Hex(),
 		OrderTrackingId: po.TrackingId.Hex(),
+		PaymentStatus:   pb.PaymentStatus_UNPAID,
+		OrderStatus:     pb.OrderStatus_PENDING,
 	}, nil
 
 }

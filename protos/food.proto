@@ -48,7 +48,7 @@ message PlaceOrder {
     int32 delivery_fee = 8;
     int32 total = 9;
 
-    DeliveryAddress address = 10;
+    Address address = 10;
     ContactInfo contact = 11;
     PaymentMethod payment_method = 12;
     PaymentStatus payment_status = 13;
@@ -81,10 +81,13 @@ enum OrderStatus {
 }
 
 
-message DeliveryAddress {
+message Address {
+
     string address_name = 1;
-    string address_info = 2;
-    string province = 3;
+	string sub_district = 2;
+	string district = 3;    
+	string province = 4;    
+	string postal_code = 5;
 }
 
 message ContactInfo {
@@ -102,7 +105,7 @@ message PlaceOrderRequest {
     int32 coupon_discount = 6;
     int32 total = 7;
 
-    DeliveryAddress address = 8;
+    Address address = 8;
     ContactInfo contact = 9;
     PaymentMethod payment_method = 10;
 }
@@ -127,25 +130,53 @@ service DeliveryService {
 
     // tracking rider's location ( update every 10s )
     // OrderService should only call this
-    rpc TrackRiderLocation(TrackRiderLocationRequest) returns (TrackRiderLocationResponse) {}
+    rpc TrackOrder(TrackOrderRequest) returns (TrackOrderResponse) {
+    }
+
+    // for Rider accept Order
+    rpc AcceptOrderHandler(AcceptOrderHandlerRequest) returns (AcceptOrderHandlerResponse){
+        option (google.api.http) = {
+            post: "/api/deliveries/accept-order" 
+            body: "*"
+        };
+    }
+
 }
 
-message TrackRiderLocationRequest {
-    string order_id = 1;
-}
-
-message TrackRiderLocationResponse {
-    string rider_id = 1;
-    string rider_name = 2;
-
-    Location rider_location = 3;
-    int64 timestamp = 4;
-}
-
-message Location {
+message Point {
     string latitude = 1;
     string longtitude = 2;
 }
+
+message Rider {
+    string rider_id = 1;
+    string rider_name = 2;
+    string phone_number = 3;
+
+}
+
+message TrackOrderRequest {
+    string order_tracking_id = 1;
+}
+
+message TrackOrderResponse {
+    Rider rider = 1;
+    int64 timestamp = 2;
+    Point rider_location = 3;
+}
+
+message AcceptOrderHandlerRequest {
+    string rider_id = 1;
+    string order_id = 2;
+}
+
+message AcceptOrderHandlerResponse {
+    string pickup_code = 1; // three digit i.e 712 , 412
+    Point pickup_location = 2;
+    Point destination = 3;
+}
+
+
 
 // ---------- Restaurant service ----------
 service RestaurantService {
@@ -174,6 +205,19 @@ service RestaurantService {
             body: "*"
         };
     }
+}
+
+message Restaurant {
+    string restaurant_id = 1;
+    string restaurant_name = 2;
+    repeated Menu menus = 3;
+    Address address = 4;
+}
+
+message Menu {
+    string food_name = 1;
+    int32 price = 2;
+    AvailStatus available = 3;
 }
 
 message CheckAvailableMenuRequest {
@@ -211,20 +255,10 @@ message AddMenuRequest {
     repeated Menu menus = 2;
 }
 
-message Restaurant {
-    string restaurant_id = 1;
-    string restaurant_name = 2;
-    repeated Menu menus = 3;
-}
-
-message Menu {
-    string food_name = 1;
-    int32 price = 2;
-    AvailStatus available = 3;
-}
 
 
 // ---------- User service ----------
+// Manage User's Profile
 service UserService {
 
     // TODO
@@ -259,7 +293,7 @@ message User {
     string username = 1;
     string email = 2;
     string phone_number = 3;
-    DeliveryAddress address = 4;
+    Address address = 4;
 }
 
 message CreateUserRequest {

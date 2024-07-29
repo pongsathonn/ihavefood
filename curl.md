@@ -27,8 +27,10 @@ curl -H "Authorization:<token>" http://localhost:180/login \
 <pre>
 
 <b>Place Order</b>
+
 curl -X POST http://localhost:180/api/orders/place-order \
--H "Authorization: Bearer <your_token_here>" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer xxxxx" \
 -d '{
   "username": "ronaldo",
   "restaurant_name":"HaiDee",
@@ -36,21 +38,25 @@ curl -X POST http://localhost:180/api/orders/place-order \
     {"food_name": "Pad Thai", "price": 50},
     {"food_name": "Tom Yum Goong", "price": 70}
   ],
-  "delivery_fee":50,
+  "delivery_fee": 50,
   "coupon_code": "129dh012",
   "coupon_discount": 20,
   "total": 150,
   "address": {
     "address_name": "home",
-    "address_info": "123 Sukhumvit Rd",
-    "province": "Bangkok"
+    "sub_district": "Nong Hoi",
+    "district": "Mueang Chiang Mai",
+    "province": "Chiang Mai",
+    "postalCode": "50000",
+    "country": "Thailand"
   },
   "contact": {
     "phone_number": "+668 1234 5678",
     "email": "r7do@mail.com"
   },
-  "payment_method":0
+  "payment_method": 0
 }'
+
 
 
 <b>User Order History</b>

@@ -108,7 +108,7 @@ func (s *restaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) 
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or menus is empty")
 	}
 
-	if err := s.rp.SaveMenu(context.TODO(), in.RestaurantName, in.Menus); err != nil {
+	if err := s.rp.UpdateMenu(context.TODO(), in.RestaurantName, in.Menus); err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 

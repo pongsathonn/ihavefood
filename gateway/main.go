@@ -50,6 +50,7 @@ func main() {
 	pb.RegisterCouponServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("COUPON_URI"), opts)
 	pb.RegisterOrderServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("ORDER_URI"), opts)
 	pb.RegisterRestaurantServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("RESTAURANT_URI"), opts)
+	pb.RegisterDeliveryServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("DELIVERY_URI"), opts)
 
 	err := pb.RegisterAuthServiceHandlerFromEndpoint(context.TODO(), gwmux, os.Getenv("AUTH_URI"), opts)
 	if err != nil {
@@ -59,8 +60,15 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/login", gwmux)
 	//mux.Handle("DELETE /api/*", authz(gwmux))
-	mux.Handle("POST /api/orders/place-order", authn(verifyPlaceOrder(gwmux)))
-	mux.Handle("/api/*", authn(gwmux))
+
+	// production use this
+	// mux.Handle("POST /api/orders/place-order", authn(verifyPlaceOrder(gwmux)))
+	// mux.Handle("/api/*", authn(gwmux))
+
+	// testing
+	mux.Handle("/api/*", (gwmux))
+	mux.Handle("POST /api/orders/place-order", (verifyPlaceOrder(gwmux)))
+
 	mux.Handle("/", gwmux)
 
 	log.Println("gateway starting")

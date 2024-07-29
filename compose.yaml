@@ -1,8 +1,6 @@
-
 name: raiman
 
 services:
-
   gateway:
     container_name: gateway
     build: gateway
@@ -14,6 +12,7 @@ services:
       RESTAURANT_URI: restaurant:2222
       USER_URI: user:3333
       AUTH_URI: auth:4444
+      DELIVERY_URI: delivery:5555
     networks:
       - dtac
     depends_on:
@@ -129,7 +128,28 @@ services:
       timeout: 5s
     networks:
       - dtac
-    
+
+  delivery:
+    container_name: delivery
+    build: ./src/delivery
+    env_file:
+      - path: ./src/delivery/.env
+    networks:
+      - dtac
+    depends_on:
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+  deliverydb:
+    container_name: deliverydb
+    image: mongo:latest
+    ports:
+      - "27053:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=donkadmin
+      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+    networks:
+      - dtac
 
   rabbitmqx:
     container_name: rabbitmqx
@@ -139,8 +159,8 @@ services:
       - RABBITMQ_DEFAULT_PASS=donkpassword
     healthcheck:
       test: ["CMD-SHELL","rabbitmq-diagnostics -q ping"]
-      interval: 20s 
-      timeout: 20s
+      interval: 40s
+      timeout: 30s
       retries: 3
     networks:
       - dtac
