@@ -1,11 +1,10 @@
-module github.com/pongsathonn/food-delivery/src/user
+module github.com/pongsathonn/ihavefood/src/userservice
 
 go 1.22.2
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
 	github.com/lib/pq v1.10.9
-	golang.org/x/crypto v0.24.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240617180043-68d350f18fd4
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.2

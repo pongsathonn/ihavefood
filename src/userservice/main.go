@@ -9,39 +9,40 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
-	pb "github.com/pongsathonn/food-delivery/src/user/genproto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
 
-type userService struct {
+type user struct {
 	pb.UnimplementedUserServiceServer
 
 	db *sql.DB
 }
 
-func NewUserService(db *sql.DB) *userService {
-	return &userService{db: db}
+func NewUser(db *sql.DB) *user {
+	return &user{db: db}
 }
 
-func (s *userService) UpdateUser(context.Context, *pb.Empty) (*pb.Empty, error) {
+func (s *user) UpdateUser(context.Context, *pb.Empty) (*pb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 
-func (s *userService) CreateUser(context.Context, *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+func (s *user) CreateUser(context.Context, *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 
-func (s *userService) ListUser(context.Context, *pb.ListUserRequest) (*pb.ListUserResponse, error) {
+func (s *user) ListUser(context.Context, *pb.ListUserRequest) (*pb.ListUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUser not implemented")
 }
 
-func (s *userService) GetUser(context.Context, *pb.GetUserRequest) (*pb.User, error) {
+func (s *user) GetUser(context.Context, *pb.GetUserRequest) (*pb.User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
 
-func (s *userService) DeleteUser(context.Context, *pb.DeleteUserRequest) (*pb.Empty, error) {
+func (s *user) DeleteUser(context.Context, *pb.DeleteUserRequest) (*pb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
 
@@ -70,11 +71,11 @@ func initPostgres() *sql.DB {
 func main() {
 	db := initPostgres()
 
-	userService := NewUserService(db)
+	user := NewUser(db)
 
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterUserServiceServer(grpcServer, userService)
+	pb.RegisterUserServiceServer(grpcServer, user)
 
 	port := os.Getenv("USER_SERVER_PORT")
 	address := fmt.Sprintf(":%s", port)

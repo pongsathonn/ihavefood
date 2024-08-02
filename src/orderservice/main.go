@@ -15,10 +15,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/pongsathonn/food-delivery/src/order/data"
-	"github.com/pongsathonn/food-delivery/src/order/pubsub"
+	"github.com/pongsathonn/ihavefood/src/orderservice/data"
+	"github.com/pongsathonn/ihavefood/src/orderservice/pubsub"
 
-	pb "github.com/pongsathonn/food-delivery/src/order/genproto"
+	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -39,21 +39,21 @@ type PlaceOrderBody struct {
 	OrderStatus    pb.OrderStatus
 }
 
-func NewOrderServer(db data.OrderRepo, ps pubsub.RabbitMQ) *orderServer {
-	return &orderServer{
+func NewOrder(db data.OrderRepo, ps pubsub.RabbitMQ) *order {
+	return &order{
 		db: db,
 		ps: ps,
 	}
 }
 
-type orderServer struct {
+type order struct {
 	pb.UnimplementedOrderServiceServer
 
 	db data.OrderRepo
 	ps pubsub.RabbitMQ
 }
 
-func (or *orderServer) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
+func (or *order) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
 
 	if in.Username == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username shouldn't be empty")
@@ -68,7 +68,7 @@ func (or *orderServer) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 
 }
 
-func (or *orderServer) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+func (or *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 
 	if in.Username == "" || in.Address == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "bad request ")
@@ -213,7 +213,7 @@ func main() {
 	db := data.NewOrderRepo(initMongoClient())
 	ps := pubsub.NewRabbitMQ(initRabbitMQ())
 
-	ors := NewOrderServer(db, ps)
+	ors := NewOrder(db, ps)
 
 	s := grpc.NewServer()
 	pb.RegisterOrderServiceServer(s, ors)

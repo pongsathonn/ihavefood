@@ -1,4 +1,4 @@
-module github.com/pongsathonn/ihavefood/src/delivery
+module github.com/pongsathonn/ihavefood/src/deliveryservice
 
 go 1.22.2
 

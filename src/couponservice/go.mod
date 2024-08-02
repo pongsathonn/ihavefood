@@ -1,4 +1,4 @@
-module github.com/pongsathonn/food-delivery/src/coupon
+module github.com/pongsathonn/ihavefood/src/couponservice
 
 go 1.22.2
 

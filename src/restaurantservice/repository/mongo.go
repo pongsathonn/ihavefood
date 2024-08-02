@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	pb "github.com/pongsathonn/food-delivery/src/restaurant/genproto"
+	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 )
 
 type RestaurantRepo interface {

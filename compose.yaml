@@ -23,9 +23,9 @@ services:
 
   order:
     container_name: order
-    build: ./src/order
+    build: ./src/orderservice
     env_file:
-      - path: ./src/order/.env
+      - path: ./src/orderservice/.env
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -48,9 +48,9 @@ services:
 
   restaurant:
     container_name: restaurant
-    build: ./src/restaurant
+    build: ./src/restaurantservice
     env_file:
-      - path: ./src/restaurant/.env
+      - path: ./src/restaurantservice/.env
     networks:
       - dtac
     depends_on:
@@ -73,9 +73,9 @@ services:
 
   user:
     container_name: user
-    build: ./src/user
+    build: ./src/userservice
     env_file:
-      - path: ./src/user/.env
+      - path: ./src/userservice/.env
     networks:
       - dtac
     depends_on:
@@ -88,7 +88,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./src/user/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./src/userservice/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     environment:
       - POSTGRES_USER=donkadmin
       - POSTGRES_PASSWORD=donkpassword
@@ -102,9 +102,9 @@ services:
 
   auth:
     container_name: auth
-    build: ./src/auth
+    build: ./src/authservice
     env_file:
-      - path: ./src/auth/.env
+      - path: ./src/authservice/.env
     networks:
       - dtac
     depends_on:
@@ -117,7 +117,7 @@ services:
     ports:
       - "5442:5432"
     volumes:
-      - ./src/auth/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./src/authservice/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     environment:
       - POSTGRES_USER=donkadmin
       - POSTGRES_PASSWORD=donkpassword
@@ -131,9 +131,9 @@ services:
 
   delivery:
     container_name: delivery
-    build: ./src/delivery
+    build: ./src/deliveryservice
     env_file:
-      - path: ./src/delivery/.env
+      - path: ./src/deliveryservice/.env
     networks:
       - dtac
     depends_on:

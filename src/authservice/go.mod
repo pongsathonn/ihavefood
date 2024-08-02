@@ -1,4 +1,4 @@
-module github.com/pongsathonn/food-delivery/src/auth
+module github.com/pongsathonn/ihavefood/src/authservice
 
 go 1.22.2
 

@@ -12,19 +12,19 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/pongsathonn/food-delivery/src/coupon/genproto"
+	pb "github.com/pongsathonn/ihavefood/src/couponservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type couponService struct {
+type coupon struct {
 	pb.UnimplementedCouponServiceServer
 }
 
-func NewCouponService() *couponService {
-	return &couponService{}
+func NewCoupon() *coupon {
+	return &coupon{}
 }
 
-func (s *couponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
+func (s *coupon) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
 
 	if in.Code != "" {
 		return &pb.GetCouponResponse{
@@ -41,7 +41,7 @@ func (s *couponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoupon not implemented")
 }
 
-func (s *couponService) ListCoupon(context.Context, *pb.Empty) (*pb.ListCouponResponse, error) {
+func (s *coupon) ListCoupon(context.Context, *pb.Empty) (*pb.ListCouponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCoupon not implemented")
 }
 
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterCouponServiceServer(s, NewCouponService())
+	pb.RegisterCouponServiceServer(s, NewCoupon())
 
 	log.Println("coupong server starting") //for developing
 	log.Fatal(s.Serve(lis))

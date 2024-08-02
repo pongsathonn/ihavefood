@@ -15,28 +15,28 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/pongsathonn/food-delivery/src/restaurant/pubsub"
-	"github.com/pongsathonn/food-delivery/src/restaurant/repository"
+	"github.com/pongsathonn/ihavefood/src/restaurantservice/pubsub"
+	"github.com/pongsathonn/ihavefood/src/restaurantservice/repository"
 
-	pb "github.com/pongsathonn/food-delivery/src/restaurant/genproto"
+	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type restaurantService struct {
+type restaurant struct {
 	pb.UnimplementedRestaurantServiceServer
 
 	rp repository.RestaurantRepo
 	mb pubsub.MessageBroker
 }
 
-func NewRestaurantService(rp repository.RestaurantRepo, mb pubsub.MessageBroker) *restaurantService {
-	return &restaurantService{
+func NewRestaurant(rp repository.RestaurantRepo, mb pubsub.MessageBroker) *restaurant {
+	return &restaurant{
 		rp: rp,
 		mb: mb,
 	}
 }
 
-func (s *restaurantService) CheckAvailableMenu(ctx context.Context, in *pb.CheckAvailableMenuRequest) (*pb.CheckAvailableMenuResponse, error) {
+func (s *restaurant) CheckAvailableMenu(ctx context.Context, in *pb.CheckAvailableMenuRequest) (*pb.CheckAvailableMenuResponse, error) {
 
 	if in.RestaurantName == "" || len(in.Menus) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "input shouldn't be empty")
@@ -55,7 +55,7 @@ func (s *restaurantService) CheckAvailableMenu(ctx context.Context, in *pb.Check
 	return &pb.CheckAvailableMenuResponse{Available: pb.AvailStatus_AVAILABLE}, nil
 }
 
-func (s *restaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
+func (s *restaurant) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
 	if in.RestaurantName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name is empty")
 	}
@@ -68,7 +68,7 @@ func (s *restaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaur
 	return &pb.GetRestaurantResponse{Restaurant: restaurant}, nil
 }
 
-func (s *restaurantService) ListRestaurant(context.Context, *pb.Empty) (*pb.ListRestaurantResponse, error) {
+func (s *restaurant) ListRestaurant(context.Context, *pb.Empty) (*pb.ListRestaurantResponse, error) {
 
 	restaurants, err := s.rp.Restaurants(context.TODO())
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *restaurantService) ListRestaurant(context.Context, *pb.Empty) (*pb.List
 	return resp, nil
 }
 
-func (s *restaurantService) RegisterRestaurant(ctx context.Context, in *pb.RegisterRestaurantRequest) (*pb.RegisterRestaurantResponse, error) {
+func (s *restaurant) RegisterRestaurant(ctx context.Context, in *pb.RegisterRestaurantRequest) (*pb.RegisterRestaurantResponse, error) {
 
 	if in.RestaurantName == "" || len(in.Menus) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or menus is empty")
@@ -102,7 +102,7 @@ func (s *restaurantService) RegisterRestaurant(ctx context.Context, in *pb.Regis
 }
 
 // TODO
-func (s *restaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.Empty, error) {
+func (s *restaurant) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.Empty, error) {
 
 	if in.RestaurantName == "" || len(in.Menus) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or menus is empty")
@@ -166,7 +166,7 @@ func main() {
 	rp := repository.NewRestaurantRepo(initMongoDB())
 	mb := pubsub.NewMessageBroker(initRabbitMQ())
 
-	rs := NewRestaurantService(rp, mb)
+	rs := NewRestaurant(rp, mb)
 	s := grpc.NewServer()
 
 	pb.RegisterRestaurantServiceServer(s, rs)

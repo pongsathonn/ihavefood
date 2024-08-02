@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	_ "github.com/lib/pq"
-	pb "github.com/pongsathonn/food-delivery/src/auth/genproto"
+	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
 // this signing key for testing purpose
@@ -43,17 +43,18 @@ func init() {
 
 }
 
-type authService struct {
+// auth response for authenti iolajskldjaklsjdlasjdl
+type auth struct {
 	pb.UnimplementedAuthServiceServer
 
 	db *sql.DB
 }
 
-func NewAuthService(db *sql.DB) *authService {
-	return &authService{db: db}
+func NewAuth(db *sql.DB) *auth {
+	return &auth{db: db}
 }
 
-func (s *authService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
+func (s *auth) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
 
 	if valid, err := validateToken(in.Token, []byte(signingKey)); !valid {
 		return nil, status.Errorf(codes.Unauthenticated, "token invalid :%v", err)
@@ -62,7 +63,7 @@ func (s *authService) IsValidToken(ctx context.Context, in *pb.IsValidTokenReque
 	return &pb.IsValidTokenResponse{IsValid: true}, nil
 }
 
-func (s *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+func (s *auth) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
 	if in.Username == "" || in.Email == "" || in.Password == "" {
 		log.Println("error A: some input empty bro")
@@ -85,7 +86,7 @@ func (s *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	return &pb.RegisterResponse{}, nil
 }
 
-func (s *authService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (s *auth) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 
 	// Check if user exists
 	var user pb.UserCredentials
@@ -203,10 +204,10 @@ func initPostgres() *sql.DB {
 
 func main() {
 	db := initPostgres()
-	authService := NewAuthService(db)
+	auth := NewAuth(db)
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterAuthServiceServer(grpcServer, authService)
+	pb.RegisterAuthServiceServer(grpcServer, auth)
 
 	port := os.Getenv("AUTH_SERVER_PORT")
 	address := fmt.Sprintf(":%s", port)
