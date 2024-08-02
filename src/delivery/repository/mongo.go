@@ -11,7 +11,7 @@ import (
 )
 
 type DeliveryRepo interface {
-	GetOrderDeliveryById(ctx context.Context, orderId string) (*DeliveryStatus, error)
+	GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error)
 	SaveOrderDelivery(ctx context.Context, orderId string) error
 	UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error
 }
@@ -24,7 +24,7 @@ type deliveryRepo struct {
 // time.Time, allowing it to be nil if the order has not been accepted yet.
 // Using a pointer enables us to differentiate between an unset time and a zero-value time,
 // making it easier to handle cases where the acceptance time is not yet available.
-type DeliveryStatus struct {
+type OrderDelivery struct {
 	OrderId      string     `bson:"orderId"`
 	RiderId      string     `bson:"riderId"`
 	IsAccepted   bool       `bson:"isAccepted"`
@@ -39,7 +39,7 @@ func (r *deliveryRepo) SaveOrderDelivery(ctx context.Context, orderId string) er
 
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	deliveryStatus := DeliveryStatus{
+	deliveryStatus := OrderDelivery{
 		OrderId:      orderId,
 		RiderId:      "",
 		IsAccepted:   false,
@@ -79,12 +79,12 @@ func (r *deliveryRepo) UpdateOrderDelivery(ctx context.Context, orderId, riderId
 	return nil
 }
 
-func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string) (*DeliveryStatus, error) {
+func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error) {
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	filter := bson.M{"orderId": orderId}
 
-	var result DeliveryStatus
+	var result OrderDelivery
 
 	err := coll.FindOne(ctx, filter).Decode(&result)
 	if err != nil {

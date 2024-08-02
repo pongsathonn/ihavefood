@@ -12,4 +12,3 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-delivery
 
 CMD ["/docker-delivery"]
-

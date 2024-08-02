@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"slices"
 	"sync"
 	"time"
 
@@ -30,6 +31,7 @@ type pickUpInfo struct {
 	PickupCode     string
 	PickupLocation *pb.Point
 	Destination    *pb.Point
+	Error          error
 }
 
 // deliveryServer implements the DeliveryServiceServer interface from the protobuf definition.
@@ -38,6 +40,7 @@ type pickUpInfo struct {
 // DeliveryRepo interface for data access
 // riderAcceptedCh is used to send notifications about riders who have accepted an order.
 // orderPickupCh is used to receive pickup information order
+// notifiedRidersCh  used to send Riders list that notified
 type deliveryServer struct {
 	pb.UnimplementedDeliveryServiceServer
 
@@ -52,8 +55,9 @@ type deliveryServer struct {
 // newDeliveryServer creates and initializes a new deliveryServer instance.
 func newDeliveryServer(ps pubsub.RabbitMQ, rp repository.DeliveryRepo) *deliveryServer {
 	return &deliveryServer{
-		ps:              ps,
-		rp:              rp,
+		ps: ps,
+		rp: rp,
+
 		riderAcceptedCh: make(chan *pb.AcceptOrderHandlerRequest),
 		orderPickupCh:   make(chan *pickUpInfo),
 	}
@@ -75,17 +79,16 @@ func (s *deliveryServer) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOr
 
 	order, err := s.rp.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
-
-	//TODO check Rider is a rider that notified
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if order.IsAccepted {
 		return nil, errors.New("order has already been accepted")
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	// Notify that the rider has accepted the order
 	s.riderAcceptedCh <- &pb.AcceptOrderHandlerRequest{RiderId: in.RiderId, OrderId: in.OrderId}
@@ -97,7 +100,16 @@ func (s *deliveryServer) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOr
 
 	// Wait for the pickup information or timeout after 30 seconds
 	select {
-	case order := <-s.orderPickupCh:
+	case order, ok := <-s.orderPickupCh:
+
+		if !ok {
+			return nil, errors.New("channel closed unexpectedly")
+		}
+
+		if order.Error != nil {
+			return nil, errors.New("internal error ja")
+		}
+
 		return &pb.AcceptOrderHandlerResponse{
 			PickupCode:     order.PickupCode,
 			PickupLocation: order.PickupLocation,
@@ -112,41 +124,37 @@ func (s *deliveryServer) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOr
 // orderAssignment is responsible for receiving orders and assigning them to riders.
 func (s *deliveryServer) orderAssignment() {
 
-	placeOrder := s.receiveOrder()
+	for {
 
-	//Save placeOrder to deliverydb
-	s.rp.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
+		placeOrder := s.receiveOrder()
 
-	riders, err := s.calculateNearestRider(placeOrder.Address)
-	if err != nil {
-		log.Println("Error calculating nearest riders:", err)
-		return
+		go func(placeOrder *pb.PlaceOrder) {
+
+			// save new placeOrder to deliverydb ( not accepted yet )
+			s.rp.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
+
+			riders, err := s.calculateNearestRider(placeOrder.Address)
+			if err != nil {
+				log.Println("Error calculating nearest riders:", err)
+				return
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			//TODO generateOrderPickup receive input placeOrder
+			orderPickup, err := s.generateOrderPickUp()
+			if err != nil {
+				log.Println("Error calculating order pickup:", err)
+				return
+			}
+
+			// waiting for rider accept order
+			go s.waitRiderAcceptance(ctx, cancel, riders, orderPickup)
+			s.notifyToRider(ctx, riders, orderPickup)
+
+		}(placeOrder)
 	}
-
-	orderPickup, err := s.calculateOrderPickUp()
-	if err != nil {
-		log.Println("Error calculating order pickup:", err)
-		return
-	}
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
-	go func() {
-		select {
-		case req := <-s.riderAcceptedCh:
-			log.Printf("rider %s has accepted order", req.RiderId)
-			cancel()
-
-			//response pickup order to rider
-			s.orderPickupCh <- orderPickup
-
-		case <-time.After(15 * time.Minute):
-			cancel()
-		}
-	}()
-
-	s.notifyToRider(ctx, riders, orderPickup)
 
 }
 
@@ -190,7 +198,9 @@ func (s *deliveryServer) calculateNearestRider(addr *pb.Address) ([]*pb.Rider, e
 
 // This function needs implementation.
 // receive order and calculate location and pickup code
-func (s *deliveryServer) calculateOrderPickUp() (*pickUpInfo, error) {
+func (s *deliveryServer) generateOrderPickUp() (*pickUpInfo, error) {
+
+	//TODO implement generate pickup code
 
 	return &pickUpInfo{
 		PickupCode:     "229",
@@ -200,14 +210,44 @@ func (s *deliveryServer) calculateOrderPickUp() (*pickUpInfo, error) {
 
 }
 
+// waitRiderAcceptance waiting for Rider nofitied accep order
+func (s *deliveryServer) waitRiderAcceptance(ctx context.Context, cancel context.CancelFunc, riders []*pb.Rider, orderPickup *pickUpInfo) {
+
+	var ridersId []string
+	for _, rider := range riders {
+		ridersId = append(ridersId, rider.RiderId)
+	}
+
+	select {
+	case req := <-s.riderAcceptedCh:
+
+		// TODO  check rider is rider notified
+		if !slices.Contains(ridersId, req.RiderId) {
+			log.Printf("we didn't notify this rider %s ", req.RiderId)
+			s.orderPickupCh <- &pickUpInfo{Error: errors.New("invalid rider id")}
+			return
+		}
+
+		log.Printf("rider %s has accepted order", req.RiderId)
+		cancel()
+
+		//response pickup order to rider
+		s.orderPickupCh <- orderPickup
+
+	case <-time.After(15 * time.Minute):
+		cancel()
+	}
+}
+
 // notifyToRider notify to all rider bla bla TODO fix doc
 func (s *deliveryServer) notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
 
-	for _, rider := range riders {
+	log.Printf("started notify order %s", orderPickup.PickupCode)
+
+	for _ = range riders {
 
 		// Assume this message is send to Rider
-		// FIXME chane orderid to pickup code
-		log.Printf("Hi Rider %s (ID : %s). You have new order : %s", rider.RiderName, rider.RiderId, orderPickup.PickupCode)
+		// TODO implement notify function to all riders with order code
 
 		select {
 		case <-ctx.Done():
@@ -217,6 +257,7 @@ func (s *deliveryServer) notifyToRider(ctx context.Context, riders []*pb.Rider, 
 		}
 
 	}
+
 }
 
 // initPubSub initializes the RabbitMQ connection and returns the pubsub instance
