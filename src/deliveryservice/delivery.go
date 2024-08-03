@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log"
 	"slices"
 	"sync"
@@ -66,17 +66,17 @@ func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHan
 
 	// Validate the input request
 	if in.OrderId == "" || in.RiderId == "" {
-		return nil, errors.New("order ID and rider ID must be provided")
+		return nil, status.Errorf(codes.InvalidArgument, "order ID and rider ID must be provided")
 	}
 
 	order, err := s.rp.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, status.Errorf(codes.NotFound, "order not found: %v ", err)
 	}
 
 	if order.IsAccepted {
-		return nil, errors.New("order has already been accepted")
+		return nil, status.Errorf(409, "order has already been accepted")
 	}
 
 	s.mu.Lock()
@@ -87,7 +87,8 @@ func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHan
 
 	// Save the order delivery information to the database
 	if err := s.rp.UpdateOrderDelivery(ctx, in.OrderId, in.RiderId, true); err != nil {
-		return nil, errors.New("failed to save order delivery information")
+		log.Println(err)
+		return nil, status.Errorf(codes.Internal, "failed to save order delivery information")
 	}
 
 	// Wait for the pickup information or timeout after 30 seconds
@@ -95,11 +96,12 @@ func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHan
 	case order, ok := <-s.orderPickupCh:
 
 		if !ok {
-			return nil, errors.New("channel closed unexpectedly")
+			return nil, status.Errorf(codes.Internal, "channel closed unexpectedly")
 		}
 
 		if order.Error != nil {
-			return nil, errors.New("internal error ja")
+			log.Println(order.Error.Error)
+			return nil, status.Errorf(codes.Internal, "failed to retrieve order pickup information: %s", order.Error.Error)
 		}
 
 		return &pb.AcceptOrderHandlerResponse{
@@ -109,11 +111,11 @@ func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHan
 		}, nil
 
 	case <-time.After(30 * time.Second):
-		return nil, errors.New("timeout while waiting for pickup information")
+		return nil, status.Errorf(codes.Internal, "timeout while waiting for pickup information")
 	}
 }
 
-// orderAssignment is responsible for receiving orders and assigning them to riders.
+// orderAssignment is responsible for receiving orders and assign them to riders.
 func (s *delivery) orderAssignment() {
 
 	for {
@@ -127,7 +129,7 @@ func (s *delivery) orderAssignment() {
 
 			riders, err := s.calculateNearestRider(placeOrder.Address)
 			if err != nil {
-				log.Println("Error calculating nearest riders:", err)
+				log.Printf("calculating nearest riders failed: %s", err.Error())
 				return
 			}
 
@@ -137,7 +139,7 @@ func (s *delivery) orderAssignment() {
 			//TODO generateOrderPickup receive input placeOrder
 			orderPickup, err := s.generateOrderPickUp()
 			if err != nil {
-				log.Println("Error calculating order pickup:", err)
+				log.Println("generate order pickup failed: %s", err.Error())
 				return
 			}
 
@@ -213,17 +215,19 @@ func (s *delivery) waitRiderAcceptance(ctx context.Context, cancel context.Cance
 	select {
 	case req := <-s.riderAcceptedCh:
 
-		// TODO  check rider is rider notified
+		//  check rider is rider notified
 		if !slices.Contains(ridersId, req.RiderId) {
-			log.Printf("we didn't notify this rider %s ", req.RiderId)
-			s.orderPickupCh <- &pickUpInfo{Error: errors.New("invalid rider id")}
+
+			err := fmt.Errorf("rider %s not notified", req.RiderId)
+			log.Println(err)
+
+			s.orderPickupCh <- &pickUpInfo{Error: err}
 			return
 		}
 
 		log.Printf("rider %s has accepted order with order code %s", req.RiderId, orderPickup.PickupCode)
 		cancel()
 
-		//response pickup order to rider
 		s.orderPickupCh <- orderPickup
 
 	case <-time.After(15 * time.Minute):
@@ -231,15 +235,14 @@ func (s *delivery) waitRiderAcceptance(ctx context.Context, cancel context.Cance
 	}
 }
 
-// notifyToRider notify to all rider bla bla TODO fix doc
+// notifyToRider will notify to all nearest riders
 func (s *delivery) notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
 
 	log.Printf("started notify order %s", orderPickup.PickupCode)
 
 	for _ = range riders {
 
-		// Assume this message is send to Rider
-		// TODO implement notify function to all riders with order code
+		// TODO implement notify logic
 
 		select {
 		case <-ctx.Done():

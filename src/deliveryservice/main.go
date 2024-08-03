@@ -11,9 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
-	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/pubsub"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/repository"
+
+	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -101,11 +102,11 @@ func main() {
 		log.Fatal("Failed to initialize MongoDB:", err)
 	}
 
-	ds := newDelivery(ps, rp)
+	d := newDelivery(ps, rp)
 
 	// Start the order assignment process in a separate goroutine
 	go ds.orderAssignment()
 
 	// Set up and start the gRPC server
-	startGRPCServer(ds)
+	startGRPCServer(d)
 }

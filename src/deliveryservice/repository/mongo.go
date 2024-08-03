@@ -93,7 +93,7 @@ func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string)
 			return nil, errors.New("order does not exists")
 		}
 
-		log.Printf("error finding order: %v", err)
+		log.Println(err.Error())
 		return nil, err
 	}
 
