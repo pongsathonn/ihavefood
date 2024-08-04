@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pongsathonn/ihavefood/src/deliveryservice/pubsub"
+	"github.com/pongsathonn/ihavefood/src/deliveryservice/rabbitmq"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,17 +37,17 @@ type delivery struct {
 	pb.UnimplementedDeliveryServiceServer
 
 	mu sync.Mutex
-	ps pubsub.RabbitMQ
+	rb rabbitmq.RabbitMQ
 	rp repository.DeliveryRepo
 
 	riderAcceptedCh chan *pb.AcceptOrderHandlerRequest
 	orderPickupCh   chan *pickUpInfo
 }
 
-// newDeliveryServer creates and initializes a new delivery instance.
-func newDelivery(ps pubsub.RabbitMQ, rp repository.DeliveryRepo) *delivery {
+// NewDeliveryServer creates and initializes a new delivery instance.
+func NewDelivery(rb rabbitmq.RabbitMQ, rp repository.DeliveryRepo) *delivery {
 	return &delivery{
-		ps: ps,
+		rb: rb,
 		rp: rp,
 
 		riderAcceptedCh: make(chan *pb.AcceptOrderHandlerRequest),
@@ -57,6 +57,9 @@ func newDelivery(ps pubsub.RabbitMQ, rp repository.DeliveryRepo) *delivery {
 
 // TrackOrder handles requests for tracking an order. This method is not yet implemented.
 func (s *delivery) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*pb.TrackOrderResponse, error) {
+
+	//TODO implement
+
 	return nil, status.Errorf(codes.Unimplemented, "method TrackOrder not implemented")
 }
 
@@ -119,13 +122,15 @@ func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHan
 func (s *delivery) orderAssignment() {
 
 	for {
-
 		placeOrder := s.receiveOrder()
-
 		go func(placeOrder *pb.PlaceOrder) {
 
 			// save new placeOrder to deliverydb ( not accepted yet )
-			s.rp.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
+			err := s.rp.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
+			if err != nil {
+				log.Printf("failed to save new order: %s", err.Error())
+				return
+			}
 
 			riders, err := s.calculateNearestRider(placeOrder.Address)
 			if err != nil {
@@ -154,7 +159,8 @@ func (s *delivery) orderAssignment() {
 
 // receiveOrder subscribes to the RabbitMQ queue and returns the received order.
 func (s *delivery) receiveOrder() *pb.PlaceOrder {
-	deliveries, err := s.ps.Subscribe()
+
+	deliveries, err := s.rb.Subscribe()
 	if err != nil {
 		log.Println("Error subscribing to order queue:", err)
 		return nil
@@ -168,7 +174,6 @@ func (s *delivery) receiveOrder() *pb.PlaceOrder {
 		}
 		return &placeOrder
 	}
-
 	return nil
 }
 

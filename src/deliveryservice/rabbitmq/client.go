@@ -1,4 +1,4 @@
-package pubsub
+package rabbitmq
 
 import (
 	"context"
@@ -66,6 +66,7 @@ func (r *rabbitMQ) Subscribe() (<-chan amqp.Delivery, error) {
 	if err != nil {
 		log.Println(err)
 	}
+
 	failOnError(err, "Failed to open a channel")
 
 	// parameters = name, type, durable, auto-deleted, internal, no-wait, arguments

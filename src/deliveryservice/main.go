@@ -11,15 +11,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
-	"github.com/pongsathonn/ihavefood/src/deliveryservice/pubsub"
+	"github.com/pongsathonn/ihavefood/src/deliveryservice/rabbitmq"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/repository"
 
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// initPubSub initializes the RabbitMQ connection and returns the pubsub instance
-func initPubSub() (pubsub.RabbitMQ, error) {
+// initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
+func initRabbitMQ() (*amqp.Connection, error) {
+
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		getEnv("DELIVERY_AMQP_USER", "donkadmin"),
 		getEnv("DELIVERY_AMQP_PASS", "donkpassword"),
@@ -29,14 +30,14 @@ func initPubSub() (pubsub.RabbitMQ, error) {
 
 	conn, err := amqp.Dial(uri)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
+		return nil, err
 	}
 
-	return pubsub.NewRabbitMQ(conn), nil
+	return conn, nil
 }
 
 // initRepository initializes the MongoDB connection and returns the delivery repository instance
-func initRepository(ctx context.Context) (repository.DeliveryRepo, error) {
+func initMongoDB() (*mongo.Client, error) {
 
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/delivery_database?authSource=admin",
 		getEnv("DELIVERY_MONGO_USER", "donkadmin"),
@@ -45,20 +46,20 @@ func initRepository(ctx context.Context) (repository.DeliveryRepo, error) {
 		getEnv("DELIVERY_MONGO_PORT", "27017"),
 	)
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
+		return nil, err
 	}
 
-	if err := client.Ping(ctx, nil); err != nil {
-		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
+	if err := client.Ping(context.Background(), nil); err != nil {
+		return nil, err
 	}
 
-	return repository.NewDeliveryRepo(client), nil
+	return client, nil
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(ds *delivery) {
+func startGRPCServer(d *delivery) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("DELIVERY_SERVER_PORT", "5555"))
@@ -68,12 +69,12 @@ func startGRPCServer(ds *delivery) {
 	}
 
 	// Create and start the gRPC server
-	s := grpc.NewServer()
-	pb.RegisterDeliveryServiceServer(s, ds)
+	grpcServer := grpc.NewServer()
+	pb.RegisterDeliveryServiceServer(grpcServer, d)
 
 	log.Printf("Delivery service is running on port %s\n", getEnv("DELIVERY_SERVER_PORT", "5555"))
 
-	if err := s.Serve(lis); err != nil {
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
 	}
 }
@@ -88,25 +89,22 @@ func getEnv(key, defaultValue string) string {
 
 func main() {
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Initialize dependencies
-	ps, err := initPubSub()
+	conn, err := initRabbitMQ()
 	if err != nil {
-		log.Fatal("Failed to initialize RabbitMQ:", err)
+		log.Fatal(err)
 	}
+	rb := rabbitmq.NewRabbitMQ(conn)
 
-	rp, err := initRepository(ctx)
+	client, err := initMongoDB()
 	if err != nil {
-		log.Fatal("Failed to initialize MongoDB:", err)
+		log.Fatal(err)
 	}
+	rp := repository.NewDeliveryRepo(client)
 
-	d := newDelivery(ps, rp)
+	d := NewDelivery(rb, rp)
 
 	// Start the order assignment process in a separate goroutine
-	go ds.orderAssignment()
+	go d.orderAssignment()
 
-	// Set up and start the gRPC server
 	startGRPCServer(d)
 }

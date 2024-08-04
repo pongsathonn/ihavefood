@@ -10,16 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type DeliveryRepo interface {
-	GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error)
-	SaveOrderDelivery(ctx context.Context, orderId string) error
-	UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error
-}
-
-type deliveryRepo struct {
-	db *mongo.Client
-}
-
 // AcceptedTime is The time when the order was accepted. This field is a pointer to
 // time.Time, allowing it to be nil if the order has not been accepted yet.
 // Using a pointer enables us to differentiate between an unset time and a zero-value time,
@@ -31,8 +21,39 @@ type OrderDelivery struct {
 	AcceptedTime *time.Time `bson:"acceptedTime"`
 }
 
+type DeliveryRepo interface {
+	GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error)
+	SaveOrderDelivery(ctx context.Context, orderId string) error
+	UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error
+}
+
+type deliveryRepo struct {
+	db *mongo.Client
+}
+
 func NewDeliveryRepo(db *mongo.Client) DeliveryRepo {
 	return &deliveryRepo{db: db}
+}
+
+func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error) {
+	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
+
+	filter := bson.M{"orderId": orderId}
+
+	var result OrderDelivery
+
+	err := coll.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// No document found means the order is not accepted yet
+			return nil, errors.New("order does not exists")
+		}
+
+		log.Println(err.Error())
+		return nil, err
+	}
+
+	return &result, nil
 }
 
 func (r *deliveryRepo) SaveOrderDelivery(ctx context.Context, orderId string) error {
@@ -48,6 +69,7 @@ func (r *deliveryRepo) SaveOrderDelivery(ctx context.Context, orderId string) er
 
 	_, err := coll.InsertOne(ctx, deliveryStatus)
 	if err != nil {
+		log.Println("er")
 		return err
 	}
 
@@ -77,25 +99,4 @@ func (r *deliveryRepo) UpdateOrderDelivery(ctx context.Context, orderId, riderId
 	}
 
 	return nil
-}
-
-func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error) {
-	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
-
-	filter := bson.M{"orderId": orderId}
-
-	var result OrderDelivery
-
-	err := coll.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			// No document found means the order is not accepted yet
-			return nil, errors.New("order does not exists")
-		}
-
-		log.Println(err.Error())
-		return nil, err
-	}
-
-	return &result, nil
 }
