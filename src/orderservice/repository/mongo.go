@@ -1,4 +1,4 @@
-package data
+package repository
 
 import (
 	"context"
@@ -14,10 +14,6 @@ import (
 type OrderRepo interface {
 	PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error)
 	SavePlaceOrder(*pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error)
-}
-
-func NewOrderRepo(conn *mongo.Client) OrderRepo {
-	return &orderRepo{conn: conn}
 }
 
 // this PlaceOrder use as model for "INSERT" and "QUERY" with mongodb
@@ -45,6 +41,10 @@ type SavePlaceOrderResponse struct {
 	OrderTrackingId string
 	PaymentStatus   pb.PaymentStatus
 	OrderStatus     pb.OrderStatus
+}
+
+func NewOrderRepo(conn *mongo.Client) OrderRepo {
+	return &orderRepo{conn: conn}
 }
 
 type orderRepo struct {

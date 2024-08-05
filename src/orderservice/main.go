@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -12,140 +11,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
-	"github.com/pongsathonn/ihavefood/src/orderservice/data"
-	"github.com/pongsathonn/ihavefood/src/orderservice/pubsub"
+	"github.com/pongsathonn/ihavefood/src/orderservice/rabbitmq"
+	"github.com/pongsathonn/ihavefood/src/orderservice/repository"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type PlaceOrderBody struct {
-	OrderId        string
-	TrackingId     string
-	Username       string
-	RestaurantName string
-	Menus          []*pb.Menu
-	CouponCode     string
-	CouponDiscount int32
-	DeliveryFee    int32
-	Total          int32
-	UserAddress    *pb.Address
-	ContactInfo    *pb.ContactInfo
-	PaymentMethod  pb.PaymentMethod
-	PaymentStatus  pb.PaymentStatus
-	OrderStatus    pb.OrderStatus
-}
-
-func NewOrder(db data.OrderRepo, ps pubsub.RabbitMQ) *order {
-	return &order{
-		db: db,
-		ps: ps,
-	}
-}
-
-type order struct {
-	pb.UnimplementedOrderServiceServer
-
-	db data.OrderRepo
-	ps pubsub.RabbitMQ
-}
-
-func (or *order) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
-
-	if in.Username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username shouldn't be empty")
-	}
-
-	resp, err := or.db.PlaceOrder(in.Username)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", err)
-	}
-
-	return resp, nil
-
-}
-
-func (or *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
-
-	if in.Username == "" || in.Address == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "bad request ")
-	}
-
-	pm := in.PaymentMethod.String()
-	if _, ok := pb.PaymentMethod_value[pm]; !ok {
-		return nil, fmt.Errorf("bad request kuy")
-	}
-
-	var total int32
-	for _, mn := range in.Menus {
-		total += mn.Price
-	}
-
-	if in.Total != ((total + in.DeliveryFee) - in.CouponDiscount) {
-		return nil, errors.New("total invalid")
-	}
-
-	// save place order
-	res, err := or.db.SavePlaceOrder(in)
-	if err != nil {
-		return nil, fmt.Errorf("save failed %v", err)
-	}
-
-	/* THIS WORK
-	body := &PlaceOrderBody{
-		OrderId:         res.OrderId,
-		TrackingId:      res.OrderTrackingId,
-		Username:        in.Username,
-		RestaurantName:  in.RestaurantName,
-		Menus:           in.Menus,
-		CouponCode:      in.CouponCode,
-		CouponDiscount:  in.CouponDiscount,
-		DeliveryFee:     in.DeliveryFee,
-		Total:           in.Total,
-		DeliveryAddress: in.Address,
-		ContactInfo:     in.Contact,
-		PaymentMethod:   in.PaymentMethod,
-		PaymentStatus:   res.PaymentStatus,
-		OrderStatus:     res.OrderStatus,
-	}
-	*/
-
-	body := &pb.PlaceOrder{
-		OrderId:         res.OrderId,
-		OrderTrackingId: res.OrderTrackingId,
-		Username:        in.Username,
-		RestaurantName:  in.RestaurantName,
-		Menus:           in.Menus,
-		CouponCode:      in.CouponCode,
-		CouponDiscount:  in.CouponDiscount,
-		DeliveryFee:     in.DeliveryFee,
-		Total:           in.Total,
-		Address:         in.Address,
-		Contact:         in.Contact,
-		PaymentMethod:   in.PaymentMethod,
-		PaymentStatus:   res.PaymentStatus,
-		OrderStatus:     res.OrderStatus,
-	}
-
-	// publish event
-	routingKey := "order.placed.event"
-	err = or.ps.Publish(routingKey, body)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create event")
-	}
-	log.Printf("published with order id : %s\n", body.OrderId)
-
-	// response
-	return &pb.PlaceOrderResponse{
-		OrderId:         res.OrderId,
-		OrderTrackingId: res.OrderTrackingId,
-	}, nil
-}
-
-func initRabbitMQ() *amqp.Connection {
+func initRabbitMQ() (*amqp.Connection, error) {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("ORDER_AMQP_USER"),
@@ -157,13 +31,13 @@ func initRabbitMQ() *amqp.Connection {
 	//uri := "amqp://donkadmin:donkpassword@rabbitmqx:5672"
 	conn, err := amqp.Dial(uri)
 	if err != nil {
-		log.Fatal(uri, err)
+		return nil, err
 	}
 
-	return conn
+	return conn, nil
 }
 
-func initMongoClient() *mongo.Client {
+func initMongoClient() (*mongo.Client, error) {
 
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/order_database?authSource=admin",
 		os.Getenv("ORDER_MONGO_USER"),
@@ -176,55 +50,72 @@ func initMongoClient() *mongo.Client {
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		log.Fatal("AAA", err)
+		return nil, err
 	}
 
 	// Create collection if not exists
 	err = client.Database("order_database").CreateCollection(context.TODO(), "orderCollection")
 	if err != nil {
 		//TODO if exists pass
-		log.Fatal("yyyy", err)
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal("BB", err)
+		return nil, err
 	}
 
-	return client
+	return client, nil
 }
 
-func failOnError(err error, msg string) {
+// startGRPCServer sets up and starts the gRPC server
+func startGRPCServer(s *order) {
+
+	// Set up the server port from environment variable
+	uri := fmt.Sprintf(":%s", getEnv("ORDER_SERVER_PORT", "2222"))
+	lis, err := net.Listen("tcp", uri)
 	if err != nil {
-		log.Printf("%s: %s", msg, err)
+		log.Fatal("Failed to listen:", err)
 	}
+
+	// Create and start the gRPC server
+	grpcServer := grpc.NewServer()
+	pb.RegisterOrderServiceServer(grpcServer, s)
+
+	log.Printf("order service is running on port %s\n", getEnv("ORDER_SERVER_PORT", "2222"))
+
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatal("Failed to serve:", err)
+	}
+}
+
+// getEnv fetches an environment variable with a fallback default value
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }
 
 func main() {
 
-	uri := fmt.Sprintf(":%s", os.Getenv("ORDER_SERVER_PORT"))
-	lis, err := net.Listen("tcp", uri)
+	mg, err := initMongoClient()
 	if err != nil {
-		log.Fatal("listen failed", err)
+		log.Fatal(err)
 	}
 
-	db := data.NewOrderRepo(initMongoClient())
-	ps := pubsub.NewRabbitMQ(initRabbitMQ())
+	rb, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	ors := NewOrder(db, ps)
+	db := repository.NewOrderRepo(mg)
+	ps := rabbitmq.NewRabbitMQ(rb)
 
-	s := grpc.NewServer()
-	pb.RegisterOrderServiceServer(s, ors)
+	s := NewOrder(db, ps)
 
-	/*
-		If this log not display when starting server it might be from
-		- Order Database not starting
-	*/
-
-	log.Println("order service is running")
-
-	log.Fatal(s.Serve(lis))
+	startGRPCServer(s)
 
 }
