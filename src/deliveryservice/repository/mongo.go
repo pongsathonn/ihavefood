@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -46,7 +46,7 @@ func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// No document found means the order is not accepted yet
-			return nil, errors.New("order does not exists")
+			return nil, fmt.Errorf("order does not exists")
 		}
 
 		log.Println(err.Error())
@@ -69,7 +69,6 @@ func (r *deliveryRepo) SaveOrderDelivery(ctx context.Context, orderId string) er
 
 	_, err := coll.InsertOne(ctx, deliveryStatus)
 	if err != nil {
-		log.Println("er")
 		return err
 	}
 

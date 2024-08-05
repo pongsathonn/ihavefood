@@ -22,18 +22,18 @@ import (
 var signingKey string
 
 // auth implements the pb.AuthServiceServer interface.
-type auth struct {
+type authService struct {
 	pb.UnimplementedAuthServiceServer
 	db *sql.DB
 }
 
 // NewAuth creates a new instance of auth with the provided database connection.
-func NewAuth(db *sql.DB) *auth {
-	return &auth{db: db}
+func NewAuthService(db *sql.DB) *authService {
+	return &authService{db: db}
 }
 
 // IsValidToken checks if the provided token is valid. It returns a response indicating validity and an error if any.
-func (s *auth) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
+func (x *authService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
 	if valid, err := validateToken(in.Token, []byte(signingKey)); !valid {
 		return nil, status.Errorf(codes.Unauthenticated, "token invalid: %v", err)
 	}
@@ -42,7 +42,7 @@ func (s *auth) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*p
 
 // Register handles user registration. It creates a new user record with hashed password in the database.
 // It returns an empty response on success or an error if the registration fails.
-func (s *auth) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	if in.Username == "" || in.Email == "" || in.Password == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username, email, or password must be provided")
 	}
@@ -52,7 +52,7 @@ func (s *auth) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.Regist
 		return nil, status.Errorf(codes.Internal, "password hashing failed")
 	}
 
-	_, err = s.db.Exec(`INSERT INTO auth_table(username, email, password) VALUES($1, $2, $3)`, in.Username, in.Email, string(hashedPass))
+	_, err = x.db.Exec(`INSERT INTO auth_table(username, email, password) VALUES($1, $2, $3)`, in.Username, in.Email, string(hashedPass))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to insert user into database")
 	}
@@ -62,9 +62,9 @@ func (s *auth) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.Regist
 
 // Login handles user login. It verifies the provided credentials, generates a JWT token on success, and returns it along with its expiration time.
 // It returns an error if login fails or credentials are incorrect.
-func (s *auth) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (x *authService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 	var user pb.UserCredentials
-	row := s.db.QueryRowContext(ctx, `SELECT username, password FROM auth_table WHERE username=$1`, in.Username)
+	row := x.db.QueryRowContext(ctx, `SELECT username, password FROM auth_table WHERE username=$1`, in.Username)
 
 	if err := row.Scan(&user.Username, &user.Password); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -97,9 +97,12 @@ func validateToken(tokenString string, key []byte) (bool, error) {
 		}
 		return key, nil
 	})
+	if err != nil {
+		return false, err
+	}
 
 	if !token.Valid {
-		return false, err
+		return false, fmt.Errorf("token invalid")
 	}
 
 	return true, nil
@@ -108,6 +111,7 @@ func validateToken(tokenString string, key []byte) (bool, error) {
 // createNewToken generates a new JWT token with a default expiration time of 5 minutes from the current time.
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
 func createNewToken() (string, int64, error) {
+
 	// 300 sec = 5 minutes
 	addTimeSec := 300
 	unixNow := time.Now().Unix()

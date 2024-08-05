@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -120,7 +120,7 @@ func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*SavePlaceOrderRe
 
 	orderId, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return nil, errors.New("error assert type")
+		return nil, fmt.Errorf("failed to convert id to primitive.ObjectId")
 	}
 
 	return &SavePlaceOrderResponse{

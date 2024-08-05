@@ -1,4 +1,4 @@
-name: raiman
+name: ihavefood
 
 services:
   gateway:
@@ -125,7 +125,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL","pg_isready -U donkadmin"]
       interval: 5s 
-      timeout: 5s
+      timeout: 10s
     networks:
       - dtac
 
@@ -150,6 +150,18 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=donkpassword
     networks:
       - dtac
+        
+  coupon:
+    container_name: coupon
+    build: ./src/couponservice
+    env_file:
+      - path: ./src/couponservice/.env
+    networks:
+      - dtac
+    depends_on:
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
 
   rabbitmqx:
     container_name: rabbitmqx

@@ -59,7 +59,7 @@ func initMongoDB() (*mongo.Client, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(d *delivery) {
+func startGRPCServer(s *deliveryService) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("DELIVERY_SERVER_PORT", "5555"))
@@ -70,9 +70,9 @@ func startGRPCServer(d *delivery) {
 
 	// Create and start the gRPC server
 	grpcServer := grpc.NewServer()
-	pb.RegisterDeliveryServiceServer(grpcServer, d)
+	pb.RegisterDeliveryServiceServer(grpcServer, s)
 
-	log.Printf("Delivery service is running on port %s\n", getEnv("DELIVERY_SERVER_PORT", "5555"))
+	log.Printf("delivery service is running on port %s\n", getEnv("DELIVERY_SERVER_PORT", "5555"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
@@ -101,7 +101,7 @@ func main() {
 	}
 	rp := repository.NewDeliveryRepo(client)
 
-	d := NewDelivery(rb, rp)
+	d := NewDeliveryService(rb, rp)
 
 	// Start the order assignment process in a separate goroutine
 	go d.orderAssignment()

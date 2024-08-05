@@ -3,25 +3,25 @@ package main
 import (
 	"context"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/pongsathonn/ihavefood/src/couponservice/genproto"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type coupon struct {
+type couponService struct {
 	pb.UnimplementedCouponServiceServer
 
 	rb          *amqp.Connection
 	orderClient pb.OrderServiceClient
 }
 
-func NewCoupon(rb *amqp.Connection, oc pb.OrderServiceClient) *coupon {
-	return &coupon{rb: rb, orderClient: oc}
+func NewCouponService(rb *amqp.Connection, oc pb.OrderServiceClient) *couponService {
+	return &couponService{rb: rb, orderClient: oc}
 }
 
-func (s *coupon) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
+func (x *couponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
 
 	if in.Code != "" {
 		return &pb.GetCouponResponse{
@@ -38,6 +38,6 @@ func (s *coupon) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.Ge
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoupon not implemented")
 }
 
-func (s *coupon) ListCoupon(context.Context, *pb.Empty) (*pb.ListCouponResponse, error) {
+func (x *couponService) ListCoupon(context.Context, *pb.Empty) (*pb.ListCouponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCoupon not implemented")
 }

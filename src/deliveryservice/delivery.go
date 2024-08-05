@@ -33,7 +33,7 @@ type pickUpInfo struct {
 // riderAcceptedCh is used to send notifications about riders who have accepted an order.
 // orderPickupCh is used to receive pickup information order
 // notifiedRidersCh  used to send Riders list that notified
-type delivery struct {
+type deliveryService struct {
 	pb.UnimplementedDeliveryServiceServer
 
 	mu sync.Mutex
@@ -45,8 +45,8 @@ type delivery struct {
 }
 
 // NewDeliveryServer creates and initializes a new delivery instance.
-func NewDelivery(rb rabbitmq.RabbitMQ, rp repository.DeliveryRepo) *delivery {
-	return &delivery{
+func NewDeliveryService(rb rabbitmq.RabbitMQ, rp repository.DeliveryRepo) *deliveryService {
+	return &deliveryService{
 		rb: rb,
 		rp: rp,
 
@@ -56,7 +56,7 @@ func NewDelivery(rb rabbitmq.RabbitMQ, rp repository.DeliveryRepo) *delivery {
 }
 
 // TrackOrder handles requests for tracking an order. This method is not yet implemented.
-func (s *delivery) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*pb.TrackOrderResponse, error) {
+func (x *deliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*pb.TrackOrderResponse, error) {
 
 	//TODO implement
 
@@ -65,14 +65,14 @@ func (s *delivery) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*p
 
 // AcceptOrderHandler handles requests indicating that a rider has accepted an order.
 // It saves the delivery order to the database. Each order should only be accepted once.
-func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHandlerRequest) (*pb.AcceptOrderHandlerResponse, error) {
+func (x *deliveryService) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHandlerRequest) (*pb.AcceptOrderHandlerResponse, error) {
 
 	// Validate the input request
 	if in.OrderId == "" || in.RiderId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "order ID and rider ID must be provided")
 	}
 
-	order, err := s.rp.GetOrderDeliveryById(ctx, in.OrderId)
+	order, err := x.rp.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
 		log.Println(err)
 		return nil, status.Errorf(codes.NotFound, "order not found: %v ", err)
@@ -82,21 +82,21 @@ func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHan
 		return nil, status.Errorf(409, "order has already been accepted")
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	x.mu.Lock()
+	defer x.mu.Unlock()
 
 	// Notify that the rider has accepted the order
-	s.riderAcceptedCh <- &pb.AcceptOrderHandlerRequest{RiderId: in.RiderId, OrderId: in.OrderId}
+	x.riderAcceptedCh <- &pb.AcceptOrderHandlerRequest{RiderId: in.RiderId, OrderId: in.OrderId}
 
 	// Save the order delivery information to the database
-	if err := s.rp.UpdateOrderDelivery(ctx, in.OrderId, in.RiderId, true); err != nil {
+	if err := x.rp.UpdateOrderDelivery(ctx, in.OrderId, in.RiderId, true); err != nil {
 		log.Println(err)
 		return nil, status.Errorf(codes.Internal, "failed to save order delivery information")
 	}
 
 	// Wait for the pickup information or timeout after 30 seconds
 	select {
-	case order, ok := <-s.orderPickupCh:
+	case order, ok := <-x.orderPickupCh:
 
 		if !ok {
 			return nil, status.Errorf(codes.Internal, "channel closed unexpectedly")
@@ -119,22 +119,22 @@ func (s *delivery) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHan
 }
 
 // orderAssignment is responsible for receiving orders and assign them to riders.
-func (s *delivery) orderAssignment() {
+func (x *deliveryService) orderAssignment() {
 
 	for {
-		placeOrder := s.receiveOrder()
+		placeOrder := x.receiveOrder()
 		go func(placeOrder *pb.PlaceOrder) {
 
 			// save new placeOrder to deliverydb ( not accepted yet )
-			err := s.rp.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
+			err := x.rp.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
 			if err != nil {
-				log.Printf("failed to save new order: %s", err.Error())
+				log.Printf("failed to save new order: %v", err)
 				return
 			}
 
-			riders, err := s.calculateNearestRider(placeOrder.Address)
+			riders, err := x.calculateNearestRider(placeOrder.Address)
 			if err != nil {
-				log.Printf("calculating nearest riders failed: %s", err.Error())
+				log.Printf("failed to calculate nearest riders: %v", err)
 				return
 			}
 
@@ -142,15 +142,15 @@ func (s *delivery) orderAssignment() {
 			defer cancel()
 
 			//TODO generateOrderPickup receive input placeOrder
-			orderPickup, err := s.generateOrderPickUp()
+			orderPickup, err := x.generateOrderPickUp()
 			if err != nil {
-				log.Println("generate order pickup failed: %s", err.Error())
+				log.Println("failed to generate order pickup: %v", err)
 				return
 			}
 
 			// waiting for rider accept order
-			go s.waitRiderAcceptance(ctx, cancel, riders, orderPickup)
-			s.notifyToRider(ctx, riders, orderPickup)
+			go x.waitRiderAcceptance(ctx, cancel, riders, orderPickup)
+			x.notifyToRider(ctx, riders, orderPickup)
 
 		}(placeOrder)
 	}
@@ -158,18 +158,18 @@ func (s *delivery) orderAssignment() {
 }
 
 // receiveOrder subscribes to the RabbitMQ queue and returns the received order.
-func (s *delivery) receiveOrder() *pb.PlaceOrder {
+func (x *deliveryService) receiveOrder() *pb.PlaceOrder {
 
-	deliveries, err := s.rb.Subscribe()
+	deliveries, err := x.rb.Subscribe()
 	if err != nil {
-		log.Println("Error subscribing to order queue:", err)
+		log.Println("failed to subscrib to order queue: %v", err)
 		return nil
 	}
 
 	for delivery := range deliveries {
 		var placeOrder pb.PlaceOrder
 		if err := json.Unmarshal(delivery.Body, &placeOrder); err != nil {
-			log.Printf("Failed to unmarshal message: %w", err)
+			log.Printf("failed to unmarshal message: %v", err)
 			return nil
 		}
 		return &placeOrder
@@ -179,7 +179,7 @@ func (s *delivery) receiveOrder() *pb.PlaceOrder {
 
 // calculateNearestRider calculates and returns a list of riders nearest to the given address.
 // This function needs implementation.
-func (s *delivery) calculateNearestRider(addr *pb.Address) ([]*pb.Rider, error) {
+func (x *deliveryService) calculateNearestRider(addr *pb.Address) ([]*pb.Rider, error) {
 
 	// TODO: Implement algorithm to calculate nearest riders based on address
 
@@ -197,7 +197,7 @@ func (s *delivery) calculateNearestRider(addr *pb.Address) ([]*pb.Rider, error) 
 
 // This function needs implementation.
 // receive order and calculate location and pickup code
-func (s *delivery) generateOrderPickUp() (*pickUpInfo, error) {
+func (x *deliveryService) generateOrderPickUp() (*pickUpInfo, error) {
 
 	//TODO implement generate pickup code
 
@@ -210,7 +210,7 @@ func (s *delivery) generateOrderPickUp() (*pickUpInfo, error) {
 }
 
 // waitRiderAcceptance waiting for Rider nofitied accep order
-func (s *delivery) waitRiderAcceptance(ctx context.Context, cancel context.CancelFunc, riders []*pb.Rider, orderPickup *pickUpInfo) {
+func (x *deliveryService) waitRiderAcceptance(ctx context.Context, cancel context.CancelFunc, riders []*pb.Rider, orderPickup *pickUpInfo) {
 
 	var ridersId []string
 	for _, rider := range riders {
@@ -218,7 +218,7 @@ func (s *delivery) waitRiderAcceptance(ctx context.Context, cancel context.Cance
 	}
 
 	select {
-	case req := <-s.riderAcceptedCh:
+	case req := <-x.riderAcceptedCh:
 
 		//  check rider is rider notified
 		if !slices.Contains(ridersId, req.RiderId) {
@@ -226,14 +226,14 @@ func (s *delivery) waitRiderAcceptance(ctx context.Context, cancel context.Cance
 			err := fmt.Errorf("rider %s not notified", req.RiderId)
 			log.Println(err)
 
-			s.orderPickupCh <- &pickUpInfo{Error: err}
+			x.orderPickupCh <- &pickUpInfo{Error: err}
 			return
 		}
 
-		log.Printf("rider %s has accepted order with order code %s", req.RiderId, orderPickup.PickupCode)
+		log.Printf("rider %s has accepted order with order pickup code %s", req.RiderId, orderPickup.PickupCode)
 		cancel()
 
-		s.orderPickupCh <- orderPickup
+		x.orderPickupCh <- orderPickup
 
 	case <-time.After(15 * time.Minute):
 		cancel()
@@ -241,7 +241,7 @@ func (s *delivery) waitRiderAcceptance(ctx context.Context, cancel context.Cance
 }
 
 // notifyToRider will notify to all nearest riders
-func (s *delivery) notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
+func (x *deliveryService) notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
 
 	log.Printf("started notify order %s", orderPickup.PickupCode)
 

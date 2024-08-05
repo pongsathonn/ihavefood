@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -44,8 +44,7 @@ func (r *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string,
 	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	if len(menus) == 0 {
-		err := errors.New("menus is empty")
-		return false, err
+		return false, fmt.Errorf("menus must be provided")
 	}
 
 	filter := bson.D{{"restaurantName", restauName}}
@@ -61,13 +60,13 @@ func (r *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string,
 	}
 
 	if len(menus) == 0 {
-		return false, errors.New("no documents ja")
+		return false, fmt.Errorf("menus not found")
 	}
 
 	// 0 avaliable, 1 unavaliable , 2 unknown
 	for _, mn := range menus {
 		if mn.Available != 0 {
-			return false, errors.New("menu not avaliable ")
+			return false, fmt.Errorf("menu not available")
 		}
 	}
 
@@ -77,7 +76,7 @@ func (r *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string,
 func (r *restaurantRepo) Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error) {
 
 	if restauName == "" {
-		return nil, errors.New("empty ja")
+		return nil, fmt.Errorf("restaurant name must be provided")
 	}
 
 	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
@@ -141,14 +140,14 @@ func (r *restaurantRepo) SaveRestaurant(ctx context.Context, restauName string, 
 	res, err := coll.InsertOne(context.TODO(), restau)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return "", errors.New("restaurant name already exists")
+			return "", fmt.Errorf("restaurant name already exists")
 		}
 		return "", err
 	}
 
 	id, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return "", errors.New("error assert type")
+		return "", fmt.Errorf("failed to convert id to primitive.ObjectID")
 	}
 
 	return id.Hex(), nil

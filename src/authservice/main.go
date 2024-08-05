@@ -18,6 +18,7 @@ import (
 
 // create singning key when app start
 // testing purpose
+// TODO delete
 func init() {
 
 	key := make([]byte, 64)
@@ -61,7 +62,7 @@ func initPostgres() (*sql.DB, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(a *auth) {
+func startGRPCServer(a *authService) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("AUTH_SERVER_PORT", "4444"))
@@ -98,7 +99,7 @@ func main() {
 		log.Fatal("Failed to initialize PostgresDB connection:", err)
 	}
 
-	auth := NewAuth(db)
+	auth := NewAuthService(db)
 
 	startGRPCServer(auth)
 

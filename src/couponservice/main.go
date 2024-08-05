@@ -49,7 +49,7 @@ func initOrderClient() (pb.OrderServiceClient, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(s *coupon) {
+func startGRPCServer(s *couponService) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("COUPON_SERVER_PORT", "3333"))
@@ -88,7 +88,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	c := NewCoupon(conn, orderClient)
+	c := NewCouponService(conn, orderClient)
 
 	startGRPCServer(c)
 

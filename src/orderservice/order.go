@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -45,30 +44,30 @@ type order struct {
 	ps rabbitmq.RabbitMQ
 }
 
-func (or *order) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
+func (x *order) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
 
 	if in.Username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username shouldn't be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
 	}
 
-	resp, err := or.db.PlaceOrder(in.Username)
+	resp, err := x.db.PlaceOrder(in.Username)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrieve user's place orders :%v", err)
 	}
 
 	return resp, nil
 
 }
 
-func (or *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+func (x *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 
 	if in.Username == "" || in.Address == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "bad request ")
+		return nil, status.Errorf(codes.InvalidArgument, "username or address must be provided")
 	}
 
 	pm := in.PaymentMethod.String()
 	if _, ok := pb.PaymentMethod_value[pm]; !ok {
-		return nil, fmt.Errorf("bad request kuy")
+		return nil, fmt.Errorf("payment methods invalid: %s", pm)
 	}
 
 	var total int32
@@ -77,13 +76,13 @@ func (or *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.
 	}
 
 	if in.Total != ((total + in.DeliveryFee) - in.CouponDiscount) {
-		return nil, errors.New("total invalid")
+		return nil, fmt.Errorf("total invalid")
 	}
 
 	// save place order
-	res, err := or.db.SavePlaceOrder(in)
+	res, err := x.db.SavePlaceOrder(in)
 	if err != nil {
-		return nil, fmt.Errorf("save failed %v", err)
+		return nil, fmt.Errorf("failed to save place order: %v", err)
 	}
 
 	/* THIS WORK
@@ -124,10 +123,11 @@ func (or *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.
 
 	// publish event
 	routingKey := "order.placed.event"
-	err = or.ps.Publish(routingKey, body)
+	err = x.ps.Publish(routingKey, body)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't create event")
+		return nil, fmt.Errorf("failed to create event : %v", err)
 	}
+
 	log.Printf("published with order id : %s\n", body.OrderId)
 
 	// response

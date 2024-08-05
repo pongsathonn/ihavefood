@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -10,83 +9,69 @@ import (
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
 
-type user struct {
-	pb.UnimplementedUserServiceServer
-
-	db *sql.DB
-}
-
-func NewUser(db *sql.DB) *user {
-	return &user{db: db}
-}
-
-func (s *user) UpdateUser(context.Context, *pb.Empty) (*pb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
-}
-
-func (s *user) CreateUser(context.Context, *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
-}
-
-func (s *user) ListUser(context.Context, *pb.ListUserRequest) (*pb.ListUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListUser not implemented")
-}
-
-func (s *user) GetUser(context.Context, *pb.GetUserRequest) (*pb.User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
-}
-
-func (s *user) DeleteUser(context.Context, *pb.DeleteUserRequest) (*pb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
-}
-
-func initPostgres() *sql.DB {
+func initPostgres() (*sql.DB, error) {
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/user_database?sslmode=disable",
-		os.Getenv("USER_POSTGRES_USER"),
-		os.Getenv("USER_POSTGRES_PASS"),
-		os.Getenv("USER_POSTGRES_HOST"),
-		os.Getenv("USER_POSTGRES_PORT"),
+		getEnv("USER_POSTGRES_USER", "donk"),
+		getEnv("USER_POSTGRES_PASS", "donkpassword"),
+		getEnv("USER_POSTGRES_HOST", "localhost"),
+		getEnv("USER_POSTGRES_PORT", "5432"),
 	)
 
 	db, err := sql.Open("postgres", uri)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	if err = db.Ping(); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return db
+	return db, nil
 
 }
 
-func main() {
-	db := initPostgres()
+// startGRPCServer sets up and starts the gRPC server
+func startGRPCServer(s *userService) {
 
-	user := NewUser(db)
-
-	grpcServer := grpc.NewServer()
-
-	pb.RegisterUserServiceServer(grpcServer, user)
-
-	port := os.Getenv("USER_SERVER_PORT")
-	address := fmt.Sprintf(":%s", port)
-	listener, err := net.Listen("tcp", address)
+	// Set up the server port from environment variable
+	uri := fmt.Sprintf(":%s", getEnv("USER_SERVER_PORT", "7777"))
+	lis, err := net.Listen("tcp", uri)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatal("Failed to listen:", err)
 	}
 
-	log.Printf("User server is running on port %s", port)
+	// Create and start the gRPC server
+	grpcServer := grpc.NewServer()
+	pb.RegisterUserServiceServer(grpcServer, s)
 
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+	log.Printf("user service is running on port %s\n", getEnv("USER_SERVER_PORT", "7777"))
+
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatal("Failed to serve:", err)
 	}
+}
+
+// getEnv fetches an environment variable with a fallback default value
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
+}
+
+func main() {
+	db, err := initPostgres()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user := NewUserService(db)
+
+	startGRPCServer(user)
+
 }
