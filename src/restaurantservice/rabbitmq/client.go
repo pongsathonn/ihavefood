@@ -1,4 +1,4 @@
-package pubsub
+package rabbitmq
 
 import (
 	"context"
@@ -8,25 +8,25 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type MessageBroker interface {
+type RabbitmqClient interface {
 	Publish(exchangeName string, routingKey string, body []byte) error
 	Subscribe() (<-chan amqp.Delivery, error)
 }
 
-type messageBroker struct {
+type rabbitmqClient struct {
 	conn *amqp.Connection
 }
 
-func NewMessageBroker(conn *amqp.Connection) MessageBroker {
-	return &messageBroker{conn: conn}
+func NewRabbitmqClient(conn *amqp.Connection) RabbitmqClient {
+	return &rabbitmqClient{conn: conn}
 }
 
 func failOnError(e error, s string) error {
 	return fmt.Errorf("%s : %v\n", s, e)
 }
 
-func (mb *messageBroker) Publish(exchangeName string, routingKey string, body []byte) error {
-	ch, err := mb.conn.Channel()
+func (r *rabbitmqClient) Publish(exchangeName string, routingKey string, body []byte) error {
+	ch, err := r.conn.Channel()
 	if err != nil {
 		log.Println(err)
 	}
@@ -58,9 +58,9 @@ func (mb *messageBroker) Publish(exchangeName string, routingKey string, body []
 	return nil
 }
 
-func (mb *messageBroker) Subscribe() (<-chan amqp.Delivery, error) {
+func (r *rabbitmqClient) Subscribe() (<-chan amqp.Delivery, error) {
 
-	ch, err := mb.conn.Channel()
+	ch, err := r.conn.Channel()
 	if err != nil {
 		log.Println(err)
 	}
