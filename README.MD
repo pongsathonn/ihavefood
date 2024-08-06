@@ -1,4 +1,3 @@
-<h> IHAVEFOOD <h>
 
 IHAVEFOOD is a food-delivery microservice personal app written by Go 
 
