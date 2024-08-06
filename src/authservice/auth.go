@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -54,10 +55,15 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 
 	_, err = x.db.Exec(`INSERT INTO auth_table(username, email, password) VALUES($1, $2, $3)`, in.Username, in.Email, string(hashedPass))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to insert user into database")
+		// 23505 = Unique constraint violation postgres
+		var pqError *pq.Error
+		if errors.As(err, &pqError) && pqError.Code == "23505" {
+			return nil, status.Errorf(codes.AlreadyExists, "username or email duplicated ")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to insert user into database ")
 	}
 
-	return &pb.RegisterResponse{}, nil
+	return &pb.RegisterResponse{SuccessMessage: "registerd success"}, nil
 }
 
 // Login handles user login. It verifies the provided credentials, generates a JWT token on success, and returns it along with its expiration time.
@@ -112,8 +118,8 @@ func validateToken(tokenString string, key []byte) (bool, error) {
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
 func createNewToken() (string, int64, error) {
 
-	// 300 sec = 5 minutes
-	addTimeSec := 300
+	// 1800 sec = 30 minutes
+	addTimeSec := 1800
 	unixNow := time.Now().Unix()
 	expiration := unixNow + int64(addTimeSec)
 

@@ -366,6 +366,7 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
+    string success_message = 1;
 }
 
 message LoginRequest {

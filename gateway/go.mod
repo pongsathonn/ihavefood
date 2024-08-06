@@ -1,4 +1,4 @@
-module github.com/pongsathonn/food-delivery/gateway
+module github.com/pongsathonn/ihavefood/gateway
 
 go 1.22.2
 

@@ -105,6 +105,11 @@ curl -X POST http://localhost:180/api/restaurants/menus \
 
 </pre>
 
+# Delivery Service
+curl -X POST http://localhost:180/api/deliveries/accept-order \
+-H "Authorization: Bearer <your_token_here>" \
+-d '{"rider_id":"rider002", "order_id":"66af00af1687c32893d15693"}'
+
 
 # User Service
 <pre>
