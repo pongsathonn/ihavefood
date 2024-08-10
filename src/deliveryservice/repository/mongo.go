@@ -10,10 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// AcceptedTime is The time when the order was accepted. This field is a pointer to
-// time.Time, allowing it to be nil if the order has not been accepted yet.
-// Using a pointer enables us to differentiate between an unset time and a zero-value time,
-// making it easier to handle cases where the acceptance time is not yet available.
 type OrderDelivery struct {
 	OrderId      string     `bson:"orderId"`
 	RiderId      string     `bson:"riderId"`

@@ -8,7 +8,7 @@ RUN go mod download && go mod verify
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-order
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /docker-order
 
 CMD ["/docker-order"]
 

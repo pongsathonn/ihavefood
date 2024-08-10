@@ -38,6 +38,10 @@ func initPostgres() (*sql.DB, error) {
 // startGRPCServer sets up and starts the gRPC server
 func startGRPCServer(s *userService) {
 
+	if s == nil {
+		log.Fatal("userService instance is nil")
+	}
+
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("USER_SERVER_PORT", "7777"))
 	lis, err := net.Listen("tcp", uri)
@@ -70,8 +74,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	user := NewUserService(db)
+	s := NewUserService(db)
 
-	startGRPCServer(user)
+	startGRPCServer(s)
 
 }

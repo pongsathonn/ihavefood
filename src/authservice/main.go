@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
 	"fmt"
 	"log"
@@ -16,25 +15,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-// create singning key when app start
-// testing purpose
-// TODO delete
-func init() {
-
-	key := make([]byte, 64)
-
-	if _, err := rand.Read(key); err != nil {
-		log.Println("generate key failed")
-		return
-	}
-
-	if len(key) == 0 {
-		log.Println("signing key is empty")
-		return
-	}
-
-	signingKey = string(key)
-}
+var signingKey []byte
 
 func initPostgres() (*sql.DB, error) {
 
@@ -59,6 +40,19 @@ func initPostgres() (*sql.DB, error) {
 
 	return db, nil
 
+}
+
+func initSigningKey() error {
+
+	key := os.Getenv("JWT_SIGNING_KEY")
+
+	if key == "" {
+		return fmt.Errorf("JWT_SIGNING_KEY environment variable is empty")
+	}
+
+	signingKey = []byte(key)
+
+	return nil
 }
 
 // startGRPCServer sets up and starts the gRPC server

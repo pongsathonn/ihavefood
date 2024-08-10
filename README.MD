@@ -1,10 +1,11 @@
 
 IHAVEFOOD is a food-delivery microservice personal app written by Go 
 
-Eventbus use Rabbitmq
-
-
-
+Golang
+gRPC HTTP
+Docker 
+MongoDB PostgreSQL
+RabbitMQ
 
 
 
@@ -35,22 +36,6 @@ $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 2) execute $ ./genproto.sh
 
 #---------------------------------------------------------------------
-
-Command,Query,Event
-
-Command = State can be change or not , Typically CREATE UPDATE DELETE
-Query = State not change , Typically GET
-Event = Occur after state has changed
-
-Command Example
-POST    http://foodDelivery.com/api/orders/place-order
-PUT     http://foodDelivery.com/api/orders/place-order/newmenu?menu=krapao
-DELETE  http://foodDelivery.com/api/orders/place-order/krapao
-
-Query Example
-GET    http://foodDelivery.com/api/orders/place-order
-GET     http://foodDelivery.com/api/orders/place-order/ronaldo
-
 
 +==========================================================================+
 |  exchange    | type   |   routing key               |    queue           |

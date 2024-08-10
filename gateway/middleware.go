@@ -17,6 +17,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/gateway/genproto"
 )
 
+// authn is authentication middleware
 func authn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -42,6 +43,7 @@ func authn(next http.Handler) http.Handler {
 	})
 }
 
+// TODO handler authorization
 func authz(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -139,7 +141,6 @@ func availableMenu(restauName string, menus []*pb.Menu) (bool, error) {
 			Menus:          menus,
 		})
 	if err != nil {
-		log.Println("AB@", err)
 		return false, err
 	}
 

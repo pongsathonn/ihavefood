@@ -1,25 +1,31 @@
 name: ihavefood
 
 services:
+
   gateway:
     container_name: gateway
     build: gateway
     ports:
-      - "180:180"
-    environment:
-      GATEWAY_PORT: 180
-      ORDER_URI: order:1111
-      RESTAURANT_URI: restaurant:2222
-      USER_URI: user:3333
-      AUTH_URI: auth:4444
-      DELIVERY_URI: delivery:5555
+      - "180:180" 
+      - "4041:4041" # debug port
+    env_file:
+      - path: ./gateway/.env
     networks:
       - dtac
+
+    # debug
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4041","--accept-multiclient", "/gatewayb" ]
+    security_opt:
+      - seccomp:unconfined
+
     depends_on:
+      - user
+      - coupon
       - order
       - restaurant
-      - user
+      - delivery
       - auth
+
 
   order:
     container_name: order
@@ -78,6 +84,14 @@ services:
       - path: ./src/userservice/.env
     networks:
       - dtac
+
+    # debug
+    ports:
+      - "4040:4040"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4040","--accept-multiclient", "/docker-user" ]
+    security_opt:
+      - seccomp:unconfined
+
     depends_on:
       userdb:
         condition: service_healthy
@@ -94,7 +108,7 @@ services:
       - POSTGRES_PASSWORD=donkpassword
       - POSTGRES_DATABASE=user_database
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U donkadmin"]
+      test: ["CMD-SHELL","pg_isready -U $${POSTGRES_USER}"]
       interval: 5s 
       timeout: 5s
     networks:
@@ -118,12 +132,10 @@ services:
       - "5442:5432"
     volumes:
       - ./src/authservice/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
-    environment:
-      - POSTGRES_USER=donkadmin
-      - POSTGRES_PASSWORD=donkpassword
-      - POSTGRES_DATABASE=auth_database
+    env_file:
+      - path: ./src/authservice/.env
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U donkadmin"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DATABASE}"]
       interval: 5s 
       timeout: 10s
     networks:

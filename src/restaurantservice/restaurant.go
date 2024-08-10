@@ -32,7 +32,7 @@ func (x *restaurant) CheckAvailableMenu(ctx context.Context, in *pb.CheckAvailab
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or menus must be provided")
 	}
 
-	avaliable, err := x.rp.IsAvailableMenu(context.TODO(), in.RestaurantName, in.Menus)
+	avaliable, err := x.rp.IsAvailableMenu(ctx, in.RestaurantName, in.Menus)
 	if err != nil {
 		err = status.Errorf(codes.Internal, err.Error())
 		return &pb.CheckAvailableMenuResponse{Available: pb.AvailStatus_UNKNOWN}, err
@@ -50,7 +50,7 @@ func (x *restaurant) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequ
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name must be provided")
 	}
 
-	restaurant, err := x.rp.Restaurant(context.TODO(), in.RestaurantName)
+	restaurant, err := x.rp.Restaurant(ctx, in.RestaurantName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurant: %v", err)
 	}
@@ -58,9 +58,9 @@ func (x *restaurant) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequ
 	return &pb.GetRestaurantResponse{Restaurant: restaurant}, nil
 }
 
-func (x *restaurant) ListRestaurant(context.Context, *pb.Empty) (*pb.ListRestaurantResponse, error) {
+func (x *restaurant) ListRestaurant(ctx context.Context, empty *pb.Empty) (*pb.ListRestaurantResponse, error) {
 
-	restaurants, err := x.rp.Restaurants(context.TODO())
+	restaurants, err := x.rp.Restaurants(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurants: %v", err)
 	}
@@ -83,7 +83,7 @@ func (x *restaurant) RegisterRestaurant(ctx context.Context, in *pb.RegisterRest
 		}
 	}
 
-	id, err := x.rp.SaveRestaurant(context.TODO(), in.RestaurantName, in.Menus)
+	id, err := x.rp.SaveRestaurant(ctx, in.RestaurantName, in.Menus)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to save restaurant: %v", err)
 	}
@@ -91,14 +91,13 @@ func (x *restaurant) RegisterRestaurant(ctx context.Context, in *pb.RegisterRest
 	return &pb.RegisterRestaurantResponse{RestaurantId: id}, nil
 }
 
-// TODO
 func (x *restaurant) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.Empty, error) {
 
 	if in.RestaurantName == "" || len(in.Menus) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or munus must be provided")
 	}
 
-	if err := x.rp.UpdateMenu(context.TODO(), in.RestaurantName, in.Menus); err != nil {
+	if err := x.rp.UpdateMenu(ctx, in.RestaurantName, in.Menus); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update menu: %v", err)
 	}
 

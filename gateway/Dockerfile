@@ -7,9 +7,11 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY . .
 
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
 RUN apt update 
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /gateway
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /gatewayb
 
-CMD ["/gateway"]
+CMD ["/gatewayb"]
 

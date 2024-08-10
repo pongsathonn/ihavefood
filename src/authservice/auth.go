@@ -17,11 +17,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-// signingKey is used for signing JWT tokens.
-// testing purpose
-// TODO delete it when deploy
-var signingKey string
-
 // auth implements the pb.AuthServiceServer interface.
 type authService struct {
 	pb.UnimplementedAuthServiceServer
@@ -35,7 +30,12 @@ func NewAuthService(db *sql.DB) *authService {
 
 // IsValidToken checks if the provided token is valid. It returns a response indicating validity and an error if any.
 func (x *authService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
-	if valid, err := validateToken(in.Token, []byte(signingKey)); !valid {
+
+	if in.Token == "" {
+		return nil, status.Errorf(codes.Unknown, "token must be provided")
+	}
+
+	if valid, err := validateToken(in.Token, signingKey); !valid {
 		return nil, status.Errorf(codes.Unauthenticated, "token invalid: %v", err)
 	}
 	return &pb.IsValidTokenResponse{IsValid: true}, nil
@@ -131,7 +131,8 @@ func createNewToken() (string, int64, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString([]byte(signingKey))
+
+	ss, err := token.SignedString(signingKey)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to sign token: %v", err)
 	}

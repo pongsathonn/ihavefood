@@ -267,7 +267,12 @@ service UserService {
 
     rpc UpdateUser(Empty) returns(Empty) {}
 
-    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+        option (google.api.http) = {
+            post: "/api/users" 
+            body: "*"                                                      
+        };
+    }
 
     rpc GetUser(GetUserRequest) returns(User){
         option (google.api.http) = {
@@ -290,17 +295,22 @@ service UserService {
 }
 
 message User {
+    string user_id = 1;
+    string username = 2;
+    string email = 3;
+    string phone_number = 4;
+    Address address = 5;
+}
+
+message CreateUserRequest {
     string username = 1;
     string email = 2;
     string phone_number = 3;
     Address address = 4;
 }
 
-message CreateUserRequest {
-    User user = 1;
-}
-
 message CreateUserResponse {
+    string user_id =1;
 }
 
 message GetUserRequest{

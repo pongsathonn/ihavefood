@@ -30,7 +30,7 @@ curlLogin(){
 curlPlaceOrder(){
 
     # assign response from curl test to variable
-    res=$(curl -X POST ${uri}/api/orders/place-order \
+    res=$(curl -s -X POST ${uri}/api/orders/place-order \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${token}" \
     -d '{
@@ -57,7 +57,8 @@ curlPlaceOrder(){
         "email": "r7do@mail.com"
       },
       "payment_method": 0
-    }'
-}
+    }' )
 
+    echo ${res}
+}
 

@@ -8,7 +8,7 @@ COPY go.mod go.sum .
 RUN go mod download && go mod verify
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-coupon
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /docker-coupon
 
 CMD ["/docker-coupon"]
 

@@ -92,7 +92,6 @@ func (od *orderRepo) PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse
 	return &pb.ListUserPlaceOrderResponse{PlaceOrders: placeOrders}, nil
 }
 
-// TODO generate tracking id
 func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error) {
 
 	coll := od.conn.Database("order_database", nil).Collection("orderCollection")

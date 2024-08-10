@@ -76,17 +76,15 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 }
 
 func setupHTTPMux(gwmux *runtime.ServeMux) http.Handler {
+
 	mux := http.NewServeMux()
 	mux.Handle("/login", gwmux)
-	//mux.Handle("DELETE /api/*", authz(gwmux))
+	mux.Handle("DELETE /api/*", authz(gwmux))
 
 	// production use this
 	mux.Handle("POST /api/orders/place-order", authn(verifyPlaceOrder(gwmux)))
 	mux.Handle("/api/*", authn(gwmux))
-
-	// testing
-	//mux.Handle("/api/*", (gwmux))
-	//mux.Handle("POST /api/orders/place-order", (verifyPlaceOrder(gwmux)))
+	mux.Handle("POST /api/users", authn(gwmux))
 
 	mux.Handle("/", gwmux)
 

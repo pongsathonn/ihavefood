@@ -13,23 +13,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
-type PlaceOrderBody struct {
-	OrderId        string
-	TrackingId     string
-	Username       string
-	RestaurantName string
-	Menus          []*pb.Menu
-	CouponCode     string
-	CouponDiscount int32
-	DeliveryFee    int32
-	Total          int32
-	UserAddress    *pb.Address
-	ContactInfo    *pb.ContactInfo
-	PaymentMethod  pb.PaymentMethod
-	PaymentStatus  pb.PaymentStatus
-	OrderStatus    pb.OrderStatus
-}
-
 func NewOrder(db repository.OrderRepo, ps rabbitmq.RabbitMQ) *order {
 	return &order{
 		db: db,
@@ -84,25 +67,6 @@ func (x *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.P
 	if err != nil {
 		return nil, fmt.Errorf("failed to save place order: %v", err)
 	}
-
-	/* THIS WORK
-	body := &PlaceOrderBody{
-		OrderId:         res.OrderId,
-		TrackingId:      res.OrderTrackingId,
-		Username:        in.Username,
-		RestaurantName:  in.RestaurantName,
-		Menus:           in.Menus,
-		CouponCode:      in.CouponCode,
-		CouponDiscount:  in.CouponDiscount,
-		DeliveryFee:     in.DeliveryFee,
-		Total:           in.Total,
-		DeliveryAddress: in.Address,
-		ContactInfo:     in.Contact,
-		PaymentMethod:   in.PaymentMethod,
-		PaymentStatus:   res.PaymentStatus,
-		OrderStatus:     res.OrderStatus,
-	}
-	*/
 
 	body := &pb.PlaceOrder{
 		OrderId:         res.OrderId,
