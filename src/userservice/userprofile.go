@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"strconv"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,7 +42,7 @@ func (x *userService) UpdateUser(ctx context.Context, empty *pb.Empty) (*pb.Empt
 
 func (x *userService) CreateUser(ctx context.Context, in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 
-	if in.Username == "" || in.Email == "" || in.PhoneNumber == "" {
+	if in.Username == "" || in.Email == "" || in.PhoneNumber == "" || in.Address == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "username, email or phone number must be provided")
 	}
 
@@ -55,29 +56,30 @@ func (x *userService) CreateUser(ctx context.Context, in *pb.CreateUserRequest) 
 	var addressID int
 	addressQuery := `INSERT INTO address(name, sub_district, district, province, postal_code) 
 	                 VALUES($1, $2, $3, $4, $5) RETURNING id`
-	err = tx.QueryRowContext(ctx, addressQuery,
+	addrRow := tx.QueryRowContext(ctx, addressQuery,
 		in.Address.AddressName,
 		in.Address.SubDistrict,
 		in.Address.District,
 		in.Address.Province,
 		in.Address.PostalCode,
-	).Scan(&addressID)
-	if err != nil {
+	)
+	if err := addrRow.Scan(&addressID); err != nil {
 		tx.Rollback()
 		log.Printf("Failed to insert address: %v", err)
 		return nil, status.Errorf(codes.Internal, "Failed to create user")
 	}
 
 	// Insert the user with the address ID
-	var userID int
+	var id int
 	userQuery := `INSERT INTO user_profile(username, email, phone_number, address_id, created_at) 
 	              VALUES($1, $2, $3, $4, NOW()) RETURNING id`
-	err = tx.QueryRowContext(ctx, userQuery,
+	userRow := tx.QueryRowContext(ctx, userQuery,
 		in.Username,
 		in.Email,
 		in.PhoneNumber,
-		addressID).Scan(&userID)
-	if err != nil {
+		addressID,
+	)
+	if err := userRow.Scan(&id); err != nil {
 		tx.Rollback()
 		log.Printf("Failed to insert user: %v", err)
 		return nil, status.Errorf(codes.Internal, "Failed to create user")
@@ -89,7 +91,9 @@ func (x *userService) CreateUser(ctx context.Context, in *pb.CreateUserRequest) 
 		return nil, status.Errorf(codes.Internal, "Failed to create user")
 	}
 
-	return &pb.CreateUserResponse{}, nil
+	userID := strconv.Itoa(id)
+
+	return &pb.CreateUserResponse{UserId: userID}, nil
 }
 
 func (x *userService) ListUser(ctx context.Context, req *pb.ListUserRequest) (*pb.ListUserResponse, error) {
