@@ -117,6 +117,27 @@ curl -X POST http://localhost:180/api/deliveries/accept-order \
 curl -X GET http://localhost:180/api/users/{username} \
 -H "Authorization: Bearer <your_token_here>"
 
+<b> Create New User </b>
+curl -X POST http://localhost:180/api/users \
+-H "Authorization: Bearer <your_token_here>" \
+-H "Content-Type: application/json" \
+-d '{
+    "username": "_____",
+    "email": "_____",
+    "phone_number": "",
+    "address": {
+        "address_name": "_____",
+        "sub_district": "_____",
+        "district": "_____",
+        "province": "_____",
+        "postal_code": "_____"
+    }
+}'
+
+<b> List User </b>
+curl -X GET http://localhost:180/api/users \
+-H "Authorization: Bearer <your_token_here>"
+
 
 </pre>
 
