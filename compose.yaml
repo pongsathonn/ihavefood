@@ -1,5 +1,7 @@
 name: ihavefood
 
+# port 40XX for debugging
+
 services:
 
   gateway:
@@ -7,17 +9,16 @@ services:
     build: gateway
     ports:
       - "180:180" 
-      - "4041:4041" # debug port
+      - "4041:4041" 
     env_file:
       - path: ./gateway/.env
     networks:
       - dtac
-
-    # debug
+    # debug --------------------------------
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4041","--accept-multiclient", "/gatewayb" ]
     security_opt:
       - seccomp:unconfined
-
+    # ---------------------------------------
     depends_on:
       - user
       - coupon
