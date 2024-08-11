@@ -101,14 +101,14 @@ func (x *userService) ListUser(ctx context.Context, req *pb.ListUserRequest) (*p
 	query :=
 		`SELECT 
 			user_profile.id, user_profile.username, user_profile.email, user_profile.phone_number,
-			address.address_name, address.sub_district, address.district, address.province, address.postal_code
+			address.name, address.sub_district, address.district, address.province, address.postal_code
 		FROM 
 			user_profile
 		LEFT JOIN address ON user_profile.address_id = address.id;`
 
 	rows, err := x.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "")
+		return nil, status.Errorf(codes.NotFound, "failed to retrive users from db")
 	}
 	defer rows.Close()
 
@@ -116,9 +116,20 @@ func (x *userService) ListUser(ctx context.Context, req *pb.ListUserRequest) (*p
 
 	for rows.Next() {
 		var u userProfile
-		if err := rows.Scan(&u); err != nil {
-			log.Printf("Failed to scan: %v", err)
-			return nil, status.Errorf(codes.Internal, "Failed to retrive users")
+		err := rows.Scan(
+			&u.UserId,
+			&u.Username,
+			&u.Email,
+			&u.PhoneNumber,
+			&u.AddressName,
+			&u.SubDistrict,
+			&u.District,
+			&u.Province,
+			&u.PostalCode,
+		)
+		if err != nil {
+			log.Printf("failed to scan: %v", err)
+			return nil, status.Errorf(codes.Internal, "failed to retrive users")
 		}
 
 		user := &pb.User{
