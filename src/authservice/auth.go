@@ -63,7 +63,8 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		if errors.As(err, &pqError) && pqError.Code == "23505" {
 			return nil, status.Errorf(codes.AlreadyExists, "username or email duplicated ")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to insert user into database ")
+		log.Printf("failed to insert user into database: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to insert user into database")
 	}
 
 	// Send username ,email to UserService for handle userprofile

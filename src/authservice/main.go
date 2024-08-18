@@ -52,11 +52,11 @@ func initPostgres() (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", uri)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}
 
 	if err = db.PingContext(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
 
 	return db, nil
@@ -74,7 +74,7 @@ func initRabbitMQ() (*amqp.Connection, error) {
 
 	conn, err := amqp.Dial(uri)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to dial AMQP connection: %v", err)
 	}
 
 	return conn, nil
