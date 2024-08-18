@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -20,12 +21,14 @@ import (
 // auth implements the pb.AuthServiceServer interface.
 type authService struct {
 	pb.UnimplementedAuthServiceServer
-	db *sql.DB
+
+	db       *sql.DB
+	rabbitmq RabbitmqClient
 }
 
 // NewAuth creates a new instance of auth with the provided database connection.
-func NewAuthService(db *sql.DB) *authService {
-	return &authService{db: db}
+func NewAuthService(db *sql.DB, rabbitmq RabbitmqClient) *authService {
+	return &authService{db: db, rabbitmq: rabbitmq}
 }
 
 // IsValidToken checks if the provided token is valid. It returns a response indicating validity and an error if any.
@@ -61,6 +64,22 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 			return nil, status.Errorf(codes.AlreadyExists, "username or email duplicated ")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to insert user into database ")
+	}
+
+	// Send username ,email to UserService for handle userprofile
+	v := pb.CreateUserRequest{
+		Username:    in.Username,
+		Email:       in.Email,
+		PhoneNumber: in.PhoneNumber,
+		Address:     in.Address,
+	}
+	body, err := json.Marshal(v)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "")
+	}
+
+	if err := x.rabbitmq.Publish("user_exchange", "user", "user.registerd.event", body); err != nil {
+		return nil, status.Errorf(codes.Internal, "")
 	}
 
 	return &pb.RegisterResponse{SuccessMessage: "registerd success"}, nil

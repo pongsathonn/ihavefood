@@ -13,9 +13,30 @@ import (
 
 	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 var signingKey []byte
+
+func main() {
+
+	// Initialize dependencies
+	db, err := initPostgres()
+	if err != nil {
+		log.Fatal("Failed to initialize PostgresDB connection:", err)
+	}
+
+	amqpConn, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal("Failed to initialize RabbitMQ connection:", err)
+	}
+	rb := NewRabbitMQ(amqpConn)
+
+	auth := NewAuthService(db, rb)
+
+	startGRPCServer(auth)
+
+}
 
 func initPostgres() (*sql.DB, error) {
 
@@ -39,7 +60,24 @@ func initPostgres() (*sql.DB, error) {
 	}
 
 	return db, nil
+}
 
+// initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
+func initRabbitMQ() (*amqp.Connection, error) {
+
+	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+		getEnv("AUTH_AMQP_USER", "donkadmin"),
+		getEnv("AUTH_AMQP_PASS", "donkpassword"),
+		getEnv("AUTH_AMQP_HOST", "localhost"),
+		getEnv("AUTH_AMQP_PORT", "5672"),
+	)
+
+	conn, err := amqp.Dial(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }
 
 func initSigningKey() error {
@@ -83,18 +121,4 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
-
-func main() {
-
-	// Initialize dependencies
-	db, err := initPostgres()
-	if err != nil {
-		log.Fatal("Failed to initialize PostgresDB connection:", err)
-	}
-
-	auth := NewAuthService(db)
-
-	startGRPCServer(auth)
-
 }
