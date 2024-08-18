@@ -13,6 +13,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pb "github.com/pongsathonn/ihavefood/gateway/genproto"
+	"github.com/pongsathonn/ihavefood/gateway/middleware"
 )
 
 func main() {
@@ -26,7 +27,9 @@ func main() {
 
 	log.Println("gateway starting")
 
-	mux := setupHTTPMux(gwmux)
+	mw := middleware.NewMiddleware()
+	mux := setupHTTPMux(mw, gwmux)
+
 	s := fmt.Sprintf(":%s", os.Getenv("GATEWAY_PORT"))
 	log.Fatal(http.ListenAndServe(s, mux))
 }
@@ -70,23 +73,32 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 		if err := handler.regsiterFunc(ctx, gwmux, os.Getenv(handler.endpoint), opts); err != nil {
 			return err
 		}
+
 	}
 
 	return nil
 }
 
-func setupHTTPMux(gwmux *runtime.ServeMux) http.Handler {
+func setupHTTPMux(mw middleware.XXX, gwmux *runtime.ServeMux) http.Handler {
 
 	mux := http.NewServeMux()
-	mux.Handle("/login", gwmux)
-	mux.Handle("DELETE /api/*", authz(gwmux))
+	mux.Handle("/auth/login", gwmux)
+	mux.Handle("/auth/register", gwmux)
+	mux.Handle("DELETE /api/*", mw.Authz(gwmux))
 
 	// production use this
-	mux.Handle("POST /api/orders/place-order", authn(verifyPlaceOrder(gwmux)))
-	mux.Handle("/api/*", authn(gwmux))
-	mux.Handle("POST /api/users", authn(gwmux))
+	mux.Handle("POST /api/orders/place-order", mw.Authn(mw.VerifyPlaceOrder(gwmux)))
+	mux.Handle("POST /api/users", mw.Authn(gwmux))
 
+	mux.Handle("/api/*", mw.Authn(gwmux))
 	mux.Handle("/", gwmux)
 
 	return prettierJSON(mux)
+}
+
+func prettierJSON(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Header.Set("Accept", "application/json+pretty")
+		h.ServeHTTP(w, r)
+	})
 }

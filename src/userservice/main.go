@@ -11,7 +11,26 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
+
+// initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
+func initRabbitMQ() (*amqp.Connection, error) {
+
+	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+		getEnv("USER_AMQP_USER", "donkadmin"),
+		getEnv("USER_AMQP_PASS", "donkpassword"),
+		getEnv("USER_AMQP_HOST", "localhost"),
+		getEnv("USER_AMQP_PORT", "5672"),
+	)
+
+	conn, err := amqp.Dial(uri)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial AMQP connection: %v", err)
+	}
+
+	return conn, nil
+}
 
 func initPostgres() (*sql.DB, error) {
 
@@ -24,11 +43,11 @@ func initPostgres() (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", uri)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}
 
 	if err = db.Ping(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
 
 	return db, nil
@@ -74,7 +93,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := NewUserService(db)
+	amqpConn, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+	rabbitmq := NewRabbitMQ(amqpConn)
+
+	s := NewUserService(db, rabbitmq)
 
 	startGRPCServer(s)
 

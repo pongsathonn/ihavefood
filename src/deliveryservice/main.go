@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
-	"github.com/pongsathonn/ihavefood/src/deliveryservice/rabbitmq"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/repository"
 
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
@@ -84,6 +83,7 @@ func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
+
 	log.Printf("value of %s not set\n", key)
 	return defaultValue
 }
@@ -94,7 +94,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	rb := rabbitmq.NewRabbitMQ(conn)
+	rb := NewRabbitMQ(conn)
 
 	client, err := initMongoDB()
 	if err != nil {

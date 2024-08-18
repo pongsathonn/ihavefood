@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pongsathonn/ihavefood/src/deliveryservice/rabbitmq"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,19 +35,19 @@ type pickUpInfo struct {
 type deliveryService struct {
 	pb.UnimplementedDeliveryServiceServer
 
-	mu sync.Mutex
-	rb rabbitmq.RabbitMQ
-	rp repository.DeliveryRepo
+	mu         sync.Mutex
+	rabbitmq   RabbitmqClient
+	repository repository.DeliveryRepo
 
 	riderAcceptedCh chan *pb.AcceptOrderHandlerRequest
 	orderPickupCh   chan *pickUpInfo
 }
 
 // NewDeliveryServer creates and initializes a new delivery instance.
-func NewDeliveryService(rb rabbitmq.RabbitMQ, rp repository.DeliveryRepo) *deliveryService {
+func NewDeliveryService(rabbitmq RabbitmqClient, repository repository.DeliveryRepo) *deliveryService {
 	return &deliveryService{
-		rb: rb,
-		rp: rp,
+		rabbitmq:   rabbitmq,
+		repository: repository,
 
 		riderAcceptedCh: make(chan *pb.AcceptOrderHandlerRequest),
 		orderPickupCh:   make(chan *pickUpInfo),
@@ -72,7 +71,7 @@ func (x *deliveryService) AcceptOrderHandler(ctx context.Context, in *pb.AcceptO
 		return nil, status.Errorf(codes.InvalidArgument, "order ID and rider ID must be provided")
 	}
 
-	order, err := x.rp.GetOrderDeliveryById(ctx, in.OrderId)
+	order, err := x.repository.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
 		log.Println(err)
 		return nil, status.Errorf(codes.NotFound, "order not found: %v ", err)
@@ -89,7 +88,7 @@ func (x *deliveryService) AcceptOrderHandler(ctx context.Context, in *pb.AcceptO
 	x.riderAcceptedCh <- &pb.AcceptOrderHandlerRequest{RiderId: in.RiderId, OrderId: in.OrderId}
 
 	// Save the order delivery information to the database
-	if err := x.rp.UpdateOrderDelivery(ctx, in.OrderId, in.RiderId, true); err != nil {
+	if err := x.repository.UpdateOrderDelivery(ctx, in.OrderId, in.RiderId, true); err != nil {
 		log.Println(err)
 		return nil, status.Errorf(codes.Internal, "failed to save order delivery information")
 	}
@@ -126,7 +125,7 @@ func (x *deliveryService) orderAssignment() {
 		go func(placeOrder *pb.PlaceOrder) {
 
 			// save new placeOrder to deliverydb ( not accepted yet )
-			err := x.rp.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
+			err := x.repository.SaveOrderDelivery(context.TODO(), placeOrder.OrderId)
 			if err != nil {
 				log.Printf("failed to save new order: %v", err)
 				return
@@ -160,7 +159,11 @@ func (x *deliveryService) orderAssignment() {
 // receiveOrder subscribes to the RabbitMQ queue and returns the received order.
 func (x *deliveryService) receiveOrder() *pb.PlaceOrder {
 
-	deliveries, err := x.rb.Subscribe()
+	deliveries, err := x.rabbitmq.Subscribe(
+		"order",              // exchange
+		"",                   // queue
+		"order.placed.event", // routing key
+	)
 	if err != nil {
 		log.Println("failed to subscrib to order queue: %v", err)
 		return nil

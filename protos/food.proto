@@ -267,14 +267,9 @@ service UserService {
 
     rpc UpdateUser(Empty) returns(Empty) {}
 
-    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
-        option (google.api.http) = {
-            post: "/api/users" 
-            body: "*"                                                      
-        };
-    }
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
 
-    rpc GetUser(GetUserRequest) returns(User){
+    rpc GetUser(GetUserRequest) returns(GetUserResponse){
         option (google.api.http) = {
             get: "/api/users/{username}" 
         };
@@ -317,6 +312,10 @@ message GetUserRequest{
     string username = 1;
 }
 
+message GetUserResponse{
+    User user = 1;
+}
+
 message ListUserRequest {
 }
 
@@ -330,20 +329,21 @@ message DeleteUserRequest {
 
 
 // ---------- Auth service ----------
+// Authservice response user's credentials
 service AuthService {
 
     rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
 
     rpc Register(RegisterRequest) returns(RegisterResponse) {
         option (google.api.http) = {
-            post: "/register" 
+            post: "/auth/register" 
             body: "*"
         };
     }
 
     rpc Login(LoginRequest) returns(LoginResponse){
         option (google.api.http) = {
-            post: "/login" 
+            post: "/auth/login" 
             body: "*"
         };
     }
@@ -369,10 +369,14 @@ message IsValidTokenResponse {
     bool is_valid = 1;
 }
 
+// username, email, password will be save in AuthService
+// username email phone_number will be save in UserService
 message RegisterRequest {
    string username = 1;
    string email = 2;
    string password = 3;
+   string phone_number = 4;
+   Address address = 5;
 }
 
 message RegisterResponse {

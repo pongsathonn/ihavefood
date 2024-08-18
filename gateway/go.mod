@@ -3,7 +3,6 @@ module github.com/pongsathonn/ihavefood/gateway
 go 1.22.2
 
 require (
-	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de
 	google.golang.org/grpc v1.63.2

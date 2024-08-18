@@ -14,10 +14,10 @@ services:
       - path: ./gateway/.env
     networks:
       - dtac
-    # debug --------------------------------
+    # debug ---------------------------------
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4041","--accept-multiclient", "/gatewayb" ]
     security_opt:
-      - seccomp:unconfined
+    - seccomp:unconfined
     # ---------------------------------------
     depends_on:
       - user
@@ -26,7 +26,6 @@ services:
       - restaurant
       - delivery
       - auth
-
 
   order:
     container_name: order
@@ -85,16 +84,18 @@ services:
       - path: ./src/userservice/.env
     networks:
       - dtac
-
-    # debug
+    # debug -----------------------
     ports:
       - "4040:4040"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4040","--accept-multiclient", "/docker-user" ]
     security_opt:
       - seccomp:unconfined
-
+    #--------------------------------
     depends_on:
       userdb:
+        condition: service_healthy
+        restart: true
+      rabbitmqx: 
         condition: service_healthy
         restart: true
   userdb:
@@ -104,12 +105,12 @@ services:
       - "5432:5432"
     volumes:
       - ./src/userservice/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    env_file:
+      - path: ./src/userservice/.env
     environment:
-      - POSTGRES_USER=donkadmin
       - POSTGRES_PASSWORD=donkpassword
-      - POSTGRES_DATABASE=user_database
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL","pg_isready -U postgres"]
       interval: 5s 
       timeout: 5s
     networks:
@@ -126,6 +127,9 @@ services:
       authdb:
         condition: service_healthy
         restart: true
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
   authdb:
     container_name: authdb
     image: postgres
@@ -135,8 +139,11 @@ services:
       - ./src/authservice/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     env_file:
       - path: ./src/authservice/.env
+    environment:
+      - POSTGRES_PASSWORD=donkpassword
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DATABASE}"]
+      # test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DATABASE}"] 
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s 
       timeout: 10s
     networks:
@@ -184,9 +191,9 @@ services:
       - RABBITMQ_DEFAULT_PASS=donkpassword
     healthcheck:
       test: ["CMD-SHELL","rabbitmq-diagnostics -q ping"]
-      interval: 40s
-      timeout: 30s
-      retries: 3
+      interval: 30s
+      timeout: 20s
+      retries: 5
     networks:
       - dtac
 

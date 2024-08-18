@@ -6,7 +6,7 @@ orderId="not assign yet"
 
 # Function to register
 curlRegister(){
-    curl -X POST ${uri}/register \
+    curl -X POST ${uri}/auth/register \
     -H "Content-Type: application/json" \
     -d '{"username":"messi","email":"xxx@example.com","password":"awwwwwww"}'
 }
@@ -15,7 +15,7 @@ curlRegister(){
 curlLogin(){
 
     # assign response from curl test to variable
-    res=$(curl -s -X POST ${uri}/login \
+    res=$(curl -s -X POST ${uri}/auth/login \
     -H "Content-Type: application/json" \
     -d '{"username":"messi", "password":"awwwwwww"}')
 

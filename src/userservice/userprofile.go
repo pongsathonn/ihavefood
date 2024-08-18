@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"log"
 	"strconv"
 
@@ -11,6 +13,8 @@ import (
 
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
+
+//TODO when user register , auth service or gateway need to send username and email via amqp to userService to save user
 
 type userProfile struct {
 	UserId      string
@@ -28,11 +32,12 @@ type userProfile struct {
 type userService struct {
 	pb.UnimplementedUserServiceServer
 
-	db *sql.DB
+	db       *sql.DB
+	rabbitmq RabbitmqClient
 }
 
-func NewUserService(db *sql.DB) *userService {
-	return &userService{db: db}
+func NewUserService(db *sql.DB, rabbitmq RabbitmqClient) *userService {
+	return &userService{db: db, rabbitmq: rabbitmq}
 }
 
 func (x *userService) UpdateUser(ctx context.Context, empty *pb.Empty) (*pb.Empty, error) {
@@ -41,6 +46,20 @@ func (x *userService) UpdateUser(ctx context.Context, empty *pb.Empty) (*pb.Empt
 }
 
 func (x *userService) CreateUser(ctx context.Context, in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+
+	//TODO split this to another function
+	// TODO create Datalayer to save this
+	deliveries, err := x.rabbitmq.Subscribe("user_exchange", "user", "user.registered.event")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "")
+	}
+
+	var userx pb.CreateUserRequest
+	for delivery := range deliveries {
+		if err := json.Unmarshal(delivery.Body, &userx); err != nil {
+			return nil, status.Errorf(codes.Internal, "")
+		}
+	}
 
 	if in.Username == "" || in.Email == "" || in.PhoneNumber == "" || in.Address == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "username, email or phone number must be provided")
@@ -98,6 +117,8 @@ func (x *userService) CreateUser(ctx context.Context, in *pb.CreateUserRequest) 
 
 func (x *userService) ListUser(ctx context.Context, req *pb.ListUserRequest) (*pb.ListUserResponse, error) {
 
+	//TODO validate input
+
 	query :=
 		`SELECT 
 			user_profile.id, user_profile.username, user_profile.email, user_profile.phone_number,
@@ -108,12 +129,14 @@ func (x *userService) ListUser(ctx context.Context, req *pb.ListUserRequest) (*p
 
 	rows, err := x.db.QueryContext(ctx, query)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
 		return nil, status.Errorf(codes.NotFound, "failed to retrive users from db")
 	}
 	defer rows.Close()
 
 	var users []*pb.User
-
 	for rows.Next() {
 		var u userProfile
 		err := rows.Scan(
@@ -152,8 +175,30 @@ func (x *userService) ListUser(ctx context.Context, req *pb.ListUserRequest) (*p
 	return &pb.ListUserResponse{Users: users}, nil
 }
 
-func (x *userService) GetUser(context.Context, *pb.GetUserRequest) (*pb.User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+func (x *userService) GetUser(ctx context.Context, in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+
+	if in.Username == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
+	}
+
+	query :=
+		`SELECT 
+			user_profile.id, user_profile.username, user_profile.email, user_profile.phone_number,
+			address.name, address.sub_district, address.district, address.province, address.postal_code
+		FROM 
+			user_profile
+		LEFT JOIN address ON user_profile.address_id = address.id
+		WHERE user_profile.username = $1;`
+
+	var user pb.User
+	if err := x.db.QueryRowContext(ctx, query, in.Username).Scan(&user); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to retrive users from db")
+	}
+
+	return &pb.GetUserResponse{User: &user}, nil
 }
 
 func (x *userService) DeleteUser(context.Context, *pb.DeleteUserRequest) (*pb.Empty, error) {

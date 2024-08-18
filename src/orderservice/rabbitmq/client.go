@@ -31,13 +31,13 @@ func (r *rabbitMQ) Publish(routingKey string, body interface{}) error {
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"order", // name
-		"topic", // type
-		true,    // durable
-		false,   // auto-deleted
-		false,   // internal
-		false,   // no-wait
-		nil,     // arguments
+		"order_exchange", // name
+		"topic",          // type
+		true,             // durable
+		false,            // auto-deleted
+		false,            // internal
+		false,            // no-wait
+		nil,              // arguments
 	)
 	if err != nil {
 		return fmt.Errorf("failed to declare exchange :", err)
