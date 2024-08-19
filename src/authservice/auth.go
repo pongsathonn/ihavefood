@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -22,13 +21,18 @@ import (
 type authService struct {
 	pb.UnimplementedAuthServiceServer
 
-	db       *sql.DB
-	rabbitmq RabbitmqClient
+	db         *sql.DB
+	rabbitmq   RabbitmqClient
+	userClient pb.UserServiceClient
 }
 
 // NewAuth creates a new instance of auth with the provided database connection.
-func NewAuthService(db *sql.DB, rabbitmq RabbitmqClient) *authService {
-	return &authService{db: db, rabbitmq: rabbitmq}
+func NewAuthService(db *sql.DB, rabbitmq RabbitmqClient, userClient pb.UserServiceClient) *authService {
+	return &authService{
+		db:         db,
+		rabbitmq:   rabbitmq,
+		userClient: userClient,
+	}
 }
 
 // IsValidToken checks if the provided token is valid. It returns a response indicating validity and an error if any.
@@ -47,6 +51,7 @@ func (x *authService) IsValidToken(ctx context.Context, in *pb.IsValidTokenReque
 // Register handles user registration. It creates a new user record with hashed password in the database.
 // It returns an empty response on success or an error if the registration fails.
 func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+
 	if in.Username == "" || in.Email == "" || in.Password == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username, email, or password must be provided")
 	}
@@ -63,24 +68,21 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		if errors.As(err, &pqError) && pqError.Code == "23505" {
 			return nil, status.Errorf(codes.AlreadyExists, "username or email duplicated ")
 		}
-		log.Printf("failed to insert user into database: %v", err)
+		log.Printf("Failed to insert user into database: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to insert user into database")
 	}
 
-	// Send username ,email to UserService for handle userprofile
-	v := pb.CreateUserRequest{
+	// Calling UserService to update UserProfile
+	req := &pb.CreateUserProfileRequest{
 		Username:    in.Username,
 		Email:       in.Email,
 		PhoneNumber: in.PhoneNumber,
 		Address:     in.Address,
 	}
-	body, err := json.Marshal(v)
+	_, err = x.userClient.CreateUserProfile(ctx, req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "")
-	}
-
-	if err := x.rabbitmq.Publish("user_exchange", "user", "user.registerd.event", body); err != nil {
-		return nil, status.Errorf(codes.Internal, "")
+		log.Printf("Failed to create user profile in UserService: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create user profile in UserService")
 	}
 
 	return &pb.RegisterResponse{SuccessMessage: "registerd success"}, nil

@@ -92,6 +92,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	repository := NewUserRepository(db)
 
 	amqpConn, err := initRabbitMQ()
 	if err != nil {
@@ -99,8 +100,7 @@ func main() {
 	}
 	rabbitmq := NewRabbitMQ(amqpConn)
 
-	s := NewUserService(db, rabbitmq)
-
+	s := NewUserService(rabbitmq, repository)
 	startGRPCServer(s)
 
 }

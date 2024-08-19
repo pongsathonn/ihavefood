@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
@@ -32,10 +33,26 @@ func main() {
 	}
 	rb := NewRabbitMQ(amqpConn)
 
-	auth := NewAuthService(db, rb)
+	userClient, err := newUserServiceClient()
+	if err != nil {
+		log.Fatal("Failed to make new user client:", err)
+	}
 
+	auth := NewAuthService(db, rb, userClient)
 	startGRPCServer(auth)
 
+}
+
+func newUserServiceClient() (pb.UserServiceClient, error) {
+
+	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.NewClient(getEnv("USER_URI", ""), opt)
+	if err != nil {
+		return nil, err
+	}
+	client := pb.NewUserServiceClient(conn)
+
+	return client, nil
 }
 
 func initPostgres() (*sql.DB, error) {
@@ -117,8 +134,11 @@ func startGRPCServer(a *authService) {
 
 // getEnv fetches an environment variable with a fallback default value
 func getEnv(key, defaultValue string) string {
+
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
+
+	log.Println("%s doesn't exists", key)
 	return defaultValue
 }
