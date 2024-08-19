@@ -7,6 +7,7 @@ AUTH_USER="${AUTH_POSTGRES_USER}"
 AUTH_PASSWORD="${AUTH_POSTGRES_PASS}"
 AUTH_DB="${AUTH_POSTGRES_DATABASE}"
 
+# flag -z check if the environment variables are set ( true if string empty )
 if [ -z "${AUTH_USER}" ] || [ -z "${AUTH_PASSWORD}" ] || [ -z "${AUTH_DB}" ]; then
     echo "Error: Required environment variables are not set."
     exit 1
