@@ -33,7 +33,7 @@ curlRegister() {
     -d "{
         \"username\": \"$userz\",
         \"email\": \"$mailz\",
-        \"password\": \"securepassword123\",
+        \"password\": \"secret\",
         \"phone_number\": \"091230123\",
         \"address\": {
             \"address_name\": \"123 Sukhumvit Road\",
@@ -46,19 +46,29 @@ curlRegister() {
 }
 
 
-# Function to log in and capture the token
-curlLogin(){
+curlLogin() {
+    while getopts "u:p:" opt; do
+        case $opt in
+            u) local username="$OPTARG" ;;  # Store the argument in USER
+            p) local password="$OPTARG" ;;  # Store the argument in PASSWORD
+            *) echo "Invalid option"; return 1 ;;  # Handle invalid options
+        esac
+    done
 
-    # assign response from curl test to variable
-    res=$(curl -s -X POST ${uri}/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"username":"messi", "password":"awwwwwww"}')
+    # Perform the curl request and capture the response
+    local res
+    res=$(curl -s -X POST "${uri}/auth/login" \
+        -H "Content-Type: application/json" \
+        -d "{\"username\":\"$username\", \"password\":\"$password\"}")
 
-    # print actual curl response
-    echo ${res}
+    # Print the actual curl response
+    echo "$res"
 
-    # Extract the access token from the response and assign it to the global variable
-    token=$(echo ${res} | jq -r ".accessToken")
+    # Extract the access token from the response
+    token=$(echo "$res" | jq -r ".accessToken")
+
+    # Optionally, you can print or use the token here
+    echo "Access Token: $token"
 }
 
 
