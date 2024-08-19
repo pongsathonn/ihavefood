@@ -4,12 +4,47 @@ uri="http://localhost:180"
 token="not assign yet"
 orderId="not assign yet"
 
-# Function to register
-curlRegister(){
-    curl -X POST ${uri}/auth/register \
+# Function to register a new user
+curlRegister() {
+    # Default values
+    local default_username="primmie"
+    local default_email="primmieno1world@example.com"
+
+    # Initialize variables with default values
+    local UUU="$default_username"
+    local MMM="$default_email"
+
+    while getopts "u:m:" opt; do
+        case $opt in
+            u) UUU="$OPTARG" ;;  # If option is -u, store the argument in USER
+            m) MMM="$OPTARG" ;;  # If option is -m, store the argument in EMAIL
+            *) echo "Invalid option"; return 1 ;;  # Handle invalid options
+        esac
+    done
+
+    # Variables to use in curl command
+    local userz="$UUU"
+    local mailz="$MMM"
+
+    # Perform the curl request
+    # NOTE: Use double quotes in the body because it allows for variable expansion
+    curl -X POST "${uri}/auth/register" \
     -H "Content-Type: application/json" \
-    -d '{"username":"messi","email":"xxx@example.com","password":"awwwwwww"}'
+    -d "{
+        \"username\": \"$userz\",
+        \"email\": \"$mailz\",
+        \"password\": \"securepassword123\",
+        \"phone_number\": \"091230123\",
+        \"address\": {
+            \"address_name\": \"123 Sukhumvit Road\",
+            \"sub_district\": \"Khlong Toei\",
+            \"district\": \"Khlong Toei\",
+            \"province\": \"Bangkok\",
+            \"postal_code\": \"10110\"
+        }
+    }"
 }
+
 
 # Function to log in and capture the token
 curlLogin(){
