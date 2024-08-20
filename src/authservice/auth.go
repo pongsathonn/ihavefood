@@ -61,7 +61,18 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "password hashing failed")
 	}
 
-	_, err = x.db.Exec(`INSERT INTO auth_table(username, email, password) VALUES($1, $2, $3)`, in.Username, in.Email, string(hashedPass))
+	_, err = x.db.Exec(`
+		INSERT INTO auth_table(
+			username, 
+			email, 
+			password
+		) 
+		VALUES($1, $2, $3)
+	`,
+		in.Username,
+		in.Email,
+		string(hashedPass),
+	)
 	if err != nil {
 		// 23505 = Unique constraint violation postgres
 		var pqError *pq.Error
@@ -92,8 +103,17 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 // It returns an error if login fails or credentials are incorrect.
 func (x *authService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 	var user pb.UserCredentials
-	row := x.db.QueryRowContext(ctx, `SELECT username, password FROM auth_table WHERE username=$1`, in.Username)
-
+	row := x.db.QueryRowContext(ctx, `
+		SELECT 
+			username, 
+			password 
+		FROM 
+			auth_table 
+		WHERE 
+			username=$1
+	`,
+		in.Username,
+	)
 	if err := row.Scan(&user.Username, &user.Password); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "user not found")
