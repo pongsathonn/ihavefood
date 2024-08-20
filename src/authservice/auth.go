@@ -61,6 +61,12 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "password hashing failed")
 	}
 
+	tx, err := x.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
+	}
+
 	_, err = x.db.Exec(`
 		INSERT INTO auth_table(
 			username, 
@@ -74,8 +80,9 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		string(hashedPass),
 	)
 	if err != nil {
-		// 23505 = Unique constraint violation postgres
+		tx.Rollback()
 		var pqError *pq.Error
+		// 23505 = Unique constraint violation postgres
 		if errors.As(err, &pqError) && pqError.Code == "23505" {
 			return nil, status.Errorf(codes.AlreadyExists, "username or email duplicated ")
 		}
@@ -92,8 +99,14 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 	_, err = x.userClient.CreateUserProfile(ctx, req)
 	if err != nil {
+		tx.Rollback()
 		log.Printf("Failed to create user profile in UserService: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to create user profile in UserService")
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
 	}
 
 	return &pb.RegisterResponse{SuccessMessage: "registerd success"}, nil
