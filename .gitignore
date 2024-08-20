@@ -4,3 +4,5 @@ UML.md
 *.swp
 *.sh
 .env
+
+lazycurl.sh
