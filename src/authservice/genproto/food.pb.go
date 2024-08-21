@@ -1744,7 +1744,6 @@ func (x *AddMenuRequest) GetMenus() []*Menu {
 	return nil
 }
 
-// TODO add picture field
 type UserProfile struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

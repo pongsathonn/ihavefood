@@ -13,6 +13,18 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
 
+type userProfile struct {
+	UserId      string
+	Username    string
+	Email       string
+	PhoneNumber string
+	AddressName sql.NullString
+	SubDistrict sql.NullString
+	District    sql.NullString
+	Province    sql.NullString
+	PostalCode  sql.NullString
+}
+
 type UserRepository interface {
 	SaveUserProfile(ctx context.Context, username, email, phoneNumber string, address *pb.Address) (string, error)
 	UserProfiles(ctx context.Context) ([]*pb.UserProfile, error)
@@ -156,12 +168,9 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*pb.UserProfile, e
 				PostalCode:  u.PostalCode.String,
 			},
 		}
-
 		users = append(users, user)
 	}
-
 	return users, nil
-
 }
 
 func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username string) (*pb.UserProfile, error) {
@@ -197,6 +206,5 @@ func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username 
 		}
 		return nil, status.Errorf(codes.Internal, "failed to retrive users from db")
 	}
-
 	return &user, nil
 }

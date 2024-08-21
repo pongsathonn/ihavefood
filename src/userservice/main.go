@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
+	"github.com/pongsathonn/ihavefood/src/userservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -55,7 +56,7 @@ func initPostgres() (*sql.DB, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(s *userService) {
+func startGRPCServer(s *internal.UserService) {
 
 	if s == nil {
 		log.Fatal("userService instance is nil")
@@ -92,15 +93,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	repository := NewUserRepository(db)
 
 	amqpConn, err := initRabbitMQ()
 	if err != nil {
 		log.Fatal(err)
 	}
-	rabbitmq := NewRabbitMQ(amqpConn)
 
-	s := NewUserService(rabbitmq, repository)
+	repository := internal.NewUserRepository(db)
+	rabbitmq := internal.NewRabbitMQ(amqpConn)
+	s := internal.NewUserService(rabbitmq, repository)
 	startGRPCServer(s)
 
 }

@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,8 +18,10 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
+var signingKey []byte
+
 // auth implements the pb.AuthServiceServer interface.
-type authService struct {
+type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
 	db         *sql.DB
@@ -27,16 +30,25 @@ type authService struct {
 }
 
 // NewAuth creates a new instance of auth with the provided database connection.
-func NewAuthService(db *sql.DB, rabbitmq RabbitmqClient, userClient pb.UserServiceClient) *authService {
-	return &authService{
+func NewAuthService(db *sql.DB, rabbitmq RabbitmqClient, userClient pb.UserServiceClient) *AuthService {
+	return &AuthService{
 		db:         db,
 		rabbitmq:   rabbitmq,
 		userClient: userClient,
 	}
 }
 
+func InitSigningKey() error {
+	key := os.Getenv("JWT_SIGNING_KEY")
+	if key == "" {
+		return fmt.Errorf("JWT_SIGNING_KEY environment variable is empty")
+	}
+	signingKey = []byte(key)
+	return nil
+}
+
 // IsValidToken checks if the provided token is valid. It returns a response indicating validity and an error if any.
-func (x *authService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
+func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
 
 	if in.Token == "" {
 		return nil, status.Errorf(codes.Unknown, "token must be provided")
@@ -50,7 +62,7 @@ func (x *authService) IsValidToken(ctx context.Context, in *pb.IsValidTokenReque
 
 // Register handles user registration. It creates a new user record with hashed password in the database.
 // It returns an empty response on success or an error if the registration fails.
-func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
 	if in.Username == "" || in.Email == "" || in.Password == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username, email, or password must be provided")
@@ -67,12 +79,12 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
 
-	_, err = x.db.Exec(`
-		INSERT INTO auth_table(
-			username, 
-			email, 
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO user_credentials(
+			username,
+			email,
 			password
-		) 
+		)
 		VALUES($1, $2, $3)
 	`,
 		in.Username,
@@ -114,14 +126,14 @@ func (x *authService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 
 // Login handles user login. It verifies the provided credentials, generates a JWT token on success, and returns it along with its expiration time.
 // It returns an error if login fails or credentials are incorrect.
-func (x *authService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 	var user pb.UserCredentials
 	row := x.db.QueryRowContext(ctx, `
 		SELECT 
 			username, 
 			password 
 		FROM 
-			auth_table 
+			user_credentials 
 		WHERE 
 			username=$1
 	`,

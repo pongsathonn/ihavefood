@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"log"
 
 	"google.golang.org/grpc/codes"
@@ -11,19 +10,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
 
-type userProfile struct {
-	UserId      string
-	Username    string
-	Email       string
-	PhoneNumber string
-	AddressName sql.NullString
-	SubDistrict sql.NullString
-	District    sql.NullString
-	Province    sql.NullString
-	PostalCode  sql.NullString
-}
-
-// userService handle user profiles
+// UserService handle UserProfile
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 

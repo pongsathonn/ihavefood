@@ -13,13 +13,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	_ "github.com/lib/pq"
+	"github.com/pongsathonn/ihavefood/src/authservice/internal"
+
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var signingKey []byte
-
 func main() {
+	if err := internal.InitSigningKey(); err != nil {
+		log.Printf("Failed to initialize jwt signingkey:", err)
+	}
 
 	// Initialize dependencies
 	db, err := initPostgres()
@@ -31,14 +34,14 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to initialize RabbitMQ connection:", err)
 	}
-	rb := NewRabbitMQ(amqpConn)
+	rb := internal.NewRabbitMQ(amqpConn)
 
 	userClient, err := newUserServiceClient()
 	if err != nil {
 		log.Fatal("Failed to make new user client:", err)
 	}
 
-	auth := NewAuthService(db, rb, userClient)
+	auth := internal.NewAuthService(db, rb, userClient)
 	startGRPCServer(auth)
 
 }
@@ -97,21 +100,8 @@ func initRabbitMQ() (*amqp.Connection, error) {
 	return conn, nil
 }
 
-func initSigningKey() error {
-
-	key := os.Getenv("JWT_SIGNING_KEY")
-
-	if key == "" {
-		return fmt.Errorf("JWT_SIGNING_KEY environment variable is empty")
-	}
-
-	signingKey = []byte(key)
-
-	return nil
-}
-
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(a *authService) {
+func startGRPCServer(s *internal.AuthService) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("AUTH_SERVER_PORT", "4444"))
@@ -122,7 +112,7 @@ func startGRPCServer(a *authService) {
 
 	// Create and start the gRPC server
 	grpcServer := grpc.NewServer()
-	pb.RegisterAuthServiceServer(grpcServer, a)
+	pb.RegisterAuthServiceServer(grpcServer, s)
 
 	log.Printf("auth service is running on port %s\n", getEnv("AUTH_SERVER_PORT", "4444"))
 
@@ -139,6 +129,6 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 
-	log.Println("%s doesn't exists", key)
+	log.Printf("%s doesn't exists \n", key)
 	return defaultValue
 }
