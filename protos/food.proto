@@ -262,8 +262,8 @@ message AddMenuRequest {
 service UserService {
 
     // TODO
-    // update user's profile picture
-    // update name 
+    // - update user's profile picture
+    // - update name 
 
     rpc UpdateUserProfile(Empty) returns(Empty) {}
 
@@ -292,14 +292,12 @@ service UserService {
 message UserProfile {
     string user_id = 1;
     string username = 2;
-    string email = 3;
     string phone_number = 4;
     Address address = 5;
 }
 
 message CreateUserProfileRequest {
     string username = 1;
-    string email = 2;
     string phone_number = 3;
     Address address = 4;
 }
@@ -313,14 +311,14 @@ message GetUserProfileRequest{
 }
 
 message GetUserProfileResponse{
-    User user = 1;
+    UserProfile user_profile = 1;
 }
 
 message ListUserProfileRequest {
 }
 
 message ListUserProfileResponse{
-    repeated User users = 1;
+    repeated UserProfile user_profiles = 1;
 }
 
 message DeleteUserProfileRequest {

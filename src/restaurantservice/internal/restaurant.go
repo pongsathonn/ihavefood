@@ -1,32 +1,30 @@
-package main
+package internal
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/pongsathonn/ihavefood/src/restaurantservice/rabbitmq"
-	"github.com/pongsathonn/ihavefood/src/restaurantservice/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 )
 
-type restaurant struct {
+type RestaurantService struct {
 	pb.UnimplementedRestaurantServiceServer
 
-	rp repository.RestaurantRepo
-	mb rabbitmq.RabbitmqClient
+	rp RestaurantRepo
+	rb RabbitmqClient
 }
 
-func NewRestaurant(rp repository.RestaurantRepo, mb rabbitmq.RabbitmqClient) *restaurant {
-	return &restaurant{
+func NewRestaurant(rp RestaurantRepo, rb RabbitmqClient) *RestaurantService {
+	return &RestaurantService{
 		rp: rp,
-		mb: mb,
+		rb: rb,
 	}
 }
 
-func (x *restaurant) CheckAvailableMenu(ctx context.Context, in *pb.CheckAvailableMenuRequest) (*pb.CheckAvailableMenuResponse, error) {
+func (x *RestaurantService) CheckAvailableMenu(ctx context.Context, in *pb.CheckAvailableMenuRequest) (*pb.CheckAvailableMenuResponse, error) {
 
 	if in.RestaurantName == "" || len(in.Menus) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or menus must be provided")
@@ -45,7 +43,7 @@ func (x *restaurant) CheckAvailableMenu(ctx context.Context, in *pb.CheckAvailab
 	return &pb.CheckAvailableMenuResponse{Available: pb.AvailStatus_AVAILABLE}, nil
 }
 
-func (x *restaurant) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
+func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
 	if in.RestaurantName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name must be provided")
 	}
@@ -58,7 +56,7 @@ func (x *restaurant) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequ
 	return &pb.GetRestaurantResponse{Restaurant: restaurant}, nil
 }
 
-func (x *restaurant) ListRestaurant(ctx context.Context, empty *pb.Empty) (*pb.ListRestaurantResponse, error) {
+func (x *RestaurantService) ListRestaurant(ctx context.Context, empty *pb.Empty) (*pb.ListRestaurantResponse, error) {
 
 	restaurants, err := x.rp.Restaurants(ctx)
 	if err != nil {
@@ -70,7 +68,7 @@ func (x *restaurant) ListRestaurant(ctx context.Context, empty *pb.Empty) (*pb.L
 	return resp, nil
 }
 
-func (x *restaurant) RegisterRestaurant(ctx context.Context, in *pb.RegisterRestaurantRequest) (*pb.RegisterRestaurantResponse, error) {
+func (x *RestaurantService) RegisterRestaurant(ctx context.Context, in *pb.RegisterRestaurantRequest) (*pb.RegisterRestaurantResponse, error) {
 
 	if in.RestaurantName == "" || len(in.Menus) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or munus must be provided")
@@ -91,7 +89,7 @@ func (x *restaurant) RegisterRestaurant(ctx context.Context, in *pb.RegisterRest
 	return &pb.RegisterRestaurantResponse{RestaurantId: id}, nil
 }
 
-func (x *restaurant) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.Empty, error) {
+func (x *RestaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.Empty, error) {
 
 	if in.RestaurantName == "" || len(in.Menus) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or munus must be provided")

@@ -11,9 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
-	"github.com/pongsathonn/ihavefood/src/deliveryservice/repository"
-
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
+	"github.com/pongsathonn/ihavefood/src/deliveryservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -58,7 +57,7 @@ func initMongoDB() (*mongo.Client, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(s *deliveryService) {
+func startGRPCServer(s *internal.DeliveryService) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("DELIVERY_SERVER_PORT", "5555"))
@@ -94,18 +93,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	rb := NewRabbitMQ(conn)
 
 	client, err := initMongoDB()
 	if err != nil {
 		log.Fatal(err)
 	}
-	rp := repository.NewDeliveryRepo(client)
 
-	d := NewDeliveryService(rb, rp)
+	rb := internal.NewRabbitMQ(conn)
+	rp := internal.NewDeliveryRepo(client)
+	d := internal.NewDeliveryService(rb, rp)
 
 	// Start the order assignment process in a separate goroutine
-	go d.orderAssignment()
+	go d.OrderAssignment()
 
 	startGRPCServer(d)
 }

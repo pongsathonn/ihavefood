@@ -12,8 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
-	"github.com/pongsathonn/ihavefood/src/orderservice/rabbitmq"
-	"github.com/pongsathonn/ihavefood/src/orderservice/repository"
+	"github.com/pongsathonn/ihavefood/src/orderservice/internal"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -71,7 +70,7 @@ func initMongoClient() (*mongo.Client, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(s *order) {
+func startGRPCServer(s *internal.OrderService) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("ORDER_SERVER_PORT", "2222"))
@@ -111,10 +110,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db := repository.NewOrderRepo(mg)
-	ps := rabbitmq.NewRabbitMQ(rb)
+	db := internal.NewOrderRepo(mg)
+	ps := internal.NewRabbitMQ(rb)
 
-	s := NewOrder(db, ps)
+	s := internal.NewOrderService(db, ps)
 
 	startGRPCServer(s)
 

@@ -12,10 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
-	"github.com/pongsathonn/ihavefood/src/restaurantservice/rabbitmq"
-	"github.com/pongsathonn/ihavefood/src/restaurantservice/repository"
-
 	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
+	"github.com/pongsathonn/ihavefood/src/restaurantservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -65,17 +63,14 @@ func initRabbitMQ() (*amqp.Connection, error) {
 	return conn, nil
 }
 
-// startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(s *restaurant) {
+func startGRPCServer(s *internal.RestaurantService) {
 
-	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("RESTAURANT_SERVER_PORT", "1111"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
 	}
 
-	// Create and start the gRPC server
 	grpcServer := grpc.NewServer()
 	pb.RegisterRestaurantServiceServer(grpcServer, s)
 
@@ -106,10 +101,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	repo := repository.NewRestaurantRepo(mongoClient)
-	rb := rabbitmq.NewRabbitmqClient(rabbitConn)
-
-	s := NewRestaurant(repo, rb)
+	repo := internal.NewRestaurantRepo(mongoClient)
+	rb := internal.NewRabbitmqClient(rabbitConn)
+	s := internal.NewRestaurant(repo, rb)
 
 	startGRPCServer(s)
 

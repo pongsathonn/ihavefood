@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/pongsathonn/ihavefood/src/couponservice/genproto"
+	"github.com/pongsathonn/ihavefood/src/couponservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -49,7 +50,7 @@ func initOrderClient() (pb.OrderServiceClient, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(s *couponService) {
+func startGRPCServer(s *internal.CouponService) {
 
 	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("COUPON_SERVER_PORT", "3333"))
@@ -88,7 +89,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	c := NewCouponService(conn, orderClient)
+	c := internal.NewCouponService(conn, orderClient)
 
 	startGRPCServer(c)
 

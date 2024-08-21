@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"context"
@@ -10,18 +10,18 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type couponService struct {
+type CouponService struct {
 	pb.UnimplementedCouponServiceServer
 
 	rb          *amqp.Connection
 	orderClient pb.OrderServiceClient
 }
 
-func NewCouponService(rb *amqp.Connection, oc pb.OrderServiceClient) *couponService {
-	return &couponService{rb: rb, orderClient: oc}
+func NewCouponService(rb *amqp.Connection, oc pb.OrderServiceClient) *CouponService {
+	return &CouponService{rb: rb, orderClient: oc}
 }
 
-func (x *couponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
+func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
 
 	if in.Code != "" {
 		return &pb.GetCouponResponse{
@@ -38,6 +38,6 @@ func (x *couponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoupon not implemented")
 }
 
-func (x *couponService) ListCoupon(context.Context, *pb.Empty) (*pb.ListCouponResponse, error) {
+func (x *CouponService) ListCoupon(context.Context, *pb.Empty) (*pb.ListCouponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCoupon not implemented")
 }

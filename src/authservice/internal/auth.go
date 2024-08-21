@@ -105,7 +105,6 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	// Calling UserService to update UserProfile
 	req := &pb.CreateUserProfileRequest{
 		Username:    in.Username,
-		Email:       in.Email,
 		PhoneNumber: in.PhoneNumber,
 		Address:     in.Address,
 	}

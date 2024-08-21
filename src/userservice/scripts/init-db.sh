@@ -38,7 +38,6 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$USER_DB" <<-EOSQL
     CREATE TABLE user_profile (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
         phone_number VARCHAR(255) NOT NULL,
         address_id INT REFERENCES address(id) ON DELETE SET NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()

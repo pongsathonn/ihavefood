@@ -16,7 +16,6 @@ import (
 type userProfile struct {
 	UserId      string
 	Username    string
-	Email       string
 	PhoneNumber string
 	AddressName sql.NullString
 	SubDistrict sql.NullString
@@ -26,7 +25,7 @@ type userProfile struct {
 }
 
 type UserRepository interface {
-	SaveUserProfile(ctx context.Context, username, email, phoneNumber string, address *pb.Address) (string, error)
+	SaveUserProfile(ctx context.Context, username, phoneNumber string, address *pb.Address) (string, error)
 	UserProfiles(ctx context.Context) ([]*pb.UserProfile, error)
 	GetUserProfileByUsername(ctx context.Context, username string) (*pb.UserProfile, error)
 }
@@ -39,7 +38,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) SaveUserProfile(ctx context.Context, username, email, phoneNumber string, address *pb.Address) (string, error) {
+func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNumber string, address *pb.Address) (string, error) {
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -77,16 +76,14 @@ func (r *userRepository) SaveUserProfile(ctx context.Context, username, email, p
 	userRow := tx.QueryRowContext(ctx, `
 		INSERT INTO user_profile(
 			username,
-			email,
 			phone_number,
 			address_id,
 			created_at
 		)
-		VALUES($1,$2,$3,$4,NOW())
+		VALUES($1,$2,$3,NOW())
 		RETURNING id
 	`,
 		username,
-		email,
 		phoneNumber,
 		addressID,
 	)
@@ -114,7 +111,6 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*pb.UserProfile, e
 		SELECT
 			user_profile.id, 
 			user_profile.username, 
-			user_profile.email, 
 			user_profile.phone_number,
 			address.name, 
 			address.sub_district, 
@@ -142,7 +138,6 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*pb.UserProfile, e
 		err := rows.Scan(
 			&u.UserId,
 			&u.Username,
-			&u.Email,
 			&u.PhoneNumber,
 			&u.AddressName,
 			&u.SubDistrict,
@@ -158,7 +153,6 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*pb.UserProfile, e
 		user := &pb.UserProfile{
 			UserId:      u.UserId,
 			Username:    u.Username,
-			Email:       u.Email,
 			PhoneNumber: u.PhoneNumber,
 			Address: &pb.Address{
 				AddressName: u.AddressName.String,
@@ -184,7 +178,6 @@ func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username 
 		SELECT
 			user_profile.id, 
 			user_profile.username, 
-			user_profile.email, 
 			user_profile.phone_number,
 			address.name, 
 			address.sub_district, 

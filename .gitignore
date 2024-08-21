@@ -2,7 +2,6 @@
 EventDesign.md
 UML.md
 *.swp
-*.sh
 .env
 
 lazycurl.sh

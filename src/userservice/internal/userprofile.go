@@ -31,11 +31,11 @@ func (x *UserService) UpdateUserProfile(ctx context.Context, empty *pb.Empty) (*
 // and save it to database
 func (x *UserService) CreateUserProfile(ctx context.Context, in *pb.CreateUserProfileRequest) (*pb.CreateUserProfileResponse, error) {
 
-	if in.Username == "" || in.Email == "" || in.PhoneNumber == "" || in.Address == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "username, email, phone number or address must be provided")
+	if in.Username == "" || in.PhoneNumber == "" || in.Address == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "username,  phone number or address must be provided")
 	}
 
-	userID, err := x.repository.SaveUserProfile(ctx, in.Username, in.Email, in.PhoneNumber, in.Address)
+	userID, err := x.repository.SaveUserProfile(ctx, in.Username, in.PhoneNumber, in.Address)
 	if err != nil {
 		log.Println("insert failed: %v", err)
 		return nil, status.Errorf(codes.InvalidArgument, "failed to save user to database")

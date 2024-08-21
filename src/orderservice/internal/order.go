@@ -1,33 +1,31 @@
-package main
+package internal
 
 import (
 	"context"
 	"fmt"
 	"log"
 
-	"github.com/pongsathonn/ihavefood/src/orderservice/rabbitmq"
-	"github.com/pongsathonn/ihavefood/src/orderservice/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
-func NewOrder(db repository.OrderRepo, ps rabbitmq.RabbitMQ) *order {
-	return &order{
+type OrderService struct {
+	pb.UnimplementedOrderServiceServer
+
+	db OrderRepo
+	ps RabbitMQ
+}
+
+func NewOrderService(db OrderRepo, ps RabbitMQ) *OrderService {
+	return &OrderService{
 		db: db,
 		ps: ps,
 	}
 }
 
-type order struct {
-	pb.UnimplementedOrderServiceServer
-
-	db repository.OrderRepo
-	ps rabbitmq.RabbitMQ
-}
-
-func (x *order) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
+func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
 
 	if in.Username == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
@@ -42,7 +40,7 @@ func (x *order) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrde
 
 }
 
-func (x *order) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+func (x *OrderService) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
 
 	if in.Username == "" || in.Address == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "username or address must be provided")
