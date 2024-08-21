@@ -4,4 +4,6 @@ UML.md
 *.swp
 .env
 
+TODO.md
+dngproto.sh
 lazycurl.sh
