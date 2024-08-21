@@ -265,31 +265,31 @@ service UserService {
     // update user's profile picture
     // update name 
 
-    rpc UpdateUser(Empty) returns(Empty) {}
+    rpc UpdateUserProfile(Empty) returns(Empty) {}
 
-    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc CreateUserProfile(CreateUserProfileRequest) returns (CreateUserProfileResponse) {}
 
-    rpc GetUser(GetUserRequest) returns(GetUserResponse){
+    rpc GetUserProfile(GetUserProfileRequest) returns(GetUserProfileResponse){
         option (google.api.http) = {
             get: "/api/users/{username}" 
         };
     }
 
-    rpc ListUser(ListUserRequest) returns(ListUserResponse){
+    rpc ListUserProfile(ListUserProfileRequest) returns(ListUserProfileResponse){
         option (google.api.http) = {
             get: "/api/users" 
         };
     }
 
 
-    rpc DeleteUser(DeleteUserRequest) returns(Empty){
+    rpc DeleteUserProfile(DeleteUserProfileRequest) returns(Empty){
         option (google.api.http) = {
             delete: "/api/users/{username}" 
         };
     }
 }
 
-message User {
+message UserProfile {
     string user_id = 1;
     string username = 2;
     string email = 3;
@@ -297,33 +297,33 @@ message User {
     Address address = 5;
 }
 
-message CreateUserRequest {
+message CreateUserProfileRequest {
     string username = 1;
     string email = 2;
     string phone_number = 3;
     Address address = 4;
 }
 
-message CreateUserResponse {
+message CreateUserProfileResponse {
     string user_id =1;
 }
 
-message GetUserRequest{
+message GetUserProfileRequest{
     string username = 1;
 }
 
-message GetUserResponse{
+message GetUserProfileResponse{
     User user = 1;
 }
 
-message ListUserRequest {
+message ListUserProfileRequest {
 }
 
-message ListUserResponse{
+message ListUserProfileResponse{
     repeated User users = 1;
 }
 
-message DeleteUserRequest {
+message DeleteUserProfileRequest {
     string username = 1;
 }
 
