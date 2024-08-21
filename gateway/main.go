@@ -25,10 +25,13 @@ func main() {
 		log.Fatalf("failed to register service handler: %v", err)
 	}
 
-	log.Println("gateway starting")
+	authMW, serviceMW, err := initMiddleware()
+	if err != nil {
+		log.Fatalf("failed to init middleware: %v", err)
+	}
+	mux := setupHTTPMux(authMW, serviceMW, gwmux)
 
-	mw := middleware.NewMiddleware()
-	mux := setupHTTPMux(mw, gwmux)
+	log.Println("gateway starting")
 
 	s := fmt.Sprintf(":%s", os.Getenv("GATEWAY_PORT"))
 	log.Fatal(http.ListenAndServe(s, mux))
@@ -73,24 +76,59 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 		if err := handler.regsiterFunc(ctx, gwmux, os.Getenv(handler.endpoint), opts); err != nil {
 			return err
 		}
-
 	}
 
 	return nil
 }
 
-func setupHTTPMux(mw middleware.XXX, gwmux *runtime.ServeMux) http.Handler {
+// TODO try to understand this
+func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware, error) {
+
+	clientConfig := map[string]func(*grpc.ClientConn) interface{}{
+		"RESTAURANT_URI": func(conn *grpc.ClientConn) interface{} { return pb.NewRestaurantServiceClient(conn) },
+		"COUPON_URI":     func(conn *grpc.ClientConn) interface{} { return pb.NewCouponServiceClient(conn) },
+		"ORDER_URI":      func(conn *grpc.ClientConn) interface{} { return pb.NewOrderServiceClient(conn) },
+		"DELIVERY_URI":   func(conn *grpc.ClientConn) interface{} { return pb.NewDeliveryServiceClient(conn) },
+		"USER_URI":       func(conn *grpc.ClientConn) interface{} { return pb.NewUserServiceClient(conn) },
+	}
+
+	clients := make(map[string]interface{})
+	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+
+	for key, createClient := range clientConfig {
+		conn, err := grpc.Dial(os.Getenv(key), opts)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error creating %s client: %v", key, err)
+		}
+		clients[key] = createClient(conn)
+	}
+
+	cfg := middleware.ServiceMiddlewareConfig{
+		RestaurantClient: clients["RESTAURANT_URI"].(pb.RestaurantServiceClient),
+		CouponClient:     clients["COUPON_URI"].(pb.CouponServiceClient),
+		OrderClient:      clients["ORDER_URI"].(pb.OrderServiceClient),
+		DeliveryClient:   clients["DELIVERY_URI"].(pb.DeliveryServiceClient),
+		UserClient:       clients["USER_URI"].(pb.UserServiceClient),
+	}
+
+	serviceMW := middleware.NewServiceMiddleware(cfg)
+	authMW := middleware.NewAuthMiddleware()
+
+	return authMW, serviceMW, nil
+}
+
+func setupHTTPMux(auth middleware.AuthMiddleware, svc middleware.ServiceMiddleware, gwmux *runtime.ServeMux) http.Handler {
 
 	mux := http.NewServeMux()
 	mux.Handle("/auth/login", gwmux)
 	mux.Handle("/auth/register", gwmux)
-	mux.Handle("DELETE /api/*", mw.Authz(gwmux))
+	mux.Handle("DELETE /api/*", auth.Authz(gwmux))
 
 	// production use this
-	mux.Handle("POST /api/orders/place-order", mw.Authn(mw.VerifyPlaceOrder(gwmux)))
-	mux.Handle("POST /api/users", mw.Authn(gwmux))
+	mux.Handle("POST /api/orders/place-order", auth.Authn(svc.VerifyPlaceOrder(gwmux)))
+	mux.Handle("POST /api/users", auth.Authn(gwmux))
 
-	mux.Handle("/api/*", mw.Authn(gwmux))
+	mux.Handle("/api/*", auth.Authn(gwmux))
 	mux.Handle("/", gwmux)
 
 	return prettierJSON(mux)
