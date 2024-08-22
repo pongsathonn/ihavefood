@@ -14,12 +14,15 @@ import (
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 
-	rabbitmq   RabbitmqClient
+	rabbitmq   RabbitMQClient
 	repository UserRepository
 }
 
-func NewUserService(rabbitmq RabbitmqClient, repo UserRepository) *UserService {
-	return &UserService{rabbitmq: rabbitmq, repository: repo}
+func NewUserService(rabbitmq RabbitMQClient, repo UserRepository) *UserService {
+	return &UserService{
+		rabbitmq:   rabbitmq,
+		repository: repo,
+	}
 }
 
 func (x *UserService) UpdateUserProfile(ctx context.Context, empty *pb.Empty) (*pb.Empty, error) {
