@@ -1,5 +1,5 @@
 
-IHAVEFOOD is a food-delivery microservice personal app written by Go 
+ihavefood is a food-delivery microservice personal app written by Go 
 
 Golang
 gRPC HTTP
