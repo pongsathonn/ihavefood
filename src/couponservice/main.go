@@ -14,6 +14,25 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+func main() {
+	conn, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	orderClient, err := initOrdergRPCClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := internal.NewCouponService(conn, orderClient)
+
+	startGRPCServer(c)
+
+	//-----------------------
+
+}
+
 // initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
 func initRabbitMQ() (*amqp.Connection, error) {
 
@@ -32,7 +51,7 @@ func initRabbitMQ() (*amqp.Connection, error) {
 	return conn, nil
 }
 
-func initOrderClient() (pb.OrderServiceClient, error) {
+func initOrdergRPCClient() (pb.OrderServiceClient, error) {
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 
@@ -75,24 +94,6 @@ func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
+	log.Printf("%s doesn't exists \n", key)
 	return defaultValue
-}
-
-func main() {
-	conn, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	orderClient, err := initOrderClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	c := internal.NewCouponService(conn, orderClient)
-
-	startGRPCServer(c)
-
-	//-----------------------
-
 }

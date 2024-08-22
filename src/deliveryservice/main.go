@@ -16,6 +16,28 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+func main() {
+
+	conn, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client, err := initMongoDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rb := internal.NewRabbitMQ(conn)
+	rp := internal.NewDeliveryRepository(client)
+	d := internal.NewDeliveryService(rb, rp)
+
+	// Start the order assignment process in a separate goroutine
+	go d.OrderAssignment()
+
+	startGRPCServer(d)
+}
+
 // initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
 func initRabbitMQ() (*amqp.Connection, error) {
 
@@ -85,26 +107,4 @@ func getEnv(key, defaultValue string) string {
 
 	log.Printf("value of %s not set\n", key)
 	return defaultValue
-}
-
-func main() {
-
-	conn, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	client, err := initMongoDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rb := internal.NewRabbitMQ(conn)
-	rp := internal.NewDeliveryRepo(client)
-	d := internal.NewDeliveryService(rb, rp)
-
-	// Start the order assignment process in a separate goroutine
-	go d.OrderAssignment()
-
-	startGRPCServer(d)
 }

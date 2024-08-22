@@ -14,10 +14,10 @@ type RestaurantService struct {
 	pb.UnimplementedRestaurantServiceServer
 
 	repository RestaurantRepository
-	rabbitmq   RabbitmqClient
+	rabbitmq   RabbitMQ
 }
 
-func NewRestaurantService(repository RestaurantRepository, rabbitmq RabbitmqClient) *RestaurantService {
+func NewRestaurantService(repository RestaurantRepository, rabbitmq RabbitMQ) *RestaurantService {
 	return &RestaurantService{
 		repository: repository,
 		rabbitmq:   rabbitmq,

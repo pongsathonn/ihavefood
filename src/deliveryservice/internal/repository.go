@@ -17,21 +17,21 @@ type OrderDelivery struct {
 	AcceptedTime *time.Time `bson:"acceptedTime"`
 }
 
-type DeliveryRepo interface {
+type DeliveryRepository interface {
 	GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error)
 	SaveOrderDelivery(ctx context.Context, orderId string) error
 	UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error
 }
 
-type deliveryRepo struct {
+type deliveryRepository struct {
 	db *mongo.Client
 }
 
-func NewDeliveryRepo(db *mongo.Client) DeliveryRepo {
-	return &deliveryRepo{db: db}
+func NewDeliveryRepository(db *mongo.Client) DeliveryRepository {
+	return &deliveryRepository{db: db}
 }
 
-func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error) {
+func (r *deliveryRepository) GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error) {
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	filter := bson.M{"orderId": orderId}
@@ -52,7 +52,7 @@ func (r *deliveryRepo) GetOrderDeliveryById(ctx context.Context, orderId string)
 	return &result, nil
 }
 
-func (r *deliveryRepo) SaveOrderDelivery(ctx context.Context, orderId string) error {
+func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderId string) error {
 
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
@@ -73,7 +73,7 @@ func (r *deliveryRepo) SaveOrderDelivery(ctx context.Context, orderId string) er
 }
 
 // UpdateOrderDelivery update when Rider accepted order
-func (r *deliveryRepo) UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error {
+func (r *deliveryRepository) UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error {
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	filter := bson.D{

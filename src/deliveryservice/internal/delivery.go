@@ -35,15 +35,15 @@ type DeliveryService struct {
 	pb.UnimplementedDeliveryServiceServer
 
 	mu         sync.Mutex
-	rabbitmq   RabbitmqClient
-	repository DeliveryRepo
+	rabbitmq   RabbitMQ
+	repository DeliveryRepository
 
 	riderAcceptedCh chan *pb.AcceptOrderHandlerRequest
 	orderPickupCh   chan *pickUpInfo
 }
 
 // NewDeliveryServer creates and initializes a new delivery instance.
-func NewDeliveryService(rabbitmq RabbitmqClient, repository DeliveryRepo) *DeliveryService {
+func NewDeliveryService(rabbitmq RabbitMQ, repository DeliveryRepository) *DeliveryService {
 	return &DeliveryService{
 		rabbitmq:   rabbitmq,
 		repository: repository,
@@ -159,7 +159,8 @@ func (x *DeliveryService) OrderAssignment() {
 func (x *DeliveryService) receiveOrder() *pb.PlaceOrder {
 
 	deliveries, err := x.rabbitmq.Subscribe(
-		"order",              // exchange
+		context.TODO(),
+		"order_exchange",     // exchange
 		"",                   // queue
 		"order.placed.event", // routing key
 	)

@@ -18,6 +18,26 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+func main() {
+
+	mg, err := initMongoClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rb, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db := internal.NewOrderRepository(mg)
+	ps := internal.NewRabbitMQ(rb)
+	s := internal.NewOrderService(db, ps)
+
+	startGRPCServer(s)
+
+}
+
 func initRabbitMQ() (*amqp.Connection, error) {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
@@ -95,25 +115,6 @@ func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
+	log.Printf("%s doesn't exists \n", key)
 	return defaultValue
-}
-
-func main() {
-
-	mg, err := initMongoClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rb, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db := internal.NewOrderRepository(mg)
-	ps := internal.NewRabbitmqClient(rb)
-	s := internal.NewOrderService(db, ps)
-
-	startGRPCServer(s)
-
 }

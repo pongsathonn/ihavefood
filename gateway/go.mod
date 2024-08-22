@@ -16,9 +16,3 @@ require (
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
 )
-
-replace github.com/pongsathonn/food-delivery/src/user => ../src/user
-
-replace github.com/pongsathonn/food-delivery/src/order => ../src/order
-
-replace github.com/pongsathonn/food-delivery/src/coupon => ../src/coupon

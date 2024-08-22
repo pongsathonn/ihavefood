@@ -14,11 +14,11 @@ import (
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 
-	rabbitmq   RabbitMQClient
+	rabbitmq   RabbitMQ
 	repository UserRepository
 }
 
-func NewUserService(rabbitmq RabbitMQClient, repo UserRepository) *UserService {
+func NewUserService(rabbitmq RabbitMQ, repo UserRepository) *UserService {
 	return &UserService{
 		rabbitmq:   rabbitmq,
 		repository: repo,

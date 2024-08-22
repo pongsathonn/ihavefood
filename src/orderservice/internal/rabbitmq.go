@@ -8,21 +8,21 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type RabbitmqClient interface {
+type RabbitMQ interface {
 	Publish(ctx context.Context, exchange, routingKey string, body []byte) error
 	Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error)
 }
 
-type rabbitmqClient struct {
+type rabbitMQ struct {
 	conn *amqp.Connection
 }
 
-func NewRabbitmqClient(conn *amqp.Connection) RabbitmqClient {
-	return &rabbitmqClient{conn: conn}
+func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
+	return &rabbitMQ{conn: conn}
 }
 
 // routing key example i.e Order.Created.Event
-func (r *rabbitmqClient) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
+func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
 
 	ch, err := r.conn.Channel()
 	if err != nil {
@@ -68,7 +68,7 @@ func (r *rabbitmqClient) Publish(ctx context.Context, exchange, routingKey strin
 
 }
 
-func (r *rabbitmqClient) Subscribe(ctx context.Context, exchange, queue, routingkey string) (<-chan amqp.Delivery, error) {
+func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingkey string) (<-chan amqp.Delivery, error) {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open the channel: %v", err)

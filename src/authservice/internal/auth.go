@@ -25,12 +25,12 @@ type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
 	db         *sql.DB
-	rabbitmq   RabbitmqClient
+	rabbitmq   RabbitMQ
 	userClient pb.UserServiceClient
 }
 
 // NewAuth creates a new instance of auth with the provided database connection.
-func NewAuthService(db *sql.DB, rabbitmq RabbitmqClient, userClient pb.UserServiceClient) *AuthService {
+func NewAuthService(db *sql.DB, rabbitmq RabbitMQ, userClient pb.UserServiceClient) *AuthService {
 	return &AuthService{
 		db:         db,
 		rabbitmq:   rabbitmq,

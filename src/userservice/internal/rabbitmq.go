@@ -7,20 +7,20 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type RabbitMQClient interface {
+type RabbitMQ interface {
 	Publish(ctx context.Context, exchange, routingKey string, body []byte) error
 	Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error)
 }
 
-type rabbitMQClient struct {
+type rabbitMQ struct {
 	conn *amqp.Connection
 }
 
-func NewRabbitMQClient(conn *amqp.Connection) RabbitMQClient {
-	return &rabbitMQClient{conn: conn}
+func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
+	return &rabbitMQ{conn: conn}
 }
 
-func (r *rabbitMQClient) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
+func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return fmt.Errorf("failed to open a channel: %v", err)
@@ -58,7 +58,7 @@ func (r *rabbitMQClient) Publish(ctx context.Context, exchange, routingKey strin
 	return nil
 }
 
-func (r *rabbitMQClient) Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error) {
+func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error) {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open the channel: %v", err)

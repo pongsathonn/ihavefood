@@ -17,6 +17,26 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+func main() {
+
+	mongoClient, err := initMongoClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rabbitConn, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	repo := internal.NewRestaurantRepository(mongoClient)
+	rb := internal.NewRabbitMQ(rabbitConn)
+	s := internal.NewRestaurantService(repo, rb)
+
+	startGRPCServer(s)
+
+}
+
 func initMongoClient() (*mongo.Client, error) {
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/restaurant_database?authSource=admin",
 		os.Getenv("RESTAURANT_MONGO_USER"),
@@ -86,25 +106,6 @@ func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
+	log.Printf("%s doesn't exists \n", key)
 	return defaultValue
-}
-
-func main() {
-
-	mongoClient, err := initMongoClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rabbitConn, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	repo := internal.NewRestaurantRepository(mongoClient)
-	rb := internal.NewRabbitmqClient(rabbitConn)
-	s := internal.NewRestaurantService(repo, rb)
-
-	startGRPCServer(s)
-
 }

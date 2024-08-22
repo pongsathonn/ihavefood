@@ -15,6 +15,24 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+func main() {
+	db, err := initPostgres()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	amqpConn, err := initRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	repository := internal.NewUserRepository(db)
+	rabbitmq := internal.NewRabbitMQ(amqpConn)
+	s := internal.NewUserService(rabbitmq, repository)
+	startGRPCServer(s)
+
+}
+
 // initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
 func initRabbitMQ() (*amqp.Connection, error) {
 
@@ -85,23 +103,6 @@ func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
+	log.Printf("%s doesn't exists \n", key)
 	return defaultValue
-}
-
-func main() {
-	db, err := initPostgres()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	amqpConn, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	repository := internal.NewUserRepository(db)
-	rabbitmq := internal.NewRabbitMQClient(amqpConn)
-	s := internal.NewUserService(rabbitmq, repository)
-	startGRPCServer(s)
-
 }

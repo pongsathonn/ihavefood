@@ -16,10 +16,10 @@ type OrderService struct {
 	pb.UnimplementedOrderServiceServer
 
 	repository OrderRepository
-	rabbitmq   RabbitmqClient
+	rabbitmq   RabbitMQ
 }
 
-func NewOrderService(repository OrderRepository, rabbitmq RabbitmqClient) *OrderService {
+func NewOrderService(repository OrderRepository, rabbitmq RabbitMQ) *OrderService {
 	return &OrderService{
 		repository: repository,
 		rabbitmq:   rabbitmq,
