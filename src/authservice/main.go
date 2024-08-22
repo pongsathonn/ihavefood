@@ -34,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to initialize RabbitMQ connection:", err)
 	}
-	rb := internal.NewRabbitMQ(amqpConn)
+	rb := internal.NewRabbitmqClient(amqpConn)
 
 	userClient, err := newUserServiceClient()
 	if err != nil {
