@@ -11,7 +11,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 )
 
-type RestaurantRepo interface {
+type RestaurantRepository interface {
 	IsAvailableMenu(ctx context.Context, restauName string, menus []*pb.Menu) (bool, error)
 	Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error)
 	Restaurants(context.Context) ([]*pb.Restaurant, error)
@@ -32,15 +32,15 @@ type MenuEntity struct {
 	Available pb.AvailStatus `bson:"available,omitempty"`
 }
 
-type restaurantRepo struct {
+type restaurantRepository struct {
 	db *mongo.Client
 }
 
-func NewRestaurantRepo(db *mongo.Client) RestaurantRepo {
-	return &restaurantRepo{db: db}
+func NewRestaurantRepository(db *mongo.Client) RestaurantRepository {
+	return &restaurantRepository{db: db}
 }
 
-func (r *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string, menus []*pb.Menu) (bool, error) {
+func (r *restaurantRepository) IsAvailableMenu(ctx context.Context, restauName string, menus []*pb.Menu) (bool, error) {
 	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	if len(menus) == 0 {
@@ -73,7 +73,7 @@ func (r *restaurantRepo) IsAvailableMenu(ctx context.Context, restauName string,
 	return true, nil
 }
 
-func (r *restaurantRepo) Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error) {
+func (r *restaurantRepository) Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error) {
 
 	if restauName == "" {
 		return nil, fmt.Errorf("restaurant name must be provided")
@@ -96,7 +96,7 @@ func (r *restaurantRepo) Restaurant(ctx context.Context, restauName string) (*pb
 	}, nil
 }
 
-func (r *restaurantRepo) Restaurants(context.Context) ([]*pb.Restaurant, error) {
+func (r *restaurantRepository) Restaurants(context.Context) ([]*pb.Restaurant, error) {
 
 	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
@@ -127,7 +127,7 @@ func (r *restaurantRepo) Restaurants(context.Context) ([]*pb.Restaurant, error) 
 
 }
 
-func (r *restaurantRepo) SaveRestaurant(ctx context.Context, restauName string, menus []*pb.Menu) (string, error) {
+func (r *restaurantRepository) SaveRestaurant(ctx context.Context, restauName string, menus []*pb.Menu) (string, error) {
 
 	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 
@@ -154,7 +154,7 @@ func (r *restaurantRepo) SaveRestaurant(ctx context.Context, restauName string, 
 
 }
 
-func (r *restaurantRepo) UpdateMenu(ctx context.Context, restauName string, newMenus []*pb.Menu) error {
+func (r *restaurantRepository) UpdateMenu(ctx context.Context, restauName string, newMenus []*pb.Menu) error {
 
 	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
 

@@ -13,14 +13,14 @@ import (
 type RestaurantService struct {
 	pb.UnimplementedRestaurantServiceServer
 
-	rp RestaurantRepo
-	rb RabbitmqClient
+	repository RestaurantRepository
+	rabbitmq   RabbitmqClient
 }
 
-func NewRestaurant(rp RestaurantRepo, rb RabbitmqClient) *RestaurantService {
+func NewRestaurantService(repository RestaurantRepository, rabbitmq RabbitmqClient) *RestaurantService {
 	return &RestaurantService{
-		rp: rp,
-		rb: rb,
+		repository: repository,
+		rabbitmq:   rabbitmq,
 	}
 }
 
@@ -30,7 +30,7 @@ func (x *RestaurantService) CheckAvailableMenu(ctx context.Context, in *pb.Check
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or menus must be provided")
 	}
 
-	avaliable, err := x.rp.IsAvailableMenu(ctx, in.RestaurantName, in.Menus)
+	avaliable, err := x.repository.IsAvailableMenu(ctx, in.RestaurantName, in.Menus)
 	if err != nil {
 		err = status.Errorf(codes.Internal, err.Error())
 		return &pb.CheckAvailableMenuResponse{Available: pb.AvailStatus_UNKNOWN}, err
@@ -48,7 +48,7 @@ func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaur
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name must be provided")
 	}
 
-	restaurant, err := x.rp.Restaurant(ctx, in.RestaurantName)
+	restaurant, err := x.repository.Restaurant(ctx, in.RestaurantName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurant: %v", err)
 	}
@@ -58,7 +58,7 @@ func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaur
 
 func (x *RestaurantService) ListRestaurant(ctx context.Context, empty *pb.Empty) (*pb.ListRestaurantResponse, error) {
 
-	restaurants, err := x.rp.Restaurants(ctx)
+	restaurants, err := x.repository.Restaurants(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurants: %v", err)
 	}
@@ -81,7 +81,7 @@ func (x *RestaurantService) RegisterRestaurant(ctx context.Context, in *pb.Regis
 		}
 	}
 
-	id, err := x.rp.SaveRestaurant(ctx, in.RestaurantName, in.Menus)
+	id, err := x.repository.SaveRestaurant(ctx, in.RestaurantName, in.Menus)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to save restaurant: %v", err)
 	}
@@ -95,7 +95,7 @@ func (x *RestaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) 
 		return nil, status.Errorf(codes.InvalidArgument, "restaurant name or munus must be provided")
 	}
 
-	if err := x.rp.UpdateMenu(ctx, in.RestaurantName, in.Menus); err != nil {
+	if err := x.repository.UpdateMenu(ctx, in.RestaurantName, in.Menus); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update menu: %v", err)
 	}
 
