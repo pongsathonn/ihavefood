@@ -110,9 +110,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db := internal.NewOrderRepo(mg)
-	ps := internal.NewRabbitMQ(rb)
-
+	db := internal.NewOrderRepository(mg)
+	ps := internal.NewRabbitmqClient(rb)
 	s := internal.NewOrderService(db, ps)
 
 	startGRPCServer(s)

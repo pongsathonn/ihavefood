@@ -11,11 +11,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
-type OrderRepo interface {
-	PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error)
-	SavePlaceOrder(*pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error)
-}
-
 // this PlaceOrder use as model for "INSERT" and "QUERY" with mongodb
 // to make this model match with protobuff json name should be same as bson name tag
 // if not omitempty at id Mongo will use zero as id ( when insert )
@@ -43,18 +38,23 @@ type SavePlaceOrderResponse struct {
 	OrderStatus     pb.OrderStatus
 }
 
-func NewOrderRepo(conn *mongo.Client) OrderRepo {
-	return &orderRepo{conn: conn}
+type OrderRepository interface {
+	PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error)
+	SavePlaceOrder(*pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error)
 }
 
-type orderRepo struct {
+type orderRepository struct {
 	conn *mongo.Client
 }
 
-// list all user's placeorder by username ( like query placeorder history )
-func (od *orderRepo) PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error) {
+func NewOrderRepository(conn *mongo.Client) OrderRepository {
+	return &orderRepository{conn: conn}
+}
 
-	coll := od.conn.Database("order_database", nil).Collection("orderCollection")
+// list all user's placeorder by username ( like query placeorder history )
+func (r *orderRepository) PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse, error) {
+
+	coll := r.conn.Database("order_database", nil).Collection("orderCollection")
 
 	filter := bson.D{{"username", username}}
 	cur, err := coll.Find(context.TODO(), filter)
@@ -92,9 +92,9 @@ func (od *orderRepo) PlaceOrder(username string) (*pb.ListUserPlaceOrderResponse
 	return &pb.ListUserPlaceOrderResponse{PlaceOrders: placeOrders}, nil
 }
 
-func (od *orderRepo) SavePlaceOrder(in *pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error) {
+func (r *orderRepository) SavePlaceOrder(in *pb.PlaceOrderRequest) (*SavePlaceOrderResponse, error) {
 
-	coll := od.conn.Database("order_database", nil).Collection("orderCollection")
+	coll := r.conn.Database("order_database", nil).Collection("orderCollection")
 
 	po := PlaceOrder{
 		TrackingId:     primitive.NewObjectID(),

@@ -8,20 +8,21 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type RabbitMQ interface {
-	Publish(routingKey string, body interface{}) error
+type RabbitmqClient interface {
+	Publish(ctx context.Context, exchange, routingKey string, body []byte) error
+	Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error)
 }
 
-type rabbitMQ struct {
+type rabbitmqClient struct {
 	conn *amqp.Connection
 }
 
-func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
-	return &rabbitMQ{conn: conn}
+func NewRabbitmqClient(conn *amqp.Connection) RabbitmqClient {
+	return &rabbitmqClient{conn: conn}
 }
 
 // routing key example i.e Order.Created.Event
-func (r *rabbitMQ) Publish(routingKey string, body interface{}) error {
+func (r *rabbitmqClient) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
 
 	ch, err := r.conn.Channel()
 	if err != nil {
@@ -31,13 +32,13 @@ func (r *rabbitMQ) Publish(routingKey string, body interface{}) error {
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"order_exchange", // name
-		"topic",          // type
-		true,             // durable
-		false,            // auto-deleted
-		false,            // internal
-		false,            // no-wait
-		nil,              // arguments
+		exchange, // name
+		"topic",  // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
 	)
 	if err != nil {
 		return fmt.Errorf("failed to declare exchange :", err)
@@ -48,8 +49,9 @@ func (r *rabbitMQ) Publish(routingKey string, body interface{}) error {
 		return fmt.Errorf("marshal body to json failed :", err)
 	}
 
-	err = ch.PublishWithContext(context.TODO(),
-		"order",    // exchange
+	err = ch.PublishWithContext(
+		ctx,
+		exchange,   // exchange
 		routingKey, // routing key
 		false,      // mandatory
 		false,      // immediate
@@ -64,4 +66,63 @@ func (r *rabbitMQ) Publish(routingKey string, body interface{}) error {
 
 	return nil
 
+}
+
+func (r *rabbitmqClient) Subscribe(ctx context.Context, exchange, queue, routingkey string) (<-chan amqp.Delivery, error) {
+	ch, err := r.conn.Channel()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open the channel: %v", err)
+	}
+
+	err = ch.ExchangeDeclare(
+		exchange, // name
+		"topic",  // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to declare an exchange: %v", err)
+	}
+
+	q, err := ch.QueueDeclare(
+		queue, // name
+		false, // durable
+		false, // delete when unused
+		true,  // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to declare a queue: %v", err)
+	}
+
+	err = ch.QueueBind(
+		q.Name,     // queue name
+		routingkey, // routing key
+		exchange,   // exchange
+		false,      // no-wait
+		nil,        // arguments
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to bind a queue: %v", err)
+	}
+
+	deliveries, err := ch.ConsumeWithContext(
+		ctx,
+		q.Name,          // queue
+		"order_service", // consumer
+		true,            // auto-ack
+		false,           // exclusive
+		false,           // no-local
+		false,           // no-wait
+		nil,             // arguments
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to register a consumer: %v", err)
+	}
+
+	return deliveries, nil
 }

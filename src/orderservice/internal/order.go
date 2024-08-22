@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -14,14 +15,14 @@ import (
 type OrderService struct {
 	pb.UnimplementedOrderServiceServer
 
-	db OrderRepo
-	ps RabbitMQ
+	repository OrderRepository
+	rabbitmq   RabbitmqClient
 }
 
-func NewOrderService(db OrderRepo, ps RabbitMQ) *OrderService {
+func NewOrderService(repository OrderRepository, rabbitmq RabbitmqClient) *OrderService {
 	return &OrderService{
-		db: db,
-		ps: ps,
+		repository: repository,
+		rabbitmq:   rabbitmq,
 	}
 }
 
@@ -31,7 +32,7 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
 	}
 
-	resp, err := x.db.PlaceOrder(in.Username)
+	resp, err := x.repository.PlaceOrder(in.Username)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve user's place orders :%v", err)
 	}
@@ -46,6 +47,7 @@ func (x *OrderService) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest)
 		return nil, status.Errorf(codes.InvalidArgument, "username or address must be provided")
 	}
 
+	// validate payment methods
 	pm := in.PaymentMethod.String()
 	if _, ok := pb.PaymentMethod_value[pm]; !ok {
 		return nil, fmt.Errorf("payment methods invalid: %s", pm)
@@ -61,12 +63,12 @@ func (x *OrderService) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest)
 	}
 
 	// save place order
-	res, err := x.db.SavePlaceOrder(in)
+	res, err := x.repository.SavePlaceOrder(in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save place order: %v", err)
 	}
 
-	body := &pb.PlaceOrder{
+	p := &pb.PlaceOrder{
 		OrderId:         res.OrderId,
 		OrderTrackingId: res.OrderTrackingId,
 		Username:        in.Username,
@@ -83,16 +85,19 @@ func (x *OrderService) PlaceOrder(ctx context.Context, in *pb.PlaceOrderRequest)
 		OrderStatus:     res.OrderStatus,
 	}
 
+	body, err := json.Marshal(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal json: %v", err)
+	}
+
 	// publish event
-	routingKey := "order.placed.event"
-	err = x.ps.Publish(routingKey, body)
+	err = x.rabbitmq.Publish(ctx, "order_exchange", "order.placed.event", body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create event : %v", err)
 	}
 
-	log.Printf("published with order id : %s\n", body.OrderId)
+	log.Printf("published with order id : %s\n", p.OrderId)
 
-	// response
 	return &pb.PlaceOrderResponse{
 		OrderId:         res.OrderId,
 		OrderTrackingId: res.OrderTrackingId,
