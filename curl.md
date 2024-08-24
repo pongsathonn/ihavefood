@@ -7,9 +7,8 @@ AvailabilityStatus
 2  = unknow
 
 <!------------------------------------------------------------------------>
-<pre>
 # Order Service
-
+<pre>
 <b>Place Order</b>
 
 curl -X POST http://localhost:180/api/orders/place-order \
@@ -41,8 +40,6 @@ curl -X POST http://localhost:180/api/orders/place-order \
   "payment_method": 0
 }'
 
-
-
 <b>User Order History</b>
 curl -X GET http://localhost:180/api/orders/{username} \
 -H "Authorization: Bearer <your_token_here>"
@@ -51,8 +48,8 @@ curl -X GET http://localhost:180/api/orders/{username} \
 
 <!------------------------------------------------------------------------>
 
-<pre>
 # Delivery Service
+<pre>
 curl -X POST http://localhost:180/api/deliveries/accept-order \
 -H "Authorization: Bearer <your_token_here>" \
 -d '{"rider_id":"rider002", "order_id":"66af00af1687c32893d15693"}'
@@ -63,8 +60,8 @@ curl -X POST http://localhost:180/api/deliveries/accept-order \
 <!------------------------------------------------------------------------>
 
 
-<pre>
 # Auth Service
+<pre>
 
 <b>Register</b>
 curl -X POST http://localhost:<port>/register \
@@ -80,8 +77,8 @@ curl -H "Authorization:<token>" http://localhost:180/login \
 <!------------------------------------------------------------------------>
 
 
-<pre>
 # Restaurant 
+<pre>
 <b>Register new restaurant</b>
 
 curl -X POST http://localhost:180/api/restaurants \
@@ -117,8 +114,8 @@ curl -X POST http://localhost:180/api/restaurants/menus \
 
 <!------------------------------------------------------------------------>
 
-<pre>
 # User Service
+<pre>
 <b> Get User </b>
 curl -X GET http://localhost:180/api/users/{username} \
 -H "Authorization: Bearer <your_token_here>"
