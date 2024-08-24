@@ -1,5 +1,6 @@
 
 # CURL TEST
+this file contains every endpoint test with curl every services
 
 AvailabilityStatus <br>
 0  = available <br>
@@ -59,28 +60,18 @@ curl -X POST http://localhost:180/api/deliveries/accept-order \
 
 <!------------------------------------------------------------------------>
 
-
-# Auth Service
-<pre>
-
-<b>Register</b>
-curl -X POST http://localhost:<port>/register \
--d '{ xxxxxx}'
-
-<b>Login</b>
-POST
-curl -H "Authorization:<token>" http://localhost:180/login \
--d '{"username":"ken", "password":"secret"}'
-
-</pre>
-
-<!------------------------------------------------------------------------>
-
-
 # Restaurant 
 <pre>
-<b>Register new restaurant</b>
 
+<b>List Menus</b>
+curl -X GET http://localhost:180/api/restaurants/{restaurant_name} \
+-H "Authorization: Bearer <your_token_here>"
+
+<b>List Restaurants</b>
+curl -X GET http://localhost:180/api/restaurants \
+-H "Authorization: Bearer <your_token_here>"
+
+<b>Register new restaurant</b>
 curl -X POST http://localhost:180/api/restaurants \
 -H "Authorization: Bearer <your_token_here>" \
 -d '{
@@ -91,14 +82,6 @@ curl -X POST http://localhost:180/api/restaurants \
     {"food_name": "Green Curry", "price": 80}
   ]
 }'
-
-<b>List Restaurants</b>
-curl -X GET http://localhost:180/api/restaurants \
--H "Authorization: Bearer <your_token_here>"
-
-<b>List Menus</b>
-curl -X GET http://localhost:180/api/restaurants/{restaurant_name} \
--H "Authorization: Bearer <your_token_here>"
 
 <b>Add Menu</b>
 curl -X POST http://localhost:180/api/restaurants/menus \
@@ -116,34 +99,70 @@ curl -X POST http://localhost:180/api/restaurants/menus \
 
 # User Service
 <pre>
-<b> Get User </b>
+
+<b> Get User Profile </b>
 curl -X GET http://localhost:180/api/users/{username} \
 -H "Authorization: Bearer <your_token_here>"
 
-<b> Create New User </b>
-curl -X POST http://localhost:180/api/users \
--H "Authorization: Bearer <your_token_here>" \
--H "Content-Type: application/json" \
--d '{
-    "username": "_____",
-    "email": "_____",
-    "phone_number": "",
-    "address": {
-        "address_name": "_____",
-        "sub_district": "_____",
-        "district": "_____",
-        "province": "_____",
-        "postal_code": "_____"
-    }
-}'
-
-<b> List User </b>
+<b> List User Profile </b>
 curl -X GET http://localhost:180/api/users \
 -H "Authorization: Bearer <your_token_here>"
 
+<b> Delete User Profile </b>
+curl -X GET http://localhost:180/api/users/{username} \
+-H "Authorization: Bearer <your_token_here>"
 
 </pre>
 
 <!------------------------------------------------------------------------>
+
+# Auth Service
+<pre>
+
+<b>Register</b>
+curl -X POST "http://localhost:180/auth/register" \
+-H "Content-Type: application/json" \
+-d "{
+    "username": "___",
+    "email": "____",
+    "password": "____",
+    "phone_number": "___",
+    "address": {
+        "address_name": "123 Sukhumvit Road",
+        "sub_district": "Khlong Toei",
+        "district": "Khlong Toei",
+        "province": "Bangkok",
+        "postal_code": "10110"
+    }
+}"
+
+
+<b>Login</b>
+curl -s -X POST "http://localhost:180/auth/login" \
+-H "Content-Type: application/json" \
+-d "{"username":"________", "password":"_______"}")
+
+</pre>
+
+<!------------------------------------------------------------------------>
+
+# Coupon Service
+<pre>
+
+<b>Get coupon</b>
+curl -s -X GET "http://localhost:180/api/coupons/{code}" \
+-H "Authorization: Bearer <your_token_here>"
+
+<b>List coupon</b>
+curl -s -X GET "http://localhost:180/api/coupons" \
+-H "Authorization: Bearer <your_token_here>"
+
+
+
+</pre>
+
+
+<!------------------------------------------------------------------------>
+
 
 
