@@ -8,21 +8,6 @@ AvailabilityStatus
 1  = unavailiable
 2  = unknow
 
-# Auth Service
-<pre>
-
-<b>Register</b>
-curl -X POST http://localhost:<port>/register \
--d '{ xxxxxx}'
-
-<b>Login</b>
-POST
-curl -H "Authorization:<token>" http://localhost:180/login \
--d '{"username":"ken", "password":"secret"}'
-
-</pre>
-
-
 # Order Service
 <pre>
 
@@ -63,10 +48,35 @@ curl -X POST http://localhost:180/api/orders/place-order \
 curl -X GET http://localhost:180/api/orders/{username} \
 -H "Authorization: Bearer <your_token_here>"
 
-<b> </b>
+</pre>
+#-------------------------------------------------------------
+
+
+<pre>
+# Delivery Service
+curl -X POST http://localhost:180/api/deliveries/accept-order \
+-H "Authorization: Bearer <your_token_here>" \
+-d '{"rider_id":"rider002", "order_id":"66af00af1687c32893d15693"}'
 
 
 </pre>
+
+
+# Auth Service
+<pre>
+
+<b>Register</b>
+curl -X POST http://localhost:<port>/register \
+-d '{ xxxxxx}'
+
+<b>Login</b>
+POST
+curl -H "Authorization:<token>" http://localhost:180/login \
+-d '{"username":"ken", "password":"secret"}'
+
+</pre>
+
+
 
 # Restaurant 
 
@@ -105,10 +115,6 @@ curl -X POST http://localhost:180/api/restaurants/menus \
 
 </pre>
 
-# Delivery Service
-curl -X POST http://localhost:180/api/deliveries/accept-order \
--H "Authorization: Bearer <your_token_here>" \
--d '{"rider_id":"rider002", "order_id":"66af00af1687c32893d15693"}'
 
 
 # User Service
