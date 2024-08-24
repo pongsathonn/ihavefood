@@ -2,7 +2,7 @@
 # CURL TEST
 
 AvailabilityStatus
-0  = available
+0  = available <br>
 1  = unavailiable
 2  = unknow
 
