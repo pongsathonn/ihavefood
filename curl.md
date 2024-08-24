@@ -1,21 +1,14 @@
 
 # CURL TEST
 
-#-------------------------------------------------------------
-<--------->
-<>------------------------
-//--------------------
-<!----------->
-
-
-
 AvailabilityStatus
 0  = available
 1  = unavailiable
 2  = unknow
 
-# Order Service
+<!------------------------------------------------------------------------>
 <pre>
+# Order Service
 
 <b>Place Order</b>
 
@@ -56,6 +49,7 @@ curl -X GET http://localhost:180/api/orders/{username} \
 
 </pre>
 
+<!------------------------------------------------------------------------>
 
 <pre>
 # Delivery Service
@@ -66,9 +60,11 @@ curl -X POST http://localhost:180/api/deliveries/accept-order \
 
 </pre>
 
+<!------------------------------------------------------------------------>
 
-# Auth Service
+
 <pre>
+# Auth Service
 
 <b>Register</b>
 curl -X POST http://localhost:<port>/register \
@@ -81,12 +77,11 @@ curl -H "Authorization:<token>" http://localhost:180/login \
 
 </pre>
 
+<!------------------------------------------------------------------------>
 
-
-# Restaurant 
 
 <pre>
-
+# Restaurant 
 <b>Register new restaurant</b>
 
 curl -X POST http://localhost:180/api/restaurants \
@@ -120,10 +115,10 @@ curl -X POST http://localhost:180/api/restaurants/menus \
 
 </pre>
 
+<!------------------------------------------------------------------------>
 
-
-# User Service
 <pre>
+# User Service
 <b> Get User </b>
 curl -X GET http://localhost:180/api/users/{username} \
 -H "Authorization: Bearer <your_token_here>"
@@ -151,5 +146,7 @@ curl -X GET http://localhost:180/api/users \
 
 
 </pre>
+
+<!------------------------------------------------------------------------>
 
 
