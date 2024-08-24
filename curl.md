@@ -1,10 +1,10 @@
 
 # CURL TEST
 
-AvailabilityStatus
+AvailabilityStatus <br>
 0  = available <br>
-1  = unavailiable
-2  = unknow
+1  = unavailiable <br>
+2  = unknow 
 
 <!------------------------------------------------------------------------>
 # Order Service
