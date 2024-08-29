@@ -17,24 +17,19 @@ import (
 )
 
 func main() {
-
 	gwmux := newGatewaymux()
-
 	ctx := context.Background()
 	if err := registerServiceHandlers(ctx, gwmux); err != nil {
 		log.Fatalf("failed to register service handler: %v", err)
 	}
 
-	authMW, serviceMW, err := initMiddleware()
-	if err != nil {
-		log.Fatalf("failed to init middleware: %v", err)
-	}
-	mux := setupHTTPMux(authMW, serviceMW, gwmux)
+	auth, service := initMiddleware()
+	mux := setupHTTPMux(auth, service, gwmux)
+	handler := prettierJSON(cors(mux))
 
 	log.Println("gateway starting")
-
 	s := fmt.Sprintf(":%s", os.Getenv("GATEWAY_PORT"))
-	log.Fatal(http.ListenAndServe(s, mux))
+	log.Fatal(http.ListenAndServe(s, handler))
 }
 
 func newGatewaymux() *runtime.ServeMux {
@@ -61,7 +56,7 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 	}
 
 	services := []struct {
-		regsiterFunc func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error
+		registerFunc func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error
 		endpoint     string
 	}{
 		{pb.RegisterUserServiceHandlerFromEndpoint, "USER_URI"},
@@ -73,7 +68,7 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 	}
 
 	for _, handler := range services {
-		if err := handler.regsiterFunc(ctx, gwmux, os.Getenv(handler.endpoint), opts); err != nil {
+		if err := handler.registerFunc(ctx, gwmux, os.Getenv(handler.endpoint), opts); err != nil {
 			return err
 		}
 	}
@@ -81,57 +76,112 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 	return nil
 }
 
-// TODO try to understand this
-func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware, error) {
+func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware) {
 
-	clientConfig := map[string]func(*grpc.ClientConn) interface{}{
-		"RESTAURANT_URI": func(conn *grpc.ClientConn) interface{} { return pb.NewRestaurantServiceClient(conn) },
-		"COUPON_URI":     func(conn *grpc.ClientConn) interface{} { return pb.NewCouponServiceClient(conn) },
-		"ORDER_URI":      func(conn *grpc.ClientConn) interface{} { return pb.NewOrderServiceClient(conn) },
-		"DELIVERY_URI":   func(conn *grpc.ClientConn) interface{} { return pb.NewDeliveryServiceClient(conn) },
-		"USER_URI":       func(conn *grpc.ClientConn) interface{} { return pb.NewUserServiceClient(conn) },
-	}
-
-	clients := make(map[string]interface{})
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-
-	for key, createClient := range clientConfig {
-		conn, err := grpc.Dial(os.Getenv(key), opts)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error creating %s client: %v", key, err)
-		}
-		clients[key] = createClient(conn)
+	restaurantConn, err := grpc.Dial(os.Getenv("RESTAURANT_URI"), opts)
+	if err != nil {
+		log.Fatalf("error creating restaurant client: %v", err)
 	}
+	restaurantClient := pb.NewRestaurantServiceClient(restaurantConn)
 
+	couponConn, err := grpc.Dial(os.Getenv("COUPON_URI"), opts)
+	if err != nil {
+		log.Fatalf("error creating coupon client: %v", err)
+	}
+	couponClient := pb.NewCouponServiceClient(couponConn)
+
+	orderConn, err := grpc.Dial(os.Getenv("ORDER_URI"), opts)
+	if err != nil {
+		log.Fatalf("error creating order client: %v", err)
+	}
+	orderClient := pb.NewOrderServiceClient(orderConn)
+
+	deliveryConn, err := grpc.Dial(os.Getenv("DELIVERY_URI"), opts)
+	if err != nil {
+		log.Fatalf("error creating delivery client: %v", err)
+	}
+	deliveryClient := pb.NewDeliveryServiceClient(deliveryConn)
+
+	userConn, err := grpc.Dial(os.Getenv("USER_URI"), opts)
+	if err != nil {
+		log.Fatalf("error creating user client: %v", err)
+	}
+	userClient := pb.NewUserServiceClient(userConn)
+
+	// Service Middleware Configuration
 	cfg := middleware.ServiceMiddlewareConfig{
-		RestaurantClient: clients["RESTAURANT_URI"].(pb.RestaurantServiceClient),
-		CouponClient:     clients["COUPON_URI"].(pb.CouponServiceClient),
-		OrderClient:      clients["ORDER_URI"].(pb.OrderServiceClient),
-		DeliveryClient:   clients["DELIVERY_URI"].(pb.DeliveryServiceClient),
-		UserClient:       clients["USER_URI"].(pb.UserServiceClient),
+		RestaurantClient: restaurantClient,
+		CouponClient:     couponClient,
+		OrderClient:      orderClient,
+		DeliveryClient:   deliveryClient,
+		UserClient:       userClient,
 	}
 
-	serviceMW := middleware.NewServiceMiddleware(cfg)
-	authMW := middleware.NewAuthMiddleware()
+	auth := middleware.NewAuthMiddleware()
+	service := middleware.NewServiceMiddleware(cfg)
 
-	return authMW, serviceMW, nil
+	return auth, service
 }
 
 func setupHTTPMux(auth middleware.AuthMiddleware, svc middleware.ServiceMiddleware, gwmux *runtime.ServeMux) http.Handler {
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", HomePage)
+
 	mux.Handle("/auth/login", gwmux)
 	mux.Handle("/auth/register", gwmux)
 	mux.Handle("DELETE /api/*", auth.Authz(gwmux))
 
-	// production use this
 	mux.Handle("POST /api/orders/place-order", auth.Authn(svc.VerifyPlaceOrder(gwmux)))
 	mux.Handle("POST /api/users", auth.Authn(gwmux))
 
 	mux.Handle("/api/*", auth.Authn(gwmux))
-	mux.Handle("/", gwmux)
 
-	return prettierJSON(mux)
+	return mux
+}
+
+// HomePage serves a simple HTML page for the root URL ("/").
+func HomePage(w http.ResponseWriter, r *http.Request) {
+
+	htmlContent := `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Home Page</title>
+	</head>
+	<body>
+		<h1>Welcome to ihavefood!</h1>
+	</body>
+	</html>
+	`
+
+	// Set the content type to HTML
+	w.Header().Set("Content-Type", "text/html")
+
+	// Write the HTML content to the response
+	_, err := w.Write([]byte(htmlContent))
+	if err != nil {
+		http.Error(w, "Unable to write response", http.StatusInternalServerError)
+	}
+}
+
+func cors(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Add("Access-Control-Allow-Origin", "https://editor.swagger.io")
+		w.Header().Add("Access-Control-Allow-Credentials", "true")
+		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			http.Error(w, "No Content", http.StatusNoContent)
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
 
 func prettierJSON(h http.Handler) http.Handler {
