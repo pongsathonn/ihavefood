@@ -20,6 +20,183 @@ enum AvailStatus{
 
 message Empty{} 
 
+// ---------- User service ----------
+// Manage User's Profile
+service UserService {
+
+    // TODO
+    // - update user's profile picture
+    // - update name 
+
+    rpc UpdateUserProfile(Empty) returns(Empty) {}
+
+    rpc CreateUserProfile(CreateUserProfileRequest) returns (CreateUserProfileResponse) {}
+
+    // GetUserProfileByUsername for specific username
+    rpc GetUserProfileByUsername(GetUserProfileByUsernameRequest) returns(GetUserProfileByUsernameResponse){
+        option (google.api.http) = {
+            get: "/api/users/{username}" 
+        };
+    }
+
+    // GetUserProfile for query filter
+    rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse){
+        option (google.api.http) = {
+            get: "/api/users" 
+        };
+    }
+
+    rpc ListUserProfile(ListUserProfileRequest) returns(ListUserProfileResponse){
+        option (google.api.http) = {
+            get: "/api/users/all" 
+        };
+    }
+
+
+    rpc DeleteUserProfile(DeleteUserProfileRequest) returns(Empty){
+        option (google.api.http) = {
+            delete: "/api/users/{username}" 
+        };
+    }
+}
+
+message UserProfile {
+    string user_id = 1;
+    string username = 2;
+    string phone_number = 3;
+    Address address = 4;
+}
+
+message CreateUserProfileRequest {
+    string username = 1;
+    string phone_number = 2;
+    Address address = 3;
+}
+
+message CreateUserProfileResponse {
+    string user_id =1;
+}
+
+message GetUserProfileByUsernameRequest{
+    string username = 1;
+}
+
+message GetUserProfileByUsernameResponse{
+    UserProfile user_profile = 1;
+}
+
+message GetUserProfileRequest {
+    string username = 1;
+    string phone_number = 2;
+	string sub_district = 3;
+	string district = 4;    
+	string province = 5;    
+	string postal_code = 6;
+}
+
+message GetUserProfileResponse {
+    UserProfile user_profile = 1;
+}
+
+message ListUserProfileRequest {
+}
+
+message ListUserProfileResponse{
+    repeated UserProfile user_profiles = 1;
+}
+
+message DeleteUserProfileRequest {
+    string username = 1;
+}
+
+
+// ---------- Auth service ----------
+// Authservice response user's credentials
+service AuthService {
+
+    rpc Register(RegisterRequest) returns(RegisterResponse) {
+        option (google.api.http) = {
+            post: "/auth/register" 
+            body: "*"
+        };
+    }
+
+    rpc Login(LoginRequest) returns(LoginResponse){
+        option (google.api.http) = {
+            post: "/auth/login" 
+            body: "*"
+        };
+    }
+
+    rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
+
+    rpc AssignRolesToUsers(AssignRolesToUsersRequest) returns (AssignRolesToUsersResponse){
+        option (google.api.http) = {
+            put: "/auth/role" 
+            body: "*"
+       };
+    }
+
+    // rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
+}
+
+message UserCredentials {
+    string username = 1;
+    string email = 2;
+    string password = 3;
+    Roles role = 4;
+    string access_token = 5;
+    int64 access_token_exp = 6;
+}
+
+enum Roles {
+    VISITOR = 0;
+    USER = 1;
+    ADMIN = 2;
+}
+
+// username, email, password will be save in AuthService
+// username email phone_number will be save in UserService
+message RegisterRequest {
+   string username = 1;
+   string email = 2;
+   string password = 3;
+   string phone_number = 4;
+   Address address = 5;
+}
+
+message RegisterResponse {
+    bool success = 1;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    int64 access_token_exp =2;
+}
+
+message IsValidTokenRequest {
+    string token = 1;
+}
+
+message IsValidTokenResponse {
+    bool is_valid = 1;
+}
+
+// Role that can call this method should be "admin" or above
+message AssignRolesToUsersRequest {
+    string username = 1;
+    Roles role = 2;
+}
+
+message AssignRolesToUsersResponse {
+    bool success = 1;
+}
+
 // ---------- Order service ----------
 service OrderService {
     rpc PlaceOrder(PlaceOrderRequest) returns(PlaceOrderResponse){
@@ -82,9 +259,7 @@ enum OrderStatus {
     CANCELLED =5;
 }
 
-
 message Address {
-
     string address_name = 1;
 	string sub_district = 2;
 	string district = 3;    
@@ -262,139 +437,6 @@ message AddMenuRequest {
     repeated Menu menus = 2;
 }
 
-// ---------- User service ----------
-// Manage User's Profile
-service UserService {
-
-    // TODO
-    // - update user's profile picture
-    // - update name 
-
-    rpc UpdateUserProfile(Empty) returns(Empty) {}
-
-    rpc CreateUserProfile(CreateUserProfileRequest) returns (CreateUserProfileResponse) {}
-
-    rpc GetUserProfile(GetUserProfileRequest) returns(GetUserProfileResponse){
-        option (google.api.http) = {
-            get: "/api/users/{username}" 
-        };
-    }
-
-    rpc ListUserProfile(ListUserProfileRequest) returns(ListUserProfileResponse){
-        option (google.api.http) = {
-            get: "/api/users" 
-        };
-    }
-
-
-    rpc DeleteUserProfile(DeleteUserProfileRequest) returns(Empty){
-        option (google.api.http) = {
-            delete: "/api/users/{username}" 
-        };
-    }
-}
-
-message UserProfile {
-    string user_id = 1;
-    string username = 2;
-    string phone_number = 4;
-    Address address = 5;
-}
-
-message CreateUserProfileRequest {
-    string username = 1;
-    string phone_number = 3;
-    Address address = 4;
-}
-
-message CreateUserProfileResponse {
-    string user_id =1;
-}
-
-message GetUserProfileRequest{
-    string username = 1;
-}
-
-message GetUserProfileResponse{
-    UserProfile user_profile = 1;
-}
-
-message ListUserProfileRequest {
-}
-
-message ListUserProfileResponse{
-    repeated UserProfile user_profiles = 1;
-}
-
-message DeleteUserProfileRequest {
-    string username = 1;
-}
-
-
-// ---------- Auth service ----------
-// Authservice response user's credentials
-service AuthService {
-
-    rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
-
-    rpc Register(RegisterRequest) returns(RegisterResponse) {
-        option (google.api.http) = {
-            post: "/auth/register" 
-            body: "*"
-        };
-    }
-
-    rpc Login(LoginRequest) returns(LoginResponse){
-        option (google.api.http) = {
-            post: "/auth/login" 
-            body: "*"
-        };
-    }
-
-    // TODO 
-    // rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
-}
-
-// TODO add role
-message UserCredentials {
-    string username = 1;
-    string email = 2;
-    string password = 3;
-    string access_token = 4;
-    int64 access_token_exp = 5;
-}
-
-message IsValidTokenRequest {
-    string token = 1;
-}
-
-message IsValidTokenResponse {
-    bool is_valid = 1;
-}
-
-// username, email, password will be save in AuthService
-// username email phone_number will be save in UserService
-message RegisterRequest {
-   string username = 1;
-   string email = 2;
-   string password = 3;
-   string phone_number = 4;
-   Address address = 5;
-}
-
-message RegisterResponse {
-    string success_message = 1;
-}
-
-message LoginRequest {
-    string username = 1;
-    string password = 2;
-}
-
-message LoginResponse {
-    string access_token = 1;
-    int64 access_token_exp =2;
-}
 
 
 // ---------- Coupon service ----------
