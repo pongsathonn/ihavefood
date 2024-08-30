@@ -311,6 +311,7 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_food_proto_rawDescGZIP(), []int{0}
 }
 
+// TODO might be change order id to order no
 type PlaceOrder struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

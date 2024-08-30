@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pb "github.com/pongsathonn/ihavefood/gateway/genproto"
@@ -44,8 +45,21 @@ func newGatewaymux() *runtime.ServeMux {
 					DiscardUnknown: true,
 				},
 			}),
+		runtime.WithForwardResponseOption(setStatus),
 	)
 
+}
+
+// setStatus handle specific response types
+func setStatus(ctx context.Context, w http.ResponseWriter, m protoreflect.ProtoMessage) error {
+
+	switch m.(type) {
+	case *pb.RegisterResponse:
+		w.WriteHeader(http.StatusCreated)
+	}
+
+	// keep default behavior
+	return nil
 }
 
 // Register service handlers
@@ -170,7 +184,11 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 func cors(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		w.Header().Add("Access-Control-Allow-Origin", "https://editor.swagger.io")
+		// Production use this
+		// 	  swg := fmt.Sprintf("http://localhost:%s", os.Getenv("SWAGGER_UI_PORT"))
+		// 	  w.Header().Add("Access-Control-Allow-Origin", swg)
+
+		w.Header().Add("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
 		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")

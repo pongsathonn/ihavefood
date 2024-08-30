@@ -1,17 +1,13 @@
 
 ihavefood is a food-delivery microservice personal app written by Go 
 
-Golang
-gRPC HTTP
-Docker 
-MongoDB PostgreSQL
-RabbitMQ
+Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 
 
+
+application protobuff message need to manual generate
 
 <pre>
-
-TODO use dirname pubsub
 
 Algorithm are used in this project
 - Dijkstra algorithm

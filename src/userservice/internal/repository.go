@@ -13,6 +13,10 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
 
+// TODO improve doc
+// userProfile use for scan user from database
+// it has sql.Null string for empty field in postgres
+// proto.UserProfile does not have this
 type userProfile struct {
 	UserId      string
 	Username    string
@@ -173,7 +177,6 @@ func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username 
 		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
 	}
 
-	var user pb.UserProfile
 	row := r.db.QueryRowContext(ctx, `
 		SELECT
 			user_profile.id, 
@@ -193,11 +196,38 @@ func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username 
 		WHERE 
 			user_profile.username = $1;
 	`, username)
-	if err := row.Scan(&user); err != nil {
+
+	var u userProfile
+	err := row.Scan(
+		&u.UserId,
+		&u.Username,
+		&u.PhoneNumber,
+		&u.AddressName,
+		&u.SubDistrict,
+		&u.District,
+		&u.Province,
+		&u.PostalCode,
+	)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "user not found")
 		}
+		log.Printf("Scan failed :%v", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive users from db")
 	}
-	return &user, nil
+
+	user := &pb.UserProfile{
+		UserId:      u.UserId,
+		Username:    u.Username,
+		PhoneNumber: u.PhoneNumber,
+		Address: &pb.Address{
+			AddressName: u.AddressName.String,
+			SubDistrict: u.SubDistrict.String,
+			District:    u.District.String,
+			Province:    u.Province.String,
+			PostalCode:  u.PostalCode.String,
+		},
+	}
+
+	return user, nil
 }

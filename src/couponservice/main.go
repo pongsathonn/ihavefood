@@ -25,9 +25,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	c := internal.NewCouponService(conn, orderClient)
+	couponService := internal.NewCouponService(conn, orderClient)
 
-	startGRPCServer(c)
+	startGRPCServer(couponService)
 
 	//-----------------------
 

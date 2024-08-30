@@ -10,17 +10,27 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type OrderDelivery struct {
-	OrderId      string     `bson:"orderId"`
-	RiderId      string     `bson:"riderId"`
-	IsAccepted   bool       `bson:"isAccepted"`
-	AcceptedTime *time.Time `bson:"acceptedTime"`
+// TODO make doc for this struct
+// Prefix M  represent model for repository prevent naming conflict with same package
+type MOrderDelivery struct {
+	OrderId        string     `bson:"orderId"`
+	RiderId        string     `bson:"riderId"`
+	IsAccepted     bool       `bson:"isAccepted"`
+	PickupCode     string     `bson:"pickupCode"`
+	PickupLocation *MPoint    `bson:"pickupLocation"`
+	Destination    *MPoint    `bson:"destination"`
+	AcceptedTime   *time.Time `bson:"acceptedTime"`
+}
+
+type MPoint struct {
+	Latitude  float64 `bson:"latitude"`
+	Longitude float64 `bson:"longtitude"`
 }
 
 type DeliveryRepository interface {
-	GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error)
+	GetOrderDeliveryById(ctx context.Context, orderId string) (*MOrderDelivery, error)
 	SaveOrderDelivery(ctx context.Context, orderId string) error
-	UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error
+	UpdateOrderDelivery(ctx context.Context, orderDelivery *MOrderDelivery) error
 }
 
 type deliveryRepository struct {
@@ -31,12 +41,12 @@ func NewDeliveryRepository(db *mongo.Client) DeliveryRepository {
 	return &deliveryRepository{db: db}
 }
 
-func (r *deliveryRepository) GetOrderDeliveryById(ctx context.Context, orderId string) (*OrderDelivery, error) {
+func (r *deliveryRepository) GetOrderDeliveryById(ctx context.Context, orderId string) (*MOrderDelivery, error) {
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	filter := bson.M{"orderId": orderId}
 
-	var result OrderDelivery
+	var result MOrderDelivery
 
 	err := coll.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
@@ -52,18 +62,22 @@ func (r *deliveryRepository) GetOrderDeliveryById(ctx context.Context, orderId s
 	return &result, nil
 }
 
+// SaveMOrderDelivery sava only orderid to database with empty other field
 func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderId string) error {
 
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	deliveryStatus := OrderDelivery{
-		OrderId:      orderId,
-		RiderId:      "",
-		IsAccepted:   false,
-		AcceptedTime: nil,
+	data := MOrderDelivery{
+		OrderId:        orderId,
+		RiderId:        "",
+		PickupCode:     "",
+		PickupLocation: nil,
+		Destination:    nil,
+		IsAccepted:     false,
+		AcceptedTime:   nil,
 	}
 
-	_, err := coll.InsertOne(ctx, deliveryStatus)
+	_, err := coll.InsertOne(ctx, data)
 	if err != nil {
 		return err
 	}
@@ -72,18 +86,26 @@ func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderId stri
 
 }
 
-// UpdateOrderDelivery update when Rider accepted order
-func (r *deliveryRepository) UpdateOrderDelivery(ctx context.Context, orderId, riderId string, isAccepted bool) error {
+func (r *deliveryRepository) UpdateOrderDelivery(ctx context.Context, orderDelivery *MOrderDelivery) error {
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	filter := bson.D{
-		{"orderId", orderId},
+		{"orderId", orderDelivery.OrderId},
 	}
 
 	update := bson.M{
 		"$set": bson.M{
-			"riderId":      riderId,
-			"isAccepted":   isAccepted,
+			"riderId":    orderDelivery.RiderId,
+			"isAccepted": orderDelivery.IsAccepted,
+			"pickupCode": orderDelivery.PickupCode,
+			"pickupLocation": bson.M{
+				"latitude":  orderDelivery.PickupLocation.Latitude,
+				"longitude": orderDelivery.PickupLocation.Longitude,
+			},
+			"destination": bson.M{
+				"latitude":  orderDelivery.Destination.Latitude,
+				"longitude": orderDelivery.Destination.Longitude,
+			},
 			"acceptedTime": time.Now(),
 		},
 	}

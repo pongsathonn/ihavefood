@@ -34,15 +34,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to initialize RabbitMQ connection:", err)
 	}
-	rb := internal.NewRabbitMQ(amqpConn)
+	rabbitmq := internal.NewRabbitMQ(amqpConn)
 
 	userClient, err := newUserServiceClient()
 	if err != nil {
 		log.Fatal("Failed to make new user client:", err)
 	}
 
-	auth := internal.NewAuthService(db, rb, userClient)
-	startGRPCServer(auth)
+	authService := internal.NewAuthService(db, rabbitmq, userClient)
+	startGRPCServer(authService)
 
 }
 

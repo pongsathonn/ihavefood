@@ -146,8 +146,8 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	DeliveryService_TrackOrder_FullMethodName         = "/foodDeliveryApp.DeliveryService/TrackOrder"
-	DeliveryService_AcceptOrderHandler_FullMethodName = "/foodDeliveryApp.DeliveryService/AcceptOrderHandler"
+	DeliveryService_TrackOrder_FullMethodName  = "/foodDeliveryApp.DeliveryService/TrackOrder"
+	DeliveryService_AcceptOrder_FullMethodName = "/foodDeliveryApp.DeliveryService/AcceptOrder"
 )
 
 // DeliveryServiceClient is the client API for DeliveryService service.
@@ -158,7 +158,7 @@ type DeliveryServiceClient interface {
 	// OrderService should only call this
 	TrackOrder(ctx context.Context, in *TrackOrderRequest, opts ...grpc.CallOption) (*TrackOrderResponse, error)
 	// for Rider accept Order
-	AcceptOrderHandler(ctx context.Context, in *AcceptOrderHandlerRequest, opts ...grpc.CallOption) (*AcceptOrderHandlerResponse, error)
+	AcceptOrder(ctx context.Context, in *AcceptOrderRequest, opts ...grpc.CallOption) (*AcceptOrderResponse, error)
 }
 
 type deliveryServiceClient struct {
@@ -178,9 +178,9 @@ func (c *deliveryServiceClient) TrackOrder(ctx context.Context, in *TrackOrderRe
 	return out, nil
 }
 
-func (c *deliveryServiceClient) AcceptOrderHandler(ctx context.Context, in *AcceptOrderHandlerRequest, opts ...grpc.CallOption) (*AcceptOrderHandlerResponse, error) {
-	out := new(AcceptOrderHandlerResponse)
-	err := c.cc.Invoke(ctx, DeliveryService_AcceptOrderHandler_FullMethodName, in, out, opts...)
+func (c *deliveryServiceClient) AcceptOrder(ctx context.Context, in *AcceptOrderRequest, opts ...grpc.CallOption) (*AcceptOrderResponse, error) {
+	out := new(AcceptOrderResponse)
+	err := c.cc.Invoke(ctx, DeliveryService_AcceptOrder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ type DeliveryServiceServer interface {
 	// OrderService should only call this
 	TrackOrder(context.Context, *TrackOrderRequest) (*TrackOrderResponse, error)
 	// for Rider accept Order
-	AcceptOrderHandler(context.Context, *AcceptOrderHandlerRequest) (*AcceptOrderHandlerResponse, error)
+	AcceptOrder(context.Context, *AcceptOrderRequest) (*AcceptOrderResponse, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
 
@@ -206,8 +206,8 @@ type UnimplementedDeliveryServiceServer struct {
 func (UnimplementedDeliveryServiceServer) TrackOrder(context.Context, *TrackOrderRequest) (*TrackOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TrackOrder not implemented")
 }
-func (UnimplementedDeliveryServiceServer) AcceptOrderHandler(context.Context, *AcceptOrderHandlerRequest) (*AcceptOrderHandlerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AcceptOrderHandler not implemented")
+func (UnimplementedDeliveryServiceServer) AcceptOrder(context.Context, *AcceptOrderRequest) (*AcceptOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcceptOrder not implemented")
 }
 func (UnimplementedDeliveryServiceServer) mustEmbedUnimplementedDeliveryServiceServer() {}
 
@@ -240,20 +240,20 @@ func _DeliveryService_TrackOrder_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeliveryService_AcceptOrderHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AcceptOrderHandlerRequest)
+func _DeliveryService_AcceptOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeliveryServiceServer).AcceptOrderHandler(ctx, in)
+		return srv.(DeliveryServiceServer).AcceptOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeliveryService_AcceptOrderHandler_FullMethodName,
+		FullMethod: DeliveryService_AcceptOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).AcceptOrderHandler(ctx, req.(*AcceptOrderHandlerRequest))
+		return srv.(DeliveryServiceServer).AcceptOrder(ctx, req.(*AcceptOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -270,8 +270,8 @@ var DeliveryService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DeliveryService_TrackOrder_Handler,
 		},
 		{
-			MethodName: "AcceptOrderHandler",
-			Handler:    _DeliveryService_AcceptOrderHandler_Handler,
+			MethodName: "AcceptOrder",
+			Handler:    _DeliveryService_AcceptOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

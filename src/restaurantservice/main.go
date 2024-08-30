@@ -29,11 +29,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	repo := internal.NewRestaurantRepository(mongoClient)
-	rb := internal.NewRabbitMQ(rabbitConn)
-	s := internal.NewRestaurantService(repo, rb)
+	repository := internal.NewRestaurantRepository(mongoClient)
+	rabbitmq := internal.NewRabbitMQ(rabbitConn)
+	restaurantService := internal.NewRestaurantService(repository, rabbitmq)
 
-	startGRPCServer(s)
+	startGRPCServer(restaurantService)
 
 }
 

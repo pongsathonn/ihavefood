@@ -30,11 +30,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db := internal.NewOrderRepository(mg)
-	ps := internal.NewRabbitMQ(rb)
-	s := internal.NewOrderService(db, ps)
+	repository := internal.NewOrderRepository(mg)
+	rabbitmq := internal.NewRabbitMQ(rb)
+	orderService := internal.NewOrderService(repository, rabbitmq)
 
-	startGRPCServer(s)
+	startGRPCServer(orderService)
 
 }
 

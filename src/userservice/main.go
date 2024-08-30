@@ -28,8 +28,8 @@ func main() {
 
 	repository := internal.NewUserRepository(db)
 	rabbitmq := internal.NewRabbitMQ(amqpConn)
-	s := internal.NewUserService(rabbitmq, repository)
-	startGRPCServer(s)
+	userService := internal.NewUserService(rabbitmq, repository)
+	startGRPCServer(userService)
 
 }
 

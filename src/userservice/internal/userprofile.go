@@ -56,7 +56,12 @@ func (x *UserService) ListUserProfile(ctx context.Context, req *pb.ListUserProfi
 
 func (x *UserService) GetUserProfile(ctx context.Context, in *pb.GetUserProfileRequest) (*pb.GetUserProfileResponse, error) {
 
-	return &pb.GetUserProfileResponse{UserProfile: nil}, nil
+	user, err := x.repository.GetUserProfileByUsername(ctx, in.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetUserProfileResponse{UserProfile: user}, nil
 }
 
 func (x *UserService) DeleteUserProfile(context.Context, *pb.DeleteUserProfileRequest) (*pb.Empty, error) {

@@ -36,6 +36,8 @@ service OrderService {
 
     }
 }
+
+// TODO might be change order id to order no
 message PlaceOrder {
     string order_id = 1 ;
     string order_tracking_id = 2;
@@ -134,7 +136,7 @@ service DeliveryService {
     }
 
     // for Rider accept Order
-    rpc AcceptOrderHandler(AcceptOrderHandlerRequest) returns (AcceptOrderHandlerResponse){
+    rpc AcceptOrder(AcceptOrderRequest) returns (AcceptOrderResponse){
         option (google.api.http) = {
             post: "/api/deliveries/accept-order" 
             body: "*"
@@ -143,9 +145,10 @@ service DeliveryService {
 
 }
 
+// TODO might be change from string to float
 message Point {
-    string latitude = 1;
-    string longtitude = 2;
+    double latitude = 1;
+    double longitude = 2;
 }
 
 message Rider {
@@ -153,6 +156,12 @@ message Rider {
     string rider_name = 2;
     string phone_number = 3;
 
+}
+
+message PickupInfo {
+    string pickup_code = 1; // three digit i.e 712 , 412
+    Point pickup_location = 2;
+    Point destination = 3;
 }
 
 message TrackOrderRequest {
@@ -165,15 +174,13 @@ message TrackOrderResponse {
     Point rider_location = 3;
 }
 
-message AcceptOrderHandlerRequest {
+message AcceptOrderRequest {
     string rider_id = 1;
     string order_id = 2;
 }
 
-message AcceptOrderHandlerResponse {
-    string pickup_code = 1; // three digit i.e 712 , 412
-    Point pickup_location = 2;
-    Point destination = 3;
+message AcceptOrderResponse {
+    PickupInfo pickup_info = 1;
 }
 
 
@@ -254,8 +261,6 @@ message AddMenuRequest {
     string restaurant_name = 1;
     repeated Menu menus = 2;
 }
-
-
 
 // ---------- User service ----------
 // Manage User's Profile

@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/internal"
@@ -28,14 +29,36 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rb := internal.NewRabbitMQ(conn)
-	rp := internal.NewDeliveryRepository(client)
-	d := internal.NewDeliveryService(rb, rp)
+	restaurantClient, err := newRestaurantServiceClient()
+	if err != nil {
+		log.Fatal("Failed to create new restaurant client:", err)
+	}
+
+	rabbitmq := internal.NewRabbitMQ(conn)
+	repository := internal.NewDeliveryRepository(client)
+
+	deliveryService := internal.NewDeliveryService(
+		rabbitmq,
+		repository,
+		restaurantClient,
+	)
 
 	// Start the order assignment process in a separate goroutine
-	go d.OrderAssignment()
+	go deliveryService.OrderAssignment()
 
-	startGRPCServer(d)
+	startGRPCServer(deliveryService)
+}
+
+func newRestaurantServiceClient() (pb.RestaurantServiceClient, error) {
+
+	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.NewClient(getEnv("RESTAURANT_URI", ""), opt)
+	if err != nil {
+		return nil, err
+	}
+	client := pb.NewRestaurantServiceClient(conn)
+
+	return client, nil
 }
 
 // initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance

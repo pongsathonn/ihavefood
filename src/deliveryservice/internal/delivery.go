@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"slices"
+	"strconv"
 	"sync"
 	"time"
 
@@ -15,8 +17,8 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 )
 
-// PickupInfo has same field with AcceptOrderHandlerResponse
-// but only use in program
+// pickUpInfo have field same as *pb.PickupInfo
+// but add error field use in this file only
 type pickUpInfo struct {
 	PickupCode     string
 	PickupLocation *pb.Point
@@ -34,21 +36,23 @@ type pickUpInfo struct {
 type DeliveryService struct {
 	pb.UnimplementedDeliveryServiceServer
 
-	mu         sync.Mutex
-	rabbitmq   RabbitMQ
-	repository DeliveryRepository
+	mu               sync.Mutex
+	rabbitmq         RabbitMQ
+	repository       DeliveryRepository
+	restaurantClient pb.RestaurantServiceClient
 
-	riderAcceptedCh chan *pb.AcceptOrderHandlerRequest
+	riderAcceptedCh chan *pb.AcceptOrderRequest
 	orderPickupCh   chan *pickUpInfo
 }
 
 // NewDeliveryServer creates and initializes a new delivery instance.
-func NewDeliveryService(rabbitmq RabbitMQ, repository DeliveryRepository) *DeliveryService {
+func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository, rc pb.RestaurantServiceClient) *DeliveryService {
 	return &DeliveryService{
-		rabbitmq:   rabbitmq,
-		repository: repository,
+		rabbitmq:         rb,
+		repository:       rp,
+		restaurantClient: rc,
 
-		riderAcceptedCh: make(chan *pb.AcceptOrderHandlerRequest),
+		riderAcceptedCh: make(chan *pb.AcceptOrderRequest),
 		orderPickupCh:   make(chan *pickUpInfo),
 	}
 }
@@ -61,9 +65,9 @@ func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderReque
 	return nil, status.Errorf(codes.Unimplemented, "method TrackOrder not implemented")
 }
 
-// AcceptOrderHandler handles requests indicating that a rider has accepted an order.
+// AcceptOrder handles requests indicating that a rider has accepted an order.
 // It saves the delivery order to the database. Each order should only be accepted once.
-func (x *DeliveryService) AcceptOrderHandler(ctx context.Context, in *pb.AcceptOrderHandlerRequest) (*pb.AcceptOrderHandlerResponse, error) {
+func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderRequest) (*pb.AcceptOrderResponse, error) {
 
 	// Validate the input request
 	if in.OrderId == "" || in.RiderId == "" {
@@ -84,15 +88,9 @@ func (x *DeliveryService) AcceptOrderHandler(ctx context.Context, in *pb.AcceptO
 	defer x.mu.Unlock()
 
 	// Notify that the rider has accepted the order
-	x.riderAcceptedCh <- &pb.AcceptOrderHandlerRequest{RiderId: in.RiderId, OrderId: in.OrderId}
+	x.riderAcceptedCh <- &pb.AcceptOrderRequest{RiderId: in.RiderId, OrderId: in.OrderId}
 
-	// Save the order delivery information to the database
-	if err := x.repository.UpdateOrderDelivery(ctx, in.OrderId, in.RiderId, true); err != nil {
-		log.Println(err)
-		return nil, status.Errorf(codes.Internal, "failed to save order delivery information")
-	}
-
-	// Wait for the pickup information or timeout after 30 seconds
+	// Wait for the pickup information or timeout after 10 seconds
 	select {
 	case order, ok := <-x.orderPickupCh:
 
@@ -105,18 +103,45 @@ func (x *DeliveryService) AcceptOrderHandler(ctx context.Context, in *pb.AcceptO
 			return nil, status.Errorf(codes.Internal, "failed to retrieve order pickup information: %s", order.Error.Error)
 		}
 
-		return &pb.AcceptOrderHandlerResponse{
+		// Save order delivery after rider accept to database
+		orderDelivery := &MOrderDelivery{
+			OrderId:    in.OrderId,
+			RiderId:    in.RiderId,
+			IsAccepted: true,
+			PickupCode: order.PickupCode,
+			PickupLocation: &MPoint{
+				Latitude:  order.PickupLocation.Latitude,
+				Longitude: order.PickupLocation.Longitude,
+			},
+			Destination: &MPoint{
+				Latitude:  order.PickupLocation.Latitude,
+				Longitude: order.PickupLocation.Longitude,
+			},
+		}
+
+		if err := x.repository.UpdateOrderDelivery(ctx, orderDelivery); err != nil {
+			log.Println(err)
+			return nil, status.Errorf(codes.Internal, "failed to save order delivery information")
+		}
+
+		pickupInfo := &pb.PickupInfo{
 			PickupCode:     order.PickupCode,
 			PickupLocation: order.PickupLocation,
 			Destination:    order.Destination,
-		}, nil
+		}
+		return &pb.AcceptOrderResponse{PickupInfo: pickupInfo}, nil
 
-	case <-time.After(30 * time.Second):
+	case <-time.After(10 * time.Second):
 		return nil, status.Errorf(codes.Internal, "timeout while waiting for pickup information")
 	}
 }
 
-// orderAssignment is responsible for receiving orders and assign them to riders.
+// OrderAssignment handles incoming orders, saves them to the database,
+// calculates the nearest riders, and notifies them. It waits for rider
+// acceptance and responds with order pickup details if accepted.
+//
+// when save order with SaveOrderDelivery the order status still be not accept
+// after rider accept order it change order status at function AcceptOrder
 func (x *DeliveryService) OrderAssignment() {
 
 	for {
@@ -136,17 +161,17 @@ func (x *DeliveryService) OrderAssignment() {
 				return
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-
-			//TODO generateOrderPickup receive input placeOrder
-			orderPickup, err := x.generateOrderPickUp()
+			orderPickup, err := x.generateOrderPickUp(placeOrder)
 			if err != nil {
 				log.Println("failed to generate order pickup: %v", err)
 				return
 			}
 
-			// waiting for rider accept order
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			// notify to rider and wait for rider accept order
+			// if rider is
 			go x.waitRiderAcceptance(ctx, cancel, riders, orderPickup)
 			x.notifyToRider(ctx, riders, orderPickup)
 
@@ -155,7 +180,8 @@ func (x *DeliveryService) OrderAssignment() {
 
 }
 
-// receiveOrder subscribes to the RabbitMQ queue and returns the received order.
+// receiveOrder subscribes to new order from OrderService
+// and returns the received order.
 func (x *DeliveryService) receiveOrder() *pb.PlaceOrder {
 
 	deliveries, err := x.rabbitmq.Subscribe(
@@ -182,37 +208,82 @@ func (x *DeliveryService) receiveOrder() *pb.PlaceOrder {
 
 // calculateNearestRider calculates and returns a list of riders nearest to the given address.
 // This function needs implementation.
-func (x *DeliveryService) calculateNearestRider(addr *pb.Address) ([]*pb.Rider, error) {
+func (x *DeliveryService) calculateNearestRider(userAddr *pb.Address) ([]*pb.Rider, error) {
 
-	// TODO: Implement algorithm to calculate nearest riders based on address
+	// TODO
+	// - Implement actual algorithm to calculate nearest riders based on user's address
+	//   and convert user's address to latitude, longtitude
 
-	// Example data for riders, typically used for testing or as mock data.
+	// Example data for riders, used for testing or as mock data.
 	riders := []*pb.Rider{
-		{RiderId: "rider001", RiderName: "Suriya Jaidi", PhoneNumber: "+1234567890"},
-		{RiderId: "rider002", RiderName: "Warinee Sukchai", PhoneNumber: "+1987654321"},
-		{RiderId: "rider003", RiderName: "Cheenchom Prabussa", PhoneNumber: "+1654321897"},
-		{RiderId: "rider004", RiderName: "Janchonchan Chomphu", PhoneNumber: "+3334445555"},
-		{RiderId: "rider005", RiderName: "Sudarat Prasang", PhoneNumber: "+7778889999"},
+		{RiderId: "001", RiderName: "Messi", PhoneNumber: "+1234567890"},
+		{RiderId: "002", RiderName: "Ronaldo", PhoneNumber: "+1987654321"},
+		{RiderId: "003", RiderName: "Neymar", PhoneNumber: "+1654321897"},
+		{RiderId: "004", RiderName: "Pogba", PhoneNumber: "+3334445555"},
+		{RiderId: "005", RiderName: "Halaand", PhoneNumber: "+7778889999"},
 	}
-
 	return riders, nil
 }
 
-// This function needs implementation.
-// receive order and calculate location and pickup code
-func (x *DeliveryService) generateOrderPickUp() (*pickUpInfo, error) {
+// generateOrderPickUp is a function that generate pickupcode and locations
+// to riderthat not accept order yet.
+func (x *DeliveryService) generateOrderPickUp(placeOrder *pb.PlaceOrder) (*pickUpInfo, error) {
 
-	//TODO implement generate pickup code
+	code := x.randomThreeDigits()
+
+	req := &pb.GetRestaurantRequest{RestaurantName: placeOrder.RestaurantName}
+	restaurant, err := x.restaurantClient.GetRestaurant(context.TODO(), req)
+	if err != nil {
+	}
+
+	restaurantPoint, err := x.addressToPoint(restaurant.Restaurant.Address)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't convert restaurant address to point: %w", err)
+	}
+
+	destinationPoint, err := x.addressToPoint(placeOrder.Address)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't convert destination address to point: %w", err)
+	}
 
 	return &pickUpInfo{
-		PickupCode:     "229",
-		PickupLocation: &pb.Point{Latitude: "-1283712", Longtitude: "123120312"},
-		Destination:    &pb.Point{Latitude: "-13123123", Longtitude: "91203820"},
+		PickupCode:     code,
+		PickupLocation: restaurantPoint,
+		Destination:    destinationPoint,
 	}, nil
 
 }
 
-// waitRiderAcceptance waiting for Rider nofitied accep order
+// addressToPoint use for  convert address to locations point
+func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
+
+	// TODO implememnt Geocoding ( Google APIs )
+
+	// Example data
+	example := map[string]*pb.Point{
+		"Bangkok":    &pb.Point{Latitude: 13.7563, Longitude: 100.5018},
+		"Chiang Mai": &pb.Point{Latitude: 18.7883, Longitude: 98.9853},
+		"Phuket":     &pb.Point{Latitude: 7.8804, Longitude: 98.3923},
+		"Lampang":    &pb.Point{Latitude: 18.2888, Longitude: 99.4931},
+		"Rayong":     &pb.Point{Latitude: 12.6828, Longitude: 101.2753},
+	}
+
+	point, ok := example[addr.Province]
+	if !ok {
+		return nil, fmt.Errorf("province %s not found", addr.Province)
+	}
+
+	return point, nil
+}
+
+// waitRiderAcceptance waits for a rider to accept the order.
+// The function listens for a rider's acceptance from the riderAcceptedCh channel.
+// Upon receiving an acceptance:
+//   - It validates if the rider was notified.
+//   - Cancels the context to stop further notifications to other riders.
+//   - Sends the order pickup information to the orderPickupCh channel.
+//
+// If no rider accepts the order within 15 minutes, the function cancels the context and stops waiting.
 func (x *DeliveryService) waitRiderAcceptance(ctx context.Context, cancel context.CancelFunc, riders []*pb.Rider, orderPickup *pickUpInfo) {
 
 	var ridersId []string
@@ -234,23 +305,43 @@ func (x *DeliveryService) waitRiderAcceptance(ctx context.Context, cancel contex
 		}
 
 		log.Printf("rider %s has accepted order with order pickup code %s", req.RiderId, orderPickup.PickupCode)
+
+		// Call this cancel function to signal the context in the notifyToRider function.
+		// This will stop any further notifications to other riders.
 		cancel()
 
+		// sending orderpickup information to function AcceptOrder
 		x.orderPickupCh <- orderPickup
 
 	case <-time.After(15 * time.Minute):
 		cancel()
+		return
 	}
+}
+
+// randomThreeDigits generate 3 digits pickup code between 100 - 999 .
+func (x *DeliveryService) randomThreeDigits() string {
+
+	// Half-open interval
+	// - [a,b) is include a, exclude b
+	// - (a,b] is include b, exclude a
+	//
+	// rand.Intn(900) returns a number between 0 and 899.
+	// Adding 100 shifts the range to [100, 999].
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	n := r.Intn(900) + 100
+	return strconv.Itoa(n)
 }
 
 // notifyToRider will notify to all nearest riders
 func (x *DeliveryService) notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
 
+	// example notify
 	log.Printf("started notify order %s", orderPickup.PickupCode)
 
 	for _ = range riders {
 
-		// TODO implement notify logic
+		// TODO implement Push notification here
 
 		select {
 		case <-ctx.Done():

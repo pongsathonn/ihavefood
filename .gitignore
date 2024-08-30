@@ -5,5 +5,8 @@ UML.md
 .env
 
 TODO.md
+curl.md
 dngproto.sh
 lazycurl.sh
+
+utils/

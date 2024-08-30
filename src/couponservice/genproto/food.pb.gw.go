@@ -109,28 +109,28 @@ func local_request_OrderService_ListUserPlaceOrder_0(ctx context.Context, marsha
 
 }
 
-func request_DeliveryService_AcceptOrderHandler_0(ctx context.Context, marshaler runtime.Marshaler, client DeliveryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptOrderHandlerRequest
+func request_DeliveryService_AcceptOrder_0(ctx context.Context, marshaler runtime.Marshaler, client DeliveryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AcceptOrderRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.AcceptOrderHandler(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.AcceptOrder(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_DeliveryService_AcceptOrderHandler_0(ctx context.Context, marshaler runtime.Marshaler, server DeliveryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptOrderHandlerRequest
+func local_request_DeliveryService_AcceptOrder_0(ctx context.Context, marshaler runtime.Marshaler, server DeliveryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AcceptOrderRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.AcceptOrderHandler(ctx, &protoReq)
+	msg, err := server.AcceptOrder(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -566,7 +566,7 @@ func RegisterOrderServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterDeliveryServiceHandlerFromEndpoint instead.
 func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server DeliveryServiceServer) error {
 
-	mux.Handle("POST", pattern_DeliveryService_AcceptOrderHandler_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_DeliveryService_AcceptOrder_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -574,12 +574,12 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrderHandler", runtime.WithHTTPPathPattern("/api/deliveries/accept-order"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrder", runtime.WithHTTPPathPattern("/api/deliveries/accept-order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_DeliveryService_AcceptOrderHandler_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_DeliveryService_AcceptOrder_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -587,7 +587,7 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_DeliveryService_AcceptOrderHandler_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_DeliveryService_AcceptOrder_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1040,25 +1040,25 @@ func RegisterDeliveryServiceHandler(ctx context.Context, mux *runtime.ServeMux, 
 // "DeliveryServiceClient" to call the correct interceptors.
 func RegisterDeliveryServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client DeliveryServiceClient) error {
 
-	mux.Handle("POST", pattern_DeliveryService_AcceptOrderHandler_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_DeliveryService_AcceptOrder_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrderHandler", runtime.WithHTTPPathPattern("/api/deliveries/accept-order"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrder", runtime.WithHTTPPathPattern("/api/deliveries/accept-order"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_DeliveryService_AcceptOrderHandler_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_DeliveryService_AcceptOrder_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_DeliveryService_AcceptOrderHandler_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_DeliveryService_AcceptOrder_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1066,11 +1066,11 @@ func RegisterDeliveryServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_DeliveryService_AcceptOrderHandler_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "deliveries", "accept-order"}, ""))
+	pattern_DeliveryService_AcceptOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "deliveries", "accept-order"}, ""))
 )
 
 var (
-	forward_DeliveryService_AcceptOrderHandler_0 = runtime.ForwardResponseMessage
+	forward_DeliveryService_AcceptOrder_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterRestaurantServiceHandlerFromEndpoint is same as RegisterRestaurantServiceHandler but
