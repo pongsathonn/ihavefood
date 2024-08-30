@@ -68,7 +68,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, "username, email, or password must be provided")
 	}
 
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(in.Password), 10)
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "password hashing failed")
 	}
@@ -83,13 +83,15 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		INSERT INTO user_credentials(
 			username,
 			email,
-			password
+			password,
+			role
 		)
-		VALUES($1, $2, $3)
+		VALUES($1, $2, $3, $4)
 	`,
 		in.Username,
 		in.Email,
 		string(hashedPass),
+		pb.Roles_USER.String(),
 	)
 	if err != nil {
 		tx.Rollback()
@@ -120,7 +122,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
 	}
 
-	return &pb.RegisterResponse{SuccessMessage: "registerd success"}, nil
+	return &pb.RegisterResponse{Success: true}, nil
 }
 
 // Login handles user login. It verifies the provided credentials, generates a JWT token on success, and returns it along with its expiration time.
@@ -196,6 +198,7 @@ func createNewToken() (string, int64, error) {
 		ExpiresAt: jwt.NewNumericDate(time.Unix(expiration, 0)),
 	}
 
+	// TODO use jwt.MapWithClaims{} for claims with "role"
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	ss, err := token.SignedString(signingKey)
