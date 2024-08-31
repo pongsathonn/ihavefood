@@ -120,7 +120,6 @@ service AuthService {
             body: "*"
         };
     }
-
     rpc Login(LoginRequest) returns(LoginResponse){
         option (google.api.http) = {
             post: "/auth/login" 
@@ -129,6 +128,8 @@ service AuthService {
     }
 
     rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
+
+    rpc IsValidAdminToken(IsValidAdminTokenRequest) returns (IsValidAdminTokenResponse){}
 
     rpc AssignRolesToUsers(AssignRolesToUsersRequest) returns (AssignRolesToUsersResponse){
         option (google.api.http) = {
@@ -184,6 +185,14 @@ message IsValidTokenRequest {
 }
 
 message IsValidTokenResponse {
+    bool is_valid = 1;
+}
+
+message IsValidAdminTokenRequest {
+    string token = 1;
+}
+
+message IsValidAdminTokenResponse {
     bool is_valid = 1;
 }
 
