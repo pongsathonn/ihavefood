@@ -15,6 +15,17 @@ type ServiceMiddleware interface {
 	VerifyPlaceOrder(next http.Handler) http.Handler
 }
 
+// ServiceMiddlewareConfig holds the clients required for the serviceMiddleware.
+// The struct is used to simplify the parameter list of the NewServiceMiddleware function,
+// making it easier to manage and pass multiple gRPC clients.
+type ServiceMiddlewareConfig struct {
+	RestaurantClient pb.RestaurantServiceClient
+	CouponClient     pb.CouponServiceClient
+	OrderClient      pb.OrderServiceClient
+	DeliveryClient   pb.DeliveryServiceClient
+	UserClient       pb.UserServiceClient
+}
+
 // serviceMiddleware is responsible for handling validation, verification,
 // and orchestration tasks across various microservices. It contains gRPC
 // clients for interacting with various services. facilitating communication
@@ -24,17 +35,6 @@ type serviceMiddleware struct {
 	couponClient     pb.CouponServiceClient
 	orderClient      pb.OrderServiceClient
 	deliveryClient   pb.DeliveryServiceClient
-	UserClient       pb.UserServiceClient
-}
-
-// ServiceMiddlewareConfig holds the clients required for the serviceMiddleware.
-// The struct is used to simplify the parameter list of the NewServiceMiddleware function,
-// making it easier to manage and pass multiple gRPC clients.
-type ServiceMiddlewareConfig struct {
-	RestaurantClient pb.RestaurantServiceClient
-	CouponClient     pb.CouponServiceClient
-	OrderClient      pb.OrderServiceClient
-	DeliveryClient   pb.DeliveryServiceClient
 	UserClient       pb.UserServiceClient
 }
 

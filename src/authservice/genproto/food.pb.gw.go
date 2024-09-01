@@ -736,7 +736,7 @@ func RegisterAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.AuthService/AssignRolesToUsers", runtime.WithHTTPPathPattern("/auth/role"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.AuthService/AssignRolesToUsers", runtime.WithHTTPPathPattern("/auth/roles/assign"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -829,7 +829,7 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrder", runtime.WithHTTPPathPattern("/api/deliveries/accept-order"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrder", runtime.WithHTTPPathPattern("/api/deliveries/riders/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1254,7 +1254,7 @@ func RegisterAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.AuthService/AssignRolesToUsers", runtime.WithHTTPPathPattern("/auth/role"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.AuthService/AssignRolesToUsers", runtime.WithHTTPPathPattern("/auth/roles/assign"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1278,7 +1278,7 @@ var (
 
 	pattern_AuthService_Login_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"auth", "login"}, ""))
 
-	pattern_AuthService_AssignRolesToUsers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"auth", "role"}, ""))
+	pattern_AuthService_AssignRolesToUsers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"auth", "roles", "assign"}, ""))
 )
 
 var (
@@ -1430,7 +1430,7 @@ func RegisterDeliveryServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrder", runtime.WithHTTPPathPattern("/api/deliveries/accept-order"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.DeliveryService/AcceptOrder", runtime.WithHTTPPathPattern("/api/deliveries/riders/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1450,7 +1450,7 @@ func RegisterDeliveryServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_DeliveryService_AcceptOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "deliveries", "accept-order"}, ""))
+	pattern_DeliveryService_AcceptOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "deliveries", "riders", "accept"}, ""))
 )
 
 var (

@@ -159,9 +159,8 @@ func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenReque
 		return nil, status.Errorf(codes.InvalidArgument, "token must be provided")
 	}
 
-	if valid, err := validateToken(in.Token); !valid {
-		log.Println(err)
-		return nil, status.Errorf(codes.Unauthenticated, "token invalid")
+	if valid, err := validateToken(in.Token, signingKey); !valid {
+		return nil, status.Errorf(codes.Unauthenticated, "token invalid: %v", err)
 	}
 	return &pb.IsValidTokenResponse{IsValid: true}, nil
 }
@@ -172,39 +171,27 @@ func (x *AuthService) IsValidAdminToken(ctx context.Context, in *pb.IsValidAdmin
 		return nil, status.Errorf(codes.InvalidArgument, "token must be provided")
 	}
 
+	//TODO
 	if valid, err := validateAdminToken(in.Token); !valid {
-		return nil, status.Errorf(codes.Unauthenticated, "token validation failed: %v", err)
+		return nil, status.Errorf(codes.TODO, "TODO")
 	}
-	return &pb.IsValidAdminTokenResponse{IsValid: true}, nil
+	return nil, status.Errorf(codes.TODO, "TODO")
 
 }
 
-// FIXME might change this fn name from AssignRoles to UpdateRoles
 func (x *AuthService) AssignRolesToUsers(ctx context.Context, in *pb.AssignRolesToUsersRequest) (*pb.AssignRolesToUsersResponse, error) {
 
 	if in.Username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
+		return nil, status.Errorf(codes.InvalidArgument, "TODO error")
 	}
 
-	// check roles valid
-	if _, ok := pb.Roles_name[int32(in.Role.Number())]; !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid roles")
+	role, ok := pb.Roles_name[in.Role]
+	if !ok {
+		return nil, status.Errorf(codes.Unknown, "role doesn't exists")
 	}
 
-	//TODO
-	_, err := x.db.ExecContext(ctx, `
-		UPDATE user_credentials
-		SET role = $1,
-		WHERE username = $2
-		RETURNING username;
-	`,
-		in.Role.String(),
-		in.Username,
-	)
-	if err != nil {
-		//TODO
-	}
-
+	// TODO
+	// - check token's claims role admin who call this function or check in middleware
 	// - update user role in database , mighe be create function update role
 
 	return nil, status.Errorf(codes.Unimplemented, "method AssignRolesToUsers not implemented")
@@ -212,12 +199,12 @@ func (x *AuthService) AssignRolesToUsers(ctx context.Context, in *pb.AssignRoles
 
 // validateToken verifies the validity of a JWT token using the provided signing key.
 // It returns true if the token is valid, false otherwise, along with any error encountered.
-func validateToken(tokenString string) (bool, error) {
+func validateToken(tokenString string, key []byte) (bool, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return signingKey, nil
+		return key, nil
 	})
 	if err != nil {
 		return false, err
@@ -235,16 +222,16 @@ func validateAdminToken(tokenString string) (bool, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return signingKey, nil
+		return key, nil
 	})
 	if err != nil {
 		return false, err
 	}
 
-	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
-		return false, fmt.Errorf("Role invalid")
+	claims, ok := token.Claims.(*AuthClaims)
+	if !ok || claims.Role != pb.Roles_ADMIN {
+		return false, nil
 	}
-
 	return true, nil
 }
 

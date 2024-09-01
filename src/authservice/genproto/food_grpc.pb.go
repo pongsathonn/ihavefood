@@ -301,6 +301,7 @@ const (
 	AuthService_Register_FullMethodName           = "/foodDeliveryApp.AuthService/Register"
 	AuthService_Login_FullMethodName              = "/foodDeliveryApp.AuthService/Login"
 	AuthService_IsValidToken_FullMethodName       = "/foodDeliveryApp.AuthService/IsValidToken"
+	AuthService_IsValidAdminToken_FullMethodName  = "/foodDeliveryApp.AuthService/IsValidAdminToken"
 	AuthService_AssignRolesToUsers_FullMethodName = "/foodDeliveryApp.AuthService/AssignRolesToUsers"
 )
 
@@ -311,6 +312,7 @@ type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	IsValidToken(ctx context.Context, in *IsValidTokenRequest, opts ...grpc.CallOption) (*IsValidTokenResponse, error)
+	IsValidAdminToken(ctx context.Context, in *IsValidAdminTokenRequest, opts ...grpc.CallOption) (*IsValidAdminTokenResponse, error)
 	AssignRolesToUsers(ctx context.Context, in *AssignRolesToUsersRequest, opts ...grpc.CallOption) (*AssignRolesToUsersResponse, error)
 }
 
@@ -349,6 +351,15 @@ func (c *authServiceClient) IsValidToken(ctx context.Context, in *IsValidTokenRe
 	return out, nil
 }
 
+func (c *authServiceClient) IsValidAdminToken(ctx context.Context, in *IsValidAdminTokenRequest, opts ...grpc.CallOption) (*IsValidAdminTokenResponse, error) {
+	out := new(IsValidAdminTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_IsValidAdminToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) AssignRolesToUsers(ctx context.Context, in *AssignRolesToUsersRequest, opts ...grpc.CallOption) (*AssignRolesToUsersResponse, error) {
 	out := new(AssignRolesToUsersResponse)
 	err := c.cc.Invoke(ctx, AuthService_AssignRolesToUsers_FullMethodName, in, out, opts...)
@@ -365,6 +376,7 @@ type AuthServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	IsValidToken(context.Context, *IsValidTokenRequest) (*IsValidTokenResponse, error)
+	IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error)
 	AssignRolesToUsers(context.Context, *AssignRolesToUsersRequest) (*AssignRolesToUsersResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -381,6 +393,9 @@ func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*Lo
 }
 func (UnimplementedAuthServiceServer) IsValidToken(context.Context, *IsValidTokenRequest) (*IsValidTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsValidToken not implemented")
+}
+func (UnimplementedAuthServiceServer) IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsValidAdminToken not implemented")
 }
 func (UnimplementedAuthServiceServer) AssignRolesToUsers(context.Context, *AssignRolesToUsersRequest) (*AssignRolesToUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AssignRolesToUsers not implemented")
@@ -452,6 +467,24 @@ func _AuthService_IsValidToken_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_IsValidAdminToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsValidAdminTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).IsValidAdminToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_IsValidAdminToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).IsValidAdminToken(ctx, req.(*IsValidAdminTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_AssignRolesToUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AssignRolesToUsersRequest)
 	if err := dec(in); err != nil {
@@ -488,6 +521,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IsValidToken",
 			Handler:    _AuthService_IsValidToken_Handler,
+		},
+		{
+			MethodName: "IsValidAdminToken",
+			Handler:    _AuthService_IsValidAdminToken_Handler,
 		},
 		{
 			MethodName: "AssignRolesToUsers",

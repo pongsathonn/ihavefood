@@ -93,6 +93,13 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware) {
 
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
+
+	authConn, err := grpc.Dial(os.Getenv("AUTH_URI"), opts)
+	if err != nil {
+		log.Fatalf("error creating restaurant client: %v", err)
+	}
+	authClient := pb.NewAuthServiceClient(authConn)
+
 	restaurantConn, err := grpc.Dial(os.Getenv("RESTAURANT_URI"), opts)
 	if err != nil {
 		log.Fatalf("error creating restaurant client: %v", err)
@@ -132,7 +139,7 @@ func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware) 
 		UserClient:       userClient,
 	}
 
-	auth := middleware.NewAuthMiddleware()
+	auth := middleware.NewAuthMiddleware(authClient)
 	service := middleware.NewServiceMiddleware(cfg)
 
 	return auth, service
@@ -140,51 +147,29 @@ func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware) 
 
 func setupHTTPMux(auth middleware.AuthMiddleware, svc middleware.ServiceMiddleware, gwmux *runtime.ServeMux) http.Handler {
 
+	var (
+		authz = auth.Authz
+		authn = auth.Authn
+	)
+
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", HomePage)
+	mux.Handle("POST /auth/login", gwmux)
+	mux.Handle("POST /auth/register", gwmux)
+	mux.Handle("PUT /auth/roles/assign", authz(gwmux))
 
-	mux.Handle("/auth/login", gwmux)
-	mux.Handle("/auth/register", gwmux)
-	mux.Handle("DELETE /api/*", auth.Authz(gwmux))
+	mux.Handle("POST /api/orders/place-order", authn(svc.VerifyPlaceOrder(gwmux)))
+	mux.Handle("POST /api/users", authn(gwmux))
 
-	mux.Handle("POST /api/orders/place-order", auth.Authn(svc.VerifyPlaceOrder(gwmux)))
-	mux.Handle("POST /api/users", auth.Authn(gwmux))
-
-	mux.Handle("/api/*", auth.Authn(gwmux))
+	mux.Handle("DELETE /api/*", authn(authz(gwmux)))
+	mux.Handle("/api/*", authn(gwmux))
 
 	return mux
-}
-
-// HomePage serves a simple HTML page for the root URL ("/").
-func HomePage(w http.ResponseWriter, r *http.Request) {
-
-	htmlContent := `
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<title>Home Page</title>
-	</head>
-	<body>
-		<h1>Welcome to ihavefood!</h1>
-	</body>
-	</html>
-	`
-
-	// Set the content type to HTML
-	w.Header().Set("Content-Type", "text/html")
-
-	// Write the HTML content to the response
-	_, err := w.Write([]byte(htmlContent))
-	if err != nil {
-		http.Error(w, "Unable to write response", http.StatusInternalServerError)
-	}
 }
 
 func cors(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// Production use this
 		// 	  swg := fmt.Sprintf("http://localhost:%s", os.Getenv("SWAGGER_UI_PORT"))
 		// 	  w.Header().Add("Access-Control-Allow-Origin", swg)
 
