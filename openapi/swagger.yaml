@@ -237,7 +237,7 @@ paths:
         - BearerAuth: [] 
 
 #---------------Delivery Service-----------------
-  /api/deliveries/accept-order:
+  /api/deliveries/riders/accept:
     post:
       tags:
         - delivery
