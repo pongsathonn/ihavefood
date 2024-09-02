@@ -1,20 +1,19 @@
 #!/bin/bash
 set -e
 
-# this script will be executed in container
-
+# fetch env variable from .env file
 AUTH_USER="${AUTH_POSTGRES_USER}"
-AUTH_PASSWORD="${AUTH_POSTGRES_PASS}"
+AUTH_PASS="${AUTH_POSTGRES_PASS}"
 AUTH_DB="${AUTH_POSTGRES_DATABASE}"
 
-if [ -z "${AUTH_USER}" ] || [ -z "${AUTH_PASSWORD}" ] || [ -z "${AUTH_DB}" ]; then
+if [ -z "${AUTH_USER}" ] || [ -z "${AUTH_PASS}" ] || [ -z "${AUTH_DB}" ]; then
     echo "Error: Required environment variables are not set."
     exit 1
 fi
 
 
 psql -v ON_ERROR_STOP=1 --username "postgres"  <<-EOSQL
-    CREATE USER "$AUTH_USER" WITH PASSWORD '$AUTH_PASSWORD';
+    CREATE USER "$AUTH_USER" WITH PASSWORD '$AUTH_PASS';
 EOSQL
 
 psql -v ON_ERROR_STOP=1 --username "postgres"  <<-EOSQL
@@ -38,7 +37,4 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$AUTH_DB" <<-EOSQL
     GRANT SELECT, INSERT, UPDATE, DELETE ON user_credentials TO "$AUTH_USER";
     GRANT USAGE, SELECT ON SEQUENCE user_credentials_id_seq TO ${AUTH_USER};
 EOSQL
-
-
-
 

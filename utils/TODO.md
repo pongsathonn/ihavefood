@@ -4,7 +4,11 @@ TODO (DONE) UserService refactor code , create more data layer for repository
 
 # PRIORITY SORT
 
+TODO auth , tested assign role in middleware ( rold invalid ) correct (maybe)
+TODO group init to a function
+TODO add role in claims (JWT)
 TODO modify userService , authservice follow food.proto
+TODO might modify some setupMux middleware for role
 TODO add Role-Based Access Control (RBAC)
     FLOW
     my app contains 3 roles "visitor" | "user" | "admin"
@@ -26,6 +30,7 @@ TODO handle environment variable in compose file and each service
 TODO manage rabbitmqctl see which exchange do , and which service bind queue etc , might be use ack when send and receive
 TODO curl test every endpoints ( look at food.proto )
 TODO Dockerfile ight use multi stage build
+TODO handler error godly 
 TODO write UML correctly
 
 TODO add Unittest (optional)

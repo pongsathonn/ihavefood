@@ -6,6 +6,7 @@ WORKDIR gateway
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY . .
+RUN go mod tidy
 
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 

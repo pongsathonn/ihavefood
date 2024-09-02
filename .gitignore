@@ -1,12 +1,11 @@
 
-EventDesign.md
-UML.md
 *.swp
 .env
 
-TODO.md
+EventDesign.md
+UML.md
 curl.md
+
 dngproto.sh
 lazycurl.sh
 
-utils/

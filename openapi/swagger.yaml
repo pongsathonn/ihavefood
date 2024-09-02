@@ -72,6 +72,8 @@ paths:
           description: User registered successfully
         '400':
           description: Invalid input
+      security:
+        - BearerAuth: []
 
   /auth/login:
     post:
@@ -95,6 +97,33 @@ paths:
       responses:
         '200':
           description: Successful login with access token and token expiration time (Unix)
+      security:
+        - BearerAuth: []
+
+  /auth/roles/assign:
+    put:
+      tags:
+        - auth
+      summary: Assign role to User
+      description: "0 Visitor, 1 User, 2 Admin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  default: yuki002
+                role:
+                  type: integer
+                  default: 2
+      responses:
+        '200':
+          description: Successful login with access token and token expiration time (Unix)
+      security:
+        - BearerAuth: []
 
 #---------------User Service-----------------
 # TODO add more methods

@@ -11,7 +11,6 @@ import "google/api/annotations.proto";
 
 // -----------------------------------
 
-// PascalCase for enumtype , Capital Letter with underscore for values names
 enum AvailStatus{
     AVAILABLE = 0;
     UNVAILABLE = 1;
@@ -109,8 +108,8 @@ message DeleteUserProfileRequest {
     string username = 1;
 }
 
-
 // ---------- Auth service ----------
+//
 // Authservice response user's credentials
 service AuthService {
 
@@ -127,18 +126,20 @@ service AuthService {
         };
     }
 
+
     rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
 
     rpc IsValidAdminToken(IsValidAdminTokenRequest) returns (IsValidAdminTokenResponse){}
 
     rpc AssignRolesToUsers(AssignRolesToUsersRequest) returns (AssignRolesToUsersResponse){
         option (google.api.http) = {
-            put: "/auth/role" 
+            put: "/auth/roles/assign"
             body: "*"
        };
     }
 
     // rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
+    // rpc GetUserCredentials() returns(){} # this should response only "USER" role
 }
 
 message UserCredentials {
@@ -322,7 +323,7 @@ service DeliveryService {
     // for Rider accept Order
     rpc AcceptOrder(AcceptOrderRequest) returns (AcceptOrderResponse){
         option (google.api.http) = {
-            post: "/api/deliveries/accept-order" 
+            post: "/api/deliveries/riders/accept" 
             body: "*"
         };
     }
@@ -541,3 +542,8 @@ message DeleteOrderReviewRequest {
 }
 
 
+// ---------- Payment service ---------- 
+// not implement yet
+
+service PaymentService {
+}

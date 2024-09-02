@@ -20,14 +20,17 @@ import (
 )
 
 func main() {
+
 	if err := internal.InitSigningKey(); err != nil {
 		log.Printf("Failed to initialize jwt signingkey:", err)
 	}
 
-	// Initialize dependencies
 	db, err := initPostgres()
 	if err != nil {
 		log.Fatal("Failed to initialize PostgresDB connection:", err)
+	}
+	if err := internal.InitAdminUser(db); err != nil {
+		log.Printf("Failed to initialize create admin user:", err)
 	}
 
 	amqpConn, err := initRabbitMQ()

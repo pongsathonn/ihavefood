@@ -8,7 +8,9 @@ RUN go mod download && go mod verify
 COPY . .
 RUN go mod tidy
 
-RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /docker-restaurant
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
-CMD ["/docker-restaurant"]
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /restaurant
+
+CMD ["/restaurant"]
 

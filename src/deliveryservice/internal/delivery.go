@@ -254,7 +254,7 @@ func (x *DeliveryService) generateOrderPickUp(placeOrder *pb.PlaceOrder) (*pickU
 
 }
 
-// addressToPoint use for  convert address to locations point
+// addressToPoint use for convert address to locations point
 func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
 
 	// TODO implememnt Geocoding ( Google APIs )

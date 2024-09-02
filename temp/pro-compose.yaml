@@ -1,7 +1,5 @@
 name: ihavefood
 
-# port 40XX for debugging
-
 services:
 
   swaggerx:
@@ -23,14 +21,11 @@ services:
     build: gateway
     ports:
       - "180:180" 
-      - "4041:4040" 
+      - "4041:4041" 
     env_file:
       - path: ./gateway/.env
     networks:
       - dtac
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4041","--accept-multiclient", "/gatewayb" ]
-    security_opt:
-    - seccomp:unconfined
     depends_on:
       - user
       - coupon
@@ -53,11 +48,6 @@ services:
         restart: true
     networks:
       - dtac
-    ports:
-      - "4042:4040" 
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4042","--accept-multiclient", "/order" ]
-    security_opt:
-    - seccomp:unconfined
   orderdb:
     container_name: orderdb
     image: mongo:latest
@@ -76,11 +66,6 @@ services:
       - path: ./src/restaurantservice/.env
     networks:
       - dtac
-    ports:
-      - "4043:4040" 
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/restaurant" ]
-    security_opt:
-    - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -106,11 +91,6 @@ services:
       - path: ./src/userservice/.env
     networks:
       - dtac
-    ports:
-      - "4044:4040"
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/user" ]
-    security_opt:
-      - seccomp:unconfined
     depends_on:
       userdb:
         condition: service_healthy
@@ -143,11 +123,6 @@ services:
       - path: ./src/authservice/.env
     networks:
       - dtac
-    ports:
-      - "4045:4040"
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4045","--accept-multiclient", "/auth" ]
-    security_opt:
-      - seccomp:unconfined
     depends_on:
       authdb:
         condition: service_healthy
@@ -181,11 +156,6 @@ services:
       - path: ./src/deliveryservice/.env
     networks:
       - dtac
-    ports:
-      - "4046:4040"
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4046","--accept-multiclient", "/delivery" ]
-    security_opt:
-      - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -208,11 +178,6 @@ services:
       - path: ./src/couponservice/.env
     networks:
       - dtac
-    ports:
-      - "4047:4040"
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
-    security_opt:
-      - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -235,4 +200,5 @@ services:
 networks:
   dtac:
     driver: bridge
+
 

@@ -21,7 +21,7 @@ import (
 var signingKey []byte
 
 type AuthClaims struct {
-	Role pb.Roles `json:"role"`
+	Role string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -45,21 +45,62 @@ func InitSigningKey() error {
 	key := os.Getenv("JWT_SIGNING_KEY")
 	if key == "" {
 		return fmt.Errorf("JWT_SIGNING_KEY environment variable is empty")
+
 	}
 	signingKey = []byte(key)
 	return nil
 }
 
-// Register handles user registration. It creates a new user record with hashed password in the database.
-// It returns an empty response on success or an error if the registration fails.
+// initAdminUser create default user role (admin)
+func InitAdminUser(db *sql.DB) error {
+
+	admin := os.Getenv("INIT_ADMIN_USER")
+	email := os.Getenv("INIT_ADMIN_EMAIL")
+	password := os.Getenv("INIT_ADMIN_PASS")
+
+	if admin == "" || email == "" || password == "" {
+		return fmt.Errorf("required environment variables are not set")
+	}
+
+	hashedPass, err := hashPassword(password)
+	if err != nil {
+		return fmt.Errorf("password hashing failed")
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO user_credentials (
+			username,
+			email,
+			password,
+			role
+		) 
+		VALUES ($1,$2,$3,'ADMIN');
+	`,
+		admin,
+		email,
+		hashedPass,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert admin user: %v", err)
+	}
+
+	return nil
+}
+
+// Register handles user registration by creating a new user record with a hashed password in the database
+// and calling the UserService to create a user profile. It uses a transaction to ensure that both the user
+// creation and profile creation are successful before committing. If any error occurs, the transaction is rolled
+// back to maintain data integrity. Returns a success response if all operations complete successfully, or an
+// appropriate error if any operation fails.
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
 	if in.Username == "" || in.Email == "" || in.Password == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username, email, or password must be provided")
 	}
 
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
+	hashedPass, err := hashPassword(in.Password)
 	if err != nil {
+		log.Println("Hasing failed: ", err)
 		return nil, status.Errorf(codes.Internal, "password hashing failed")
 	}
 
@@ -94,7 +135,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to insert user into database")
 	}
 
-	// Calling UserService to update UserProfile
+	// Calling UserService to create new UserProfile
 	req := &pb.CreateUserProfileRequest{
 		Username:    in.Username,
 		PhoneNumber: in.PhoneNumber,
@@ -122,7 +163,8 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	row := x.db.QueryRowContext(ctx, `
 		SELECT 
 			username, 
-			password 
+			password,
+			role
 		FROM 
 			user_credentials 
 		WHERE 
@@ -130,7 +172,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	`,
 		in.Username,
 	)
-	if err := row.Scan(&user.Username, &user.Password); err != nil {
+	if err := row.Scan(&user.Username, &user.Password, &user.Role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "user not found")
 		}
@@ -142,7 +184,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Errorf(codes.InvalidArgument, "username or password incorrect")
 	}
 
-	token, exp, err := createNewToken()
+	token, exp, err := createNewToken(user.Role)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate authentication token: %v", err)
 	}
@@ -179,7 +221,7 @@ func (x *AuthService) IsValidAdminToken(ctx context.Context, in *pb.IsValidAdmin
 
 }
 
-// FIXME might change this fn name from AssignRoles to UpdateRoles
+// FIXME might change this fn name from AssignRoles to UpdateUserRole
 func (x *AuthService) AssignRolesToUsers(ctx context.Context, in *pb.AssignRolesToUsersRequest) (*pb.AssignRolesToUsersResponse, error) {
 
 	if in.Username == "" {
@@ -187,22 +229,21 @@ func (x *AuthService) AssignRolesToUsers(ctx context.Context, in *pb.AssignRoles
 	}
 
 	// check roles valid
-	if _, ok := pb.Roles_name[int32(in.Role.Number())]; !ok {
+	if _, ok := pb.Roles_value[in.Role.String()]; !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid roles")
 	}
 
-	//TODO
 	_, err := x.db.ExecContext(ctx, `
 		UPDATE user_credentials
 		SET role = $1,
 		WHERE username = $2
-		RETURNING username;
 	`,
 		in.Role.String(),
 		in.Username,
 	)
 	if err != nil {
-		//TODO
+		log.Println(err)
+		return nil, status.Errorf(codes.Internal, "failed to update user into database")
 	}
 
 	// - update user role in database , mighe be create function update role
@@ -241,7 +282,7 @@ func validateAdminToken(tokenString string) (bool, error) {
 		return false, err
 	}
 
-	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
+	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN.String() {
 		return false, fmt.Errorf("Role invalid")
 	}
 
@@ -250,7 +291,11 @@ func validateAdminToken(tokenString string) (bool, error) {
 
 // createNewToken generates a new JWT token with a default expiration time of 5 minutes from the current time.
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
-func createNewToken() (string, int64, error) {
+//
+// TODO modify createNewToken to handle both User and Admin
+// by Fetch User role first and assign to claim
+// modify doc to create new token based on role
+func createNewToken(role pb.Roles) (string, int64, error) {
 
 	// 1800 sec = 30 minutes
 	addTimeSec := 1800
@@ -258,7 +303,7 @@ func createNewToken() (string, int64, error) {
 	expiration := unixNow + int64(addTimeSec)
 
 	claims := &AuthClaims{
-		Role: pb.Roles_USER,
+		Role: role.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "authentication",
 			Issuer:    "auth service",
@@ -275,4 +320,16 @@ func createNewToken() (string, int64, error) {
 	}
 
 	return ss, expiration, nil
+}
+
+func hashPassword(password string) ([]byte, error) {
+	hashedPass, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return hashedPass, nil
+
 }
