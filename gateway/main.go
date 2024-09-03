@@ -156,7 +156,7 @@ func setupHTTPMux(auth middleware.AuthMiddleware, svc middleware.ServiceMiddlewa
 
 	mux.Handle("POST /auth/login", gwmux)
 	mux.Handle("POST /auth/register", gwmux)
-	mux.Handle("PUT /auth/roles/assign", authz(gwmux))
+	mux.Handle("PUT /auth/users/roles", authz(gwmux))
 
 	mux.Handle("POST /api/orders/place-order", authn(svc.VerifyPlaceOrder(gwmux)))
 	mux.Handle("POST /api/users", authn(gwmux))

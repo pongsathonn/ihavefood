@@ -144,7 +144,7 @@ services:
     networks:
       - dtac
     ports:
-      - "4045:4040"
+      - "4045:4045"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4045","--accept-multiclient", "/auth" ]
     security_opt:
       - seccomp:unconfined

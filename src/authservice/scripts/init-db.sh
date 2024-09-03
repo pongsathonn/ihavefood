@@ -23,18 +23,18 @@ EOSQL
 
 # Connect to the newly created database and create the table
 psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$AUTH_DB" <<-EOSQL
-    GRANT ALL PRIVILEGES ON SCHEMA public TO "$AUTH_USER";
 
     CREATE TABLE user_credentials (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
-        role VARCHAR(255) NOT NULL,
+        role SMALLINT NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
 
+    COMMENT ON COLUMN user_credentials.role IS '0:VISITOR, 1:USER, 2:ADMIN';
     GRANT SELECT, INSERT, UPDATE, DELETE ON user_credentials TO "$AUTH_USER";
-    GRANT USAGE, SELECT ON SEQUENCE user_credentials_id_seq TO ${AUTH_USER};
+    GRANT USAGE, SELECT ON SEQUENCE user_credentials_id_seq TO "$AUTH_USER";
 EOSQL
 

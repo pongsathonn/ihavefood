@@ -131,15 +131,19 @@ service AuthService {
 
     rpc IsValidAdminToken(IsValidAdminTokenRequest) returns (IsValidAdminTokenResponse){}
 
-    rpc AssignRolesToUsers(AssignRolesToUsersRequest) returns (AssignRolesToUsersResponse){
+    rpc UpdateUserRole(UpdateUserRoleRequest) returns (UpdateUserRoleResponse){
         option (google.api.http) = {
-            put: "/auth/roles/assign"
+            put: "/auth/users/roles"
             body: "*"
        };
     }
 
-    // rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
-    // rpc GetUserCredentials() returns(){} # this should response only "USER" role
+    /*
+        rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
+
+        # this should response only "USER" role
+        rpc GetUserCredentials() returns(){}   endpoint /auth/users
+    */
 }
 
 message UserCredentials {
@@ -197,13 +201,12 @@ message IsValidAdminTokenResponse {
     bool is_valid = 1;
 }
 
-// Role that can call this method should be "admin" or above
-message AssignRolesToUsersRequest {
+message UpdateUserRoleRequest {
     string username = 1;
     Roles role = 2;
 }
 
-message AssignRolesToUsersResponse {
+message UpdateUserRoleResponse {
     bool success = 1;
 }
 

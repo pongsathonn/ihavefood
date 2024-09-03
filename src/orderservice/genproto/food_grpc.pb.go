@@ -298,11 +298,11 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	AuthService_Register_FullMethodName           = "/foodDeliveryApp.AuthService/Register"
-	AuthService_Login_FullMethodName              = "/foodDeliveryApp.AuthService/Login"
-	AuthService_IsValidToken_FullMethodName       = "/foodDeliveryApp.AuthService/IsValidToken"
-	AuthService_IsValidAdminToken_FullMethodName  = "/foodDeliveryApp.AuthService/IsValidAdminToken"
-	AuthService_AssignRolesToUsers_FullMethodName = "/foodDeliveryApp.AuthService/AssignRolesToUsers"
+	AuthService_Register_FullMethodName          = "/foodDeliveryApp.AuthService/Register"
+	AuthService_Login_FullMethodName             = "/foodDeliveryApp.AuthService/Login"
+	AuthService_IsValidToken_FullMethodName      = "/foodDeliveryApp.AuthService/IsValidToken"
+	AuthService_IsValidAdminToken_FullMethodName = "/foodDeliveryApp.AuthService/IsValidAdminToken"
+	AuthService_UpdateUserRole_FullMethodName    = "/foodDeliveryApp.AuthService/UpdateUserRole"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -313,7 +313,7 @@ type AuthServiceClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	IsValidToken(ctx context.Context, in *IsValidTokenRequest, opts ...grpc.CallOption) (*IsValidTokenResponse, error)
 	IsValidAdminToken(ctx context.Context, in *IsValidAdminTokenRequest, opts ...grpc.CallOption) (*IsValidAdminTokenResponse, error)
-	AssignRolesToUsers(ctx context.Context, in *AssignRolesToUsersRequest, opts ...grpc.CallOption) (*AssignRolesToUsersResponse, error)
+	UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UpdateUserRoleResponse, error)
 }
 
 type authServiceClient struct {
@@ -360,9 +360,9 @@ func (c *authServiceClient) IsValidAdminToken(ctx context.Context, in *IsValidAd
 	return out, nil
 }
 
-func (c *authServiceClient) AssignRolesToUsers(ctx context.Context, in *AssignRolesToUsersRequest, opts ...grpc.CallOption) (*AssignRolesToUsersResponse, error) {
-	out := new(AssignRolesToUsersResponse)
-	err := c.cc.Invoke(ctx, AuthService_AssignRolesToUsers_FullMethodName, in, out, opts...)
+func (c *authServiceClient) UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UpdateUserRoleResponse, error) {
+	out := new(UpdateUserRoleResponse)
+	err := c.cc.Invoke(ctx, AuthService_UpdateUserRole_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +377,7 @@ type AuthServiceServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	IsValidToken(context.Context, *IsValidTokenRequest) (*IsValidTokenResponse, error)
 	IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error)
-	AssignRolesToUsers(context.Context, *AssignRolesToUsersRequest) (*AssignRolesToUsersResponse, error)
+	UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UpdateUserRoleResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -397,8 +397,8 @@ func (UnimplementedAuthServiceServer) IsValidToken(context.Context, *IsValidToke
 func (UnimplementedAuthServiceServer) IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsValidAdminToken not implemented")
 }
-func (UnimplementedAuthServiceServer) AssignRolesToUsers(context.Context, *AssignRolesToUsersRequest) (*AssignRolesToUsersResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AssignRolesToUsers not implemented")
+func (UnimplementedAuthServiceServer) UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UpdateUserRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserRole not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -485,20 +485,20 @@ func _AuthService_IsValidAdminToken_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_AssignRolesToUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AssignRolesToUsersRequest)
+func _AuthService_UpdateUserRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRoleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).AssignRolesToUsers(ctx, in)
+		return srv.(AuthServiceServer).UpdateUserRole(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_AssignRolesToUsers_FullMethodName,
+		FullMethod: AuthService_UpdateUserRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).AssignRolesToUsers(ctx, req.(*AssignRolesToUsersRequest))
+		return srv.(AuthServiceServer).UpdateUserRole(ctx, req.(*UpdateUserRoleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -527,8 +527,8 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_IsValidAdminToken_Handler,
 		},
 		{
-			MethodName: "AssignRolesToUsers",
-			Handler:    _AuthService_AssignRolesToUsers_Handler,
+			MethodName: "UpdateUserRole",
+			Handler:    _AuthService_UpdateUserRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1324,4 +1324,55 @@ var ReviewService_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "food.proto",
+}
+
+const ()
+
+// PaymentServiceClient is the client API for PaymentService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PaymentServiceClient interface {
+}
+
+type paymentServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPaymentServiceClient(cc grpc.ClientConnInterface) PaymentServiceClient {
+	return &paymentServiceClient{cc}
+}
+
+// PaymentServiceServer is the server API for PaymentService service.
+// All implementations must embed UnimplementedPaymentServiceServer
+// for forward compatibility
+type PaymentServiceServer interface {
+	mustEmbedUnimplementedPaymentServiceServer()
+}
+
+// UnimplementedPaymentServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedPaymentServiceServer struct {
+}
+
+func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
+
+// UnsafePaymentServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PaymentServiceServer will
+// result in compilation errors.
+type UnsafePaymentServiceServer interface {
+	mustEmbedUnimplementedPaymentServiceServer()
+}
+
+func RegisterPaymentServiceServer(s grpc.ServiceRegistrar, srv PaymentServiceServer) {
+	s.RegisterService(&PaymentService_ServiceDesc, srv)
+}
+
+// PaymentService_ServiceDesc is the grpc.ServiceDesc for PaymentService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PaymentService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "foodDeliveryApp.PaymentService",
+	HandlerType: (*PaymentServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams:     []grpc.StreamDesc{},
+	Metadata:    "food.proto",
 }

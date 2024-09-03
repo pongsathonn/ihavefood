@@ -16,7 +16,6 @@ components:
 paths:
 
 #---------------Auth Service-----------------
-# TODO add method AssignRolesToUser
   /auth/register:
     post:
       tags:
@@ -100,7 +99,7 @@ paths:
       security:
         - BearerAuth: []
 
-  /auth/roles/assign:
+  /auth/users/roles:
     put:
       tags:
         - auth

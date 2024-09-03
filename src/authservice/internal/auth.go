@@ -21,7 +21,7 @@ import (
 var signingKey []byte
 
 type AuthClaims struct {
-	Role string `json:"role"`
+	Role pb.Roles `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -74,7 +74,7 @@ func InitAdminUser(db *sql.DB) error {
 			password,
 			role
 		) 
-		VALUES ($1,$2,$3,'ADMIN');
+		VALUES ($1, $2, $3, 2);
 	`,
 		admin,
 		email,
@@ -122,7 +122,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		in.Username,
 		in.Email,
 		string(hashedPass),
-		pb.Roles_USER.String(),
+		pb.Roles_USER,
 	)
 	if err != nil {
 		tx.Rollback()
@@ -221,36 +221,70 @@ func (x *AuthService) IsValidAdminToken(ctx context.Context, in *pb.IsValidAdmin
 
 }
 
-// FIXME might change this fn name from AssignRoles to UpdateUserRole
-func (x *AuthService) AssignRolesToUsers(ctx context.Context, in *pb.AssignRolesToUsersRequest) (*pb.AssignRolesToUsersResponse, error) {
+func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UpdateUserRoleResponse, error) {
 
 	if in.Username == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
 	}
 
-	// check roles valid
+	// check roles valid with comma ok
 	if _, ok := pb.Roles_value[in.Role.String()]; !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid roles")
+		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.Role.String())
 	}
 
 	_, err := x.db.ExecContext(ctx, `
 		UPDATE user_credentials
-		SET role = $1,
+		SET role = $1
 		WHERE username = $2
 	`,
-		in.Role.String(),
+		in.Role,
 		in.Username,
 	)
 	if err != nil {
 		log.Println(err)
-		return nil, status.Errorf(codes.Internal, "failed to update user into database")
+		return nil, status.Errorf(codes.Internal, "failed to update role")
 	}
 
 	// - update user role in database , mighe be create function update role
 
-	return nil, status.Errorf(codes.Unimplemented, "method AssignRolesToUsers not implemented")
+	return &pb.UpdateUserRoleResponse{Success: true}, nil
 }
 
+// createNewToken generates a new JWT token with a default expiration time of 5 minutes from the current time.
+// It returns the signed token string, its expiration time in Unix format, and any error encountered.
+//
+// TODO modify createNewToken to handle both User and Admin
+// by Fetch User role first and assign to claim
+// modify doc to create new token based on role
+func createNewToken(role pb.Roles) (string, int64, error) {
+
+	// 1800 sec = 30 minutes
+	addTimeSec := 1800
+	unixNow := time.Now().Unix()
+	expiration := unixNow + int64(addTimeSec)
+
+	claims := &AuthClaims{
+		Role: role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "authentication",
+			Issuer:    "auth service",
+			IssuedAt:  jwt.NewNumericDate(time.Unix(unixNow, 0)),
+			ExpiresAt: jwt.NewNumericDate(time.Unix(expiration, 0)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	ss, err := token.SignedString(signingKey)
+	if err != nil {
+		return "", 0, fmt.Errorf("failed to sign token: %v", err)
+	}
+
+	return ss, expiration, nil
+}
+
+// TODO might be check "USER" role
+//
 // validateToken verifies the validity of a JWT token using the provided signing key.
 // It returns true if the token is valid, false otherwise, along with any error encountered.
 func validateToken(tokenString string) (bool, error) {
@@ -282,44 +316,11 @@ func validateAdminToken(tokenString string) (bool, error) {
 		return false, err
 	}
 
-	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN.String() {
+	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
 		return false, fmt.Errorf("Role invalid")
 	}
 
 	return true, nil
-}
-
-// createNewToken generates a new JWT token with a default expiration time of 5 minutes from the current time.
-// It returns the signed token string, its expiration time in Unix format, and any error encountered.
-//
-// TODO modify createNewToken to handle both User and Admin
-// by Fetch User role first and assign to claim
-// modify doc to create new token based on role
-func createNewToken(role pb.Roles) (string, int64, error) {
-
-	// 1800 sec = 30 minutes
-	addTimeSec := 1800
-	unixNow := time.Now().Unix()
-	expiration := unixNow + int64(addTimeSec)
-
-	claims := &AuthClaims{
-		Role: role.String(),
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   "authentication",
-			Issuer:    "auth service",
-			IssuedAt:  jwt.NewNumericDate(time.Unix(unixNow, 0)),
-			ExpiresAt: jwt.NewNumericDate(time.Unix(expiration, 0)),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	ss, err := token.SignedString(signingKey)
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to sign token: %v", err)
-	}
-
-	return ss, expiration, nil
 }
 
 func hashPassword(password string) ([]byte, error) {
