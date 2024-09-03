@@ -20,6 +20,7 @@ import (
 func main() {
 	gwmux := newGatewaymux()
 	ctx := context.Background()
+
 	if err := registerServiceHandlers(ctx, gwmux); err != nil {
 		log.Fatalf("failed to register service handler: %v", err)
 	}
@@ -57,7 +58,6 @@ func setStatus(ctx context.Context, w http.ResponseWriter, m protoreflect.ProtoM
 	case *pb.RegisterResponse:
 		w.WriteHeader(http.StatusCreated)
 	}
-
 	// keep default behavior
 	return nil
 }
@@ -90,44 +90,46 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 	return nil
 }
 
+// TODO make this function concise
 func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware) {
 
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
 
 	authConn, err := grpc.Dial(os.Getenv("AUTH_URI"), opts)
 	if err != nil {
-		log.Fatalf("error creating restaurant client: %v", err)
+		log.Fatalf("unable to connect auth client: %v", err)
 	}
-	authClient := pb.NewAuthServiceClient(authConn)
 
 	restaurantConn, err := grpc.Dial(os.Getenv("RESTAURANT_URI"), opts)
 	if err != nil {
-		log.Fatalf("error creating restaurant client: %v", err)
+		log.Fatalf("unable to connect restaurant client: %v", err)
 	}
-	restaurantClient := pb.NewRestaurantServiceClient(restaurantConn)
 
 	couponConn, err := grpc.Dial(os.Getenv("COUPON_URI"), opts)
 	if err != nil {
-		log.Fatalf("error creating coupon client: %v", err)
+		log.Fatalf("unable to connect coupon client: %v", err)
 	}
-	couponClient := pb.NewCouponServiceClient(couponConn)
 
 	orderConn, err := grpc.Dial(os.Getenv("ORDER_URI"), opts)
 	if err != nil {
-		log.Fatalf("error creating order client: %v", err)
+		log.Fatalf("unable to connect order client: %v", err)
 	}
-	orderClient := pb.NewOrderServiceClient(orderConn)
 
 	deliveryConn, err := grpc.Dial(os.Getenv("DELIVERY_URI"), opts)
 	if err != nil {
-		log.Fatalf("error creating delivery client: %v", err)
+		log.Fatalf("unable to connect delivery client: %v", err)
 	}
-	deliveryClient := pb.NewDeliveryServiceClient(deliveryConn)
 
 	userConn, err := grpc.Dial(os.Getenv("USER_URI"), opts)
 	if err != nil {
-		log.Fatalf("error creating user client: %v", err)
+		log.Fatalf("unable to connect user client: %v", err)
 	}
+
+	authClient := pb.NewAuthServiceClient(authConn)
+	restaurantClient := pb.NewRestaurantServiceClient(restaurantConn)
+	couponClient := pb.NewCouponServiceClient(couponConn)
+	orderClient := pb.NewOrderServiceClient(orderConn)
+	deliveryClient := pb.NewDeliveryServiceClient(deliveryConn)
 	userClient := pb.NewUserServiceClient(userConn)
 
 	// Service Middleware Configuration
@@ -154,15 +156,25 @@ func setupHTTPMux(auth middleware.AuthMiddleware, svc middleware.ServiceMiddlewa
 
 	mux := http.NewServeMux()
 
-	mux.Handle("POST /auth/login", gwmux)
-	mux.Handle("POST /auth/register", gwmux)
-	mux.Handle("PUT /auth/users/roles", authz(gwmux))
+	/*
+		mux.Handle("POST /auth/login", gwmux)
+		mux.Handle("POST /auth/register", gwmux)
+		mux.Handle("PUT /auth/users/roles", authz(gwmux))
 
-	mux.Handle("POST /api/orders/place-order", authn(svc.VerifyPlaceOrder(gwmux)))
-	mux.Handle("POST /api/users", authn(gwmux))
+		mux.Handle("POST /api/orders/place-order", authn(svc.VerifyPlaceOrder(gwmux)))
+		mux.Handle("POST /api/users", authn(gwmux))
 
-	mux.Handle("DELETE /api/*", authn(authz(gwmux)))
+		mux.Handle("DELETE /api/*", authn(authz(gwmux)))
+		mux.Handle("/api/*", authn(gwmux))
+	*/
+
+	mux.Handle("/auth/users/roles", authz(gwmux))
+	mux.Handle("/api/orders/place-order", authn(svc.VerifyPlaceOrder(gwmux)))
+	mux.Handle("/api/users", authn(gwmux))
 	mux.Handle("/api/*", authn(gwmux))
+	mux.Handle("DELETE /api/*", authn(authz(gwmux)))
+
+	mux.Handle("/", gwmux)
 
 	return mux
 }
