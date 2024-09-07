@@ -3,16 +3,19 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
@@ -109,6 +112,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		log.Printf("Failed to begin transaction: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
+	defer tx.Rollback()
 
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO user_credentials(
@@ -125,7 +129,6 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		pb.Roles_USER,
 	)
 	if err != nil {
-		tx.Rollback()
 		var pqError *pq.Error
 		// 23505 = Unique constraint violation postgres
 		if errors.As(err, &pqError) && pqError.Code == "23505" {
@@ -143,7 +146,6 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 	_, err = x.userClient.CreateUserProfile(ctx, req)
 	if err != nil {
-		tx.Rollback()
 		log.Printf("Failed to create user profile in UserService: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to create user profile in UserService")
 	}
@@ -159,6 +161,20 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 // Login handles user login. It verifies the provided credentials, generates a JWT token on success, and returns it along with its expiration time.
 // It returns an error if login fails or credentials are incorrect.
 func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unknown, "TODO")
+	}
+	username, password, err := extractAuth(md["authorization"])
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "TODO")
+	}
+
+	if username == "" || password == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "username or password must be provided")
+	}
+
 	var user pb.UserCredentials
 	row := x.db.QueryRowContext(ctx, `
 		SELECT 
@@ -170,7 +186,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		WHERE 
 			username=$1
 	`,
-		in.Username,
+		username,
 	)
 	if err := row.Scan(&user.Username, &user.Password, &user.Role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -180,7 +196,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Errorf(codes.Internal, "scan failed: %v", err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "username or password incorrect")
 	}
 
@@ -248,6 +264,21 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 	// - update user role in database , mighe be create function update role
 
 	return &pb.UpdateUserRoleResponse{Success: true}, nil
+}
+
+func extractAuth(authorization []string) (username, password string, err error) {
+	if len(authorization) < 1 {
+		return "", "", status.Errorf(codes.Unknown, "TODO")
+	}
+
+	encoded := strings.TrimPrefix(authorization[0], "Basic ")
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return "", "", status.Errorf(codes.Unknown, "TODO")
+	}
+
+	cred := strings.Split(string(decoded), ":")
+	return cred[0], cred[1], nil
 }
 
 // createNewToken generates a new JWT token with a default expiration time of 5 minutes from the current time.
