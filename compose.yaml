@@ -1,6 +1,8 @@
 name: ihavefood
 
 # port 40XX for debugging
+# port 8080 for grpc-gateway
+# port 9090 for server
 
 services:
 
@@ -14,7 +16,7 @@ services:
     volumes:
       - ./openapi/swagger.yaml:/swagger/swagger.yaml
     networks:
-      - dtac
+      - mynetwork
     depends_on:
       - gateway
 
@@ -27,8 +29,8 @@ services:
     env_file:
       - path: ./gateway/.env
     networks:
-      - dtac
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4041","--accept-multiclient", "/gatewayb" ]
+      - mynetwork
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4041","--accept-multiclient", "/gateway" ]
     security_opt:
     - seccomp:unconfined
     depends_on:
@@ -52,7 +54,7 @@ services:
         condition: service_started
         restart: true
     networks:
-      - dtac
+      - mynetwork
     ports:
       - "4042:4040" 
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4042","--accept-multiclient", "/order" ]
@@ -67,7 +69,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=donkadmin
       - MONGO_INITDB_ROOT_PASSWORD=donkpassword
     networks:
-      - dtac
+      - mynetwork
 
   restaurant:
     container_name: restaurant
@@ -75,7 +77,7 @@ services:
     env_file:
       - path: ./src/restaurantservice/.env
     networks:
-      - dtac
+      - mynetwork
     ports:
       - "4043:4040" 
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/restaurant" ]
@@ -97,7 +99,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=donkadmin
       - MONGO_INITDB_ROOT_PASSWORD=donkpassword
     networks:
-      - dtac
+      - mynetwork
 
   user:
     container_name: user
@@ -105,7 +107,7 @@ services:
     env_file:
       - path: ./src/userservice/.env
     networks:
-      - dtac
+      - mynetwork
     ports:
       - "4044:4040"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/user" ]
@@ -134,7 +136,7 @@ services:
       interval: 5s 
       timeout: 5s
     networks:
-      - dtac
+      - mynetwork
 
   auth:
     container_name: auth
@@ -142,7 +144,7 @@ services:
     env_file:
       - path: ./src/authservice/.env
     networks:
-      - dtac
+      - mynetwork
     ports:
       - "4045:4045"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4045","--accept-multiclient", "/auth" ]
@@ -172,7 +174,7 @@ services:
       interval: 5s 
       timeout: 10s
     networks:
-      - dtac
+      - mynetwork
 
   delivery:
     container_name: delivery
@@ -180,7 +182,7 @@ services:
     env_file:
       - path: ./src/deliveryservice/.env
     networks:
-      - dtac
+      - mynetwork
     ports:
       - "4046:4040"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4046","--accept-multiclient", "/delivery" ]
@@ -199,7 +201,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=donkadmin
       - MONGO_INITDB_ROOT_PASSWORD=donkpassword
     networks:
-      - dtac
+      - mynetwork
         
   coupon:
     container_name: coupon
@@ -207,16 +209,29 @@ services:
     env_file:
       - path: ./src/couponservice/.env
     networks:
-      - dtac
+      - mynetwork
     ports:
       - "4047:4040"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
     security_opt:
       - seccomp:unconfined
     depends_on:
+      coupondb:
+        condition: service_started
+        restart: true
       rabbitmqx: 
         condition: service_healthy
         restart: true
+  coupondb:
+    container_name: coupondb
+    image: mongo:latest
+    ports:
+      - "27054:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=donkadmin
+      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+    networks:
+      - mynetwork
 
   rabbitmqx:
     container_name: rabbitmqx
@@ -230,9 +245,9 @@ services:
       timeout: 20s
       retries: 5
     networks:
-      - dtac
+      - mynetwork
 
 networks:
-  dtac:
+  mynetwork:
     driver: bridge
 
