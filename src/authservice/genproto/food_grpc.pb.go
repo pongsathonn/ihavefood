@@ -226,6 +226,7 @@ const (
 	AuthService_Login_FullMethodName             = "/foodDeliveryApp.AuthService/Login"
 	AuthService_IsValidToken_FullMethodName      = "/foodDeliveryApp.AuthService/IsValidToken"
 	AuthService_IsValidAdminToken_FullMethodName = "/foodDeliveryApp.AuthService/IsValidAdminToken"
+	AuthService_IsUserExists_FullMethodName      = "/foodDeliveryApp.AuthService/IsUserExists"
 	AuthService_UpdateUserRole_FullMethodName    = "/foodDeliveryApp.AuthService/UpdateUserRole"
 )
 
@@ -237,6 +238,7 @@ type AuthServiceClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	IsValidToken(ctx context.Context, in *IsValidTokenRequest, opts ...grpc.CallOption) (*IsValidTokenResponse, error)
 	IsValidAdminToken(ctx context.Context, in *IsValidAdminTokenRequest, opts ...grpc.CallOption) (*IsValidAdminTokenResponse, error)
+	IsUserExists(ctx context.Context, in *IsUserExistsRequest, opts ...grpc.CallOption) (*IsUserExistsResponse, error)
 	UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UpdateUserRoleResponse, error)
 }
 
@@ -284,6 +286,15 @@ func (c *authServiceClient) IsValidAdminToken(ctx context.Context, in *IsValidAd
 	return out, nil
 }
 
+func (c *authServiceClient) IsUserExists(ctx context.Context, in *IsUserExistsRequest, opts ...grpc.CallOption) (*IsUserExistsResponse, error) {
+	out := new(IsUserExistsResponse)
+	err := c.cc.Invoke(ctx, AuthService_IsUserExists_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UpdateUserRoleResponse, error) {
 	out := new(UpdateUserRoleResponse)
 	err := c.cc.Invoke(ctx, AuthService_UpdateUserRole_FullMethodName, in, out, opts...)
@@ -301,6 +312,7 @@ type AuthServiceServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	IsValidToken(context.Context, *IsValidTokenRequest) (*IsValidTokenResponse, error)
 	IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error)
+	IsUserExists(context.Context, *IsUserExistsRequest) (*IsUserExistsResponse, error)
 	UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UpdateUserRoleResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -320,6 +332,9 @@ func (UnimplementedAuthServiceServer) IsValidToken(context.Context, *IsValidToke
 }
 func (UnimplementedAuthServiceServer) IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsValidAdminToken not implemented")
+}
+func (UnimplementedAuthServiceServer) IsUserExists(context.Context, *IsUserExistsRequest) (*IsUserExistsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsUserExists not implemented")
 }
 func (UnimplementedAuthServiceServer) UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UpdateUserRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserRole not implemented")
@@ -409,6 +424,24 @@ func _AuthService_IsValidAdminToken_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_IsUserExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsUserExistsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).IsUserExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_IsUserExists_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).IsUserExists(ctx, req.(*IsUserExistsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_UpdateUserRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRoleRequest)
 	if err := dec(in); err != nil {
@@ -449,6 +482,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IsValidAdminToken",
 			Handler:    _AuthService_IsValidAdminToken_Handler,
+		},
+		{
+			MethodName: "IsUserExists",
+			Handler:    _AuthService_IsUserExists_Handler,
 		},
 		{
 			MethodName: "UpdateUserRole",

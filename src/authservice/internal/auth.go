@@ -23,6 +23,21 @@ import (
 
 var signingKey []byte
 
+var (
+	errNoUsername         = status.Errorf(codes.InvalidArgument, "username must be provided")
+	errNoPassword         = status.Errorf(codes.InvalidArgument, "password must be provided")
+	errNoEmail            = status.Errorf(codes.InvalidArgument, "email must be provided")
+	errNoUsernamePassword = status.Errorf(codes.InvalidArgument, "username or password must be provided")
+
+	errUserIncorrect   = status.Errorf(codes.InvalidArgument, "username or password incorrect")
+	errUserNotFound    = status.Errorf(codes.NotFound, "user not found")
+	errPasswordHashing = status.Errorf(codes.Internal, "password hashing failed")
+
+	errNoToken       = status.Errorf(codes.InvalidArgument, "token must be provided")
+	errInvalidToken  = status.Errorf(codes.Unauthenticated, "invalid token")
+	errGenerateToken = status.Errorf(codes.Internal, "failed to generate authentication token")
+)
+
 type AuthClaims struct {
 	Role pb.Roles `json:"role"`
 	jwt.RegisteredClaims
@@ -47,7 +62,7 @@ func NewAuthService(db *sql.DB, rabbitmq RabbitMQ, userClient pb.UserServiceClie
 func InitSigningKey() error {
 	key := os.Getenv("JWT_SIGNING_KEY")
 	if key == "" {
-		return fmt.Errorf("JWT_SIGNING_KEY environment variable is empty")
+		return errors.New("JWT_SIGNING_KEY environment variable is empty")
 
 	}
 	signingKey = []byte(key)
@@ -62,12 +77,13 @@ func InitAdminUser(db *sql.DB) error {
 	password := os.Getenv("INIT_ADMIN_PASS")
 
 	if admin == "" || email == "" || password == "" {
-		return fmt.Errorf("required environment variables are not set")
+		return errors.New("required environment variables are not set")
 	}
 
 	hashedPass, err := hashPassword(password)
 	if err != nil {
-		return fmt.Errorf("password hashing failed")
+		log.Println(err)
+		return errPasswordHashing
 	}
 
 	_, err = db.Exec(`
@@ -90,6 +106,8 @@ func InitAdminUser(db *sql.DB) error {
 	return nil
 }
 
+// TODO might not call userservice directly
+//
 // Register handles user registration by creating a new user record with a hashed password in the database
 // and calling the UserService to create a user profile. It uses a transaction to ensure that both the user
 // creation and profile creation are successful before committing. If any error occurs, the transaction is rolled
@@ -103,8 +121,8 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 
 	hashedPass, err := hashPassword(in.Password)
 	if err != nil {
-		log.Println("Hasing failed: ", err)
-		return nil, status.Errorf(codes.Internal, "password hashing failed")
+		log.Printf("Hasing failed: %v", err)
+		return nil, errPasswordHashing
 	}
 
 	tx, err := x.db.BeginTx(ctx, nil)
@@ -164,15 +182,16 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unknown, "TODO")
+		return nil, status.Errorf(codes.Unknown, "missing metadata")
 	}
 	username, password, err := extractAuth(md["authorization"])
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "TODO")
+		log.Println("Invalid authorization: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "invalid authorization")
 	}
 
 	if username == "" || password == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username or password must be provided")
+		return nil, errNoUsernamePassword
 	}
 
 	var user pb.UserCredentials
@@ -190,19 +209,20 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	)
 	if err := row.Scan(&user.Username, &user.Password, &user.Role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "user not found")
+			return nil, errUserNotFound
 		}
-		log.Println(err)
-		return nil, status.Errorf(codes.Internal, "scan failed: %v", err)
+		log.Printf("Failed to scan: %v", err)
+		return nil, status.Errorf(codes.Internal, "scan failed")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "username or password incorrect")
+		return nil, errUserIncorrect
 	}
 
 	token, exp, err := createNewToken(user.Role)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to generate authentication token: %v", err)
+		log.Println("Failed to generate token: %v", err)
+		return nil, errGenerateToken
 	}
 
 	// TODO: Publish event for user login
@@ -214,12 +234,12 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
 
 	if in.Token == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "token must be provided")
+		return nil, errNoToken
 	}
 
 	if valid, err := validateToken(in.Token); !valid {
 		log.Println(err)
-		return nil, status.Errorf(codes.Unauthenticated, "token invalid")
+		return nil, errInvalidToken
 	}
 	return &pb.IsValidTokenResponse{IsValid: true}, nil
 }
@@ -227,20 +247,44 @@ func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenReque
 func (x *AuthService) IsValidAdminToken(ctx context.Context, in *pb.IsValidAdminTokenRequest) (*pb.IsValidAdminTokenResponse, error) {
 
 	if in.Token == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "token must be provided")
+		return nil, errNoToken
 	}
 
 	if valid, err := validateAdminToken(in.Token); !valid {
-		return nil, status.Errorf(codes.Unauthenticated, "token validation failed: %v", err)
+		log.Println("Token validation failed: %v", err)
+		return nil, errInvalidToken
 	}
 	return &pb.IsValidAdminTokenResponse{IsValid: true}, nil
+}
 
+func (x *AuthService) IsUserExists(ctx context.Context, in *pb.IsUserExistsRequest) (*pb.IsUserExistsResponse, error) {
+	if in.Username == "" {
+		return nil, errNoUsername
+	}
+
+	var user *pb.UserCredentials
+	err := x.db.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM user_credentials
+			WHERE username=$1
+		);
+		`,
+		in.Username).Scan(user)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errUserNotFound
+		}
+	}
+
+	// TODO response
+	return nil, status.Errorf(codes.Unimplemented, "method IsUserExists not implemented")
 }
 
 func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UpdateUserRoleResponse, error) {
 
 	if in.Username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
+		return nil, errNoUsername
 	}
 
 	// check roles valid with comma ok
@@ -268,13 +312,13 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 
 func extractAuth(authorization []string) (username, password string, err error) {
 	if len(authorization) < 1 {
-		return "", "", status.Errorf(codes.Unknown, "TODO")
+		return "", "", errors.New("missing authorization in metadata")
 	}
 
 	encoded := strings.TrimPrefix(authorization[0], "Basic ")
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return "", "", status.Errorf(codes.Unknown, "TODO")
+		return "", "", err
 	}
 
 	cred := strings.Split(string(decoded), ":")
@@ -308,7 +352,7 @@ func createNewToken(role pb.Roles) (string, int64, error) {
 
 	ss, err := token.SignedString(signingKey)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to sign token: %v", err)
+		return "", 0, err
 	}
 
 	return ss, expiration, nil
@@ -330,7 +374,7 @@ func validateToken(tokenString string) (bool, error) {
 	}
 
 	if !token.Valid {
-		return false, fmt.Errorf("token invalid")
+		return false, errors.New("invalid token")
 	}
 
 	return true, nil
@@ -348,7 +392,7 @@ func validateAdminToken(tokenString string) (bool, error) {
 	}
 
 	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
-		return false, fmt.Errorf("Role invalid")
+		return false, errors.New("invalid role")
 	}
 
 	return true, nil

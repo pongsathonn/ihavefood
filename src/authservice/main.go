@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	_ "github.com/lib/pq"
 	"github.com/pongsathonn/ihavefood/src/authservice/internal"
 
+	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -104,6 +104,7 @@ func initRabbitMQ() (*amqp.Connection, error) {
 }
 
 // startGRPCServer sets up and starts the gRPC server
+// func startGRPCServer(s *internal.AuthService) {
 func startGRPCServer(s *internal.AuthService) {
 
 	// Set up the server port from environment variable
