@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"time"
 
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/pongsathonn/ihavefood/src/couponservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/couponservice/internal"
@@ -15,26 +18,14 @@ import (
 )
 
 func main() {
-	conn, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	orderClient, err := initOrdergRPCClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	couponService := internal.NewCouponService(conn, orderClient)
-
+	rabbitmq := initRabbitMQ()
+	mongo := initMongoClient()
+	couponService := internal.NewCouponService(rabbitmq, mongo)
 	startGRPCServer(couponService)
-
-	//-----------------------
 
 }
 
-// initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
-func initRabbitMQ() (*amqp.Connection, error) {
+func initRabbitMQ() *amqp.Connection {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		getEnv("COUPON_AMQP_USER", "donkadmin"),
@@ -45,40 +36,50 @@ func initRabbitMQ() (*amqp.Connection, error) {
 
 	conn, err := amqp.Dial(uri)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	return conn, nil
+	return conn
 }
 
-func initOrdergRPCClient() (pb.OrderServiceClient, error) {
+func initMongoClient() *mongo.Client {
 
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/coupon_database?authSource=admin",
+		os.Getenv("COUPON_MONGO_USER"),
+		os.Getenv("COUPON_MONGO_PASS"),
+		os.Getenv("COUPON_MONGO_HOST"),
+		os.Getenv("COUPON_MONGO_PORT"),
+	)
 
-	port := getEnv("COUPON_SERVER_PORT", "3333")
-	uri := fmt.Sprintf("localhost:%s", port)
-
-	conn, err := grpc.NewClient(uri, opt)
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	// defer conn.Close()
+	err = client.Database("coupon_database").CreateCollection(context.TODO(), "couponCollection")
+	if err != nil {
+		//TODO if exists pass
+		log.Fatal(err)
+	}
 
-	return pb.NewOrderServiceClient(conn), nil
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	if err := client.Ping(ctx, nil); err != nil {
+		log.Fatal(err)
+	}
+
+	return client
 }
 
-// startGRPCServer sets up and starts the gRPC server
 func startGRPCServer(s *internal.CouponService) {
 
-	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", getEnv("COUPON_SERVER_PORT", "3333"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
 	}
 
-	// Create and start the gRPC server
 	grpcServer := grpc.NewServer()
 	pb.RegisterCouponServiceServer(grpcServer, s)
 
@@ -89,7 +90,6 @@ func startGRPCServer(s *internal.CouponService) {
 	}
 }
 
-// getEnv fetches an environment variable with a fallback default value
 func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
