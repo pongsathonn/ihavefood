@@ -20,7 +20,9 @@ import (
 func main() {
 	rabbitmq := initRabbitMQ()
 	mongo := initMongoClient()
-	couponService := internal.NewCouponService(rabbitmq, mongo)
+
+	repository := internal.NewCouponRepository(mongo)
+	couponService := internal.NewCouponService(rabbitmq, repository)
 	startGRPCServer(couponService)
 
 }

@@ -1000,6 +1000,7 @@ const (
 	CouponService_AddCoupon_FullMethodName  = "/foodDeliveryApp.CouponService/AddCoupon"
 	CouponService_GetCoupon_FullMethodName  = "/foodDeliveryApp.CouponService/GetCoupon"
 	CouponService_ListCoupon_FullMethodName = "/foodDeliveryApp.CouponService/ListCoupon"
+	CouponService_UseCoupon_FullMethodName  = "/foodDeliveryApp.CouponService/UseCoupon"
 )
 
 // CouponServiceClient is the client API for CouponService service.
@@ -1009,6 +1010,8 @@ type CouponServiceClient interface {
 	AddCoupon(ctx context.Context, in *AddCouponRequest, opts ...grpc.CallOption) (*AddCouponResponse, error)
 	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*GetCouponResponse, error)
 	ListCoupon(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListCouponResponse, error)
+	// UserCoupon is a fn updates coupon being used
+	UseCoupon(ctx context.Context, in *UserCouponRequest, opts ...grpc.CallOption) (*UserCouponResponse, error)
 }
 
 type couponServiceClient struct {
@@ -1046,6 +1049,15 @@ func (c *couponServiceClient) ListCoupon(ctx context.Context, in *Empty, opts ..
 	return out, nil
 }
 
+func (c *couponServiceClient) UseCoupon(ctx context.Context, in *UserCouponRequest, opts ...grpc.CallOption) (*UserCouponResponse, error) {
+	out := new(UserCouponResponse)
+	err := c.cc.Invoke(ctx, CouponService_UseCoupon_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CouponServiceServer is the server API for CouponService service.
 // All implementations must embed UnimplementedCouponServiceServer
 // for forward compatibility
@@ -1053,6 +1065,8 @@ type CouponServiceServer interface {
 	AddCoupon(context.Context, *AddCouponRequest) (*AddCouponResponse, error)
 	GetCoupon(context.Context, *GetCouponRequest) (*GetCouponResponse, error)
 	ListCoupon(context.Context, *Empty) (*ListCouponResponse, error)
+	// UserCoupon is a fn updates coupon being used
+	UseCoupon(context.Context, *UserCouponRequest) (*UserCouponResponse, error)
 	mustEmbedUnimplementedCouponServiceServer()
 }
 
@@ -1068,6 +1082,9 @@ func (UnimplementedCouponServiceServer) GetCoupon(context.Context, *GetCouponReq
 }
 func (UnimplementedCouponServiceServer) ListCoupon(context.Context, *Empty) (*ListCouponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCoupon not implemented")
+}
+func (UnimplementedCouponServiceServer) UseCoupon(context.Context, *UserCouponRequest) (*UserCouponResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UseCoupon not implemented")
 }
 func (UnimplementedCouponServiceServer) mustEmbedUnimplementedCouponServiceServer() {}
 
@@ -1136,6 +1153,24 @@ func _CouponService_ListCoupon_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CouponService_UseCoupon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserCouponRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CouponServiceServer).UseCoupon(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CouponService_UseCoupon_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CouponServiceServer).UseCoupon(ctx, req.(*UserCouponRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CouponService_ServiceDesc is the grpc.ServiceDesc for CouponService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1154,6 +1189,10 @@ var CouponService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCoupon",
 			Handler:    _CouponService_ListCoupon_Handler,
+		},
+		{
+			MethodName: "UseCoupon",
+			Handler:    _CouponService_UseCoupon_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
