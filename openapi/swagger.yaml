@@ -454,6 +454,7 @@ paths:
               free_delivery_request:
                 value:
                   coupon_type: 2
+                  discount: 0
                   expire_in_hour: 48
                   quantity: 3
       responses:
