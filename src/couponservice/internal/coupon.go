@@ -28,8 +28,11 @@ func NewCouponService(rb *amqp.Connection, rp CouponRepository) *CouponService {
 
 // TODO improve doc
 //
-// Addcoupon is a function insert new coupon . if coupon already exists ( same code )
+// Addcoupon is a function insert new coupon .
+// if coupon already exists ( same code )
 // it will increase coupon's quantity instead and replace expiration time with the longest .
+//
+
 // coupon type FREE_DELIVERY will ignore field discount so everytime input has type FREE_COUPON
 // it will assign discount variable to zero
 func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) (*pb.AddCouponResponse, error) {
@@ -73,9 +76,6 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 	return &pb.AddCouponResponse{Success: true}, nil
 }
 
-// TODO improve doc
-//
-// this fn might be use for check how many remaining coupon
 func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
 
 	if in.Code == "" {
@@ -91,18 +91,8 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 		return nil, status.Errorf(codes.InvalidArgument, "failed to get coupon")
 	}
 
-	var types pb.CouponType
-	switch c.Types {
-	case 0:
-		types = pb.CouponType_COUPON_TYPE_UNSPECIFICED
-	case 1:
-		types = pb.CouponType_COUPON_TYPE_DISCOUNT
-	case 2:
-		types = pb.CouponType_COUPON_TYPE_FREE_DELIVERY
-	}
-
 	return &pb.GetCouponResponse{Coupon: &pb.Coupon{
-		Types:      types,
+		Types:      pb.CouponType(c.Types),
 		Code:       c.Code,
 		Discount:   c.Discount,
 		Expiration: c.Expiration,
@@ -110,10 +100,39 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	}}, nil
 }
 
-func (x *CouponService) ListCoupon(ctx context.Context, in *pb.Empty) (*pb.ListCouponResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListCoupon not implemented")
+func (x *CouponService) ListCoupon(ctx context.Context, empty *pb.Empty) (*pb.ListCouponResponse, error) {
+
+	listCoupons, err := x.repository.ListCoupons(ctx)
+	if err != nil {
+		log.Println("List coupons failed: ", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrive list coupons")
+	}
+
+	var coupons []*pb.Coupon
+	for _, c := range listCoupons {
+		coupon := &pb.Coupon{
+			Types:      pb.CouponType(c.Types),
+			Code:       c.Code,
+			Discount:   c.Discount,
+			Expiration: c.Expiration,
+			Quantity:   c.Quantity,
+		}
+		coupons = append(coupons, coupon)
+	}
+	return &pb.ListCouponResponse{Coupons: coupons}, nil
 }
 
-func (x *CouponService) UseCoupon(ctx context.Context, in *pb.UserCouponRequest) (*pb.UserCouponResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UseCoupon not implemented")
+// ApplyCoupon is invoked when User applied coupon. And will update coupon being used in database
+func (x *CouponService) ApplyCoupon(ctx context.Context, in *pb.ApplyCouponRequest) (*pb.ApplyCouponResponse, error) {
+
+	if in.Code == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "code must be provided")
+	}
+
+	if err := x.repository.UpdateCouponQuantity(ctx, in.Code); err != nil {
+		log.Println("Update failed", err)
+		return nil, status.Errorf(codes.Internal, "failed to update coupon's quantity")
+	}
+
+	return &pb.ApplyCouponResponse{Success: true}, nil
 }

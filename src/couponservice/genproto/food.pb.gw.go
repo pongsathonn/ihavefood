@@ -563,8 +563,8 @@ func local_request_CouponService_ListCoupon_0(ctx context.Context, marshaler run
 
 }
 
-func request_CouponService_UseCoupon_0(ctx context.Context, marshaler runtime.Marshaler, client CouponServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UserCouponRequest
+func request_CouponService_ApplyCoupon_0(ctx context.Context, marshaler runtime.Marshaler, client CouponServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ApplyCouponRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -584,13 +584,13 @@ func request_CouponService_UseCoupon_0(ctx context.Context, marshaler runtime.Ma
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code", err)
 	}
 
-	msg, err := client.UseCoupon(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ApplyCoupon(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_CouponService_UseCoupon_0(ctx context.Context, marshaler runtime.Marshaler, server CouponServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UserCouponRequest
+func local_request_CouponService_ApplyCoupon_0(ctx context.Context, marshaler runtime.Marshaler, server CouponServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ApplyCouponRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -610,7 +610,7 @@ func local_request_CouponService_UseCoupon_0(ctx context.Context, marshaler runt
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code", err)
 	}
 
-	msg, err := server.UseCoupon(ctx, &protoReq)
+	msg, err := server.ApplyCoupon(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1066,7 +1066,7 @@ func RegisterCouponServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("PUT", pattern_CouponService_UseCoupon_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_CouponService_ApplyCoupon_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -1074,12 +1074,12 @@ func RegisterCouponServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.CouponService/UseCoupon", runtime.WithHTTPPathPattern("/api/coupons/{code}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/foodDeliveryApp.CouponService/ApplyCoupon", runtime.WithHTTPPathPattern("/api/coupons/{code}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CouponService_UseCoupon_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CouponService_ApplyCoupon_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -1087,7 +1087,7 @@ func RegisterCouponServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_CouponService_UseCoupon_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_CouponService_ApplyCoupon_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1761,25 +1761,25 @@ func RegisterCouponServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 
 	})
 
-	mux.Handle("PUT", pattern_CouponService_UseCoupon_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_CouponService_ApplyCoupon_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.CouponService/UseCoupon", runtime.WithHTTPPathPattern("/api/coupons/{code}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/foodDeliveryApp.CouponService/ApplyCoupon", runtime.WithHTTPPathPattern("/api/coupons/{code}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CouponService_UseCoupon_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CouponService_ApplyCoupon_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_CouponService_UseCoupon_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_CouponService_ApplyCoupon_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1793,7 +1793,7 @@ var (
 
 	pattern_CouponService_ListCoupon_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "coupons"}, ""))
 
-	pattern_CouponService_UseCoupon_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "coupons", "code"}, ""))
+	pattern_CouponService_ApplyCoupon_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "coupons", "code"}, ""))
 )
 
 var (
@@ -1803,5 +1803,5 @@ var (
 
 	forward_CouponService_ListCoupon_0 = runtime.ForwardResponseMessage
 
-	forward_CouponService_UseCoupon_0 = runtime.ForwardResponseMessage
+	forward_CouponService_ApplyCoupon_0 = runtime.ForwardResponseMessage
 )

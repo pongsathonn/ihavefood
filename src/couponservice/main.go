@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
@@ -23,8 +24,12 @@ func main() {
 
 	repository := internal.NewCouponRepository(mongo)
 	couponService := internal.NewCouponService(rabbitmq, repository)
-	startGRPCServer(couponService)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go cleanUpCoupons(ctx, mongo)
+
+	startGRPCServer(couponService)
 }
 
 func initRabbitMQ() *amqp.Connection {
@@ -89,6 +94,43 @@ func startGRPCServer(s *internal.CouponService) {
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
+	}
+}
+
+// cleanUpCoupons runs a scheduled job that removes expired coupons
+// or coupons with zero quantity from the database. It executes this
+// cleanup operation every 30 minutes.
+//
+// Parameters:
+//   - ctx: A context to allow for graceful shutdown of the job.
+//   - client: A MongoDB client used to interact with the database.
+//
+// The function runs in an infinite loop and performs the following:
+//   - Removes any coupon whose 'expiration' field is less than the current time.
+//   - Removes any coupon whose 'quantity' field is less than 1.
+//   - Stops when the context is canceled, allowing for graceful termination.
+func cleanUpCoupons(ctx context.Context, client *mongo.Client) {
+
+	coll := client.Database("coupon_database", nil).Collection("couponCollection")
+
+	ticker := time.NewTicker(30 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			expiredTime := time.Now().Unix()
+			filter := bson.M{"$or": []bson.M{
+				{"expiration": bson.M{"$lt": expiredTime}},
+				{"quantity": bson.M{"$lt": 1}},
+			}}
+			if _, err := coll.DeleteMany(ctx, filter); err != nil {
+				log.Printf("Clean Up delete failed: %v", err)
+			}
+		case <-ctx.Done():
+			log.Println("Clean Up stopped")
+			return
+		}
 	}
 }
 

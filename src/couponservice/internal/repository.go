@@ -21,8 +21,18 @@ type Coupon struct {
 }
 
 type CouponRepository interface {
+
+	// SaveCoupon updates the quantity and expiration time of an existing coupon.
+	// If the coupon code exists, it increases the quantity and sets the expiration
+	// to the latest value. If the coupon code does not exist, it inserts a new coupon.
 	SaveCoupon(ctx context.Context, coupon *Coupon) error
+
 	GetCoupon(ctx context.Context, code string) (*Coupon, error)
+
+	ListCoupons(ctx context.Context) ([]*Coupon, error)
+
+	// UpdateCouponQuantity decreases the quantity of the specified coupon by 1.
+	UpdateCouponQuantity(ctx context.Context, code string) error
 }
 
 type couponRepository struct {
@@ -33,7 +43,6 @@ func NewCouponRepository(db *mongo.Client) CouponRepository {
 	return &couponRepository{db: db}
 }
 
-// TODO doc
 func (r *couponRepository) SaveCoupon(ctx context.Context, coupon *Coupon) error {
 	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
 
@@ -70,4 +79,41 @@ func (r *couponRepository) GetCoupon(ctx context.Context, code string) (*Coupon,
 		return nil, err
 	}
 	return &coupon, nil
+}
+
+func (r *couponRepository) ListCoupons(ctx context.Context) ([]*Coupon, error) {
+
+	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
+	filter := bson.M{"quantity": bson.M{"$gt": 0}}
+
+	cur, err := coll.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var coupons []*Coupon
+	if err := cur.All(ctx, &coupons); err != nil {
+		return nil, err
+	}
+
+	return coupons, nil
+
+}
+
+func (r *couponRepository) UpdateCouponQuantity(ctx context.Context, code string) error {
+	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
+
+	filter := bson.M{
+		"code":     code,
+		"quantity": bson.M{"$gt": 0},
+	}
+
+	update := bson.D{{"$inc", bson.D{{"quantity", -1}}}}
+	if res := coll.FindOneAndUpdate(ctx, filter, update); res.Err() != nil {
+		if errors.Is(res.Err(), mongo.ErrNoDocuments) {
+			return errors.New("coupon code does not exist or quantity is insufficient")
+		}
+		return res.Err()
+	}
+	return nil
 }
