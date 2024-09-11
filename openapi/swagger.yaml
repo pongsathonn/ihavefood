@@ -444,23 +444,18 @@ paths:
                   type: integer
                 quantity:
                   type: integer
-              required:
-                - coupon_type
-              allOf:
-                - if:
-                    properties:
-                      coupon_type:
-                        enum: [1]
-                  then:
-                    required:
-                      - discount
-                - if:
-                    properties:
-                      coupon_type:
-                        enum: [2]
-                  then:
-                    not:
-                      required: [discount]
+            examples:
+              discount_request:
+                value:
+                  coupon_type: 1
+                  discount: 20
+                  expire_in_hour: 72
+                  quantity: 5
+              free_delivery_request:
+                value:
+                  coupon_type: 2
+                  expire_in_hour: 48
+                  quantity: 3
       responses:
         '200':
           description: Coupon details
