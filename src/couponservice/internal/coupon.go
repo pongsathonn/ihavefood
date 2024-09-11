@@ -37,19 +37,16 @@ func NewCouponService(rb *amqp.Connection, rp CouponRepository) *CouponService {
 // it will assign discount variable to zero
 func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) (*pb.AddCouponResponse, error) {
 
-	if in.Discount < 1 || in.Discount > 99 {
-		return nil, status.Errorf(codes.InvalidArgument, "discount must be between 1 and 99")
-	}
-
-	if in.Quantity < 1 {
-		return nil, status.Errorf(codes.InvalidArgument, "quantity must be at least 1")
-	}
-
-	var code string
-	var discount int32
+	var (
+		code     string
+		discount int32
+	)
 
 	switch in.CouponType {
 	case pb.CouponType_COUPON_TYPE_DISCOUNT:
+		if in.Discount < 1 || in.Discount > 99 {
+			return nil, status.Errorf(codes.InvalidArgument, "discount must be between 1 and 99")
+		}
 		code = fmt.Sprintf("SAVE%dFORYOU", in.Discount)
 		discount = in.Discount
 	case pb.CouponType_COUPON_TYPE_FREE_DELIVERY:
@@ -57,6 +54,10 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		discount = 0
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "invalid coupon type")
+	}
+
+	if in.Quantity < 1 {
+		return nil, status.Errorf(codes.InvalidArgument, "quantity must be at least 1")
 	}
 
 	expiration := time.Now().Add(time.Duration(in.ExpireInHour) * time.Hour)
