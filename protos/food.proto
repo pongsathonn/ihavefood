@@ -2,19 +2,42 @@ syntax = "proto3";
 
 package foodDeliveryApp;
 
-// go_package specific where complied file are placed 
-
-option go_package =  "/genproto";
+// go_package = defines the import path to be used 
+// when referencing the generated Go code
+option go_package =  "/genproto"; // 
 
 
 import "google/api/annotations.proto";
 
+
+// Caution: When validating enum types in Go using a map, if the enum includes values 
+// like UNKNOWN, UNSPECIFIED, or UNDEFINED, these should be validated explicitly 
+// before checking the map or proceeding with other validation. For example:
+//
+//    _, ok := protobuff.Types_value[input.Types]
+//
+// If input.Types is UNKNOWN, it will be treated as valid (ok == true), which is not 
+// the desired behavior. To prevent this, validate such values first, as shown below:
+//
+//    if input.Types == protobuff.UNKNOWN {
+//        return errors.New("invalid type")
+//    }
+//
+// After handling these cases, you can proceed to validate other types using 
+// switch statements, maps, or any other preferred method.
+
+
 // -----------------------------------
 
 enum AvailStatus{
-    AVAILABLE = 0;
-    UNVAILABLE = 1;
-    UNKNOWN = 2;
+    UNKNOWN = 0;
+    AVAILABLE = 1;
+    UNVAILABLE = 2;
+}
+
+enum Status{
+    CLOSED = 0;
+    OPEN = 1;
 }
 
 message Empty{} 
@@ -27,7 +50,7 @@ service UserService {
     // - update user's profile picture
     // - update name 
 
-    rpc UpdateUserProfile(Empty) returns(Empty) {}
+    // rpc UpdateUserProfile(Empty) returns(Empty) {}
 
     rpc CreateUserProfile(CreateUserProfileRequest) returns (CreateUserProfileResponse) {}
 
@@ -38,21 +61,22 @@ service UserService {
         };
     }
 
+    // TODO    
     // GetUserProfile for query filter
-    rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse){
+    // rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse){
+    //     option (google.api.http) = {
+    //         get: "/api/users" 
+    //     };
+    // }
+
+    rpc ListUserProfile(ListUserProfileRequest) returns(ListUserProfileResponse){
         option (google.api.http) = {
             get: "/api/users" 
         };
     }
 
-    rpc ListUserProfile(ListUserProfileRequest) returns(ListUserProfileResponse){
-        option (google.api.http) = {
-            get: "/api/users/all" 
-        };
-    }
 
-
-    rpc DeleteUserProfile(DeleteUserProfileRequest) returns(Empty){
+    rpc DeleteUserProfile(DeleteUserProfileRequest) returns(DeleteUserProfileResponse){
         option (google.api.http) = {
             delete: "/api/users/{username}" 
         };
@@ -108,6 +132,10 @@ message DeleteUserProfileRequest {
     string username = 1;
 }
 
+message DeleteUserProfileResponse {
+    bool success = 1;
+}
+
 // ---------- Auth service ----------
 //
 // Authservice response user's credentials
@@ -121,15 +149,15 @@ service AuthService {
     }
     rpc Login(LoginRequest) returns(LoginResponse){
         option (google.api.http) = {
-            post: "/auth/login" 
-            body: "*"
+            get: "/auth/login" 
         };
     }
-
 
     rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
 
     rpc IsValidAdminToken(IsValidAdminTokenRequest) returns (IsValidAdminTokenResponse){}
+
+    rpc IsUserExists(IsUserExistsRequest) returns (IsUserExistsResponse) {}
 
     rpc UpdateUserRole(UpdateUserRoleRequest) returns (UpdateUserRoleResponse){
         option (google.api.http) = {
@@ -201,6 +229,14 @@ message IsValidAdminTokenResponse {
     bool is_valid = 1;
 }
 
+message IsUserExistsRequest{
+    string username = 1;
+}
+
+message IsUserExistsResponse{
+    bool is_exists = 1;
+}
+
 message UpdateUserRoleRequest {
     string username = 1;
     Roles role = 2;
@@ -212,7 +248,7 @@ message UpdateUserRoleResponse {
 
 // ---------- Order service ----------
 service OrderService {
-    rpc PlaceOrder(PlaceOrderRequest) returns(PlaceOrderResponse){
+    rpc HandlePlaceOrder(HandlePlaceOrderRequest) returns(HandlePlaceOrderResponse){
         option (google.api.http) = {
             post: "/api/orders/place-order" 
             body: "*"
@@ -227,19 +263,17 @@ service OrderService {
     }
 }
 
-// TODO might be change order id to order no
+// TODO might change Order id to Order NO
 message PlaceOrder {
     string order_id = 1 ;
     string order_tracking_id = 2;
-
     string username = 3;
-    string restaurant_name = 4;
+    string restaurant_id = 4;
     repeated Menu menus = 5;
     string coupon_code = 6;
-    int32 coupon_discount = 7;
+    int32 coupon_discount =7;
     int32 delivery_fee = 8;
     int32 total = 9;
-
     Address address = 10;
     ContactInfo contact = 11;
     PaymentMethod payment_method = 12;
@@ -285,24 +319,23 @@ message ContactInfo {
     string email = 2;
 }
 
-message PlaceOrderRequest {
+message HandlePlaceOrderRequest {
     string username = 1;
-
-    string restaurant_name = 2;
+    string restaurant_id = 2;
     repeated Menu menus = 3;
-    int32 delivery_fee = 4;
     string coupon_code = 5;
-    int32 coupon_discount = 6;
-    int32 total = 7;
 
-    Address address = 8;
-    ContactInfo contact = 9;
-    PaymentMethod payment_method = 10;
+    Address address = 6;
+    ContactInfo contact = 7;
+    PaymentMethod payment_method = 8;
 }
 
-message PlaceOrderResponse {
+message HandlePlaceOrderResponse {
     string order_id = 1 ;
     string order_tracking_id = 2;
+    int32 coupon_discount =3;
+    int32 delivery_fee = 4;
+    int32 total = 5;
 }
 
 message ListUserPlaceOrderRequest {
@@ -320,8 +353,7 @@ service DeliveryService {
 
     // tracking rider's location ( update every 10s )
     // OrderService should only call this
-    rpc TrackOrder(TrackOrderRequest) returns (TrackOrderResponse) {
-    }
+    rpc TrackOrder(TrackOrderRequest) returns (TrackOrderResponse) {}
 
     // for Rider accept Order
     rpc AcceptOrder(AcceptOrderRequest) returns (AcceptOrderResponse){
@@ -331,9 +363,11 @@ service DeliveryService {
         };
     }
 
+    // GetDeliveryFee calculates the delivery cost from the pickup location (restaurant)
+    // to the destination (user's address).
+    rpc GetDeliveryFee(GetDeliveryFeeRequest) returns (GetDeliveryFeeResponse) {}
 }
 
-// TODO might be change from string to float
 message Point {
     double latitude = 1;
     double longitude = 2;
@@ -343,7 +377,6 @@ message Rider {
     string rider_id = 1;
     string rider_name = 2;
     string phone_number = 3;
-
 }
 
 message PickupInfo {
@@ -371,16 +404,30 @@ message AcceptOrderResponse {
     PickupInfo pickup_info = 1;
 }
 
+// GetDeliveryFeeRequest uses "Address" for input from the client.
+// The server may convert these addresses to geographic "Point"
+// objects for more accurate calculation, depending on the server's
+// logic and implementation.
+message GetDeliveryFeeRequest {
+    Address restaurant_address = 1;
+    Address user_address = 2;
+}
+
+message GetDeliveryFeeResponse {
+    int32 delivery_fee = 1;
+}
+
 
 
 // ---------- Restaurant service ----------
 service RestaurantService {
-    rpc CheckAvailableMenu(CheckAvailableMenuRequest) returns(CheckAvailableMenuResponse){}
+
     rpc GetRestaurant(GetRestaurantRequest) returns(GetRestaurantResponse){
         option (google.api.http) = {
-            get: "/api/restaurants/{restaurant_name}" 
+            get: "/api/restaurants/{restaurant_id}" 
         };
     }
+
     rpc ListRestaurant(Empty) returns(ListRestaurantResponse){
         option (google.api.http) = {
             get: "/api/restaurants" 
@@ -393,8 +440,7 @@ service RestaurantService {
         };
     }
 
-    //TODO DELETE MENU, UPDATE MENU
-    rpc AddMenu(AddMenuRequest) returns(Empty){
+    rpc AddMenu(AddMenuRequest) returns(AddMenuResponse){
         option (google.api.http) = {
             post: "/api/restaurants/menus"
             body: "*"
@@ -407,25 +453,17 @@ message Restaurant {
     string restaurant_name = 2;
     repeated Menu menus = 3;
     Address address = 4;
+    Status status = 5;
 }
 
 message Menu {
     string food_name = 1;
     int32 price = 2;
-    AvailStatus available = 3;
-}
-
-message CheckAvailableMenuRequest {
-    string restaurant_name = 1;
-    repeated Menu menus = 2;
-}
-
-message CheckAvailableMenuResponse {
-    AvailStatus available = 1;
+    //AvailStatus available = 3;
 }
 
 message GetRestaurantRequest{
-    string restaurant_name = 1;
+    string restaurant_id = 1;
 }
 
 message GetRestaurantResponse{
@@ -439,6 +477,7 @@ message ListRestaurantResponse{
 message RegisterRestaurantRequest {
     string restaurant_name = 1;
     repeated Menu menus = 2;
+    Address address =3;
 }
 
 message RegisterRestaurantResponse {
@@ -450,33 +489,101 @@ message AddMenuRequest {
     repeated Menu menus = 2;
 }
 
+message AddMenuResponse {
+    bool success = 1;
+}
+
 
 
 // ---------- Coupon service ----------
 service CouponService {
+
+    // AddCoupon creates a new coupon with the specified details. There are two types of coupons:
+    // Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
+    // If the coupon type is Free, the discount field is ignored and automatically set to zero.
+    rpc AddCoupon(AddCouponRequest) returns(AddCouponResponse){
+        option (google.api.http) = {
+            post: "/api/coupons"
+            body: "*"
+        };
+    }
+
+    // GetCoupon retrieves a coupon by its code. The response is 
+    // a coupon that has not expired and has sufficient quantity.
     rpc GetCoupon(GetCouponRequest) returns(GetCouponResponse) {
         option (google.api.http) = {
             get: "/api/coupons/{code}" 
         };
     }
+
+    // ListCoupons retrieves all coupons from the database without filtering for expiration
+    // or quantity. This method is intended to be used by the frontend to display a list
+    // of all coupons to users, regardless of their validity or availability.
+    //
+    // TODO: In the future, this method might be updated to list coupons by other condition,
+    // but currently, it responds with all coupons.
     rpc ListCoupon(Empty) returns(ListCouponResponse){
         option (google.api.http) = {
             get: "/api/coupons" 
         };
     }
+
+    // TODO remove http request because this fn should be invoked
+    // when place order success. thant's mean if AppliedCoupon failed
+    // placeOrder should be rollback too
+    //
+    // AppliedCoupon is called when an order is successfully placed, which may occur
+    // after payment success or food delivery. This method updates the status of the
+    // coupon in the database to mark it as used.
+    rpc AppliedCoupon(AppliedCouponRequest) returns (AppliedCouponResponse){
+        option (google.api.http) = {
+            put: "/api/coupons/{code}" 
+        };
+    }
+
 }
+
 
 message Coupon {
     CouponType types = 1;
+
     string code = 2;
+
+    // The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.
+    // The server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY.
     int32 discount = 3;
-    int32 period = 4;   //coupon expired when
-    int32 amount = 5;   // amount of coupons
+
+    // expiration is coupon expiration time (Unix) 
+    int64 expiration = 4;
+
+    int32 quantity = 5; 
 }
 
 enum CouponType{
-    COUPON_TYPE_DISCOUNT = 0; 
-    COUPON_TYPE_FREE_DELIVERY = 1; 
+
+    COUPON_TYPE_UNSPECIFICED = 0;
+
+    // Discount is a fixed amount, not a percentage.
+    COUPON_TYPE_DISCOUNT = 1; 
+
+    COUPON_TYPE_FREE_DELIVERY = 2; 
+}
+
+
+message AddCouponRequest {
+    CouponType coupon_type = 1;
+    int32 discount = 2;
+
+    // The coupon expiration time in hours from now.
+    // For example expire_in_hour is 72 means the coupon will be expired
+    // in 3 days (24*3) from now.
+    int32 expire_in_hour = 3;
+
+    int32 quantity = 4;
+}
+
+message AddCouponResponse {
+    bool success = 1;
 }
 
 message GetCouponRequest {
@@ -487,9 +594,16 @@ message GetCouponResponse {
     Coupon coupon  = 1;
 }
 
-
 message ListCouponResponse {
     repeated Coupon coupons = 1;
+}
+
+message AppliedCouponRequest {
+    string code = 1;
+}
+
+message AppliedCouponResponse { 
+    bool success = 1;
 }
 
 // ---------- Review service ---------- 
