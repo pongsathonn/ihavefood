@@ -1,14 +1,20 @@
+// TODO might delete this file
+
 package middleware
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	pb "github.com/pongsathonn/ihavefood/gateway/genproto"
+)
+
+var (
+	errRestaurantClosed = errors.New("restaurant closed")
 )
 
 type ServiceMiddleware interface {
@@ -48,7 +54,8 @@ func NewServiceMiddleware(cfg ServiceMiddlewareConfig) ServiceMiddleware {
 	}
 }
 
-// verifyPlaceOrder verifies the place order request by checking menu availability.
+// TODO improve doc
+// verifyPlaceOrder verifies the place order request by ....
 func (m *serviceMiddleware) VerifyPlaceOrder(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
@@ -57,54 +64,15 @@ func (m *serviceMiddleware) VerifyPlaceOrder(next http.Handler) http.Handler {
 			return
 		}
 
-		// re-assign body to body request
+		// re-assign value to request body
 		r.Body = io.NopCloser(bytes.NewReader(body))
 
-		var req pb.CheckAvailableMenuRequest
-		if err := json.Unmarshal(body, &req); err != nil {
+		var order pb.PlaceOrderRequest
+		if err := json.Unmarshal(body, &order); err != nil {
 			http.Error(w, fmt.Sprintf("failed to unmarshal: %v", err), http.StatusBadRequest)
 			return
 		}
 
-		if req.RestaurantName == "" || len(req.Menus) == 0 {
-			http.Error(w, "bad request", http.StatusBadRequest)
-			return
-		}
-
-		availMenu, err := m.availableMenu(req.RestaurantName, req.Menus)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to verify: %v", err), http.StatusBadRequest)
-			return
-		}
-
-		if !availMenu /*|| !availCoupon*/ {
-			http.Error(w, "menu not available", http.StatusBadRequest)
-			return
-		}
-
-		//TODO verify valid coupon
-
 		next.ServeHTTP(w, r)
 	})
-}
-
-// availableMenu checks if the menu items for a given restaurant are available.
-func (m *serviceMiddleware) availableMenu(restauName string, menus []*pb.Menu) (bool, error) {
-
-	req := &pb.CheckAvailableMenuRequest{
-		RestaurantName: restauName,
-		Menus:          menus,
-	}
-	check, err := m.restaurantClient.CheckAvailableMenu(context.TODO(), req)
-	if err != nil {
-		return false, err
-	}
-
-	// 0: available, 1: unavailable, 2: unknown
-	checkNumber := check.Available.Number()
-	if checkNumber != 0 {
-		return false, fmt.Errorf("menu status not available with number: %d", checkNumber)
-	}
-
-	return true, nil
 }
