@@ -5,6 +5,7 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 
 
 
+
 application protobuff message need to manual generate
 
 <pre>
@@ -33,33 +34,56 @@ $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
 #---------------------------------------------------------------------
 
-+==========================================================================+
-|  exchange    | type   |   routing key               |    queue           |
-|==========================================================================|
-|  order       | topic  |   Order.Placed.Event        |    payment queue   |
-|  order       | topic  |   Order.Placed.Event        |    coupon queue    |
-|  order       | topic  |   Order.Placed.Event        |    delivery queue  |
-|  order       | topic  |   Order.Confirmed.Event     |                    |
-|              |        |                             |                    |
-|  order       | topic  |   Order.Cancelled.Event     |    coupon queue    |
-|  order       | topic  |   Order.Cancelled.Event     |    delivery queue  |
-|              |        |                             |                    |
-|              |        |                             |                    |
-|  Delivery    | topic  |   OnGoing.Order.Event       |    order queue     |
-|  Delivery    | topic  |   WaitingRestau.Order.Event |    order queue     |
-|  Delivery    | topic  |   Order.Assigned.Event      |    order queue     |
-|              |        |                             |                    |
-|              |        |                             |                    |
-|  Payment     | topic  |   Payment.Paid.Event        |    order queue     |
-|  Payment     | topic  |   Payment.Failed.Event      |    order queue     |
-|              |        |                             |                    |
-|              |        |                             |                    |
-|  User        | topic  |   User.Updated.Command      |    order queue     |
-|  User        | topic  |   User.Deleted.Command      |    order queue     |
-|              |        |                             |                    |
-|  Restaurant  | topic  |   Restaurant.               |                    |
-|              |        |                             |                    |
-+==========================================================================+
+                                           gRPC communication 
+ +===========================================================================================================================+  
+ |  source service   |          function          |                   description                    |  destination service  | 
+ |===========================================================================================================================|
+ |     order         |                            |   validate coupon commadn , get coupon discount  |        coupon         |
+ |     order         |                            |   get delivery fee                               |        delivery       |
+ |                   |                            |                                                  |                       |
+ |                   |                            |                                                  |                       |
+ |                   |                            |                                                  |                       |
+ |                   |                            |                                                  |                       |
+ +---------------------------------------------------------------------------------------------------------------------------+
+
+// All exchange type is topic
+// RabbitMQ suit for event and command 
+
+
+// TODO this order.validate.evnet might considerd be command not event
+// TODO might delete thir validate envet use grpc instead faster
+ +=============================================================================================+
+ | Publish | Exchange |       Routing Key         |     Queue        | Subscribe  | STATUS     |        description 
+ |================================================================================|=============
+ | Order   | order    | order.placed.event        | restaurant queue | Restaurant | PENDING    |  validate restaurant status ( open, closed )
+ |         | order    | order.placed.event        | coupon queue     | Coupon     |    "       |  update coupon being used 
+ |         | order    | order.placed.event        | delivery queue   | Delivery   |    "       |  start delivery assignment process such as notify to rider
+ |         |          |                           |                  |            | PREPARE    |
+ |         |          |                           |                  |            |    "       |
+ |         |          |                           |                  |            | FIND_RIDER |
+ |         |          |                           |                  |            |    "       |
+ |         | delivery | order.ongoing.event       | order queue      |            | ONGOING    |
+ |         |          |                           |                  |            |    "       |
+ |         |          |                           |                  |            |            | <= Above this valid
+ |         | delivery | OnGoing.Order.Event       | order queue      |            |            |
+ |         | delivery | WaitingRestau.Order.Event | order queue      |            |            |
+ |         | delivery | Order.Assigned.Event      | order queue      |            |            |
+ |         |          |                           |                  |            |            |
+ |         |          |                           |                  |            |            |
+ |         | payment  | Payment.Paid.Event        | order queue      |    All     |            |  To confirm order success , every services can committ
+ |         |          |                           |                  |            |            |
+ |         |          |                           |                  |            |            |
+ | <----------------------------------( AFTER USER CONFIRMED)---------------------- DELIVERED->| 
+ |         | user     | User.Updated.Command      | order queue      |            |            |
+ |         | user     | User.Deleted.Command      | order queue      |            |            |
+ |         |          |                           |                  |            |            |
+ |         |          |                           |                  |            |            |
+ |         | payment  | Payment.Failed.Event      | order queue      |            |            |
+ |         | order    | Order.Cancelled.Event     | coupon queue     |            |            |
+ |         | order    | Order.Cancelled.Event     | delivery queue   |            |            |
+ |         |          |                           |                  |            |            |
+ +=============================================================================================+
+
 
 Routing Key 
 
