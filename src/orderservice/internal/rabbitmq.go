@@ -9,7 +9,7 @@ import (
 )
 
 type RabbitMQ interface {
-	Publish(ctx context.Context, exchange, routingKey string, body []byte) error
+	Publish(ctx context.Context, exchange, routingKey string, body any) error
 	Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error)
 }
 
@@ -21,8 +21,7 @@ func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
 	return &rabbitMQ{conn: conn}
 }
 
-// routing key example i.e Order.Created.Event
-func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
+func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, body any) error {
 
 	ch, err := r.conn.Channel()
 	if err != nil {

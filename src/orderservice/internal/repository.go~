@@ -116,31 +116,29 @@ func (r *orderRepository) isDuplicateOrder(ctx context.Context, in *pb.HandlePla
 
 	coll := r.client.Database("order_database", nil).Collection("orderCollection")
 
-	/*
-		filter := bson.M{
-			"restaurantId": in.RestaurantId,
-			"username":     in.Username,
-		}
+	filter := bson.M{
+		"restaurantId": in.RestaurantId,
+		"username":     in.Username,
+	}
 
-		var res PlaceOrderEntity
-		if err := coll.FindOne(ctx, filter).Decode(&res); err != nil {
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				return nil
-			}
-			return err
+	var res PlaceOrderEntity
+	if err := coll.FindOne(ctx, filter).Decode(&res); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil
 		}
-	*/
+		return err
+	}
 
 	halfHourAgo := time.Now().Add(-30 * time.Minute).Unix()
 
 	// duplicatedOrder checks if an order with the given OrderID exists,
 	// has an unpaid status, and was created within the last 30 minutes.
 	duplicatedOrder, err := coll.CountDocuments(ctx, bson.M{
-		"restaurantId":              in.RestaurantId,
-		"username":                  in.Username,
-		"paymentStatus":             int32(pb.PaymentStatus_UNPAID),
-		"orderTimeStamps.createdAt": bson.M{"$gte": halfHourAgo},
-	},
+		"_id":           res.OrderId,
+		"paymentStatus": pb.PaymentStatus_UNPAID,
+		"orderTimeStamps": bson.M{
+			"createdAt": bson.M{"$gte": halfHourAgo},
+		}},
 	)
 	if err != nil {
 		return err

@@ -1,0 +1,79 @@
+package internal
+
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+// The term "entity" refers to either a table in the relational model,
+// or a collection in the MongoDB model
+
+// This PlaceOrderEntity use as model for "INSERT" and "QUERY" with mongodb
+// to make this model match with protobuff json name should be same as bson name tag
+// if not omitempty at id Mongo will use zero as id ( when insert )
+type PlaceOrderEntity struct {
+	OrderId           primitive.ObjectID     `bson:"_id,omitempty"`
+	TrackingId        primitive.ObjectID     `bson:"trackingId"`
+	Username          string                 `bson:"username"`
+	RestaurantId      string                 `bson:"restaurantId"`
+	Menus             []*MenuEntity          `bson:"menus"`
+	CouponCode        string                 `bson:"couponCode"`
+	CouponDiscount    int32                  `bson:"couponDiscount"`
+	DeliveryFee       int32                  `bson:"deliveryFee"`
+	Total             int32                  `bson:"total"`
+	UserAddress       *AddressEntity         `bson:"userAddress"`
+	RestaurantAddress *AddressEntity         `bson:"restaurantAddress"`
+	UserContact       *ContactInfoEntity     `bson:"userContact"`
+	PaymentMethod     PaymentMethodEntity    `bson:"paymentMethod"`
+	PaymentStatus     PaymentStatusEntity    `bson:"paymentStatus"`
+	OrderStatus       OrderStatusEntity      `bson:"orderStatus"`
+	OrderTimeStamps   *OrderTimestampsEntity `bson:"orderTimeStamps"`
+}
+
+type MenuEntity struct {
+	FoodName string `bson:"foodName"`
+	Price    int32  `bson:"price"`
+}
+
+type AddressEntity struct {
+	AddressName string `bson:"addressName"`
+	SubDistrict string `bson:"subDistrict"`
+	District    string `bson:"district"`
+	Province    string `bson:"province"`
+	PostalCode  string `bson:"postalCode"`
+}
+
+type ContactInfoEntity struct {
+	PhoneNumber string `bson:"phoneNumber"`
+	Email       string `bson:"email"`
+}
+
+type PaymentMethodEntity int32
+
+const (
+	PaymentMethod_PAYMENT_METHOD_CASH        PaymentMethodEntity = 0
+	PaymentMethod_PAYMENT_METHOD_CREDIT_CARD PaymentMethodEntity = 1
+)
+
+type PaymentStatusEntity int32
+
+const (
+	PaymentStatus_UNPAID PaymentStatusEntity = 0
+	PaymentStatus_PAID   PaymentStatusEntity = 1
+)
+
+type OrderStatusEntity int32
+
+const (
+	OrderStatus_PENDING         OrderStatusEntity = 0
+	OrderStatus_PREPARING_ORDER OrderStatusEntity = 1
+	OrderStatus_FINDING_RIDER   OrderStatusEntity = 2
+	OrderStatus_ONGOING         OrderStatusEntity = 3
+	OrderStatus_DELIVERED       OrderStatusEntity = 4
+	OrderStatus_CANCELLED       OrderStatusEntity = 5
+)
+
+type OrderTimestampsEntity struct {
+	CreatedAt   int64 `bson:"createdAt"`
+	UpdatedAt   int64 `bson:"updatedAt"`
+	CompletedAt int64 `bson:"completedAt"`
+}

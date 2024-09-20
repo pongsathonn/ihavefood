@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -19,26 +20,13 @@ import (
 )
 
 func main() {
-
-	mg, err := initMongoClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rb, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	repository := internal.NewOrderRepository(mg)
-	rabbitmq := internal.NewRabbitMQ(rb)
+	repository := internal.NewOrderRepository(initMongoClient())
+	rabbitmq := internal.NewRabbitMQ(initRabbitMQ())
 	orderService := internal.NewOrderService(repository, rabbitmq)
-
 	startGRPCServer(orderService)
-
 }
 
-func initRabbitMQ() (*amqp.Connection, error) {
+func initRabbitMQ() *amqp.Connection {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("ORDER_AMQP_USER"),
@@ -47,16 +35,14 @@ func initRabbitMQ() (*amqp.Connection, error) {
 		os.Getenv("ORDER_AMQP_PORT"),
 	)
 
-	//uri := "amqp://donkadmin:donkpassword@rabbitmqx:5672"
 	conn, err := amqp.Dial(uri)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
-
-	return conn, nil
+	return conn
 }
 
-func initMongoClient() (*mongo.Client, error) {
+func initMongoClient() *mongo.Client {
 
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/order_database?authSource=admin",
 		os.Getenv("ORDER_MONGO_USER"),
@@ -65,35 +51,36 @@ func initMongoClient() (*mongo.Client, error) {
 		os.Getenv("ORDER_MONGO_PORT"),
 	)
 
-	//uri := "mongodb://donkadmin:donkpassword@orderdb:27017/order_database?authSource=admin"
-
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	// Create collection if not exists
 	err = client.Database("order_database").CreateCollection(context.TODO(), "orderCollection")
 	if err != nil {
-		//TODO if exists pass
-		return nil, err
+		var alreayExistsColl mongo.CommandError
+		if !errors.As(err, &alreayExistsColl) {
+			log.Fatal(err)
+		}
+		// ensure that orderCollection always exists
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
 	if err := client.Ping(ctx, nil); err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	return client, nil
+	return client
+
 }
 
 // startGRPCServer sets up and starts the gRPC server
 func startGRPCServer(s *internal.OrderService) {
 
 	// Set up the server port from environment variable
-	uri := fmt.Sprintf(":%s", getEnv("ORDER_SERVER_PORT", "2222"))
+	uri := fmt.Sprintf(":%s", os.Getenv("ORDER_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
@@ -103,18 +90,9 @@ func startGRPCServer(s *internal.OrderService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterOrderServiceServer(grpcServer, s)
 
-	log.Printf("order service is running on port %s\n", getEnv("ORDER_SERVER_PORT", "2222"))
+	log.Printf("order service is running on port %s\n", os.Getenv("ORDER_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
 	}
-}
-
-// getEnv fetches an environment variable with a fallback default value
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	log.Printf("%s doesn't exists \n", key)
-	return defaultValue
 }
