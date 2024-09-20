@@ -37,10 +37,10 @@ func main() {
 func initRabbitMQ() (*amqp.Connection, error) {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
-		getEnv("USER_AMQP_USER", "donkadmin"),
-		getEnv("USER_AMQP_PASS", "donkpassword"),
-		getEnv("USER_AMQP_HOST", "localhost"),
-		getEnv("USER_AMQP_PORT", "5672"),
+		os.Getenv("USER_AMQP_USER"),
+		os.Getenv("USER_AMQP_PASS"),
+		os.Getenv("USER_AMQP_HOST"),
+		os.Getenv("USER_AMQP_PORT"),
 	)
 
 	conn, err := amqp.Dial(uri)
@@ -54,10 +54,10 @@ func initRabbitMQ() (*amqp.Connection, error) {
 func initPostgres() (*sql.DB, error) {
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/user_database?sslmode=disable",
-		getEnv("USER_POSTGRES_USER", "donk"),
-		getEnv("USER_POSTGRES_PASS", "donkpassword"),
-		getEnv("USER_POSTGRES_HOST", "localhost"),
-		getEnv("USER_POSTGRES_PORT", "5432"),
+		os.Getenv("USER_POSTGRES_USER"),
+		os.Getenv("USER_POSTGRES_PASS"),
+		os.Getenv("USER_POSTGRES_HOST"),
+		os.Getenv("USER_POSTGRES_PORT"),
 	)
 
 	db, err := sql.Open("postgres", uri)
@@ -81,7 +81,7 @@ func startGRPCServer(s *internal.UserService) {
 	}
 
 	// Set up the server port from environment variable
-	uri := fmt.Sprintf(":%s", getEnv("USER_SERVER_PORT", "7777"))
+	uri := fmt.Sprintf(":%s", os.Getenv("USER_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
@@ -91,18 +91,9 @@ func startGRPCServer(s *internal.UserService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserServiceServer(grpcServer, s)
 
-	log.Printf("user service is running on port %s\n", getEnv("USER_SERVER_PORT", "7777"))
+	log.Printf("user service is running on port %s\n", os.Getenv("USER_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
 	}
-}
-
-// getEnv fetches an environment variable with a fallback default value
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	log.Printf("%s doesn't exists \n", key)
-	return defaultValue
 }

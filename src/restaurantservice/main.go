@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,18 +20,18 @@ import (
 
 func main() {
 
-	mongoClient, err := initMongoClient()
+	client, err := initMongoClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rabbitConn, err := initRabbitMQ()
+	conn, err := initRabbitMQ()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	repository := internal.NewRestaurantRepository(mongoClient)
-	rabbitmq := internal.NewRabbitMQ(rabbitConn)
+	repository := internal.NewRestaurantRepository(client)
+	rabbitmq := internal.NewRabbitMQ(conn)
 	restaurantService := internal.NewRestaurantService(repository, rabbitmq)
 
 	startGRPCServer(restaurantService)
@@ -44,27 +45,31 @@ func initMongoClient() (*mongo.Client, error) {
 		os.Getenv("RESTAURANT_MONGO_HOST"),
 		os.Getenv("RESTAURANT_MONGO_PORT"),
 	)
-	conn, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, err
 	}
 
-	if err := conn.Ping(context.TODO(), nil); err != nil {
+	if err := client.Ping(ctx, nil); err != nil {
 		return nil, err
 	}
 
-	coll := conn.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	indexModel := mongo.IndexModel{
 		Keys:    bson.D{{"restaurantName", 1}},
 		Options: options.Index().SetUnique(true),
 	}
 
-	_, err = coll.Indexes().CreateOne(context.TODO(), indexModel)
+	_, err = coll.Indexes().CreateOne(ctx, indexModel)
 	if err != nil {
 		return nil, err
 	}
-	return conn, nil
+	return client, nil
 }
 
 func initRabbitMQ() (*amqp.Connection, error) {
@@ -85,7 +90,7 @@ func initRabbitMQ() (*amqp.Connection, error) {
 
 func startGRPCServer(s *internal.RestaurantService) {
 
-	uri := fmt.Sprintf(":%s", getEnv("RESTAURANT_SERVER_PORT", "1111"))
+	uri := fmt.Sprintf(":%s", os.Getenv("RESTAURANT_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
@@ -94,18 +99,9 @@ func startGRPCServer(s *internal.RestaurantService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterRestaurantServiceServer(grpcServer, s)
 
-	log.Printf("restaurant service is running on port %s\n", getEnv("RESTAURANT_SERVER_PORT", "1111"))
+	log.Printf("restaurant service is running on port %s\n", os.Getenv("RESTAURANT_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
 	}
-}
-
-// getEnv fetches an environment variable with a fallback default value
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	log.Printf("%s doesn't exists \n", key)
-	return defaultValue
 }

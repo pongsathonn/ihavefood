@@ -52,7 +52,7 @@ func main() {
 func newUserServiceClient() (pb.UserServiceClient, error) {
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.NewClient(getEnv("USER_URI", ""), opt)
+	conn, err := grpc.NewClient(os.Getenv("USER_URI"), opt)
 	if err != nil {
 		return nil, err
 	}
@@ -64,10 +64,10 @@ func newUserServiceClient() (pb.UserServiceClient, error) {
 func initPostgres() (*sql.DB, error) {
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/auth_database?sslmode=disable",
-		getEnv("AUTH_POSTGRES_USER", "donkadmin"),
-		getEnv("AUTH_POSTGRES_PASS", "donkpassword"),
-		getEnv("AUTH_POSTGRES_HOST", "localhost"),
-		getEnv("AUTH_POSTGRES_PORT", "5432"),
+		os.Getenv("AUTH_POSTGRES_USER"),
+		os.Getenv("AUTH_POSTGRES_PASS"),
+		os.Getenv("AUTH_POSTGRES_HOST"),
+		os.Getenv("AUTH_POSTGRES_PORT"),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -85,14 +85,13 @@ func initPostgres() (*sql.DB, error) {
 	return db, nil
 }
 
-// initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
 func initRabbitMQ() (*amqp.Connection, error) {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
-		getEnv("AUTH_AMQP_USER", "donkadmin"),
-		getEnv("AUTH_AMQP_PASS", "donkpassword"),
-		getEnv("AUTH_AMQP_HOST", "localhost"),
-		getEnv("AUTH_AMQP_PORT", "5672"),
+		os.Getenv("AUTH_AMQP_USER"),
+		os.Getenv("AUTH_AMQP_PASS"),
+		os.Getenv("AUTH_AMQP_HOST"),
+		os.Getenv("AUTH_AMQP_PORT"),
 	)
 
 	conn, err := amqp.Dial(uri)
@@ -108,7 +107,7 @@ func initRabbitMQ() (*amqp.Connection, error) {
 func startGRPCServer(s *internal.AuthService) {
 
 	// Set up the server port from environment variable
-	uri := fmt.Sprintf(":%s", getEnv("AUTH_SERVER_PORT", "4444"))
+	uri := fmt.Sprintf(":%s", os.Getenv("AUTH_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("failed to listen:", err)
@@ -118,21 +117,10 @@ func startGRPCServer(s *internal.AuthService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterAuthServiceServer(grpcServer, s)
 
-	log.Printf("auth service is running on port %s\n", getEnv("AUTH_SERVER_PORT", "4444"))
+	log.Printf("auth service is running on port %s\n", os.Getenv("AUTH_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("failed to serve:", err)
 	}
 
-}
-
-// getEnv fetches an environment variable with a fallback default value
-func getEnv(key, defaultValue string) string {
-
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-
-	log.Printf("%s doesn't exists \n", key)
-	return defaultValue
 }

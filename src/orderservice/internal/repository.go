@@ -96,10 +96,7 @@ func (r *orderRepository) SavePlaceOrder(ctx context.Context, in *pb.HandlePlace
 
 // TODO check doc grammar
 // isDuplicateOrder prevents placing a duplicate order with same restaurant
-// it check if restaurantId and username match
-//
-// If a matching order is found, it then checks the payment status and the
-// creation time of the order. An order is considered a duplicate if:
+// An order is considered a duplicate if:
 // - The payment status is "unpaid".
 // - The order was created within the last 30 minutes.
 //
@@ -115,21 +112,6 @@ func (r *orderRepository) SavePlaceOrder(ctx context.Context, in *pb.HandlePlace
 func (r *orderRepository) isDuplicateOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) error {
 
 	coll := r.client.Database("order_database", nil).Collection("orderCollection")
-
-	/*
-		filter := bson.M{
-			"restaurantId": in.RestaurantId,
-			"username":     in.Username,
-		}
-
-		var res PlaceOrderEntity
-		if err := coll.FindOne(ctx, filter).Decode(&res); err != nil {
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				return nil
-			}
-			return err
-		}
-	*/
 
 	halfHourAgo := time.Now().Add(-30 * time.Minute).Unix()
 

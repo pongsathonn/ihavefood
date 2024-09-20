@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Discount is a fixed amount, not a percentage.
+// Discount is fixed amount value, not a percentage.
 // CouponType_COUPON_TYPE_DISCOUNT      CouponType = 0
 // CouponType_COUPON_TYPE_FREE_DELIVERY CouponType = 1
 type Coupon struct {
@@ -22,16 +22,19 @@ type Coupon struct {
 
 type CouponRepository interface {
 
-	// SaveCoupon updates the quantity and expiration time of an existing coupon.
-	// If the coupon code exists, it increases the quantity and sets the expiration
-	// to the latest value. If the coupon code does not exist, it inserts a new coupon.
+	// SaveCoupon inserts a new coupon. If the coupon code already exists, it will update
+	// the quantity and expiration time by increasing the quantity and setting the expiration
+	// to the latest value.
 	SaveCoupon(ctx context.Context, coupon *Coupon) error
 
-	GetCoupon(ctx context.Context, code string) (*Coupon, error)
+	// Retriving coupon via its code
+	Coupon(ctx context.Context, code string) (*Coupon, error)
 
-	ListCoupons(ctx context.Context) ([]*Coupon, error)
+	// Lists all coupons in database
+	Coupons(ctx context.Context) ([]*Coupon, error)
 
-	// UpdateCouponQuantity decreases the quantity of the specified coupon by 1.
+	// UpdateCouponQuantity decreases the quantity of the specified coupon. this function should
+	// be invoked after the coupon is used
 	UpdateCouponQuantity(ctx context.Context, code string) error
 }
 
@@ -69,24 +72,23 @@ func (r *couponRepository) SaveCoupon(ctx context.Context, coupon *Coupon) error
 	return nil
 }
 
-func (r *couponRepository) GetCoupon(ctx context.Context, code string) (*Coupon, error) {
+func (r *couponRepository) Coupon(ctx context.Context, code string) (*Coupon, error) {
 
 	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
-	filter := bson.M{"code": code}
 
 	var coupon Coupon
-	if err := coll.FindOne(ctx, filter).Decode(&coupon); err != nil {
+	if err := coll.FindOne(ctx, bson.M{"code": code}).Decode(&coupon); err != nil {
 		return nil, err
 	}
 	return &coupon, nil
 }
 
-func (r *couponRepository) ListCoupons(ctx context.Context) ([]*Coupon, error) {
+func (r *couponRepository) Coupons(ctx context.Context) ([]*Coupon, error) {
 
 	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
-	filter := bson.M{"quantity": bson.M{"$gt": 0}}
 
-	cur, err := coll.Find(ctx, filter)
+	// filter := bson.M{"quantity": bson.M{"$gt": 0}}
+	cur, err := coll.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}

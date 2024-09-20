@@ -9,29 +9,32 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
+
+type UserRepository interface {
+	SaveUserProfile(ctx context.Context, username, phoneNumber string, address *address) (string, error)
+	UserProfiles(ctx context.Context) ([]*userProfile, error)
+	UserProfile(ctx context.Context, username string) (*userProfile, error)
+	DeleteUserProfile(ctx context.Context, username string) error
+}
 
 // TODO improve doc
 // userProfile use for scan user from database
 // it has sql.Null string for empty field in postgres
 // proto.UserProfile does not have this
 type userProfile struct {
-	UserId      string
-	Username    string
-	PhoneNumber string
-	AddressName sql.NullString
-	SubDistrict sql.NullString
-	District    sql.NullString
-	Province    sql.NullString
-	PostalCode  sql.NullString
+	userId      string
+	username    string
+	phoneNumber string
+	address     address
 }
 
-type UserRepository interface {
-	SaveUserProfile(ctx context.Context, username, phoneNumber string, address *pb.Address) (string, error)
-	UserProfiles(ctx context.Context) ([]*pb.UserProfile, error)
-	GetUserProfileByUsername(ctx context.Context, username string) (*pb.UserProfile, error)
+type address struct {
+	addressName sql.NullString
+	subDistrict sql.NullString
+	district    sql.NullString
+	province    sql.NullString
+	postalCode  sql.NullString
 }
 
 type userRepository struct {
@@ -42,7 +45,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNumber string, address *pb.Address) (string, error) {
+func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNumber string, address *address) (string, error) {
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -63,11 +66,11 @@ func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNum
 	    VALUES($1,$2,$3,$4,$5) 
 		RETURNING id
 	`,
-		address.AddressName,
-		address.SubDistrict,
-		address.District,
-		address.Province,
-		address.PostalCode,
+		address.addressName,
+		address.subDistrict,
+		address.district,
+		address.province,
+		address.postalCode,
 	)
 	if err := addrRow.Scan(&addressID); err != nil {
 		tx.Rollback()
@@ -109,7 +112,7 @@ func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNum
 
 }
 
-func (r *userRepository) UserProfiles(ctx context.Context) ([]*pb.UserProfile, error) {
+func (r *userRepository) UserProfiles(ctx context.Context) ([]*userProfile, error) {
 
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
@@ -136,42 +139,30 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*pb.UserProfile, e
 	}
 	defer rows.Close()
 
-	var users []*pb.UserProfile
+	var users []*userProfile
 	for rows.Next() {
-		var u userProfile
+		var user *userProfile
 		err := rows.Scan(
-			&u.UserId,
-			&u.Username,
-			&u.PhoneNumber,
-			&u.AddressName,
-			&u.SubDistrict,
-			&u.District,
-			&u.Province,
-			&u.PostalCode,
+			&user.userId,
+			&user.username,
+			&user.phoneNumber,
+			&user.address.addressName,
+			&user.address.subDistrict,
+			&user.address.district,
+			&user.address.province,
+			&user.address.postalCode,
 		)
 		if err != nil {
 			log.Printf("failed to scan: %v", err)
 			return nil, status.Errorf(codes.Internal, "failed to retrive users")
 		}
 
-		user := &pb.UserProfile{
-			UserId:      u.UserId,
-			Username:    u.Username,
-			PhoneNumber: u.PhoneNumber,
-			Address: &pb.Address{
-				AddressName: u.AddressName.String,
-				SubDistrict: u.SubDistrict.String,
-				District:    u.District.String,
-				Province:    u.Province.String,
-				PostalCode:  u.PostalCode.String,
-			},
-		}
 		users = append(users, user)
 	}
 	return users, nil
 }
 
-func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username string) (*pb.UserProfile, error) {
+func (r *userRepository) UserProfile(ctx context.Context, username string) (*userProfile, error) {
 
 	if username == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
@@ -197,16 +188,16 @@ func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username 
 			user_profile.username = $1;
 	`, username)
 
-	var u userProfile
+	var user *userProfile
 	err := row.Scan(
-		&u.UserId,
-		&u.Username,
-		&u.PhoneNumber,
-		&u.AddressName,
-		&u.SubDistrict,
-		&u.District,
-		&u.Province,
-		&u.PostalCode,
+		&user.userId,
+		&user.username,
+		&user.phoneNumber,
+		&user.address.addressName,
+		&user.address.subDistrict,
+		&user.address.district,
+		&user.address.province,
+		&user.address.postalCode,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -215,19 +206,36 @@ func (r *userRepository) GetUserProfileByUsername(ctx context.Context, username 
 		log.Printf("Scan failed :%v", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive users from db")
 	}
+	return user, nil
+}
 
-	user := &pb.UserProfile{
-		UserId:      u.UserId,
-		Username:    u.Username,
-		PhoneNumber: u.PhoneNumber,
-		Address: &pb.Address{
-			AddressName: u.AddressName.String,
-			SubDistrict: u.SubDistrict.String,
-			District:    u.District.String,
-			Province:    u.Province.String,
-			PostalCode:  u.PostalCode.String,
-		},
+func (r *userRepository) DeleteUserProfile(ctx context.Context, username string) error {
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	addressId, err := tx.ExecContext(ctx, `
+		DELETE FROM 
+			user_profile
+		WHERE 
+			username=$1
+		RETURNNING 
+			user_profile.address_id
+	`, username)
+	if err != nil {
+		return err
 	}
 
-	return user, nil
+	_, err = tx.ExecContext(ctx, `DELETE FROM address WHERE id=$1`, addressId)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }

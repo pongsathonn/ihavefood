@@ -15,6 +15,10 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+var (
+	errNoCouponCode = status.Errorf(codes.InvalidArgument, "coupon code must be provided")
+)
+
 type CouponService struct {
 	pb.UnimplementedCouponServiceServer
 
@@ -26,15 +30,6 @@ func NewCouponService(rb *amqp.Connection, rp CouponRepository) *CouponService {
 	return &CouponService{rabbitmq: rb, repository: rp}
 }
 
-// TODO improve doc
-//
-// Addcoupon is a function insert new coupon .
-// if coupon already exists ( same code )
-// it will increase coupon's quantity instead and replace expiration time with the longest .
-//
-
-// coupon type FREE_DELIVERY will ignore field discount so everytime input has type FREE_COUPON
-// it will assign discount variable to zero
 func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) (*pb.AddCouponResponse, error) {
 
 	var (
@@ -80,30 +75,38 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
 
 	if in.Code == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "code must be provided")
+		return nil, errNoCouponCode
 	}
 
-	c, err := x.repository.GetCoupon(ctx, in.Code)
+	coupon, err := x.repository.Coupon(ctx, in.Code)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, status.Errorf(codes.NotFound, "coupon not found")
 		}
 		log.Println("Get coupon failed:", err)
-		return nil, status.Errorf(codes.InvalidArgument, "failed to get coupon")
+		return nil, status.Errorf(codes.InvalidArgument, "failed to retrive coupon from database")
+	}
+
+	if coupon.Expiration <= time.Now().Unix() {
+		return nil, status.Errorf(codes.FailedPrecondition, "coupon has expired")
+	}
+
+	if coupon.Quantity < 1 {
+		return nil, status.Errorf(codes.FailedPrecondition, "coupon quantity is insufficient")
 	}
 
 	return &pb.GetCouponResponse{Coupon: &pb.Coupon{
-		Types:      pb.CouponType(c.Types),
-		Code:       c.Code,
-		Discount:   c.Discount,
-		Expiration: c.Expiration,
-		Quantity:   c.Quantity,
+		Types:      pb.CouponType(coupon.Types),
+		Code:       coupon.Code,
+		Discount:   coupon.Discount,
+		Expiration: coupon.Expiration,
+		Quantity:   coupon.Quantity,
 	}}, nil
 }
 
 func (x *CouponService) ListCoupon(ctx context.Context, empty *pb.Empty) (*pb.ListCouponResponse, error) {
 
-	listCoupons, err := x.repository.ListCoupons(ctx)
+	listCoupons, err := x.repository.Coupons(ctx)
 	if err != nil {
 		log.Println("List coupons failed: ", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive list coupons")
@@ -123,11 +126,10 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *pb.Empty) (*pb.Li
 	return &pb.ListCouponResponse{Coupons: coupons}, nil
 }
 
-// ApplyCoupon is invoked when User applied coupon. And will update coupon being used in database
-func (x *CouponService) ApplyCoupon(ctx context.Context, in *pb.ApplyCouponRequest) (*pb.ApplyCouponResponse, error) {
+func (x *CouponService) AppliedCoupon(ctx context.Context, in *pb.AppliedCouponRequest) (*pb.AppliedCouponResponse, error) {
 
 	if in.Code == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "code must be provided")
+		return nil, errNoCouponCode
 	}
 
 	if err := x.repository.UpdateCouponQuantity(ctx, in.Code); err != nil {
@@ -135,5 +137,5 @@ func (x *CouponService) ApplyCoupon(ctx context.Context, in *pb.ApplyCouponReque
 		return nil, status.Errorf(codes.Internal, "failed to update coupon's quantity")
 	}
 
-	return &pb.ApplyCouponResponse{Success: true}, nil
+	return &pb.AppliedCouponResponse{Success: true}, nil
 }

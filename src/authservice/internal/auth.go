@@ -69,7 +69,7 @@ func InitSigningKey() error {
 	return nil
 }
 
-// initAdminUser create default user role (admin)
+// InitAdminUser creates the default admin user if it doesn't already exist.
 func InitAdminUser(db *sql.DB) error {
 
 	admin := os.Getenv("INIT_ADMIN_USER")
@@ -80,12 +80,30 @@ func InitAdminUser(db *sql.DB) error {
 		return errors.New("required environment variables are not set")
 	}
 
+	// Check if the admin user already exists by username or email
+	var exists bool
+	err := db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM user_credentials 
+			WHERE username = $1 OR email = $2
+		)
+	`, admin, email).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check if admin user exists: %v", err)
+	}
+
+	if exists {
+		return nil
+	}
+
+	// Hash the password
 	hashedPass, err := hashPassword(password)
 	if err != nil {
 		log.Println(err)
 		return errPasswordHashing
 	}
 
+	// Insert the admin user
 	_, err = db.Exec(`
 		INSERT INTO user_credentials (
 			username,
@@ -103,6 +121,7 @@ func InitAdminUser(db *sql.DB) error {
 		return fmt.Errorf("failed to insert admin user: %v", err)
 	}
 
+	log.Println("Admin user successfully initialized.")
 	return nil
 }
 
@@ -311,6 +330,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 }
 
 func extractAuth(authorization []string) (username, password string, err error) {
+
 	if len(authorization) < 1 {
 		return "", "", errors.New("missing authorization in metadata")
 	}
@@ -325,7 +345,7 @@ func extractAuth(authorization []string) (username, password string, err error) 
 	return cred[0], cred[1], nil
 }
 
-// createNewToken generates a new JWT token with a default expiration time of 5 minutes from the current time.
+// createNewToken generates a new JWT token with a expiration time from the current time.
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
 //
 // TODO modify createNewToken to handle both User and Admin
@@ -333,17 +353,15 @@ func extractAuth(authorization []string) (username, password string, err error) 
 // modify doc to create new token based on role
 func createNewToken(role pb.Roles) (string, int64, error) {
 
-	// 1800 sec = 30 minutes
-	addTimeSec := 1800
-	unixNow := time.Now().Unix()
-	expiration := unixNow + int64(addTimeSec)
+	day := 24 * time.Hour
+	expiration := time.Now().Add(7 * day).Unix()
 
 	claims := &AuthClaims{
 		Role: role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "authentication",
 			Issuer:    "auth service",
-			IssuedAt:  jwt.NewNumericDate(time.Unix(unixNow, 0)),
+			IssuedAt:  jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0)),
 			ExpiresAt: jwt.NewNumericDate(time.Unix(expiration, 0)),
 		},
 	}

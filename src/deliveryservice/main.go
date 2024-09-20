@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/deliveryservice/internal"
@@ -29,46 +28,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	restaurantClient, err := newRestaurantServiceClient()
-	if err != nil {
-		log.Fatal("Failed to create new restaurant client:", err)
-	}
-
 	rabbitmq := internal.NewRabbitMQ(conn)
 	repository := internal.NewDeliveryRepository(client)
 
 	deliveryService := internal.NewDeliveryService(
 		rabbitmq,
 		repository,
-		restaurantClient,
 	)
 
 	// Start the order assignment process in a separate goroutine
-	go deliveryService.OrderAssignment()
+	go deliveryService.DeliveryAssignment()
 
 	startGRPCServer(deliveryService)
-}
-
-func newRestaurantServiceClient() (pb.RestaurantServiceClient, error) {
-
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.NewClient(getEnv("RESTAURANT_URI", ""), opt)
-	if err != nil {
-		return nil, err
-	}
-	client := pb.NewRestaurantServiceClient(conn)
-
-	return client, nil
 }
 
 // initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
 func initRabbitMQ() (*amqp.Connection, error) {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
-		getEnv("DELIVERY_AMQP_USER", "donkadmin"),
-		getEnv("DELIVERY_AMQP_PASS", "donkpassword"),
-		getEnv("DELIVERY_AMQP_HOST", "localhost"),
-		getEnv("DELIVERY_AMQP_PORT", "5672"),
+		os.Getenv("DELIVERY_AMQP_USER"),
+		os.Getenv("DELIVERY_AMQP_PASS"),
+		os.Getenv("DELIVERY_AMQP_HOST"),
+		os.Getenv("DELIVERY_AMQP_PORT"),
 	)
 
 	conn, err := amqp.Dial(uri)
@@ -83,10 +64,10 @@ func initRabbitMQ() (*amqp.Connection, error) {
 func initMongoDB() (*mongo.Client, error) {
 
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/delivery_database?authSource=admin",
-		getEnv("DELIVERY_MONGO_USER", "donkadmin"),
-		getEnv("DELIVERY_MONGO_PASS", "donkpassword"),
-		getEnv("DELIVERY_MONGO_HOST", "localhost"),
-		getEnv("DELIVERY_MONGO_PORT", "27017"),
+		os.Getenv("DELIVERY_MONGO_USER"),
+		os.Getenv("DELIVERY_MONGO_PASS"),
+		os.Getenv("DELIVERY_MONGO_HOST"),
+		os.Getenv("DELIVERY_MONGO_PORT"),
 	)
 
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
@@ -105,7 +86,7 @@ func initMongoDB() (*mongo.Client, error) {
 func startGRPCServer(s *internal.DeliveryService) {
 
 	// Set up the server port from environment variable
-	uri := fmt.Sprintf(":%s", getEnv("DELIVERY_SERVER_PORT", "5555"))
+	uri := fmt.Sprintf(":%s", os.Getenv("DELIVERY_SERVER_PORT", "5555"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
@@ -115,19 +96,9 @@ func startGRPCServer(s *internal.DeliveryService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterDeliveryServiceServer(grpcServer, s)
 
-	log.Printf("delivery service is running on port %s\n", getEnv("DELIVERY_SERVER_PORT", "5555"))
+	log.Printf("delivery service is running on port %s\n", os.Getenv("DELIVERY_SERVER_PORT", "5555"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
 	}
-}
-
-// getEnv fetches an environment variable with a fallback default value
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-
-	log.Printf("value of %s not set\n", key)
-	return defaultValue
 }

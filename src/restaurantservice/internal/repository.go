@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,170 +11,147 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 )
 
+// TODO improve error response
+// TODO use id for find restaurant instead
+
 type RestaurantRepository interface {
-	IsAvailableMenu(ctx context.Context, restauName string, menus []*pb.Menu) (bool, error)
-	Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error)
-	Restaurants(context.Context) ([]*pb.Restaurant, error)
-	SaveRestaurant(ctx context.Context, restauName string, menus []*pb.Menu) (string, error)
-	UpdateMenu(ctx context.Context, restauName string, menus []*pb.Menu) error
+	Restaurant(ctx context.Context, restaurantId string) (*pb.Restaurant, error)
+	Restaurants(ctx context.Context) ([]*pb.Restaurant, error)
+	SaveRestaurant(ctx context.Context, restaurantName string, menus []*pb.Menu, address *pb.Address) (string, error)
+	UpdateMenu(ctx context.Context, restaurantName string, menus []*pb.Menu) error
 }
 
+// RestaurantEntity represents a MongoDB document for restaurants.
+// The RestaurantId field maps to the MongoDB _id, which is auto-generated
+// and used as the restaurant's unique identifier.
 type RestaurantEntity struct {
 	RestaurantId   primitive.ObjectID `bson:"_id,omitempty"`
-	RestaurantName string             `bson:"restaurantName"`
-	Menus          []*pb.Menu         `bson:"menus"`
-}
-
-// 0 avaiable, 1 unavailable, 2 unknown
-type MenuEntity struct {
-	FoodName  string         `bson:"foodName,omitempty"`
-	Price     int32          `bson:"price,omitempty"`
-	Available pb.AvailStatus `bson:"available,omitempty"`
+	RestaurantName string
+	Menus          []*pb.Menu
+	Address        *pb.Address
+	Status         pb.Status
 }
 
 type restaurantRepository struct {
-	db *mongo.Client
+	client *mongo.Client
 }
 
-func NewRestaurantRepository(db *mongo.Client) RestaurantRepository {
-	return &restaurantRepository{db: db}
+func NewRestaurantRepository(client *mongo.Client) RestaurantRepository {
+	return &restaurantRepository{client: client}
 }
 
-func (r *restaurantRepository) IsAvailableMenu(ctx context.Context, restauName string, menus []*pb.Menu) (bool, error) {
-	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+func (r *restaurantRepository) Restaurant(ctx context.Context, restaurantId string) (*pb.Restaurant, error) {
 
-	if len(menus) == 0 {
-		return false, fmt.Errorf("menus must be provided")
+	var entity RestaurantEntity
+
+	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
+
+	if restaurantId == "" {
+		return nil, errors.New("restaurant id must be provided")
 	}
 
-	filter := bson.D{{"restaurantName", restauName}}
-	cursor, err := coll.Find(context.TODO(), filter)
-	if err != nil {
-		return false, err
-	}
-	defer cursor.Close(context.TODO())
-
-	var resp []*MenuEntity
-	if err := cursor.All(context.TODO(), &resp); err != nil {
-		return false, err
-	}
-
-	if len(menus) == 0 {
-		return false, fmt.Errorf("menus not found")
-	}
-
-	// 0 avaliable, 1 unavaliable , 2 unknown
-	for _, mn := range menus {
-		if mn.Available != 0 {
-			return false, fmt.Errorf("menu not available")
-		}
-	}
-
-	return true, nil
-}
-
-func (r *restaurantRepository) Restaurant(ctx context.Context, restauName string) (*pb.Restaurant, error) {
-
-	if restauName == "" {
-		return nil, fmt.Errorf("restaurant name must be provided")
-	}
-
-	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
-
-	filter := bson.M{"restaurantName": restauName}
-
-	var rx RestaurantEntity
-	err := coll.FindOne(context.TODO(), filter).Decode(&rx)
+	filter := bson.M{"_id": restaurantId}
+	err := coll.FindOne(ctx, filter).Decode(&entity)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.Restaurant{
-		RestaurantId:   rx.RestaurantId.Hex(),
-		RestaurantName: rx.RestaurantName,
-		Menus:          rx.Menus,
-	}, nil
+	restaurant := &pb.Restaurant{
+		RestaurantId:   entity.RestaurantId.Hex(),
+		RestaurantName: entity.RestaurantName,
+		Menus:          entity.Menus,
+		Address:        entity.Address,
+	}
+
+	return restaurant, nil
 }
 
-func (r *restaurantRepository) Restaurants(context.Context) ([]*pb.Restaurant, error) {
+func (r *restaurantRepository) Restaurants(ctx context.Context) ([]*pb.Restaurant, error) {
 
-	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
-	filter := bson.D{{}}
-	cur, err := coll.Find(context.TODO(), filter)
+	cursor, err := coll.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(context.TODO())
+	defer cursor.Close(ctx)
 
-	var resp []*pb.Restaurant
-	for cur.Next(context.TODO()) {
-		var rx RestaurantEntity
-		if err := cur.Decode(&rx); err != nil {
+	var restaurants []*pb.Restaurant
+	for cursor.Next(ctx) {
+		var entity RestaurantEntity
+		if err := cursor.Decode(&entity); err != nil {
 			return nil, err
 		}
-		resp = append(resp, &pb.Restaurant{
-			RestaurantId:   rx.RestaurantId.Hex(),
-			RestaurantName: rx.RestaurantName,
-			Menus:          rx.Menus,
-		})
+		restaurant := &pb.Restaurant{
+			RestaurantId:   entity.RestaurantId.Hex(),
+			RestaurantName: entity.RestaurantName,
+			Menus:          entity.Menus,
+			Address:        entity.Address,
+		}
+		restaurants = append(restaurants, restaurant)
 	}
-	if err := cur.Err(); err != nil {
+	if err := cursor.Err(); err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	return restaurants, nil
 
 }
 
-func (r *restaurantRepository) SaveRestaurant(ctx context.Context, restauName string, menus []*pb.Menu) (string, error) {
+func (r *restaurantRepository) SaveRestaurant(ctx context.Context, restaurantName string, menus []*pb.Menu, address *pb.Address) (string, error) {
 
-	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
-	restau := RestaurantEntity{
-		RestaurantId:   primitive.NewObjectID(),
-		RestaurantName: restauName,
+	// ignore a restaurantId and let Mongo generate _id
+	// map with it
+	restaurant := RestaurantEntity{
+		//RestaurantId:   primitive.NewObjectID(),
+		RestaurantName: restaurantName,
 		Menus:          menus,
+		Address:        address,
+		Status:         pb.Status(pb.Status_OPEN),
 	}
 
-	res, err := coll.InsertOne(context.TODO(), restau)
+	res, err := coll.InsertOne(ctx, restaurant)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return "", fmt.Errorf("restaurant name already exists")
+			return "", errors.New("restaurant name already exists")
 		}
 		return "", err
 	}
 
 	id, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return "", fmt.Errorf("failed to convert id to primitive.ObjectID")
+		return "", errors.New("id not primitive.ObjectID type")
 	}
 
 	return id.Hex(), nil
 
 }
 
-func (r *restaurantRepository) UpdateMenu(ctx context.Context, restauName string, newMenus []*pb.Menu) error {
+func (r *restaurantRepository) UpdateMenu(ctx context.Context, restaurantId string, newMenus []*pb.Menu) error {
 
-	coll := r.db.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
-	coll.Find(context.TODO(), nil)
-
-	filter := bson.D{
-		{"restaurantName", restauName},
-	}
-
-	update := bson.D{
-		{"$push", bson.D{
-			{"menus", bson.D{
-				{"$each", newMenus},
-			}},
-		}},
-	}
-
-	_, err := coll.UpdateOne(context.TODO(), filter, update)
+	id, err := primitive.ObjectIDFromHex(restaurantId)
 	if err != nil {
 		return err
+	}
+
+	filter := bson.M{"_id": id}
+	update := bson.M{"$push": bson.M{"menus": bson.M{"$each": newMenus}}}
+
+	res, err := coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 {
+		return errors.New("restaurant not found")
+	}
+
+	if res.ModifiedCount == 0 {
+		return errors.New("update menu failed")
 	}
 
 	return nil

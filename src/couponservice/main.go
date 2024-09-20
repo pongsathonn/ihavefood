@@ -35,10 +35,10 @@ func main() {
 func initRabbitMQ() *amqp.Connection {
 
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
-		getEnv("COUPON_AMQP_USER", "donkadmin"),
-		getEnv("COUPON_AMQP_PASS", "donkpassword"),
-		getEnv("COUPON_AMQP_HOST", "localhost"),
-		getEnv("COUPON_AMQP_PORT", "5672"),
+		os.Getenv("COUPON_AMQP_USER"),
+		os.Getenv("COUPON_AMQP_PASS"),
+		os.Getenv("COUPON_AMQP_HOST"),
+		os.Getenv("COUPON_AMQP_PORT"),
 	)
 
 	conn, err := amqp.Dial(uri)
@@ -81,7 +81,7 @@ func initMongoClient() *mongo.Client {
 
 func startGRPCServer(s *internal.CouponService) {
 
-	uri := fmt.Sprintf(":%s", getEnv("COUPON_SERVER_PORT", "3333"))
+	uri := fmt.Sprintf(":%s", os.Getenv("COUPON_SERVER_PORT", "3333"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
@@ -90,7 +90,7 @@ func startGRPCServer(s *internal.CouponService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterCouponServiceServer(grpcServer, s)
 
-	log.Printf("coupon service is running on port %s\n", getEnv("COUPON_SERVER_PORT", "3333"))
+	log.Printf("coupon service is running on port %s\n", os.Getenv("COUPON_SERVER_PORT", "3333"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
@@ -132,12 +132,4 @@ func cleanUpCoupons(ctx context.Context, client *mongo.Client) {
 			return
 		}
 	}
-}
-
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	log.Printf("%s doesn't exists \n", key)
-	return defaultValue
 }

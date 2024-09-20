@@ -10,8 +10,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// TODO make doc for this struct
-// Prefix M  represent model for repository prevent naming conflict with same package
+// Prefix M(Model)
+// prevent naming conflict with similiar struct name
+//
+// MOrderDelivery represent Delivery information
 type MOrderDelivery struct {
 	OrderId        string     `bson:"orderId"`
 	RiderId        string     `bson:"riderId"`

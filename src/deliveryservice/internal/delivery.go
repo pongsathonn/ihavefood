@@ -3,8 +3,10 @@ package internal
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"slices"
 	"strconv"
@@ -17,9 +19,28 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 )
 
+// Example data ( Chaing Mai district )
+var example = map[string]*pb.Point{
+	"Mueang":    &pb.Point{Latitude: 18.7883, Longitude: 98.9853},
+	"Hang Dong": &pb.Point{Latitude: 18.6870, Longitude: 98.8897},
+	"San Sai":   &pb.Point{Latitude: 18.8578, Longitude: 99.0631},
+	"Mae Rim":   &pb.Point{Latitude: 18.8998, Longitude: 98.9311},
+	"Doi Saket": &pb.Point{Latitude: 18.8482, Longitude: 99.1403},
+}
+
+// Example data for riders
+var riders = []*pb.Rider{
+	{RiderId: "001", RiderName: "Messi", PhoneNumber: "+1234567890"},
+	{RiderId: "002", RiderName: "Ronaldo", PhoneNumber: "+1987654321"},
+	{RiderId: "003", RiderName: "Neymar", PhoneNumber: "+1654321897"},
+	{RiderId: "004", RiderName: "Pogba", PhoneNumber: "+3334445555"},
+	{RiderId: "005", RiderName: "Halaand", PhoneNumber: "+7778889999"},
+}
+
 // pickUpInfo have field same as *pb.PickupInfo
 // but add error field use in this file only
 type pickUpInfo struct {
+	OrderId        string
 	PickupCode     string
 	PickupLocation *pb.Point
 	Destination    *pb.Point
@@ -36,21 +57,19 @@ type pickUpInfo struct {
 type DeliveryService struct {
 	pb.UnimplementedDeliveryServiceServer
 
-	mu               sync.Mutex
-	rabbitmq         RabbitMQ
-	repository       DeliveryRepository
-	restaurantClient pb.RestaurantServiceClient
+	mu         sync.Mutex
+	rabbitmq   RabbitMQ
+	repository DeliveryRepository
 
 	riderAcceptedCh chan *pb.AcceptOrderRequest
 	orderPickupCh   chan *pickUpInfo
 }
 
 // NewDeliveryServer creates and initializes a new delivery instance.
-func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository, rc pb.RestaurantServiceClient) *DeliveryService {
+func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository) *DeliveryService {
 	return &DeliveryService{
-		rabbitmq:         rb,
-		repository:       rp,
-		restaurantClient: rc,
+		rabbitmq:   rb,
+		repository: rp,
 
 		riderAcceptedCh: make(chan *pb.AcceptOrderRequest),
 		orderPickupCh:   make(chan *pickUpInfo),
@@ -69,7 +88,6 @@ func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderReque
 // It saves the delivery order to the database. Each order should only be accepted once.
 func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderRequest) (*pb.AcceptOrderResponse, error) {
 
-	// Validate the input request
 	if in.OrderId == "" || in.RiderId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "order ID and rider ID must be provided")
 	}
@@ -124,28 +142,54 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 			return nil, status.Errorf(codes.Internal, "failed to save order delivery information")
 		}
 
-		pickupInfo := &pb.PickupInfo{
-			PickupCode:     order.PickupCode,
-			PickupLocation: order.PickupLocation,
-			Destination:    order.Destination,
-		}
-		return &pb.AcceptOrderResponse{PickupInfo: pickupInfo}, nil
+		return &pb.AcceptOrderResponse{
+			OrderId: in.OrderId,
+			PickupInfo: &pb.PickupInfo{
+				PickupCode:     order.PickupCode,
+				PickupLocation: order.PickupLocation,
+				Destination:    order.Destination,
+			},
+		}, nil
 
 	case <-time.After(10 * time.Second):
 		return nil, status.Errorf(codes.Internal, "timeout while waiting for pickup information")
 	}
 }
 
-// OrderAssignment handles incoming orders, saves them to the database,
-// calculates the nearest riders, and notifies them. It waits for rider
-// acceptance and responds with order pickup details if accepted.
+func (x *DeliveryService) GetDeliveryFee(ctx context.Context, in *pb.GetDeliveryFeeRequest) (*pb.GetDeliveryFeeResponse, error) {
+	if in.UserAddress == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "user address must be provided")
+	}
+
+	if in.RestaurantAddress == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "restaurant address must be provided")
+	}
+
+	deliveryFee, err := calculateDeliveryFee(in.RestaurantAddress, in.UserAddress)
+	if err != nil {
+		log.Printf("Calculate delivery fee error : %v", deliveryFee)
+		return nil, status.Errorf(codes.Internal, "get delivery fee failed")
+	}
+
+	return &pb.GetDeliveryFeeResponse{DeliveryFee: deliveryFee}, nil
+}
+
+// TODO grammar check
+// DeliveryAssignment handles incoming orders from  "order.placed.event" and saves place order
+// to the database, finding the nearest riders, and notifies them. It waits for rider acceptance
+// and responds with order pickup details if accepted.
 //
-// when save order with SaveOrderDelivery the order status still be not accept
-// after rider accept order it change order status at function AcceptOrder
-func (x *DeliveryService) OrderAssignment() {
+// when save order with SaveOrderDelivery the order status still be not accept. It will accept
+// after rider accepted order.Then  change order status at function AcceptOrder
+func (x *DeliveryService) DeliveryAssignment() {
 
 	for {
-		placeOrder := x.receiveOrder()
+		routingKey := "order.placed.event"
+		placeOrder, err := x.receiveOrder(routingKey)
+		if err != nil {
+			log.Printf("Could not receive order from %s: %v", routingKey, err)
+			return
+		}
 		go func(placeOrder *pb.PlaceOrder) {
 
 			// save new placeOrder to deliverydb ( not accepted yet )
@@ -155,7 +199,7 @@ func (x *DeliveryService) OrderAssignment() {
 				return
 			}
 
-			riders, err := x.calculateNearestRider(placeOrder.Address)
+			riders, err := calculateNearestRider(placeOrder.UserAddress, placeOrder.RestaurantAddress)
 			if err != nil {
 				log.Printf("failed to calculate nearest riders: %v", err)
 				return
@@ -163,7 +207,7 @@ func (x *DeliveryService) OrderAssignment() {
 
 			orderPickup, err := x.generateOrderPickUp(placeOrder)
 			if err != nil {
-				log.Println("failed to generate order pickup: %v", err)
+				log.Printf("failed to generate order pickup: %v", err)
 				return
 			}
 
@@ -173,7 +217,7 @@ func (x *DeliveryService) OrderAssignment() {
 			// notify to rider and wait for rider accept order
 			// if rider is
 			go x.waitRiderAcceptance(ctx, cancel, riders, orderPickup)
-			x.notifyToRider(ctx, riders, orderPickup)
+			notifyToRider(ctx, riders, orderPickup)
 
 		}(placeOrder)
 	}
@@ -182,46 +226,46 @@ func (x *DeliveryService) OrderAssignment() {
 
 // receiveOrder subscribes to new order from OrderService
 // and returns the received order.
-func (x *DeliveryService) receiveOrder() *pb.PlaceOrder {
+func (x *DeliveryService) receiveOrder(routingKey string) (*pb.PlaceOrder, error) {
 
 	deliveries, err := x.rabbitmq.Subscribe(
 		context.TODO(),
-		"order_exchange",     // exchange
-		"",                   // queue
-		"order.placed.event", // routing key
+		"order_exchange", // exchange
+		"",               // queue
+		routingKey,       // routing key
 	)
 	if err != nil {
-		log.Println("failed to subscrib to order queue: %v", err)
-		return nil
+		return nil, err
 	}
 
 	for delivery := range deliveries {
 		var placeOrder pb.PlaceOrder
 		if err := json.Unmarshal(delivery.Body, &placeOrder); err != nil {
-			log.Printf("failed to unmarshal message: %v", err)
-			return nil
+			return nil, err
 		}
-		return &placeOrder
+		return &placeOrder, nil
 	}
-	return nil
+
+	return nil, nil
 }
 
-// calculateNearestRider calculates and returns a list of riders nearest to the given address.
-// This function needs implementation.
-func (x *DeliveryService) calculateNearestRider(userAddr *pb.Address) ([]*pb.Rider, error) {
+// calculateNearestRider calculates and returns a list of riders who are
+// geographically closest to the user's location, within a certain radius.
+//
+// This function uses the user's address to determine the proximity of available
+// riders based on their current location. The algorithm should take into account
+// the distance between the user's address and the riders' locations and return
+// a list of the nearest riders.
+func calculateNearestRider(userAddr *pb.Address, restaurantAddr *pb.Address) ([]*pb.Rider, error) {
 
-	// TODO
-	// - Implement actual algorithm to calculate nearest riders based on user's address
-	//   and convert user's address to latitude, longtitude
+	// TODO:
+	//   - Implement the logic to calculate the radius between the user's address and
+	//     the riders' locations.
+	//   - Use an actual distance calculation algorithm (e.g., Haversine formula or
+	//     another geo-location method) to filter riders within the radius.
+	//   - Return a list of riders that are closest to the user's location.
 
-	// Example data for riders, used for testing or as mock data.
-	riders := []*pb.Rider{
-		{RiderId: "001", RiderName: "Messi", PhoneNumber: "+1234567890"},
-		{RiderId: "002", RiderName: "Ronaldo", PhoneNumber: "+1987654321"},
-		{RiderId: "003", RiderName: "Neymar", PhoneNumber: "+1654321897"},
-		{RiderId: "004", RiderName: "Pogba", PhoneNumber: "+3334445555"},
-		{RiderId: "005", RiderName: "Halaand", PhoneNumber: "+7778889999"},
-	}
+	// riders is example data for nearest riders
 	return riders, nil
 }
 
@@ -229,48 +273,37 @@ func (x *DeliveryService) calculateNearestRider(userAddr *pb.Address) ([]*pb.Rid
 // to riderthat not accept order yet.
 func (x *DeliveryService) generateOrderPickUp(placeOrder *pb.PlaceOrder) (*pickUpInfo, error) {
 
-	code := x.randomThreeDigits()
+	code := randomThreeDigits()
 
-	req := &pb.GetRestaurantRequest{RestaurantName: placeOrder.RestaurantName}
-	restaurant, err := x.restaurantClient.GetRestaurant(context.TODO(), req)
-	if err != nil {
-	}
-
-	restaurantPoint, err := x.addressToPoint(restaurant.Restaurant.Address)
+	startPoint, err := x.addressToPoint(placeOrder.RestaurantAddress)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't convert restaurant address to point: %w", err)
 	}
 
-	destinationPoint, err := x.addressToPoint(placeOrder.Address)
+	destinationPoint, err := x.addressToPoint(placeOrder.UserAddress)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't convert destination address to point: %w", err)
+		return nil, fmt.Errorf("couldn't convert user address to point: %w", err)
 	}
 
 	return &pickUpInfo{
+		OrderId:        placeOrder.OrderId,
 		PickupCode:     code,
-		PickupLocation: restaurantPoint,
+		PickupLocation: startPoint,
 		Destination:    destinationPoint,
 	}, nil
 
 }
 
-// addressToPoint use for convert address to locations point
+// addressToPoint use for convert Address to Locations point . this function
+// not implement actual Geocoding ( Google APIs ) yet . just response with example
+// data
+//
+// TODO implememnt Geocoding ( Google APIs ), improve docs
 func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
 
-	// TODO implememnt Geocoding ( Google APIs )
-
-	// Example data
-	example := map[string]*pb.Point{
-		"Bangkok":    &pb.Point{Latitude: 13.7563, Longitude: 100.5018},
-		"Chiang Mai": &pb.Point{Latitude: 18.7883, Longitude: 98.9853},
-		"Phuket":     &pb.Point{Latitude: 7.8804, Longitude: 98.3923},
-		"Lampang":    &pb.Point{Latitude: 18.2888, Longitude: 99.4931},
-		"Rayong":     &pb.Point{Latitude: 12.6828, Longitude: 101.2753},
-	}
-
-	point, ok := example[addr.Province]
+	point, ok := example[addr.District]
 	if !ok {
-		return nil, fmt.Errorf("province %s not found", addr.Province)
+		return nil, fmt.Errorf("district %s not found", addr.District)
 	}
 
 	return point, nil
@@ -304,7 +337,7 @@ func (x *DeliveryService) waitRiderAcceptance(ctx context.Context, cancel contex
 			return
 		}
 
-		log.Printf("rider %s has accepted order with order pickup code %s", req.RiderId, orderPickup.PickupCode)
+		log.Printf("rider %s has accepted order id:%s", req.OrderId)
 
 		// Call this cancel function to signal the context in the notifyToRider function.
 		// This will stop any further notifications to other riders.
@@ -320,7 +353,7 @@ func (x *DeliveryService) waitRiderAcceptance(ctx context.Context, cancel contex
 }
 
 // randomThreeDigits generate 3 digits pickup code between 100 - 999 .
-func (x *DeliveryService) randomThreeDigits() string {
+func randomThreeDigits() string {
 
 	// Half-open interval
 	// - [a,b) is include a, exclude b
@@ -334,10 +367,13 @@ func (x *DeliveryService) randomThreeDigits() string {
 }
 
 // notifyToRider will notify to all nearest riders
-func (x *DeliveryService) notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
+func notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
 
 	// example notify
-	log.Printf("started notify order %s", orderPickup.PickupCode)
+	log.Printf("notified rider for order id: %s (pickup code: %s)",
+		orderPickup.OrderId,
+		orderPickup.PickupCode,
+	)
 
 	for _ = range riders {
 
@@ -352,4 +388,64 @@ func (x *DeliveryService) notifyToRider(ctx context.Context, riders []*pb.Rider,
 
 	}
 
+}
+
+// NOTE : Address point is example data use district only
+// others address fields will be ignored
+//
+// calculateDeliveryFee calculate distance from user's address to restaurant's address
+func calculateDeliveryFee(userAddr *pb.Address, restaurantAddr *pb.Address) (int32, error) {
+
+	point1, okna := example[userAddr.District]
+	point2, okja := example[restaurantAddr.District]
+
+	if !okna || !okja {
+		validDistricts := []string{"Mueang Chiang Mai", "Hang Dong", "San Sai", "Mae Rim", "Doi Saket"}
+		return 0, fmt.Errorf("invalid distrct. valid districts are: %v ", validDistricts)
+	}
+
+	// distance in kilometers
+	distance := haversineDistance(point1, point2)
+	if distance < 0 || distance > 25 {
+		log.Printf("Distance invalid: %v", distance)
+		return 0, errors.New("distance not in range 0 to 25 km")
+	}
+
+	var deliveryFee int32
+
+	switch {
+	case distance <= 5:
+		deliveryFee = 0
+	case distance <= 10:
+		deliveryFee = 50
+	default:
+		deliveryFee = 100
+	}
+
+	log.Printf("Distance from %s to %s is %.2f km, delivery fee is %d baht",
+		userAddr.AddressName,
+		restaurantAddr.AddressName,
+		distance,
+		deliveryFee,
+	)
+
+	return deliveryFee, nil
+}
+
+// haversineDistance calculates the distance between two geographic points in kilometers.
+func haversineDistance(p1, p2 *pb.Point) float64 {
+	const earthRadius = 6371 // Earth's radius in kilometers.
+
+	// Convert latitude and longitude from degrees to radians.
+	lat1 := p1.Latitude * math.Pi / 180
+	lon1 := p1.Longitude * math.Pi / 180
+	lat2 := p2.Latitude * math.Pi / 180
+	lon2 := p2.Longitude * math.Pi / 180
+
+	// Calculate the distance using the Haversine formula.
+	latSin := math.Sin(lat1) * math.Sin(lat2)
+	latCos := math.Cos(lat1) * math.Cos(lat2) * math.Cos(lon2-lon1)
+	distance := math.Acos(latSin+latCos) * earthRadius
+
+	return distance
 }

@@ -19,10 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UserService_UpdateUserProfile_FullMethodName        = "/foodDeliveryApp.UserService/UpdateUserProfile"
 	UserService_CreateUserProfile_FullMethodName        = "/foodDeliveryApp.UserService/CreateUserProfile"
 	UserService_GetUserProfileByUsername_FullMethodName = "/foodDeliveryApp.UserService/GetUserProfileByUsername"
-	UserService_GetUserProfile_FullMethodName           = "/foodDeliveryApp.UserService/GetUserProfile"
 	UserService_ListUserProfile_FullMethodName          = "/foodDeliveryApp.UserService/ListUserProfile"
 	UserService_DeleteUserProfile_FullMethodName        = "/foodDeliveryApp.UserService/DeleteUserProfile"
 )
@@ -31,14 +29,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
-	UpdateUserProfile(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	CreateUserProfile(ctx context.Context, in *CreateUserProfileRequest, opts ...grpc.CallOption) (*CreateUserProfileResponse, error)
 	// GetUserProfileByUsername for specific username
 	GetUserProfileByUsername(ctx context.Context, in *GetUserProfileByUsernameRequest, opts ...grpc.CallOption) (*GetUserProfileByUsernameResponse, error)
-	// GetUserProfile for query filter
-	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*GetUserProfileResponse, error)
 	ListUserProfile(ctx context.Context, in *ListUserProfileRequest, opts ...grpc.CallOption) (*ListUserProfileResponse, error)
-	DeleteUserProfile(ctx context.Context, in *DeleteUserProfileRequest, opts ...grpc.CallOption) (*Empty, error)
+	DeleteUserProfile(ctx context.Context, in *DeleteUserProfileRequest, opts ...grpc.CallOption) (*DeleteUserProfileResponse, error)
 }
 
 type userServiceClient struct {
@@ -47,15 +42,6 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
-}
-
-func (c *userServiceClient) UpdateUserProfile(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, UserService_UpdateUserProfile_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *userServiceClient) CreateUserProfile(ctx context.Context, in *CreateUserProfileRequest, opts ...grpc.CallOption) (*CreateUserProfileResponse, error) {
@@ -76,15 +62,6 @@ func (c *userServiceClient) GetUserProfileByUsername(ctx context.Context, in *Ge
 	return out, nil
 }
 
-func (c *userServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*GetUserProfileResponse, error) {
-	out := new(GetUserProfileResponse)
-	err := c.cc.Invoke(ctx, UserService_GetUserProfile_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *userServiceClient) ListUserProfile(ctx context.Context, in *ListUserProfileRequest, opts ...grpc.CallOption) (*ListUserProfileResponse, error) {
 	out := new(ListUserProfileResponse)
 	err := c.cc.Invoke(ctx, UserService_ListUserProfile_FullMethodName, in, out, opts...)
@@ -94,8 +71,8 @@ func (c *userServiceClient) ListUserProfile(ctx context.Context, in *ListUserPro
 	return out, nil
 }
 
-func (c *userServiceClient) DeleteUserProfile(ctx context.Context, in *DeleteUserProfileRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *userServiceClient) DeleteUserProfile(ctx context.Context, in *DeleteUserProfileRequest, opts ...grpc.CallOption) (*DeleteUserProfileResponse, error) {
+	out := new(DeleteUserProfileResponse)
 	err := c.cc.Invoke(ctx, UserService_DeleteUserProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -107,14 +84,11 @@ func (c *userServiceClient) DeleteUserProfile(ctx context.Context, in *DeleteUse
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
-	UpdateUserProfile(context.Context, *Empty) (*Empty, error)
 	CreateUserProfile(context.Context, *CreateUserProfileRequest) (*CreateUserProfileResponse, error)
 	// GetUserProfileByUsername for specific username
 	GetUserProfileByUsername(context.Context, *GetUserProfileByUsernameRequest) (*GetUserProfileByUsernameResponse, error)
-	// GetUserProfile for query filter
-	GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error)
 	ListUserProfile(context.Context, *ListUserProfileRequest) (*ListUserProfileResponse, error)
-	DeleteUserProfile(context.Context, *DeleteUserProfileRequest) (*Empty, error)
+	DeleteUserProfile(context.Context, *DeleteUserProfileRequest) (*DeleteUserProfileResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -122,22 +96,16 @@ type UserServiceServer interface {
 type UnimplementedUserServiceServer struct {
 }
 
-func (UnimplementedUserServiceServer) UpdateUserProfile(context.Context, *Empty) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserProfile not implemented")
-}
 func (UnimplementedUserServiceServer) CreateUserProfile(context.Context, *CreateUserProfileRequest) (*CreateUserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUserProfile not implemented")
 }
 func (UnimplementedUserServiceServer) GetUserProfileByUsername(context.Context, *GetUserProfileByUsernameRequest) (*GetUserProfileByUsernameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfileByUsername not implemented")
 }
-func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfile not implemented")
-}
 func (UnimplementedUserServiceServer) ListUserProfile(context.Context, *ListUserProfileRequest) (*ListUserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUserProfile not implemented")
 }
-func (UnimplementedUserServiceServer) DeleteUserProfile(context.Context, *DeleteUserProfileRequest) (*Empty, error) {
+func (UnimplementedUserServiceServer) DeleteUserProfile(context.Context, *DeleteUserProfileRequest) (*DeleteUserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserProfile not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
@@ -151,24 +119,6 @@ type UnsafeUserServiceServer interface {
 
 func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 	s.RegisterService(&UserService_ServiceDesc, srv)
-}
-
-func _UserService_UpdateUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).UpdateUserProfile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_UpdateUserProfile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).UpdateUserProfile(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_CreateUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -203,24 +153,6 @@ func _UserService_GetUserProfileByUsername_Handler(srv interface{}, ctx context.
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).GetUserProfileByUsername(ctx, req.(*GetUserProfileByUsernameRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_GetUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserProfileRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).GetUserProfile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_GetUserProfile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUserProfile(ctx, req.(*GetUserProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -269,20 +201,12 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UpdateUserProfile",
-			Handler:    _UserService_UpdateUserProfile_Handler,
-		},
-		{
 			MethodName: "CreateUserProfile",
 			Handler:    _UserService_CreateUserProfile_Handler,
 		},
 		{
 			MethodName: "GetUserProfileByUsername",
 			Handler:    _UserService_GetUserProfileByUsername_Handler,
-		},
-		{
-			MethodName: "GetUserProfile",
-			Handler:    _UserService_GetUserProfile_Handler,
 		},
 		{
 			MethodName: "ListUserProfile",
@@ -302,6 +226,7 @@ const (
 	AuthService_Login_FullMethodName             = "/foodDeliveryApp.AuthService/Login"
 	AuthService_IsValidToken_FullMethodName      = "/foodDeliveryApp.AuthService/IsValidToken"
 	AuthService_IsValidAdminToken_FullMethodName = "/foodDeliveryApp.AuthService/IsValidAdminToken"
+	AuthService_IsUserExists_FullMethodName      = "/foodDeliveryApp.AuthService/IsUserExists"
 	AuthService_UpdateUserRole_FullMethodName    = "/foodDeliveryApp.AuthService/UpdateUserRole"
 )
 
@@ -313,6 +238,7 @@ type AuthServiceClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	IsValidToken(ctx context.Context, in *IsValidTokenRequest, opts ...grpc.CallOption) (*IsValidTokenResponse, error)
 	IsValidAdminToken(ctx context.Context, in *IsValidAdminTokenRequest, opts ...grpc.CallOption) (*IsValidAdminTokenResponse, error)
+	IsUserExists(ctx context.Context, in *IsUserExistsRequest, opts ...grpc.CallOption) (*IsUserExistsResponse, error)
 	UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UpdateUserRoleResponse, error)
 }
 
@@ -360,6 +286,15 @@ func (c *authServiceClient) IsValidAdminToken(ctx context.Context, in *IsValidAd
 	return out, nil
 }
 
+func (c *authServiceClient) IsUserExists(ctx context.Context, in *IsUserExistsRequest, opts ...grpc.CallOption) (*IsUserExistsResponse, error) {
+	out := new(IsUserExistsResponse)
+	err := c.cc.Invoke(ctx, AuthService_IsUserExists_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UpdateUserRoleResponse, error) {
 	out := new(UpdateUserRoleResponse)
 	err := c.cc.Invoke(ctx, AuthService_UpdateUserRole_FullMethodName, in, out, opts...)
@@ -377,6 +312,7 @@ type AuthServiceServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	IsValidToken(context.Context, *IsValidTokenRequest) (*IsValidTokenResponse, error)
 	IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error)
+	IsUserExists(context.Context, *IsUserExistsRequest) (*IsUserExistsResponse, error)
 	UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UpdateUserRoleResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -396,6 +332,9 @@ func (UnimplementedAuthServiceServer) IsValidToken(context.Context, *IsValidToke
 }
 func (UnimplementedAuthServiceServer) IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsValidAdminToken not implemented")
+}
+func (UnimplementedAuthServiceServer) IsUserExists(context.Context, *IsUserExistsRequest) (*IsUserExistsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsUserExists not implemented")
 }
 func (UnimplementedAuthServiceServer) UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UpdateUserRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserRole not implemented")
@@ -485,6 +424,24 @@ func _AuthService_IsValidAdminToken_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_IsUserExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsUserExistsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).IsUserExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_IsUserExists_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).IsUserExists(ctx, req.(*IsUserExistsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_UpdateUserRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRoleRequest)
 	if err := dec(in); err != nil {
@@ -527,6 +484,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_IsValidAdminToken_Handler,
 		},
 		{
+			MethodName: "IsUserExists",
+			Handler:    _AuthService_IsUserExists_Handler,
+		},
+		{
 			MethodName: "UpdateUserRole",
 			Handler:    _AuthService_UpdateUserRole_Handler,
 		},
@@ -536,7 +497,7 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	OrderService_PlaceOrder_FullMethodName         = "/foodDeliveryApp.OrderService/PlaceOrder"
+	OrderService_HandlePlaceOrder_FullMethodName   = "/foodDeliveryApp.OrderService/HandlePlaceOrder"
 	OrderService_ListUserPlaceOrder_FullMethodName = "/foodDeliveryApp.OrderService/ListUserPlaceOrder"
 )
 
@@ -544,7 +505,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrderServiceClient interface {
-	PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error)
+	HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*HandlePlaceOrderResponse, error)
 	ListUserPlaceOrder(ctx context.Context, in *ListUserPlaceOrderRequest, opts ...grpc.CallOption) (*ListUserPlaceOrderResponse, error)
 }
 
@@ -556,9 +517,9 @@ func NewOrderServiceClient(cc grpc.ClientConnInterface) OrderServiceClient {
 	return &orderServiceClient{cc}
 }
 
-func (c *orderServiceClient) PlaceOrder(ctx context.Context, in *PlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrderResponse, error) {
-	out := new(PlaceOrderResponse)
-	err := c.cc.Invoke(ctx, OrderService_PlaceOrder_FullMethodName, in, out, opts...)
+func (c *orderServiceClient) HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*HandlePlaceOrderResponse, error) {
+	out := new(HandlePlaceOrderResponse)
+	err := c.cc.Invoke(ctx, OrderService_HandlePlaceOrder_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -578,7 +539,7 @@ func (c *orderServiceClient) ListUserPlaceOrder(ctx context.Context, in *ListUse
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility
 type OrderServiceServer interface {
-	PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error)
+	HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*HandlePlaceOrderResponse, error)
 	ListUserPlaceOrder(context.Context, *ListUserPlaceOrderRequest) (*ListUserPlaceOrderResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
@@ -587,8 +548,8 @@ type OrderServiceServer interface {
 type UnimplementedOrderServiceServer struct {
 }
 
-func (UnimplementedOrderServiceServer) PlaceOrder(context.Context, *PlaceOrderRequest) (*PlaceOrderResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PlaceOrder not implemented")
+func (UnimplementedOrderServiceServer) HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*HandlePlaceOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HandlePlaceOrder not implemented")
 }
 func (UnimplementedOrderServiceServer) ListUserPlaceOrder(context.Context, *ListUserPlaceOrderRequest) (*ListUserPlaceOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUserPlaceOrder not implemented")
@@ -606,20 +567,20 @@ func RegisterOrderServiceServer(s grpc.ServiceRegistrar, srv OrderServiceServer)
 	s.RegisterService(&OrderService_ServiceDesc, srv)
 }
 
-func _OrderService_PlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PlaceOrderRequest)
+func _OrderService_HandlePlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandlePlaceOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrderServiceServer).PlaceOrder(ctx, in)
+		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrderService_PlaceOrder_FullMethodName,
+		FullMethod: OrderService_HandlePlaceOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).PlaceOrder(ctx, req.(*PlaceOrderRequest))
+		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, req.(*HandlePlaceOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -650,8 +611,8 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OrderServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "PlaceOrder",
-			Handler:    _OrderService_PlaceOrder_Handler,
+			MethodName: "HandlePlaceOrder",
+			Handler:    _OrderService_HandlePlaceOrder_Handler,
 		},
 		{
 			MethodName: "ListUserPlaceOrder",
@@ -663,8 +624,9 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	DeliveryService_TrackOrder_FullMethodName  = "/foodDeliveryApp.DeliveryService/TrackOrder"
-	DeliveryService_AcceptOrder_FullMethodName = "/foodDeliveryApp.DeliveryService/AcceptOrder"
+	DeliveryService_TrackOrder_FullMethodName     = "/foodDeliveryApp.DeliveryService/TrackOrder"
+	DeliveryService_AcceptOrder_FullMethodName    = "/foodDeliveryApp.DeliveryService/AcceptOrder"
+	DeliveryService_GetDeliveryFee_FullMethodName = "/foodDeliveryApp.DeliveryService/GetDeliveryFee"
 )
 
 // DeliveryServiceClient is the client API for DeliveryService service.
@@ -676,6 +638,8 @@ type DeliveryServiceClient interface {
 	TrackOrder(ctx context.Context, in *TrackOrderRequest, opts ...grpc.CallOption) (*TrackOrderResponse, error)
 	// for Rider accept Order
 	AcceptOrder(ctx context.Context, in *AcceptOrderRequest, opts ...grpc.CallOption) (*AcceptOrderResponse, error)
+	// TODO doc
+	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
 }
 
 type deliveryServiceClient struct {
@@ -704,6 +668,15 @@ func (c *deliveryServiceClient) AcceptOrder(ctx context.Context, in *AcceptOrder
 	return out, nil
 }
 
+func (c *deliveryServiceClient) GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error) {
+	out := new(GetDeliveryFeeResponse)
+	err := c.cc.Invoke(ctx, DeliveryService_GetDeliveryFee_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeliveryServiceServer is the server API for DeliveryService service.
 // All implementations must embed UnimplementedDeliveryServiceServer
 // for forward compatibility
@@ -713,6 +686,8 @@ type DeliveryServiceServer interface {
 	TrackOrder(context.Context, *TrackOrderRequest) (*TrackOrderResponse, error)
 	// for Rider accept Order
 	AcceptOrder(context.Context, *AcceptOrderRequest) (*AcceptOrderResponse, error)
+	// TODO doc
+	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
 
@@ -725,6 +700,9 @@ func (UnimplementedDeliveryServiceServer) TrackOrder(context.Context, *TrackOrde
 }
 func (UnimplementedDeliveryServiceServer) AcceptOrder(context.Context, *AcceptOrderRequest) (*AcceptOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AcceptOrder not implemented")
+}
+func (UnimplementedDeliveryServiceServer) GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeliveryFee not implemented")
 }
 func (UnimplementedDeliveryServiceServer) mustEmbedUnimplementedDeliveryServiceServer() {}
 
@@ -775,6 +753,24 @@ func _DeliveryService_AcceptOrder_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeliveryService_GetDeliveryFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeliveryFeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeliveryServiceServer).GetDeliveryFee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeliveryService_GetDeliveryFee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeliveryServiceServer).GetDeliveryFee(ctx, req.(*GetDeliveryFeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeliveryService_ServiceDesc is the grpc.ServiceDesc for DeliveryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -790,13 +786,16 @@ var DeliveryService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AcceptOrder",
 			Handler:    _DeliveryService_AcceptOrder_Handler,
 		},
+		{
+			MethodName: "GetDeliveryFee",
+			Handler:    _DeliveryService_GetDeliveryFee_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "food.proto",
 }
 
 const (
-	RestaurantService_CheckAvailableMenu_FullMethodName = "/foodDeliveryApp.RestaurantService/CheckAvailableMenu"
 	RestaurantService_GetRestaurant_FullMethodName      = "/foodDeliveryApp.RestaurantService/GetRestaurant"
 	RestaurantService_ListRestaurant_FullMethodName     = "/foodDeliveryApp.RestaurantService/ListRestaurant"
 	RestaurantService_RegisterRestaurant_FullMethodName = "/foodDeliveryApp.RestaurantService/RegisterRestaurant"
@@ -807,12 +806,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RestaurantServiceClient interface {
-	CheckAvailableMenu(ctx context.Context, in *CheckAvailableMenuRequest, opts ...grpc.CallOption) (*CheckAvailableMenuResponse, error)
 	GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
 	ListRestaurant(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListRestaurantResponse, error)
 	RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*RegisterRestaurantResponse, error)
-	// TODO DELETE MENU, UPDATE MENU
-	AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*Empty, error)
+	AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*AddMenuResponse, error)
 }
 
 type restaurantServiceClient struct {
@@ -821,15 +818,6 @@ type restaurantServiceClient struct {
 
 func NewRestaurantServiceClient(cc grpc.ClientConnInterface) RestaurantServiceClient {
 	return &restaurantServiceClient{cc}
-}
-
-func (c *restaurantServiceClient) CheckAvailableMenu(ctx context.Context, in *CheckAvailableMenuRequest, opts ...grpc.CallOption) (*CheckAvailableMenuResponse, error) {
-	out := new(CheckAvailableMenuResponse)
-	err := c.cc.Invoke(ctx, RestaurantService_CheckAvailableMenu_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *restaurantServiceClient) GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error) {
@@ -859,8 +847,8 @@ func (c *restaurantServiceClient) RegisterRestaurant(ctx context.Context, in *Re
 	return out, nil
 }
 
-func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*AddMenuResponse, error) {
+	out := new(AddMenuResponse)
 	err := c.cc.Invoke(ctx, RestaurantService_AddMenu_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -872,12 +860,10 @@ func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuReques
 // All implementations must embed UnimplementedRestaurantServiceServer
 // for forward compatibility
 type RestaurantServiceServer interface {
-	CheckAvailableMenu(context.Context, *CheckAvailableMenuRequest) (*CheckAvailableMenuResponse, error)
 	GetRestaurant(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error)
 	ListRestaurant(context.Context, *Empty) (*ListRestaurantResponse, error)
 	RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*RegisterRestaurantResponse, error)
-	// TODO DELETE MENU, UPDATE MENU
-	AddMenu(context.Context, *AddMenuRequest) (*Empty, error)
+	AddMenu(context.Context, *AddMenuRequest) (*AddMenuResponse, error)
 	mustEmbedUnimplementedRestaurantServiceServer()
 }
 
@@ -885,9 +871,6 @@ type RestaurantServiceServer interface {
 type UnimplementedRestaurantServiceServer struct {
 }
 
-func (UnimplementedRestaurantServiceServer) CheckAvailableMenu(context.Context, *CheckAvailableMenuRequest) (*CheckAvailableMenuResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckAvailableMenu not implemented")
-}
 func (UnimplementedRestaurantServiceServer) GetRestaurant(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRestaurant not implemented")
 }
@@ -897,7 +880,7 @@ func (UnimplementedRestaurantServiceServer) ListRestaurant(context.Context, *Emp
 func (UnimplementedRestaurantServiceServer) RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*RegisterRestaurantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterRestaurant not implemented")
 }
-func (UnimplementedRestaurantServiceServer) AddMenu(context.Context, *AddMenuRequest) (*Empty, error) {
+func (UnimplementedRestaurantServiceServer) AddMenu(context.Context, *AddMenuRequest) (*AddMenuResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMenu not implemented")
 }
 func (UnimplementedRestaurantServiceServer) mustEmbedUnimplementedRestaurantServiceServer() {}
@@ -911,24 +894,6 @@ type UnsafeRestaurantServiceServer interface {
 
 func RegisterRestaurantServiceServer(s grpc.ServiceRegistrar, srv RestaurantServiceServer) {
 	s.RegisterService(&RestaurantService_ServiceDesc, srv)
-}
-
-func _RestaurantService_CheckAvailableMenu_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckAvailableMenuRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RestaurantServiceServer).CheckAvailableMenu(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: RestaurantService_CheckAvailableMenu_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RestaurantServiceServer).CheckAvailableMenu(ctx, req.(*CheckAvailableMenuRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _RestaurantService_GetRestaurant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1011,10 +976,6 @@ var RestaurantService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*RestaurantServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CheckAvailableMenu",
-			Handler:    _RestaurantService_CheckAvailableMenu_Handler,
-		},
-		{
 			MethodName: "GetRestaurant",
 			Handler:    _RestaurantService_GetRestaurant_Handler,
 		},
@@ -1036,16 +997,38 @@ var RestaurantService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	CouponService_GetCoupon_FullMethodName  = "/foodDeliveryApp.CouponService/GetCoupon"
-	CouponService_ListCoupon_FullMethodName = "/foodDeliveryApp.CouponService/ListCoupon"
+	CouponService_AddCoupon_FullMethodName     = "/foodDeliveryApp.CouponService/AddCoupon"
+	CouponService_GetCoupon_FullMethodName     = "/foodDeliveryApp.CouponService/GetCoupon"
+	CouponService_ListCoupon_FullMethodName    = "/foodDeliveryApp.CouponService/ListCoupon"
+	CouponService_AppliedCoupon_FullMethodName = "/foodDeliveryApp.CouponService/AppliedCoupon"
 )
 
 // CouponServiceClient is the client API for CouponService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CouponServiceClient interface {
+	// AddCoupon creates a new coupon with the specified details. There are two types of coupons:
+	// Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
+	// If the coupon type is Free, the discount field is ignored and automatically set to zero.
+	AddCoupon(ctx context.Context, in *AddCouponRequest, opts ...grpc.CallOption) (*AddCouponResponse, error)
+	// GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and
+	// has sufficient quantity.
 	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*GetCouponResponse, error)
+	// ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
+	// This method is intended to be used by the frontend to display a list of all coupons to users,
+	// regardless of their validity or availability.
+	//
+	// TODO: In the future, this method might be updated to list coupons by other condition,
+	// but currently, it responds with all coupons.
 	ListCoupon(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListCouponResponse, error)
+	// TODO remove http request because this fn should be invoked
+	// when place order success. thant's mean if AppliedCoupon failed
+	// placeOrder should be rollback too
+	//
+	// AppliedCoupon is called when an order is successfully placed, which may occur
+	// after payment success or food delivery. This method updates the status of the
+	// coupon in the database to mark it as used.
+	AppliedCoupon(ctx context.Context, in *AppliedCouponRequest, opts ...grpc.CallOption) (*AppliedCouponResponse, error)
 }
 
 type couponServiceClient struct {
@@ -1054,6 +1037,15 @@ type couponServiceClient struct {
 
 func NewCouponServiceClient(cc grpc.ClientConnInterface) CouponServiceClient {
 	return &couponServiceClient{cc}
+}
+
+func (c *couponServiceClient) AddCoupon(ctx context.Context, in *AddCouponRequest, opts ...grpc.CallOption) (*AddCouponResponse, error) {
+	out := new(AddCouponResponse)
+	err := c.cc.Invoke(ctx, CouponService_AddCoupon_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *couponServiceClient) GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*GetCouponResponse, error) {
@@ -1074,12 +1066,41 @@ func (c *couponServiceClient) ListCoupon(ctx context.Context, in *Empty, opts ..
 	return out, nil
 }
 
+func (c *couponServiceClient) AppliedCoupon(ctx context.Context, in *AppliedCouponRequest, opts ...grpc.CallOption) (*AppliedCouponResponse, error) {
+	out := new(AppliedCouponResponse)
+	err := c.cc.Invoke(ctx, CouponService_AppliedCoupon_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CouponServiceServer is the server API for CouponService service.
 // All implementations must embed UnimplementedCouponServiceServer
 // for forward compatibility
 type CouponServiceServer interface {
+	// AddCoupon creates a new coupon with the specified details. There are two types of coupons:
+	// Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
+	// If the coupon type is Free, the discount field is ignored and automatically set to zero.
+	AddCoupon(context.Context, *AddCouponRequest) (*AddCouponResponse, error)
+	// GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and
+	// has sufficient quantity.
 	GetCoupon(context.Context, *GetCouponRequest) (*GetCouponResponse, error)
+	// ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
+	// This method is intended to be used by the frontend to display a list of all coupons to users,
+	// regardless of their validity or availability.
+	//
+	// TODO: In the future, this method might be updated to list coupons by other condition,
+	// but currently, it responds with all coupons.
 	ListCoupon(context.Context, *Empty) (*ListCouponResponse, error)
+	// TODO remove http request because this fn should be invoked
+	// when place order success. thant's mean if AppliedCoupon failed
+	// placeOrder should be rollback too
+	//
+	// AppliedCoupon is called when an order is successfully placed, which may occur
+	// after payment success or food delivery. This method updates the status of the
+	// coupon in the database to mark it as used.
+	AppliedCoupon(context.Context, *AppliedCouponRequest) (*AppliedCouponResponse, error)
 	mustEmbedUnimplementedCouponServiceServer()
 }
 
@@ -1087,11 +1108,17 @@ type CouponServiceServer interface {
 type UnimplementedCouponServiceServer struct {
 }
 
+func (UnimplementedCouponServiceServer) AddCoupon(context.Context, *AddCouponRequest) (*AddCouponResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddCoupon not implemented")
+}
 func (UnimplementedCouponServiceServer) GetCoupon(context.Context, *GetCouponRequest) (*GetCouponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoupon not implemented")
 }
 func (UnimplementedCouponServiceServer) ListCoupon(context.Context, *Empty) (*ListCouponResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCoupon not implemented")
+}
+func (UnimplementedCouponServiceServer) AppliedCoupon(context.Context, *AppliedCouponRequest) (*AppliedCouponResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AppliedCoupon not implemented")
 }
 func (UnimplementedCouponServiceServer) mustEmbedUnimplementedCouponServiceServer() {}
 
@@ -1104,6 +1131,24 @@ type UnsafeCouponServiceServer interface {
 
 func RegisterCouponServiceServer(s grpc.ServiceRegistrar, srv CouponServiceServer) {
 	s.RegisterService(&CouponService_ServiceDesc, srv)
+}
+
+func _CouponService_AddCoupon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddCouponRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CouponServiceServer).AddCoupon(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CouponService_AddCoupon_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CouponServiceServer).AddCoupon(ctx, req.(*AddCouponRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _CouponService_GetCoupon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1142,6 +1187,24 @@ func _CouponService_ListCoupon_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CouponService_AppliedCoupon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AppliedCouponRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CouponServiceServer).AppliedCoupon(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CouponService_AppliedCoupon_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CouponServiceServer).AppliedCoupon(ctx, req.(*AppliedCouponRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CouponService_ServiceDesc is the grpc.ServiceDesc for CouponService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1150,12 +1213,20 @@ var CouponService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CouponServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "AddCoupon",
+			Handler:    _CouponService_AddCoupon_Handler,
+		},
+		{
 			MethodName: "GetCoupon",
 			Handler:    _CouponService_GetCoupon_Handler,
 		},
 		{
 			MethodName: "ListCoupon",
 			Handler:    _CouponService_ListCoupon_Handler,
+		},
+		{
+			MethodName: "AppliedCoupon",
+			Handler:    _CouponService_AppliedCoupon_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
