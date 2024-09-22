@@ -37,14 +37,14 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		discount int32
 	)
 
-	switch in.CouponType {
-	case pb.CouponType_COUPON_TYPE_DISCOUNT:
+	switch in.CouponTypes {
+	case pb.CouponTypes_COUPON_TYPE_DISCOUNT:
 		if in.Discount < 1 || in.Discount > 99 {
 			return nil, status.Errorf(codes.InvalidArgument, "discount must be between 1 and 99")
 		}
 		code = fmt.Sprintf("SAVE%dFORYOU", in.Discount)
 		discount = in.Discount
-	case pb.CouponType_COUPON_TYPE_FREE_DELIVERY:
+	case pb.CouponTypes_COUPON_TYPE_FREE_DELIVERY:
 		code = fmt.Sprintf("FREEDELIVERY")
 		discount = 0
 	default:
@@ -58,7 +58,7 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 	expiration := time.Now().Add(time.Duration(in.ExpireInHour) * time.Hour)
 
 	err := x.repository.SaveCoupon(ctx, &Coupon{
-		Types:      int32(in.CouponType),
+		Types:      int32(in.CouponTypes),
 		Code:       code,
 		Discount:   discount,
 		Expiration: expiration.Unix(),
@@ -81,10 +81,10 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	coupon, err := x.repository.Coupon(ctx, in.Code)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, status.Errorf(codes.NotFound, "coupon not found")
+			return nil, status.Error(codes.NotFound, "coupon not found")
 		}
 		log.Println("Get coupon failed:", err)
-		return nil, status.Errorf(codes.InvalidArgument, "failed to retrive coupon from database")
+		return nil, status.Error(codes.InvalidArgument, "failed to retrive coupon from database")
 	}
 
 	if coupon.Expiration <= time.Now().Unix() {
@@ -96,7 +96,7 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	}
 
 	return &pb.GetCouponResponse{Coupon: &pb.Coupon{
-		Types:      pb.CouponType(coupon.Types),
+		Types:      pb.CouponTypes(coupon.Types),
 		Code:       coupon.Code,
 		Discount:   coupon.Discount,
 		Expiration: coupon.Expiration,
@@ -115,7 +115,7 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *pb.Empty) (*pb.Li
 	var coupons []*pb.Coupon
 	for _, c := range listCoupons {
 		coupon := &pb.Coupon{
-			Types:      pb.CouponType(c.Types),
+			Types:      pb.CouponTypes(c.Types),
 			Code:       c.Code,
 			Discount:   c.Discount,
 			Expiration: c.Expiration,

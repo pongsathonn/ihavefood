@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/mail"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -24,18 +26,18 @@ import (
 var signingKey []byte
 
 var (
-	errNoUsername         = status.Errorf(codes.InvalidArgument, "username must be provided")
-	errNoPassword         = status.Errorf(codes.InvalidArgument, "password must be provided")
-	errNoEmail            = status.Errorf(codes.InvalidArgument, "email must be provided")
-	errNoUsernamePassword = status.Errorf(codes.InvalidArgument, "username or password must be provided")
+	errNoUsername         = status.Error(codes.InvalidArgument, "username must be provided")
+	errNoPassword         = status.Error(codes.InvalidArgument, "password must be provided")
+	errNoEmail            = status.Error(codes.InvalidArgument, "email must be provided")
+	errNoUsernamePassword = status.Error(codes.InvalidArgument, "username or password must be provided")
 
-	errUserIncorrect   = status.Errorf(codes.InvalidArgument, "username or password incorrect")
-	errUserNotFound    = status.Errorf(codes.NotFound, "user not found")
-	errPasswordHashing = status.Errorf(codes.Internal, "password hashing failed")
+	errUserIncorrect   = status.Error(codes.InvalidArgument, "username or password incorrect")
+	errUserNotFound    = status.Error(codes.NotFound, "user not found")
+	errPasswordHashing = status.Error(codes.Internal, "password hashing failed")
 
-	errNoToken       = status.Errorf(codes.InvalidArgument, "token must be provided")
-	errInvalidToken  = status.Errorf(codes.Unauthenticated, "invalid token")
-	errGenerateToken = status.Errorf(codes.Internal, "failed to generate authentication token")
+	errNoToken       = status.Error(codes.InvalidArgument, "token must be provided")
+	errInvalidToken  = status.Error(codes.Unauthenticated, "invalid token")
+	errGenerateToken = status.Error(codes.Internal, "failed to generate authentication token")
 )
 
 type AuthClaims struct {
@@ -79,6 +81,8 @@ func InitAdminUser(db *sql.DB) error {
 	if admin == "" || email == "" || password == "" {
 		return errors.New("required environment variables are not set")
 	}
+
+	// TODO validate email format
 
 	// Check if the admin user already exists by username or email
 	var exists bool
@@ -134,9 +138,22 @@ func InitAdminUser(db *sql.DB) error {
 // appropriate error if any operation fails.
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
-	if in.Username == "" || in.Email == "" || in.Password == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username, email, or password must be provided")
+	if err := validateUsernameAndPassword(in.Username, in.Password); err != nil {
+		log.Printf("Username or Password Validation error: %v", err)
+		return nil, status.Error(codes.InvalidArgument, "invalid username or password")
 	}
+
+	if err := validatePhoneNumber(in.PhoneNumber); err != nil {
+		log.Printf("Phone Number invalid: %v", err)
+		return nil, status.Error(codes.InvalidArgument, "validate phone number failed")
+	}
+
+	if err := validateEmail(in.Email); err != nil {
+		log.Printf("Email format invalid: %v", err)
+		return nil, status.Error(codes.InvalidArgument, "validate email failed")
+	}
+
+	// validate password
 
 	hashedPass, err := hashPassword(in.Password)
 	if err != nil {
@@ -147,7 +164,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	tx, err := x.db.BeginTx(ctx, nil)
 	if err != nil {
 		log.Printf("Failed to begin transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
+		return nil, status.Error(codes.Internal, "failed to begin transaction")
 	}
 	defer tx.Rollback()
 
@@ -169,10 +186,10 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		var pqError *pq.Error
 		// 23505 = Unique constraint violation postgres
 		if errors.As(err, &pqError) && pqError.Code == "23505" {
-			return nil, status.Errorf(codes.AlreadyExists, "username or email duplicated ")
+			return nil, status.Error(codes.AlreadyExists, "username or email duplicated ")
 		}
 		log.Printf("Failed to insert user into database: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to insert user into database")
+		return nil, status.Error(codes.Internal, "failed to insert user into database")
 	}
 
 	// Calling UserService to create new UserProfile
@@ -184,12 +201,12 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	_, err = x.userClient.CreateUserProfile(ctx, req)
 	if err != nil {
 		log.Printf("Failed to create user profile in UserService: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to create user profile in UserService")
+		return nil, status.Error(codes.Internal, "failed to create user profile in UserService")
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Printf("Failed to commit transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
+		return nil, status.Error(codes.Internal, "failed to commit transaction")
 	}
 
 	return &pb.RegisterResponse{Success: true}, nil
@@ -201,12 +218,12 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unknown, "missing metadata")
+		return nil, status.Error(codes.Unknown, "missing metadata")
 	}
 	username, password, err := extractAuth(md["authorization"])
 	if err != nil {
 		log.Println("Invalid authorization: %v", err)
-		return nil, status.Errorf(codes.Unauthenticated, "invalid authorization")
+		return nil, status.Error(codes.Unauthenticated, "invalid authorization")
 	}
 
 	if username == "" || password == "" {
@@ -231,7 +248,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 			return nil, errUserNotFound
 		}
 		log.Printf("Failed to scan: %v", err)
-		return nil, status.Errorf(codes.Internal, "scan failed")
+		return nil, status.Error(codes.Internal, "scan failed")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
@@ -297,7 +314,7 @@ func (x *AuthService) IsUserExists(ctx context.Context, in *pb.IsUserExistsReque
 	}
 
 	// TODO response
-	return nil, status.Errorf(codes.Unimplemented, "method IsUserExists not implemented")
+	return nil, status.Error(codes.Unimplemented, "method IsUserExists not implemented")
 }
 
 func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UpdateUserRoleResponse, error) {
@@ -321,7 +338,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 	)
 	if err != nil {
 		log.Println(err)
-		return nil, status.Errorf(codes.Internal, "failed to update role")
+		return nil, status.Error(codes.Internal, "failed to update role")
 	}
 
 	// - update user role in database , mighe be create function update role
@@ -426,4 +443,62 @@ func hashPassword(password string) ([]byte, error) {
 	}
 	return hashedPass, nil
 
+}
+
+func validateUsernameAndPassword(username, password string) error {
+	if username == "" || password == "" {
+		return errors.New("username or password must be provided")
+	}
+
+	if len(username) < 6 || len(username) > 16 {
+		return errors.New("username must be between 6 and 16 characters")
+	}
+
+	if len(password) < 8 || len(password) > 16 {
+		return errors.New("password must be between 8 and 16 characters")
+	}
+
+	if !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(username) {
+		return errors.New("username can only contain letters and numbers")
+	}
+
+	if strings.TrimSpace(username) != username {
+		return errors.New("username cannot start or end with spaces")
+	}
+
+	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+		return errors.New("password must contain at least one lowercase letter")
+	}
+
+	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+		return errors.New("password must contain at least one uppercase letter")
+	}
+
+	if !regexp.MustCompile(`[!.@#$%^&*()_\-+=<>?]`).MatchString(password) {
+		return errors.New("password must contain at least one special character")
+	}
+
+	return nil
+}
+
+// validateEmail validates the user's email address to ensure it follows
+// the standard email format. It uses mail.ParseAddress to parse the email.
+// If the email is invalid, it returns an error.
+//
+// NOTE email such as "test@gmailcom" (without dot) not counted as error here
+func validateEmail(email string) error {
+	if _, err := mail.ParseAddress(email); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validatePhoneNumber validates a user's phone number according to the Thailand
+// phone number format (e.g., 06XXXXXXXX, 08XXXXXXXX, 09XXXXXXXX).
+// Any format outside of this is considered invalid, and the function returns an error.
+func validatePhoneNumber(phoneNumber string) error {
+	if !regexp.MustCompile(`^(06|08|09)\d{8}$`).MatchString(phoneNumber) {
+		return errors.New("invalid phone number format")
+	}
+	return nil
 }

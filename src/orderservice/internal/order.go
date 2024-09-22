@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/mail"
+	"regexp"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -81,7 +83,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		UserAddress:       in.UserAddress,
 		RestaurantAddress: in.RestaurantAddress,
 		UserContact:       in.UserContact,
-		PaymentMethod:     in.PaymentMethod,
+		PaymentMethods:    in.PaymentMethods,
 		PaymentStatus:     res.PaymentStatus,
 		OrderStatus:       res.OrderStatus,
 	})
@@ -146,6 +148,14 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 		return errors.New("user contact infomation must be provided")
 	}
 
+	if err := validateEmail(in.UserContact.Email); err != nil {
+		return err
+	}
+
+	if err := validatePhoneNumber(in.UserContact.PhoneNumber); err != nil {
+		return err
+	}
+
 	var sumMenus int32
 	for _, menu := range in.Menus {
 		sumMenus += menu.Price
@@ -156,8 +166,32 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 		return fmt.Errorf("total mismatch: calculated %d but got %d", sum, in.Total)
 	}
 
-	if _, ok := pb.PaymentMethod_value[in.PaymentMethod.String()]; !ok {
-		return errors.New("payment methods invalid")
+	switch in.PaymentMethods {
+	case pb.PaymentMethods_PAYMENT_METHOD_CASH,
+		pb.PaymentMethods_PAYMENT_METHOD_CREDIT_CARD:
+	default:
+		return errors.New("invalid payment methods")
+	}
+
+	return nil
+}
+
+// validatePhoneNumber validates a user's phone number according to the Thailand
+// phone number format (e.g., 06XXXXXXXX, 08XXXXXXXX, 09XXXXXXXX).
+// Any format outside of this is considered invalid, and the function returns an error.
+func validatePhoneNumber(phoneNumber string) error {
+	if !regexp.MustCompile(`^(06|08|09)\d{8}$`).MatchString(phoneNumber) {
+		return errors.New("invalid phone number format")
+	}
+	return nil
+}
+
+// validateEmail validates the user's email address to ensure it follows
+// the standard email format. It uses mail.ParseAddress to parse the email.
+// If the email is invalid, it returns an error.
+func validateEmail(email string) error {
+	if _, err := mail.ParseAddress(email); err != nil {
+		return err
 	}
 	return nil
 }

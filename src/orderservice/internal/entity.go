@@ -23,7 +23,7 @@ type PlaceOrderEntity struct {
 	UserAddress       *AddressEntity         `bson:"userAddress"`
 	RestaurantAddress *AddressEntity         `bson:"restaurantAddress"`
 	UserContact       *ContactInfoEntity     `bson:"userContact"`
-	PaymentMethod     PaymentMethodEntity    `bson:"paymentMethod"`
+	PaymentMethods    PaymentMethodsEntity   `bson:"paymentMethods"`
 	PaymentStatus     PaymentStatusEntity    `bson:"paymentStatus"`
 	OrderStatus       OrderStatusEntity      `bson:"orderStatus"`
 	OrderTimeStamps   *OrderTimestampsEntity `bson:"orderTimeStamps"`
@@ -47,11 +47,11 @@ type ContactInfoEntity struct {
 	Email       string `bson:"email"`
 }
 
-type PaymentMethodEntity int32
+type PaymentMethodsEntity int32
 
 const (
-	PaymentMethod_PAYMENT_METHOD_CASH        PaymentMethodEntity = 0
-	PaymentMethod_PAYMENT_METHOD_CREDIT_CARD PaymentMethodEntity = 1
+	PaymentMethods_PAYMENT_METHOD_CASH        PaymentMethodsEntity = 0
+	PaymentMethods_PAYMENT_METHOD_CREDIT_CARD PaymentMethodsEntity = 1
 )
 
 type PaymentStatusEntity int32

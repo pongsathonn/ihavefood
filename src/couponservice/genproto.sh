@@ -1,8 +1,4 @@
 #!/bin/bash -eu
-
-
-       
-
 PATH=$PATH:$GOPATH/bin
 
 # TODO: user absolute path for this

@@ -86,7 +86,7 @@ func initMongoDB() (*mongo.Client, error) {
 func startGRPCServer(s *internal.DeliveryService) {
 
 	// Set up the server port from environment variable
-	uri := fmt.Sprintf(":%s", os.Getenv("DELIVERY_SERVER_PORT", "5555"))
+	uri := fmt.Sprintf(":%s", os.Getenv("DELIVERY_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
@@ -96,7 +96,7 @@ func startGRPCServer(s *internal.DeliveryService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterDeliveryServiceServer(grpcServer, s)
 
-	log.Printf("delivery service is running on port %s\n", os.Getenv("DELIVERY_SERVER_PORT", "5555"))
+	log.Printf("delivery service is running on port %s\n", os.Getenv("DELIVERY_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)

@@ -81,7 +81,7 @@ func initMongoClient() *mongo.Client {
 
 func startGRPCServer(s *internal.CouponService) {
 
-	uri := fmt.Sprintf(":%s", os.Getenv("COUPON_SERVER_PORT", "3333"))
+	uri := fmt.Sprintf(":%s", os.Getenv("COUPON_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
@@ -90,7 +90,7 @@ func startGRPCServer(s *internal.CouponService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterCouponServiceServer(grpcServer, s)
 
-	log.Printf("coupon service is running on port %s\n", os.Getenv("COUPON_SERVER_PORT", "3333"))
+	log.Printf("coupon service is running on port %s\n", os.Getenv("COUPON_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)

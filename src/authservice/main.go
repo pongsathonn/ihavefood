@@ -22,28 +22,28 @@ import (
 func main() {
 
 	if err := internal.InitSigningKey(); err != nil {
-		log.Printf("Failed to initialize jwt signingkey:", err)
+		log.Printf("Failed to initialize jwt signingkey: %v", err)
 	}
 
 	db, err := initPostgres()
 	if err != nil {
-		log.Fatal("Failed to initialize PostgresDB connection:", err)
+		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
 	}
 	if err := internal.InitAdminUser(db); err != nil {
-		log.Printf("Failed to initialize create admin user:", err)
+		log.Printf("Failed to initialize create admin user: %v", err)
 	}
 
 	amqpConn, err := initRabbitMQ()
 	if err != nil {
-		log.Fatal("Failed to initialize RabbitMQ connection:", err)
+		log.Fatalf("Failed to initialize RabbitMQ connection: %v", err)
 	}
-	rabbitmq := internal.NewRabbitMQ(amqpConn)
 
 	userClient, err := newUserServiceClient()
 	if err != nil {
-		log.Fatal("Failed to make new user client:", err)
+		log.Fatalf("Failed to make new user client: %v", err)
 	}
 
+	rabbitmq := internal.NewRabbitMQ(amqpConn)
 	authService := internal.NewAuthService(db, rabbitmq, userClient)
 	startGRPCServer(authService)
 
@@ -87,6 +87,9 @@ func initPostgres() (*sql.DB, error) {
 
 func initRabbitMQ() (*amqp.Connection, error) {
 
+	const maxRetries = 5
+	var errDialRabbitmq error
+
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("AUTH_AMQP_USER"),
 		os.Getenv("AUTH_AMQP_PASS"),
@@ -94,12 +97,15 @@ func initRabbitMQ() (*amqp.Connection, error) {
 		os.Getenv("AUTH_AMQP_PORT"),
 	)
 
-	conn, err := amqp.Dial(uri)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial AMQP connection: %v", err)
+	for _ = range maxRetries {
+		conn, err := amqp.Dial(uri)
+		if err == nil {
+			return conn, nil
+		}
+		errDialRabbitmq = err
 	}
 
-	return conn, nil
+	return nil, errDialRabbitmq
 }
 
 // startGRPCServer sets up and starts the gRPC server
