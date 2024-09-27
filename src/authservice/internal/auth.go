@@ -82,9 +82,6 @@ func InitAdminUser(db *sql.DB) error {
 		return errors.New("required environment variables are not set")
 	}
 
-	// TODO validate email format
-
-	// Check if the admin user already exists by username or email
 	var exists bool
 	err := db.QueryRow(`
 		SELECT EXISTS(
@@ -100,14 +97,12 @@ func InitAdminUser(db *sql.DB) error {
 		return nil
 	}
 
-	// Hash the password
 	hashedPass, err := hashPassword(password)
 	if err != nil {
 		log.Println(err)
 		return errPasswordHashing
 	}
 
-	// Insert the admin user
 	_, err = db.Exec(`
 		INSERT INTO user_credentials (
 			username,
@@ -129,13 +124,12 @@ func InitAdminUser(db *sql.DB) error {
 	return nil
 }
 
-// TODO might not call userservice directly
-//
-// Register handles user registration by creating a new user record with a hashed password in the database
-// and calling the UserService to create a user profile. It uses a transaction to ensure that both the user
-// creation and profile creation are successful before committing. If any error occurs, the transaction is rolled
-// back to maintain data integrity. Returns a success response if all operations complete successfully, or an
-// appropriate error if any operation fails.
+// Register handles user registration by creating a new user record with a hashed password
+// in the database and calling the UserService to create a user profile. It uses a transaction
+// to ensure that both the user creation and profile creation are successful before committing.
+// If any error occurs, the transaction is rolled back to maintain data integrity. Returns
+// a success response if all operations complete successfully, or an appropriate error
+// if any operation fails.
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
 	if err := validateUsernameAndPassword(in.Username, in.Password); err != nil {
@@ -152,8 +146,6 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		log.Printf("Email format invalid: %v", err)
 		return nil, status.Error(codes.InvalidArgument, "validate email failed")
 	}
-
-	// validate password
 
 	hashedPass, err := hashPassword(in.Password)
 	if err != nil {
@@ -212,8 +204,8 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	return &pb.RegisterResponse{Success: true}, nil
 }
 
-// Login handles user login. It verifies the provided credentials, generates a JWT token on success, and returns it along with its expiration time.
-// It returns an error if login fails or credentials are incorrect.
+// Login handles user login. It verifies the provided credentials, generates a JWT token on success,
+// and returns it along with its expiration time. It returns an error if login fails or credentials are incorrect.
 func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -266,7 +258,8 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	return &pb.LoginResponse{AccessToken: token, AccessTokenExp: exp}, nil
 }
 
-// IsValidToken checks if the provided token is valid. It returns a response indicating validity and an error if any.
+// IsValidToken checks if the provided token is valid. It returns a response
+// indicating validity and an error if any.
 func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
 
 	if in.Token == "" {
@@ -323,7 +316,6 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		return nil, errNoUsername
 	}
 
-	// check roles valid with comma ok
 	if _, ok := pb.Roles_value[in.Role.String()]; !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.Role.String())
 	}
@@ -340,8 +332,6 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		log.Println(err)
 		return nil, status.Error(codes.Internal, "failed to update role")
 	}
-
-	// - update user role in database , mighe be create function update role
 
 	return &pb.UpdateUserRoleResponse{Success: true}, nil
 }
@@ -485,7 +475,7 @@ func validateUsernameAndPassword(username, password string) error {
 // the standard email format. It uses mail.ParseAddress to parse the email.
 // If the email is invalid, it returns an error.
 //
-// NOTE email such as "test@gmailcom" (without dot) not counted as error here
+// NOTE email such as "test@gmailcom" (without dot) not counted as error
 func validateEmail(email string) error {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return err

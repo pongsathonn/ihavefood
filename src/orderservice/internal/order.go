@@ -99,7 +99,6 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 	}, nil
 }
 
-// TODO doc
 func (x *OrderService) consumedDeliveryFeeAndDiscount() (deliveryFee, Discount int32, err error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

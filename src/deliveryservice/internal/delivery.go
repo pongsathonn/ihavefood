@@ -125,7 +125,6 @@ func (x *DeliveryService) DeliveryAssignment() {
 
 }
 
-// TrackOrder handles requests for tracking an order. This method is not yet implemented.
 func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*pb.TrackOrderResponse, error) {
 
 	//TODO implement

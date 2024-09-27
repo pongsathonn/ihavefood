@@ -28,8 +28,6 @@ func NewUserService(rabbitmq RabbitMQ, repo UserRepository) *UserService {
 	}
 }
 
-// this function will subscribe to AuthService for New User Register
-// and save it to database
 func (x *UserService) CreateUserProfile(ctx context.Context, in *pb.CreateUserProfileRequest) (*pb.CreateUserProfileResponse, error) {
 
 	if in.Username == "" || in.PhoneNumber == "" || in.Address == nil {
