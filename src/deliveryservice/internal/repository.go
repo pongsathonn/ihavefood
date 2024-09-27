@@ -2,8 +2,7 @@ package internal
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -50,21 +49,17 @@ func (r *deliveryRepository) GetOrderDeliveryById(ctx context.Context, orderId s
 
 	var result MOrderDelivery
 
-	err := coll.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
+	if err := coll.FindOne(ctx, filter).Decode(&result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			// No document found means the order is not accepted yet
-			return nil, fmt.Errorf("order does not exists")
+			return nil, errors.New("order does not exists")
 		}
-
-		log.Println(err.Error())
 		return nil, err
 	}
 
 	return &result, nil
 }
 
-// SaveMOrderDelivery sava only orderid to database with empty other field
+// SaveOrderDelivery saves only the orderId to the database with other fields empty
 func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderId string) error {
 
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
@@ -79,13 +74,11 @@ func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderId stri
 		AcceptedTime:   nil,
 	}
 
-	_, err := coll.InsertOne(ctx, data)
-	if err != nil {
+	if _, err := coll.InsertOne(ctx, data); err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
 func (r *deliveryRepository) UpdateOrderDelivery(ctx context.Context, orderDelivery *MOrderDelivery) error {
