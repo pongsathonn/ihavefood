@@ -68,6 +68,63 @@ func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository) *DeliveryService {
 	}
 }
 
+// TODO grammar check
+// DeliveryAssignment handles incoming orders from  "order.placed.event" and saves place order
+// to the database, finding the nearest riders, and notifies them. It waits for rider acceptance
+// and responds with order pickup details if accepted.
+//
+// when save order with SaveOrderDelivery the order status still be not accept. It will accept
+// after rider accepted order.Then  change order status at function AcceptOrder
+func (x *DeliveryService) DeliveryAssignment() {
+
+	for {
+		placeOrder, err := x.receiveOrder("order.placed.event")
+		if err != nil {
+			log.Printf("Could not receive order : %v", err)
+			return
+		}
+		go func(placeOrder *pb.PlaceOrder) {
+
+			if placeOrder == nil {
+				log.Println("Place order is empty")
+				return
+			}
+
+			// waitRiderDuration is time for waiting rider accept order
+			waitRiderDuration := time.Minute * 10
+			ctx, cancel := context.WithTimeout(context.Background(), waitRiderDuration)
+			defer cancel()
+
+			// save new placeOrder to deliverydb (unaccept order)
+			if err := x.repository.SaveOrderDelivery(ctx, placeOrder.OrderId); err != nil {
+				log.Printf("failed to save new order: %v", err)
+				return
+			}
+
+			riders, err := calculateNearestRider(placeOrder.UserAddress, placeOrder.RestaurantAddress)
+			if err != nil {
+				log.Printf("Failed to calculate nearest riders: %v", err)
+				return
+			}
+
+			orderPickup, err := x.generateOrderPickUp(placeOrder)
+			if err != nil {
+				log.Printf("Failed to generate order pickup: %v", err)
+				return
+			}
+
+			notifyToRider(ctx, riders, orderPickup)
+
+			if err := x.waitForRiderAccept(ctx, riders, orderPickup); err != nil {
+				log.Printf("Wait for rider accept order failed: %v", err)
+				return
+			}
+
+		}(placeOrder)
+	}
+
+}
+
 // TrackOrder handles requests for tracking an order. This method is not yet implemented.
 func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*pb.TrackOrderResponse, error) {
 
@@ -181,63 +238,6 @@ func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.Confirm
 	return &pb.ConfirmCashPaymentResponse{Success: true}, nil
 }
 
-// TODO grammar check
-// DeliveryAssignment handles incoming orders from  "order.placed.event" and saves place order
-// to the database, finding the nearest riders, and notifies them. It waits for rider acceptance
-// and responds with order pickup details if accepted.
-//
-// when save order with SaveOrderDelivery the order status still be not accept. It will accept
-// after rider accepted order.Then  change order status at function AcceptOrder
-func (x *DeliveryService) DeliveryAssignment() {
-
-	for {
-		placeOrder, err := x.receiveOrder("order.placed.event")
-		if err != nil {
-			log.Printf("Could not receive order : %v", err)
-			return
-		}
-		go func(placeOrder *pb.PlaceOrder) {
-
-			if placeOrder == nil {
-				log.Println("Place order is empty")
-				return
-			}
-
-			// waitRiderDuration is time for waiting rider accept order
-			waitRiderDuration := time.Minute * 10
-			ctx, cancel := context.WithTimeout(context.Background(), waitRiderDuration)
-			defer cancel()
-
-			// save new placeOrder to deliverydb (unaccept order)
-			if err := x.repository.SaveOrderDelivery(ctx, placeOrder.OrderId); err != nil {
-				log.Printf("failed to save new order: %v", err)
-				return
-			}
-
-			riders, err := calculateNearestRider(placeOrder.UserAddress, placeOrder.RestaurantAddress)
-			if err != nil {
-				log.Printf("Failed to calculate nearest riders: %v", err)
-				return
-			}
-
-			orderPickup, err := x.generateOrderPickUp(placeOrder)
-			if err != nil {
-				log.Printf("Failed to generate order pickup: %v", err)
-				return
-			}
-
-			notifyToRider(ctx, riders, orderPickup)
-
-			if err := x.waitForRiderAccept(ctx, riders, orderPickup); err != nil {
-				log.Printf("Wait for rider accept order failed: %v", err)
-				return
-			}
-
-		}(placeOrder)
-	}
-
-}
-
 // receiveOrder subscribes to new order from OrderService
 // and returns the received order.
 func (x *DeliveryService) receiveOrder(routingKey string) (*pb.PlaceOrder, error) {
@@ -260,26 +260,6 @@ func (x *DeliveryService) receiveOrder(routingKey string) (*pb.PlaceOrder, error
 		return &placeOrder, nil
 	}
 	return nil, nil
-}
-
-// calculateNearestRider calculates and returns a list of riders who are
-// geographically closest to the user's location, within a certain radius.
-//
-// This function uses the user's address to determine the proximity of available
-// riders based on their current location. The algorithm should take into account
-// the distance between the user's address and the riders' locations and return
-// a list of the nearest riders.
-func calculateNearestRider(userAddr *pb.Address, restaurantAddr *pb.Address) ([]*pb.Rider, error) {
-
-	// TODO:
-	//   - Implement the logic to calculate the radius between the user's address and
-	//     the riders' locations.
-	//   - Use an actual distance calculation algorithm (e.g., Haversine formula or
-	//     another geo-location method) to filter riders within the radius.
-	//   - Return a list of riders that are closest to the user's location.
-
-	// riders is example data for nearest riders
-	return riders, nil
 }
 
 // generateOrderPickUp is a function that generate pickupcode and locations
@@ -320,20 +300,6 @@ func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
 	}
 
 	return point, nil
-}
-
-// randomThreeDigits generate 3 digits pickup code between 100 - 999 .
-func randomThreeDigits() string {
-
-	// Half-open interval
-	// - [a,b) is include a, exclude b
-	// - (a,b] is include b, exclude a
-	//
-	// rand.Intn(900) returns a number between 0 and 899.
-	// Adding 100 shifts the range to [100, 999].
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	n := r.Intn(900) + 100
-	return strconv.Itoa(n)
 }
 
 // waitRiderAccept waits for a rider to accept the order.
@@ -402,6 +368,26 @@ func (x *DeliveryService) waitForRiderAccept(ctx context.Context, riders []*pb.R
 
 }
 
+// calculateNearestRider calculates and returns a list of riders who are
+// geographically closest to the user's location, within a certain radius.
+//
+// This function uses the user's address to determine the proximity of available
+// riders based on their current location. The algorithm should take into account
+// the distance between the user's address and the riders' locations and return
+// a list of the nearest riders.
+func calculateNearestRider(userAddr *pb.Address, restaurantAddr *pb.Address) ([]*pb.Rider, error) {
+
+	// TODO:
+	//   - Implement the logic to calculate the radius between the user's address and
+	//     the riders' locations.
+	//   - Use an actual distance calculation algorithm (e.g., Haversine formula or
+	//     another geo-location method) to filter riders within the radius.
+	//   - Return a list of riders that are closest to the user's location.
+
+	// riders is example data for nearest riders
+	return riders, nil
+}
+
 // notifyToRider will notify to all nearest riders
 //
 // TODO implement push notification and stop notify if context done
@@ -424,6 +410,20 @@ func notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpI
 
 	// Example log notify
 	log.Printf("[NOTIFY INFO]: %+v\n", notifyInfo)
+}
+
+// randomThreeDigits generate 3 digits pickup code between 100 - 999 .
+func randomThreeDigits() string {
+
+	// Half-open interval
+	// - [a,b) is include a, exclude b
+	// - (a,b] is include b, exclude a
+	//
+	// rand.Intn(900) returns a number between 0 and 899.
+	// Adding 100 shifts the range to [100, 999].
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	n := r.Intn(900) + 100
+	return strconv.Itoa(n)
 }
 
 // NOTE : Address point is example data use district only
