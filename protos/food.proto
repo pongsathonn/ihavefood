@@ -9,7 +9,6 @@ option go_package =  "/genproto"; //
 
 import "google/api/annotations.proto";
 
-
 // Caution: When validating enum types in Go using a map, if the enum includes values 
 // like UNKNOWN, UNSPECIFIED, or UNDEFINED, these should be validated explicitly 
 // before checking the map or proceeding with other validation. For example:
@@ -52,6 +51,8 @@ service UserService {
 
     // rpc UpdateUserProfile(Empty) returns(Empty) {}
 
+    // this function will subscribe to AuthService for New User Register
+    // and save it to database
     rpc CreateUserProfile(CreateUserProfileRequest) returns (CreateUserProfileResponse) {}
 
     // GetUserProfileByUsername for specific username
@@ -141,18 +142,30 @@ message DeleteUserProfileResponse {
 // Authservice response user's credentials
 service AuthService {
 
+    // TODO might not call userservice directly
+    //
+    // Register handles user registration by creating a new user record with a hashed password
+    // in the database and calling the UserService to create a user profile. It uses a transaction
+    // to ensure that both the user creation and profile creation are successful before committing. 
+    // If any error occurs, the transaction is rolled back to maintain data integrity. Returns 
+    // a success response if all operations complete successfully, or an appropriate error
+    // if any operation fails.
     rpc Register(RegisterRequest) returns(RegisterResponse) {
         option (google.api.http) = {
             post: "/auth/register" 
             body: "*"
         };
     }
+
+    // Login handles user login. It verifies the provided credentials, generates a JWT token on success, 
+    // and returns it along with its expiration time. It returns an error if login fails or credentials are incorrect.
     rpc Login(LoginRequest) returns(LoginResponse){
         option (google.api.http) = {
             get: "/auth/login" 
         };
     }
 
+    // IsValidToken checks if the provided token is valid. It returns a response indicating validity and an error if any.
     rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
 
     rpc IsValidAdminToken(IsValidAdminTokenRequest) returns (IsValidAdminTokenResponse){}
@@ -248,6 +261,22 @@ message UpdateUserRoleResponse {
 
 // ---------- Order service ----------
 service OrderService {
+
+    // HandlePlaceOrder handle imcomming place order from client and publish to other services
+    //
+    // routing key explanation
+    //
+    //   - "order.validate.event" occurs when place order is comming from client
+    //     DeliveryService will subscribe this and provided delivery fee for and response.
+    //     CouponService will validate coupon and resonse discount.
+    //     consumedDeliveryFeeAndDiscount will subscribe to these
+    //
+    //   - "order.placed.event" occurs after saved place order into database and get orderId,TrackingId
+    //     publish to other service delivery find rider etc.
+    //
+    // TODO
+    // - handle error
+    // - handle duplicated request
     rpc HandlePlaceOrder(HandlePlaceOrderRequest) returns(HandlePlaceOrderResponse){
         option (google.api.http) = {
             post: "/api/orders/place-order" 
@@ -261,6 +290,7 @@ service OrderService {
         };
 
     }
+
 }
 
 // TODO might change Order id to Order NO
@@ -274,22 +304,41 @@ message PlaceOrder {
     int32 coupon_discount =7;
     int32 delivery_fee = 8;
     int32 total = 9;
-    Address address = 10;
-    ContactInfo contact = 11;
-    PaymentMethod payment_method = 12;
-    PaymentStatus payment_status = 13;
-    OrderStatus order_status = 14;
+    Address user_address = 10;
+    Address restaurant_address = 11;
+    ContactInfo user_contact = 12;
+    PaymentMethods payment_methods = 13;
+    PaymentStatus payment_status = 14;
+    OrderStatus order_status = 15;
+    OrderTimestamps order_timestamps = 16;
+
 }
 
-enum PaymentMethod {
-    PAYMENT_METHOD_CASH = 0;
-    PAYMENT_METHOD_CREDIT_CARD = 1; 
+message Address {
+    string address_name = 1;
+	string sub_district = 2;
+	string district = 3;    
+	string province = 4;    
+	string postal_code = 5;
+}
+
+message ContactInfo {
+    string phone_number = 1;
+    string email = 2;
+}
+
+enum PaymentMethods {
+    PAYMENT_METHOD_UNSPECIFIED = 0;
+    PAYMENT_METHOD_CASH = 1;
+    PAYMENT_METHOD_CREDIT_CARD = 2; 
+    // PAYMENT_METHOD_PROMPT_PAY = 3;
 }
 
 enum PaymentStatus {
     UNPAID = 0;
     PAID = 1;
 }
+
 
 // PENDING = Sending Order to Restaurant
 // PREPARING_ORDER = When restaurant received order
@@ -306,28 +355,25 @@ enum OrderStatus {
     CANCELLED =5;
 }
 
-message Address {
-    string address_name = 1;
-	string sub_district = 2;
-	string district = 3;    
-	string province = 4;    
-	string postal_code = 5;
-}
-
-message ContactInfo {
-    string phone_number = 1;
-    string email = 2;
+// Unix time
+message OrderTimestamps {
+    int64 created_at = 1;
+    int64 updated_at = 2;
+    int64 completed_at = 3;
 }
 
 message HandlePlaceOrderRequest {
     string username = 1;
     string restaurant_id = 2;
     repeated Menu menus = 3;
-    string coupon_code = 5;
-
-    Address address = 6;
-    ContactInfo contact = 7;
-    PaymentMethod payment_method = 8;
+    string coupon_code = 4;
+    int32 coupon_discount =5;
+    int32 delivery_fee = 6;
+    int32 total = 7;
+    Address user_address = 8;
+    Address restaurant_address = 9;
+    ContactInfo user_contact = 10;
+    PaymentMethods payment_methods = 11;
 }
 
 message HandlePlaceOrderResponse {
@@ -336,6 +382,7 @@ message HandlePlaceOrderResponse {
     int32 coupon_discount =3;
     int32 delivery_fee = 4;
     int32 total = 5;
+    int64 created_at = 6;
 }
 
 message ListUserPlaceOrderRequest {
@@ -346,16 +393,17 @@ message ListUserPlaceOrderResponse {
     repeated PlaceOrder place_orders = 1;
 }
 
-
-
 // ---------- Delivery service ----------
 service DeliveryService {
 
     // tracking rider's location ( update every 10s )
     // OrderService should only call this
+    //
+    // TrackOrder handles requests for tracking an order. This method is not yet implemented.
     rpc TrackOrder(TrackOrderRequest) returns (TrackOrderResponse) {}
 
-    // for Rider accept Order
+    // AcceptOrder handles requests indicating that a rider has accepted an order.
+    // It saves the delivery order to the database. Each order should only be accepted once.
     rpc AcceptOrder(AcceptOrderRequest) returns (AcceptOrderResponse){
         option (google.api.http) = {
             post: "/api/deliveries/riders/accept" 
@@ -363,9 +411,21 @@ service DeliveryService {
         };
     }
 
-    // GetDeliveryFee calculates the delivery cost from the pickup location (restaurant)
-    // to the destination (user's address).
-    rpc GetDeliveryFee(GetDeliveryFeeRequest) returns (GetDeliveryFeeResponse) {}
+    // TODO doc
+    rpc GetDeliveryFee(GetDeliveryFeeRequest) returns(GetDeliveryFeeResponse) {
+        option (google.api.http) = {
+            post: "/api/deliveries/fee" 
+            body: "*"
+        };
+    }
+
+    // ConfirmCashPayment updates the payment status for cash transactions
+    // when the rider has received cash from the user.
+    rpc ConfirmCashPayment(ConfirmCashPaymentRequest) returns(ConfirmCashPaymentResponse) {}
+
+    // TODO seperate payment to its service (paymentservice)
+    // For Credit Card or Promt pay implement third-party payment gateway
+
 }
 
 message Point {
@@ -380,8 +440,13 @@ message Rider {
 }
 
 message PickupInfo {
-    string pickup_code = 1; // three digit i.e 712 , 412
+
+    // pickup_code is a simplified code used for identifying an order for the rider.
+    // use three digit i.e 712 , 412 
+    string pickup_code = 1;
+
     Point pickup_location = 2;
+
     Point destination = 3;
 }
 
@@ -401,23 +466,27 @@ message AcceptOrderRequest {
 }
 
 message AcceptOrderResponse {
-    PickupInfo pickup_info = 1;
+    string order_id = 1;
+    PickupInfo pickup_info = 2;
 }
 
-// GetDeliveryFeeRequest uses "Address" for input from the client.
-// The server may convert these addresses to geographic "Point"
-// objects for more accurate calculation, depending on the server's
-// logic and implementation.
 message GetDeliveryFeeRequest {
-    Address restaurant_address = 1;
-    Address user_address = 2;
+    Address user_address = 1;
+    Address restaurant_address = 2;
 }
 
 message GetDeliveryFeeResponse {
-    int32 delivery_fee = 1;
+    int32 delivery_fee =1;
 }
 
+message ConfirmCashPaymentRequest {
+    string order_id = 1;
+    string rider_id = 2;
+}
 
+message ConfirmCashPaymentResponse {
+    bool success = 1;
+}
 
 // ---------- Restaurant service ----------
 service RestaurantService {
@@ -494,7 +563,6 @@ message AddMenuResponse {
 }
 
 
-
 // ---------- Coupon service ----------
 service CouponService {
 
@@ -508,17 +576,17 @@ service CouponService {
         };
     }
 
-    // GetCoupon retrieves a coupon by its code. The response is 
-    // a coupon that has not expired and has sufficient quantity.
+    // GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and 
+    // has sufficient quantity.
     rpc GetCoupon(GetCouponRequest) returns(GetCouponResponse) {
         option (google.api.http) = {
             get: "/api/coupons/{code}" 
         };
     }
 
-    // ListCoupons retrieves all coupons from the database without filtering for expiration
-    // or quantity. This method is intended to be used by the frontend to display a list
-    // of all coupons to users, regardless of their validity or availability.
+    // ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
+    // This method is intended to be used by the frontend to display a list of all coupons to users, 
+    // regardless of their validity or availability.
     //
     // TODO: In the future, this method might be updated to list coupons by other condition,
     // but currently, it responds with all coupons.
@@ -545,7 +613,7 @@ service CouponService {
 
 
 message Coupon {
-    CouponType types = 1;
+    CouponTypes types = 1;
 
     string code = 2;
 
@@ -559,7 +627,7 @@ message Coupon {
     int32 quantity = 5; 
 }
 
-enum CouponType{
+enum CouponTypes{
 
     COUPON_TYPE_UNSPECIFICED = 0;
 
@@ -571,7 +639,7 @@ enum CouponType{
 
 
 message AddCouponRequest {
-    CouponType coupon_type = 1;
+    CouponTypes coupon_types = 1;
     int32 discount = 2;
 
     // The coupon expiration time in hours from now.
@@ -605,6 +673,8 @@ message AppliedCouponRequest {
 message AppliedCouponResponse { 
     bool success = 1;
 }
+
+
 
 // ---------- Review service ---------- 
 // not implement yet
@@ -658,9 +728,5 @@ message DeleteOrderReviewRequest {
     string review_id = 2;
 }
 
-
 // ---------- Payment service ---------- 
-// not implement yet
-
-service PaymentService {
-}
+// TODO might seperate payment to here
