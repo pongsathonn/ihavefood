@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/mail"
 	"regexp"
 	"time"
@@ -33,18 +33,20 @@ func NewOrderService(repository OrderRepository, rabbitmq RabbitMQ) *OrderServic
 func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
 
 	if in.Username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
+		return nil, status.Error(codes.InvalidArgument, "username must be provided")
 	}
 
-	resp, err := x.repository.PlaceOrder(ctx, in.Username)
+	resp, err := x.repository.PlaceOrders(ctx, in.Username)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to retrieve user's place orders :%v", err)
+		slog.Error("retrive place order", "err", err)
+		return nil, status.Error(codes.Internal, "failed to retrieve user's place orders")
 	}
 
 	return resp, nil
 }
 
 // HandlePlaceOrder handle imcomming place order from client and publish to other services
+// TODO explain function does
 //
 // routing key explanation
 //
@@ -55,10 +57,6 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 //
 //   - "order.placed.event" occurs after saved place order into database and get orderId,TrackingId
 //     publish to other service delivery find rider etc.
-//
-// TODO
-// - handle error
-// - handle duplicated request
 func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*pb.HandlePlaceOrderResponse, error) {
 
 	if err := validatePlaceOrderRequest(in); err != nil {
@@ -67,7 +65,8 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 
 	res, err := x.repository.SavePlaceOrder(ctx, in)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save place order: %v", err)
+		slog.Error("save place order", "err", err)
+		return nil, status.Error(codes.Internal, "failed to save place order")
 	}
 
 	err = x.rabbitmq.Publish(ctx, "order_exchange", "order.placed.event", &pb.PlaceOrder{
@@ -88,10 +87,10 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		OrderStatus:       res.OrderStatus,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create event : %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to publish event: %v", err)
 	}
 
-	log.Printf("published with order id : %s\n", res.OrderId)
+	slog.Info("published event", "order_id", res.OrderId)
 
 	return &pb.HandlePlaceOrderResponse{
 		OrderId:         res.OrderId,

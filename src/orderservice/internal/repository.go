@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	errDuplicatedOrder error = errors.New("order duplicated")
+	errDuplicatedOrder = errors.New("order duplicated")
 )
 
 type SavePlaceOrderResponse struct {
@@ -25,7 +25,7 @@ type SavePlaceOrderResponse struct {
 }
 
 type OrderRepository interface {
-	PlaceOrder(ctx context.Context, username string) (*pb.ListUserPlaceOrderResponse, error)
+	PlaceOrders(ctx context.Context, username string) (*pb.ListUserPlaceOrderResponse, error)
 	SavePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*SavePlaceOrderResponse, error)
 }
 
@@ -37,9 +37,8 @@ func NewOrderRepository(client *mongo.Client) OrderRepository {
 	return &orderRepository{client: client}
 }
 
-// TODO improve doc , adn might be change func name to plural
 // list all user's placeorder by username ( like query placeorder history )
-func (r *orderRepository) PlaceOrder(ctx context.Context, username string) (*pb.ListUserPlaceOrderResponse, error) {
+func (r *orderRepository) PlaceOrders(ctx context.Context, username string) (*pb.ListUserPlaceOrderResponse, error) {
 
 	coll := r.client.Database("order_database", nil).Collection("orderCollection")
 
@@ -56,7 +55,6 @@ func (r *orderRepository) PlaceOrder(ctx context.Context, username string) (*pb.
 		if err := cur.Decode(&res); err != nil {
 			return nil, err
 		}
-
 		placeOrder := entityToProtoMessage(&res)
 		placeOrders = append(placeOrders, placeOrder)
 	}

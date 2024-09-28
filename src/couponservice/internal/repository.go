@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"errors"
-	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -61,12 +60,10 @@ func (r *couponRepository) SaveCoupon(ctx context.Context, coupon *Coupon) error
 		// if coupon code doesn't exists insert new coupon
 		if errors.Is(res.Err(), mongo.ErrNoDocuments) {
 			if _, err := coll.InsertOne(ctx, coupon); err != nil {
-				log.Println("Insert failed: ", err)
 				return err
 			}
 			return nil
 		}
-		log.Println("Update failed: ", res.Err())
 		return res.Err()
 	}
 	return nil

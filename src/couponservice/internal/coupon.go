@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	errNoCouponCode = status.Errorf(codes.InvalidArgument, "coupon code must be provided")
+	errNoCouponCode = status.Error(codes.InvalidArgument, "coupon code must be provided")
 )
 
 type CouponService struct {
@@ -40,7 +40,7 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 	switch in.CouponTypes {
 	case pb.CouponTypes_COUPON_TYPE_DISCOUNT:
 		if in.Discount < 1 || in.Discount > 99 {
-			return nil, status.Errorf(codes.InvalidArgument, "discount must be between 1 and 99")
+			return nil, status.Error(codes.InvalidArgument, "discount must be between 1 and 99")
 		}
 		code = fmt.Sprintf("SAVE%dFORYOU", in.Discount)
 		discount = in.Discount
@@ -48,11 +48,11 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		code = fmt.Sprintf("FREEDELIVERY")
 		discount = 0
 	default:
-		return nil, status.Errorf(codes.InvalidArgument, "invalid coupon type")
+		return nil, status.Error(codes.InvalidArgument, "invalid coupon type")
 	}
 
 	if in.Quantity < 1 {
-		return nil, status.Errorf(codes.InvalidArgument, "quantity must be at least 1")
+		return nil, status.Error(codes.InvalidArgument, "quantity must be at least 1")
 	}
 
 	expiration := time.Now().Add(time.Duration(in.ExpireInHour) * time.Hour)
@@ -65,8 +65,8 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		Quantity:   in.Quantity,
 	})
 	if err != nil {
-		log.Println("Save coupon failed: ", err)
-		return nil, status.Errorf(codes.Internal, "failed to add coupon")
+		slog.Error("save coupon", "err", err)
+		return nil, status.Error(codes.Internal, "failed to save coupon")
 	}
 
 	return &pb.AddCouponResponse{Success: true}, nil
@@ -81,18 +81,19 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	coupon, err := x.repository.Coupon(ctx, in.Code)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
+			slog.Error("retrive coupon", "err", err)
 			return nil, status.Error(codes.NotFound, "coupon not found")
 		}
-		log.Println("Get coupon failed:", err)
+		slog.Error("retrive coupon", "err", err)
 		return nil, status.Error(codes.InvalidArgument, "failed to retrive coupon from database")
 	}
 
 	if coupon.Expiration <= time.Now().Unix() {
-		return nil, status.Errorf(codes.FailedPrecondition, "coupon has expired")
+		return nil, status.Error(codes.FailedPrecondition, "coupon has expired")
 	}
 
 	if coupon.Quantity < 1 {
-		return nil, status.Errorf(codes.FailedPrecondition, "coupon quantity is insufficient")
+		return nil, status.Error(codes.FailedPrecondition, "coupon quantity is insufficient")
 	}
 
 	return &pb.GetCouponResponse{Coupon: &pb.Coupon{
@@ -108,8 +109,8 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *pb.Empty) (*pb.Li
 
 	listCoupons, err := x.repository.Coupons(ctx)
 	if err != nil {
-		log.Println("List coupons failed: ", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive list coupons")
+		slog.Error("retrive coupons", "err", err)
+		return nil, status.Error(codes.Internal, "failed to retrive list coupons")
 	}
 
 	var coupons []*pb.Coupon
@@ -133,8 +134,8 @@ func (x *CouponService) AppliedCoupon(ctx context.Context, in *pb.AppliedCouponR
 	}
 
 	if err := x.repository.UpdateCouponQuantity(ctx, in.Code); err != nil {
-		log.Println("Update failed", err)
-		return nil, status.Errorf(codes.Internal, "failed to update coupon's quantity")
+		slog.Error("update coupon quantity", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to update coupon quantity")
 	}
 
 	return &pb.AppliedCouponResponse{Success: true}, nil
