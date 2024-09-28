@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"math"
 	"math/rand"
 	"slices"
@@ -80,13 +81,13 @@ func (x *DeliveryService) DeliveryAssignment() {
 	for {
 		placeOrder, err := x.receiveOrder("order.placed.event")
 		if err != nil {
-			log.Printf("Could not receive order : %v", err)
+			slog.Error("receive new order", "err", err)
 			return
 		}
 		go func(placeOrder *pb.PlaceOrder) {
 
 			if placeOrder == nil {
-				log.Println("Place order is empty")
+				slog.Error("place order is empty")
 				return
 			}
 
@@ -97,26 +98,29 @@ func (x *DeliveryService) DeliveryAssignment() {
 
 			// save new placeOrder to deliverydb (unaccept order)
 			if err := x.repository.SaveOrderDelivery(ctx, placeOrder.OrderId); err != nil {
-				log.Printf("failed to save new order: %v", err)
+				slog.Error("save new order", "err", err)
 				return
 			}
 
 			riders, err := calculateNearestRider(placeOrder.UserAddress, placeOrder.RestaurantAddress)
 			if err != nil {
-				log.Printf("Failed to calculate nearest riders: %v", err)
+				slog.Error("calculate nearest riders", "err", err)
 				return
 			}
 
 			orderPickup, err := x.generateOrderPickUp(placeOrder)
 			if err != nil {
-				log.Printf("Failed to generate order pickup: %v", err)
+				slog.Error("generate order pickup", "err", err)
 				return
 			}
 
-			notifyToRider(ctx, riders, orderPickup)
+			if err := notifyToRider(ctx, riders, orderPickup); err != nil {
+				slog.Error("notify to riders", "err", err)
+				return
+			}
 
 			if err := x.waitForRiderAccept(ctx, riders, orderPickup); err != nil {
-				log.Printf("Wait for rider accept order failed: %v", err)
+				slog.Error("waiting rider accept", "err", err)
 				return
 			}
 
@@ -142,11 +146,12 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 
 	order, err := x.repository.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "order not found: %v ", err)
+		slog.Error("retrive order delivery", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrive order delivery")
 	}
 
 	if order.IsAccepted {
-		return nil, status.Errorf(409, "order has already been accepted")
+		return nil, status.Error(409, "order has already been accepted")
 	}
 
 	timeOut, cancel := context.WithTimeout(ctx, time.Second*5)
@@ -156,7 +161,7 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 	// Notify that the rider has accepted the order
 	case x.riderAcceptedCh <- &pb.AcceptOrderRequest{RiderId: in.RiderId, OrderId: in.OrderId}:
 	case <-timeOut.Done():
-		return nil, status.Errorf(codes.Internal, "failed to notify server that rider accepted")
+		return nil, status.Error(codes.Internal, "failed to notify server that order accepted")
 	}
 
 	// Wait for the pickup information
@@ -167,8 +172,8 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 		}
 
 		if order.Error != nil {
-			log.Printf("Failed to retrive order pickup: %v", order.Error)
-			return nil, status.Errorf(codes.Internal, "failed to retrieve order pickup information")
+			slog.Error("retrive order pickup", "err", order.Error)
+			return nil, status.Error(codes.Internal, "failed to retrieve order pickup information")
 		}
 
 		return &pb.AcceptOrderResponse{
@@ -181,24 +186,24 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 		}, nil
 
 	case <-timeOut.Done():
-		return nil, status.Errorf(codes.Internal, "context timeout while waiting for pickup information")
+		return nil, status.Error(codes.Internal, "context timeout while waiting for pickup information")
 
 	}
 }
 
 func (x *DeliveryService) GetDeliveryFee(ctx context.Context, in *pb.GetDeliveryFeeRequest) (*pb.GetDeliveryFeeResponse, error) {
 	if in.UserAddress == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "user address must be provided")
+		return nil, status.Error(codes.InvalidArgument, "user address must be provided")
 	}
 
 	if in.RestaurantAddress == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "restaurant address must be provided")
+		return nil, status.Error(codes.InvalidArgument, "restaurant address must be provided")
 	}
 
 	deliveryFee, err := calculateDeliveryFee(in.RestaurantAddress, in.UserAddress)
 	if err != nil {
-		log.Printf("Calculate delivery fee error : %v", deliveryFee)
-		return nil, status.Errorf(codes.Internal, "get delivery fee failed")
+		slog.Error("calculate delivery fee", "err", err)
+		return nil, status.Error(codes.Internal, "failed to calculate delivery fee")
 	}
 
 	return &pb.GetDeliveryFeeResponse{DeliveryFee: deliveryFee}, nil
@@ -211,11 +216,12 @@ func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.Confirm
 
 	order, err := x.repository.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
+		slog.Error("retrive order delivery", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrive order delivery")
 	}
 
 	if order.RiderId != in.RiderId {
-		return nil, status.Error(codes.InvalidArgument, "rider ID does not match the accepted rider for this order")
+		return nil, status.Error(codes.InvalidArgument, "rider ID mismatch with the accepted rider")
 	}
 
 	// TODO publish body
@@ -231,7 +237,7 @@ func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.Confirm
 		[]byte(""),
 	)
 	if err != nil {
-		log.Printf("Failed to publish %s: %v ", routingKey, err)
+		slog.Error("publish failed", "routingkey", routingKey, "err", err)
 	}
 
 	return &pb.ConfirmCashPaymentResponse{Success: true}, nil
@@ -269,12 +275,12 @@ func (x *DeliveryService) generateOrderPickUp(placeOrder *pb.PlaceOrder) (*pickU
 
 	startPoint, err := x.addressToPoint(placeOrder.RestaurantAddress)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't convert restaurant address to point: %w", err)
+		return nil, err
 	}
 
 	destinationPoint, err := x.addressToPoint(placeOrder.UserAddress)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't convert user address to point: %w", err)
+		return nil, err
 	}
 
 	return &pickUpInfo{
@@ -295,7 +301,7 @@ func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
 
 	point, ok := example[addr.District]
 	if !ok {
-		return nil, fmt.Errorf("district %s not found", addr.District)
+		return nil, fmt.Errorf("district %s invalid", addr.District)
 	}
 
 	return point, nil
@@ -320,7 +326,7 @@ func (x *DeliveryService) waitForRiderAccept(ctx context.Context, riders []*pb.R
 		select {
 		case accepted := <-x.riderAcceptedCh:
 			if accepted.OrderId == "" || accepted.RiderId == "" {
-				x.orderPickupCh <- &pickUpInfo{Error: errors.New("rider id or order id accept is empty")}
+				x.orderPickupCh <- &pickUpInfo{Error: errors.New("rider id or order id is empty")}
 				continue
 			}
 
@@ -350,7 +356,10 @@ func (x *DeliveryService) waitForRiderAccept(ctx context.Context, riders []*pb.R
 			}
 			x.mu.Unlock()
 
-			log.Printf("rider id %s has accepted order id %s", accepted.RiderId, accepted.OrderId)
+			slog.Info("Rider has accepted the order",
+				"rider_id", accepted.RiderId,
+				"order_id", accepted.OrderId,
+			)
 
 			select {
 			// response order pickup information to function AcceptOrder
@@ -390,7 +399,7 @@ func calculateNearestRider(userAddr *pb.Address, restaurantAddr *pb.Address) ([]
 // notifyToRider will notify to all nearest riders
 //
 // TODO implement push notification and stop notify if context done
-func notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) {
+func notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) error {
 
 	var riderIds []string
 	for _, r := range riders {
@@ -409,6 +418,8 @@ func notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpI
 
 	// Example log notify
 	log.Printf("[NOTIFY INFO]: %+v\n", notifyInfo)
+
+	return nil
 }
 
 // randomThreeDigits generate 3 digits pickup code between 100 - 999 .
@@ -431,19 +442,24 @@ func randomThreeDigits() string {
 // calculateDeliveryFee calculate distance from user's address to restaurant's address
 func calculateDeliveryFee(userAddr *pb.Address, restaurantAddr *pb.Address) (int32, error) {
 
-	point1, okna := example[userAddr.District]
-	point2, okja := example[restaurantAddr.District]
+	point1, ok1 := example[userAddr.District]
+	point2, ok2 := example[restaurantAddr.District]
 
-	if !okna || !okja {
-		validDistricts := []string{"Mueang Chiang Mai", "Hang Dong", "San Sai", "Mae Rim", "Doi Saket"}
+	if !ok1 || !ok2 {
+		validDistricts := []string{
+			"Mueang",
+			"Hang Dong",
+			"San Sai",
+			"Mae Rim",
+			"Doi Saket",
+		}
 		return 0, fmt.Errorf("invalid distrct. valid districts are: %v ", validDistricts)
 	}
 
 	// distance in kilometers
 	distance := haversineDistance(point1, point2)
 	if distance < 0 || distance > 25 {
-		log.Printf("Distance invalid: %v", distance)
-		return 0, errors.New("distance not in range 0 to 25 km")
+		return 0, errors.New("distance must be between 0 and 25 km")
 	}
 
 	var deliveryFee int32
@@ -456,13 +472,6 @@ func calculateDeliveryFee(userAddr *pb.Address, restaurantAddr *pb.Address) (int
 	default:
 		deliveryFee = 100
 	}
-
-	log.Printf("Distance from %s to %s is %.2f km, delivery fee is %d baht",
-		userAddr.AddressName,
-		restaurantAddr.AddressName,
-		distance,
-		deliveryFee,
-	)
 
 	return deliveryFee, nil
 }
