@@ -221,7 +221,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, errNoUsernamePassword
 	}
 
-	var user pb.UserCredentials
+	var res pb.UserCredentials
 	row := x.db.QueryRowContext(ctx, `
 		SELECT 
 			username, 
@@ -234,7 +234,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	`,
 		username,
 	)
-	if err := row.Scan(&user.Username, &user.Password, &user.Role); err != nil {
+	if err := row.Scan(&res.Username, &res.Password, &res.Role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errUserNotFound
 		}
@@ -242,18 +242,16 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Error(codes.Internal, "scan user credentials failed")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(res.Password), []byte(password)); err != nil {
 		slog.Error("verify password", "err", err)
 		return nil, errUserIncorrect
 	}
 
-	token, exp, err := createNewToken(user.Role)
+	token, exp, err := createNewToken(res.Role)
 	if err != nil {
 		slog.Error("generate new token", "err", err)
 		return nil, errGenerateToken
 	}
-
-	// TODO: Publish event for user login
 
 	return &pb.LoginResponse{AccessToken: token, AccessTokenExp: exp}, nil
 }
@@ -355,10 +353,6 @@ func extractAuth(authorization []string) (username, password string, err error) 
 
 // createNewToken generates a new JWT token with a expiration time from the current time.
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
-//
-// TODO modify createNewToken to handle both User and Admin
-// by Fetch User role first and assign to claim
-// modify doc to create new token based on role
 func createNewToken(role pb.Roles) (signedToken string, expiration int64, err error) {
 
 	day := 24 * time.Hour
