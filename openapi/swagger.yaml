@@ -1,11 +1,11 @@
 openapi: 3.1.0
 info:
   title: "ihavefood"
-  description: "Only theses provinces can be used -> Chiang Mai, Bangkok, Phuket, Lampang, Rayong" 
+  description: "Based on Chaing Mai, Only this Chiang Mai district [Mueang,Hang Dong,San Sai,Mae Rim,Doi Saket]"
   version: 0.1.0
 servers:
     - url: "http://localhost:180"
-      description: "abcdefg"
+      description: "TODO TODO TODO TODO TODO"
 components:
   securitySchemes:
     bearerAuth:
@@ -39,34 +39,34 @@ paths:
                   format: email
                 password:
                   type: string
-                phone_number:
+                phoneNumber:
                   type: string
                 address:
                   type: object
                   properties:
-                    address_name:
+                    addressName:
                       type: string
-                    sub_district:
+                    subDistrict:
                       type: string
                     district:
                       type: string
                     province:
                       type: string
-                    postal_code:
+                    postalCode:
                       type: string
             examples:
               example1:
                 value: 
                   username: "yuki002"
                   email: "yuki_sleep@mail.com"
-                  password: "secret"
-                  phone_number: "081 222 3333"
+                  password: "pPassword."
+                  phoneNumber: "0619286355"
                   address:
-                    address_name: "Jai Dee Hotel"
-                    sub_district: "Mueang"
+                    addressName: "Jai Dee Hotel"
+                    subDistrict: "Mueang"
                     district: "Chiang Mai"
                     province: "Chiang Mai"
-                    postal_code: "50200"
+                    postalCode: "50200"
       responses:
         '201':
           description: User registered successfully
@@ -166,7 +166,7 @@ paths:
       tags:
       - order 
       summary: Place an order
-      description: Endpoint to place an order at a restaurant.
+      description: xxxxxxxxxx
       operationId: placeOrder
       requestBody:
         required: true
@@ -177,31 +177,46 @@ paths:
               properties:
                 username:
                   type: string
-                restaurant_name:
+                restaurantId:
                   type: string
                 menus:
                   type: array
                   items:
                     type: object
                     properties:
-                      food_name:
+                      foodName:
                         type: string
                       price:
-                        type: number
-                delivery_fee:
-                  type: number
-                coupon_code:
+                        type: integer
+                couponCode:
                   type: string
-                coupon_discount:
-                  type: number
+                couponDiscount:
+                  type: integer
+                deliveryFee:
+                  type: integer
                 total:
-                  type: number
-                address:
+                  type: integer
+                userAddress:
                   type: object
                   properties:
-                    address_name:
+                    addressName:
                       type: string
-                    sub_district:
+                    subDistrict:
+                      type: string
+                    district:
+                      type: string
+                    province:
+                      type: string
+                    postalCode:
+                      type: string
+                    country:
+                      type: string
+                restaurantAddress:
+                  type: object
+                  properties:
+                    addressName:
+                      type: string
+                    subDistrict:
                       type: string
                     district:
                       type: string
@@ -214,36 +229,49 @@ paths:
                 contact:
                   type: object
                   properties:
-                    phone_number:
+                    phoneNumber:
                       type: string
-                payment_method:
+                    email:
+                      type: string
+                      format: email
+                paymentMethods:
                   type: integer
-                  description: "0 = Cash, 1 = Credit Card"
+                  description: "1 = Cash, 2 = Credit Card"
             examples:
-              asdasd:
+              User Place Order:
                 value:
                   username: "yuki002"
-                  restaurant_name: "HaiDee"
+                  restaurantId: "19201230123"
                   menus:
-                    - food_name: "Pad Thai"
+                    - foodName: "Pad Thai"
                       price: 50
-                  delivery_fee: 50
-                  coupon_code: "129dh012"
-                  coupon_discount: 20
-                  total: 150
-                  address:
-                    address_name: "Home"
-                    sub_district: "Nong Hoi"
-                    district: "Mueang Chiang Mai"
+                    - foodName: "Kra pao"
+                      price: 60
+                  couponCode: "SAVE40FORYOU"
+                  couponDiscount: 40
+                  deliveryFee: 50
+                  total: 120
+                  userAddress:
+                    addressName: "Home"
+                    subDistrict: "Nong Hoi"
+                    district: "Mueang"
                     province: "Chiang Mai"
-                    postal_code: "50000"
+                    postalCode: "50000"
                     country: "Thailand"
-                  contact:
-                    phone_number: "+668 1234 5678"
-                  payment_method: 0
+                  restaurantAddress:
+                    addressName: "HaiDeeLhao"
+                    subDistrict: "Blabla"
+                    district: "Hang Dong"
+                    province: "Chiang Mai"
+                    postalCode: "50000"
+                    country: "Thailand"
+                  userContact:
+                    phoneNumber: "0982736541"
+                    email: "test@mail.com"
+                  paymentMethods: 1
       responses:
         '200':
-          description: Successfully placed an order
+          description: Successfully placed an order wait for user
         '400':
           description: Invalid request
       security:
@@ -284,15 +312,15 @@ paths:
             schema:
               type: object
               properties:
-                rider_id:
+                riderId:
                   type: string
-                order_id:
+                orderId:
                   type: string
             examples:
               ex:
                 value: 
-                  rider_id: "rider002"
-                  order_id: "66af00af1687c32893d15693"
+                  riderId: "rider002"
+                  orderId: "66af00af1687c32893d15693"
       responses:
         '200':
           description: Order accepted successfully
@@ -302,17 +330,17 @@ paths:
         - bearerAuth: [] 
 
 #---------------Restaurant Service-----------------
-  /api/restaurants/{restaurant_name}:
+  /api/restaurants/{restaurant_id}:
     get:
       tags:
         - restaurant
       summary: List menus of a restaurant
       description: Returns the menus of a specific restaurant.
       parameters:
-        - name: restaurant_name
+        - name: restaurantId
           in: path
           required: true
-          description: The name of the restaurant.
+          description: The id of the restaurant.
           schema:
             type: string
       responses:
@@ -346,24 +374,43 @@ paths:
             schema:
               type: object
               properties:
-                restaurant_name:
+                restaurantName:
                   type: string
                 menus:
                   type: array
                   items:
                     type: object
                     properties:
-                      food_name:
+                      foodName:
                         type: string
                       price:
                         type: number
+                address:
+                  type: object
+                  properties:
+                    addressName:
+                      type: string
+                    subDistrict:
+                      type: string
+                    district:
+                      type: string
+                    province:
+                      type: string
+                    postalCode:
+                      type: string
             examples:
               ex1:
                  value:
-                  restaurant_name: "HaiDee"
+                  restaurantName: "HaiDee"
                   menus:
-                  - food_name: "Pad Thai"
+                  - foodName: "Pad Thai"
                     price: 50
+                  address:
+                    addressName: "my restaurant"
+                    subDistrict: "Mueang"
+                    district: "asdasd"
+                    province: "Chiang Mai"
+                    postalCode: "50200"
       responses:
         '201':
           description: Restaurant registered successfully
@@ -385,23 +432,23 @@ paths:
             schema:
               type: object
               properties:
-                restaurant_name:
+                restaurantId:
                   type: string
                 menus:
                   type: array
                   items:
                     type: object
                     properties:
-                      food_name:
+                      foodName:
                         type: string
                       price:
                         type: number
-              restaurant_name: "HaiDee"
+              restaurantId: "dj12d91h922"
               menus:
-                - food_name: "Pad Thai"
+                - foodName: "Pad Thai"
                   price: 50
               required:
-                - restaurant_name
+                - restaurantName
                 - menus
       responses:
         '201':
@@ -435,27 +482,27 @@ paths:
             schema:
               type: object
               properties:
-                coupon_type:
+                couponTypes:
                   type: integer
                   description: 0=UNSPECIFIED, 1=DISCOUNT, 2=FREE_DELIVERY
                 discount:
                   type: integer
-                expire_in_hour:
+                expireInHour:
                   type: integer
                 quantity:
                   type: integer
             examples:
               discount_request:
                 value:
-                  coupon_type: 1
+                  couponTypes: 1
                   discount: 20
-                  expire_in_hour: 72
+                  expireInHour: 72
                   quantity: 5
-              free_delivery_request:
+              freeDeliveryRequest:
                 value:
-                  coupon_type: 2
+                  couponTypes: 2
                   discount: 0
-                  expire_in_hour: 48
+                  expireInHour: 48
                   quantity: 3
       responses:
         '200':
