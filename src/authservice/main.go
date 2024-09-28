@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"time"
@@ -22,7 +23,7 @@ import (
 func main() {
 
 	if err := internal.InitSigningKey(); err != nil {
-		log.Printf("Failed to initialize jwt signingkey: %v", err)
+		slog.Error("initilize jwt signing key", "err", err)
 	}
 
 	db, err := initPostgres()
@@ -75,11 +76,11 @@ func initPostgres() (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", uri)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database connection: %v", err)
+		return nil, err
 	}
 
 	if err = db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %v", err)
+		return nil, err
 	}
 
 	return db, nil
@@ -116,7 +117,7 @@ func startGRPCServer(s *internal.AuthService) {
 	uri := fmt.Sprintf(":%s", os.Getenv("AUTH_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
-		log.Fatal("failed to listen:", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	// Create and start the gRPC server
@@ -126,7 +127,7 @@ func startGRPCServer(s *internal.AuthService) {
 	log.Printf("auth service is running on port %s\n", os.Getenv("AUTH_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatal("failed to serve:", err)
+		log.Fatalf("failed to serve: %v", err)
 	}
 
 }

@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/mail"
 	"os"
 	"regexp"
@@ -90,7 +90,7 @@ func InitAdminUser(db *sql.DB) error {
 		)
 	`, admin, email).Scan(&exists)
 	if err != nil {
-		return fmt.Errorf("failed to check if admin user exists: %v", err)
+		return err
 	}
 
 	if exists {
@@ -99,8 +99,7 @@ func InitAdminUser(db *sql.DB) error {
 
 	hashedPass, err := hashPassword(password)
 	if err != nil {
-		log.Println(err)
-		return errPasswordHashing
+		return err
 	}
 
 	_, err = db.Exec(`
@@ -117,10 +116,11 @@ func InitAdminUser(db *sql.DB) error {
 		hashedPass,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to insert admin user: %v", err)
+		return err
 	}
 
-	log.Println("Admin user successfully initialized.")
+	slog.Info("admin successfully innitialized")
+
 	return nil
 }
 
@@ -133,29 +133,27 @@ func InitAdminUser(db *sql.DB) error {
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
 	if err := validateUsernameAndPassword(in.Username, in.Password); err != nil {
-		log.Printf("Username or Password Validation error: %v", err)
-		return nil, status.Error(codes.InvalidArgument, "invalid username or password")
+		slog.Error("validate user", "err", err)
+		return nil, status.Error(codes.InvalidArgument, "username or password invalid")
 	}
 
 	if err := validatePhoneNumber(in.PhoneNumber); err != nil {
-		log.Printf("Phone Number invalid: %v", err)
-		return nil, status.Error(codes.InvalidArgument, "validate phone number failed")
+		return nil, status.Errorf(codes.InvalidArgument, "phone number invalid: %v", err)
 	}
 
 	if err := validateEmail(in.Email); err != nil {
-		log.Printf("Email format invalid: %v", err)
-		return nil, status.Error(codes.InvalidArgument, "validate email failed")
+		return nil, status.Errorf(codes.InvalidArgument, "email invalid: %v", err)
 	}
 
 	hashedPass, err := hashPassword(in.Password)
 	if err != nil {
-		log.Printf("Hasing failed: %v", err)
+		slog.Error("password hasing", "err", err)
 		return nil, errPasswordHashing
 	}
 
 	tx, err := x.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Printf("Failed to begin transaction: %v", err)
+		slog.Error("begin transaction", "err", err)
 		return nil, status.Error(codes.Internal, "failed to begin transaction")
 	}
 	defer tx.Rollback()
@@ -178,9 +176,10 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		var pqError *pq.Error
 		// 23505 = Unique constraint violation postgres
 		if errors.As(err, &pqError) && pqError.Code == "23505" {
-			return nil, status.Error(codes.AlreadyExists, "username or email duplicated ")
+			slog.Error("insert user credentials", "err", err)
+			return nil, status.Error(codes.AlreadyExists, "username or email duplicated")
 		}
-		log.Printf("Failed to insert user into database: %v", err)
+		slog.Error("insert user credentials", "err", err)
 		return nil, status.Error(codes.Internal, "failed to insert user into database")
 	}
 
@@ -192,12 +191,12 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 	_, err = x.userClient.CreateUserProfile(ctx, req)
 	if err != nil {
-		log.Printf("Failed to create user profile in UserService: %v", err)
+		slog.Error("create user profile in user service", "err", err)
 		return nil, status.Error(codes.Internal, "failed to create user profile in UserService")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("Failed to commit transaction: %v", err)
+		slog.Error("commit transaction new user credentials", "err", err)
 		return nil, status.Error(codes.Internal, "failed to commit transaction")
 	}
 
@@ -214,7 +213,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	}
 	username, password, err := extractAuth(md["authorization"])
 	if err != nil {
-		log.Println("Invalid authorization: %v", err)
+		slog.Error("authorization", "err", err)
 		return nil, status.Error(codes.Unauthenticated, "invalid authorization")
 	}
 
@@ -239,17 +238,18 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errUserNotFound
 		}
-		log.Printf("Failed to scan: %v", err)
-		return nil, status.Error(codes.Internal, "scan failed")
+		slog.Error("scan user credentials", "err", err)
+		return nil, status.Error(codes.Internal, "scan user credentials failed")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		slog.Error("verify password", "err", err)
 		return nil, errUserIncorrect
 	}
 
 	token, exp, err := createNewToken(user.Role)
 	if err != nil {
-		log.Println("Failed to generate token: %v", err)
+		slog.Error("generate new token", "err", err)
 		return nil, errGenerateToken
 	}
 
@@ -266,8 +266,8 @@ func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenReque
 		return nil, errNoToken
 	}
 
-	if valid, err := validateToken(in.Token); !valid {
-		log.Println(err)
+	if valid, err := validateUserToken(in.Token); !valid {
+		slog.Error("validate token", "err", err)
 		return nil, errInvalidToken
 	}
 	return &pb.IsValidTokenResponse{IsValid: true}, nil
@@ -280,7 +280,7 @@ func (x *AuthService) IsValidAdminToken(ctx context.Context, in *pb.IsValidAdmin
 	}
 
 	if valid, err := validateAdminToken(in.Token); !valid {
-		log.Println("Token validation failed: %v", err)
+		slog.Error("validate admin token", "err", err)
 		return nil, errInvalidToken
 	}
 	return &pb.IsValidAdminTokenResponse{IsValid: true}, nil
@@ -304,10 +304,11 @@ func (x *AuthService) IsUserExists(ctx context.Context, in *pb.IsUserExistsReque
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errUserNotFound
 		}
+		slog.Error("check user credentials exists", "err", err)
+		return nil, status.Error(codes.Internal, "failed to check existence user credentials")
 	}
 
-	// TODO response
-	return nil, status.Error(codes.Unimplemented, "method IsUserExists not implemented")
+	return &pb.IsUserExistsResponse{IsExists: true}, nil
 }
 
 func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UpdateUserRoleResponse, error) {
@@ -329,7 +330,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		in.Username,
 	)
 	if err != nil {
-		log.Println(err)
+		slog.Error("update role", "err", err)
 		return nil, status.Error(codes.Internal, "failed to update role")
 	}
 
@@ -358,10 +359,10 @@ func extractAuth(authorization []string) (username, password string, err error) 
 // TODO modify createNewToken to handle both User and Admin
 // by Fetch User role first and assign to claim
 // modify doc to create new token based on role
-func createNewToken(role pb.Roles) (string, int64, error) {
+func createNewToken(role pb.Roles) (signedToken string, expiration int64, err error) {
 
 	day := 24 * time.Hour
-	expiration := time.Now().Add(7 * day).Unix()
+	exp := time.Now().Add(7 * day).Unix()
 
 	claims := &AuthClaims{
 		Role: role,
@@ -369,7 +370,7 @@ func createNewToken(role pb.Roles) (string, int64, error) {
 			Subject:   "authentication",
 			Issuer:    "auth service",
 			IssuedAt:  jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0)),
-			ExpiresAt: jwt.NewNumericDate(time.Unix(expiration, 0)),
+			ExpiresAt: jwt.NewNumericDate(time.Unix(exp, 0)),
 		},
 	}
 
@@ -380,14 +381,12 @@ func createNewToken(role pb.Roles) (string, int64, error) {
 		return "", 0, err
 	}
 
-	return ss, expiration, nil
+	return ss, exp, nil
 }
 
-// TODO might be check "USER" role
-//
-// validateToken verifies the validity of a JWT token using the provided signing key.
+// validateUserToken verifies the validity of a JWT token using the provided signing key.
 // It returns true if the token is valid, false otherwise, along with any error encountered.
-func validateToken(tokenString string) (bool, error) {
+func validateUserToken(tokenString string) (bool, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -399,7 +398,7 @@ func validateToken(tokenString string) (bool, error) {
 	}
 
 	if !token.Valid {
-		return false, errors.New("invalid token")
+		return false, errors.New("invalid user token")
 	}
 
 	return true, nil
@@ -417,7 +416,7 @@ func validateAdminToken(tokenString string) (bool, error) {
 	}
 
 	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
-		return false, errors.New("invalid role")
+		return false, errors.New("token claims do not have admin role")
 	}
 
 	return true, nil
