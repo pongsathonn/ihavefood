@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	errNoRestaurantName = status.Errorf(codes.InvalidArgument, "restaurant name must be provided")
 	errNoRestaurantId   = status.Errorf(codes.InvalidArgument, "restaurant id must be provided")
+	errNoRestaurantName = status.Errorf(codes.InvalidArgument, "restaurant name must be provided")
 	errNoMenus          = status.Errorf(codes.InvalidArgument, "menu must be at least one")
 	errNoFoodName       = status.Errorf(codes.InvalidArgument, "food name must be provided")
 	errUnknownTypeMenu  = status.Errorf(codes.InvalidArgument, "menu status cannot be UNKNOWN")
@@ -39,7 +39,7 @@ func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaur
 
 	restaurant, err := x.repository.Restaurant(ctx, in.RestaurantId)
 	if err != nil {
-		log.Printf("Failed to retrive restaurant: %v", err)
+		slog.Error("retrive restaurant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurant")
 	}
 
@@ -50,7 +50,7 @@ func (x *RestaurantService) ListRestaurant(ctx context.Context, empty *pb.Empty)
 
 	restaurants, err := x.repository.Restaurants(ctx)
 	if err != nil {
-		log.Printf("Failed to retrive restaurants: %v", err)
+		slog.Error("retrive restaurants", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurants")
 	}
 
@@ -71,7 +71,7 @@ func (x *RestaurantService) RegisterRestaurant(ctx context.Context, in *pb.Regis
 
 	id, err := x.repository.SaveRestaurant(ctx, in.RestaurantName, in.Menus, in.Address)
 	if err != nil {
-		log.Printf("Save restaurant failed: %v", err)
+		slog.Error("save restaurant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save restaurant")
 	}
 
@@ -80,17 +80,17 @@ func (x *RestaurantService) RegisterRestaurant(ctx context.Context, in *pb.Regis
 
 func (x *RestaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.AddMenuResponse, error) {
 
-	if in.RestaurantName == "" {
-		return nil, errNoRestaurantName
+	if in.RestaurantId == "" {
+		return nil, errNoRestaurantId
 	}
 
 	if len(in.Menus) == 0 {
 		return nil, errNoMenus
 	}
 
-	if err := x.repository.UpdateMenu(ctx, in.RestaurantName, in.Menus); err != nil {
-		log.Printf("Update menu failed: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to add menu")
+	if err := x.repository.UpdateMenu(ctx, in.RestaurantId, in.Menus); err != nil {
+		slog.Error("update menu", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to update menu in database")
 	}
 
 	return &pb.AddMenuResponse{Success: true}, nil

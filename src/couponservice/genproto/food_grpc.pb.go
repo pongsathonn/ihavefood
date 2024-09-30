@@ -19,20 +19,23 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UserService_CreateUserProfile_FullMethodName        = "/foodDeliveryApp.UserService/CreateUserProfile"
-	UserService_GetUserProfileByUsername_FullMethodName = "/foodDeliveryApp.UserService/GetUserProfileByUsername"
-	UserService_ListUserProfile_FullMethodName          = "/foodDeliveryApp.UserService/ListUserProfile"
-	UserService_DeleteUserProfile_FullMethodName        = "/foodDeliveryApp.UserService/DeleteUserProfile"
+	UserService_CreateUserProfile_FullMethodName = "/foodDeliveryApp.UserService/CreateUserProfile"
+	UserService_GetUserProfile_FullMethodName    = "/foodDeliveryApp.UserService/GetUserProfile"
+	UserService_ListUserProfile_FullMethodName   = "/foodDeliveryApp.UserService/ListUserProfile"
+	UserService_DeleteUserProfile_FullMethodName = "/foodDeliveryApp.UserService/DeleteUserProfile"
 )
 
 // UserServiceClient is the client API for UserService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
+	// Subscribe to AuthService for a new user registration and creates a profile
 	CreateUserProfile(ctx context.Context, in *CreateUserProfileRequest, opts ...grpc.CallOption) (*CreateUserProfileResponse, error)
-	// GetUserProfileByUsername for specific username
-	GetUserProfileByUsername(ctx context.Context, in *GetUserProfileByUsernameRequest, opts ...grpc.CallOption) (*GetUserProfileByUsernameResponse, error)
+	// Retrieves a user profile by their username
+	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*GetUserProfileResponse, error)
+	// List all user profiles
 	ListUserProfile(ctx context.Context, in *ListUserProfileRequest, opts ...grpc.CallOption) (*ListUserProfileResponse, error)
+	// Deletes a user profile by their username
 	DeleteUserProfile(ctx context.Context, in *DeleteUserProfileRequest, opts ...grpc.CallOption) (*DeleteUserProfileResponse, error)
 }
 
@@ -53,9 +56,9 @@ func (c *userServiceClient) CreateUserProfile(ctx context.Context, in *CreateUse
 	return out, nil
 }
 
-func (c *userServiceClient) GetUserProfileByUsername(ctx context.Context, in *GetUserProfileByUsernameRequest, opts ...grpc.CallOption) (*GetUserProfileByUsernameResponse, error) {
-	out := new(GetUserProfileByUsernameResponse)
-	err := c.cc.Invoke(ctx, UserService_GetUserProfileByUsername_FullMethodName, in, out, opts...)
+func (c *userServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*GetUserProfileResponse, error) {
+	out := new(GetUserProfileResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +87,13 @@ func (c *userServiceClient) DeleteUserProfile(ctx context.Context, in *DeleteUse
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
+	// Subscribe to AuthService for a new user registration and creates a profile
 	CreateUserProfile(context.Context, *CreateUserProfileRequest) (*CreateUserProfileResponse, error)
-	// GetUserProfileByUsername for specific username
-	GetUserProfileByUsername(context.Context, *GetUserProfileByUsernameRequest) (*GetUserProfileByUsernameResponse, error)
+	// Retrieves a user profile by their username
+	GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error)
+	// List all user profiles
 	ListUserProfile(context.Context, *ListUserProfileRequest) (*ListUserProfileResponse, error)
+	// Deletes a user profile by their username
 	DeleteUserProfile(context.Context, *DeleteUserProfileRequest) (*DeleteUserProfileResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
@@ -99,8 +105,8 @@ type UnimplementedUserServiceServer struct {
 func (UnimplementedUserServiceServer) CreateUserProfile(context.Context, *CreateUserProfileRequest) (*CreateUserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUserProfile not implemented")
 }
-func (UnimplementedUserServiceServer) GetUserProfileByUsername(context.Context, *GetUserProfileByUsernameRequest) (*GetUserProfileByUsernameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfileByUsername not implemented")
+func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfile not implemented")
 }
 func (UnimplementedUserServiceServer) ListUserProfile(context.Context, *ListUserProfileRequest) (*ListUserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUserProfile not implemented")
@@ -139,20 +145,20 @@ func _UserService_CreateUserProfile_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_GetUserProfileByUsername_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserProfileByUsernameRequest)
+func _UserService_GetUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserProfileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).GetUserProfileByUsername(ctx, in)
+		return srv.(UserServiceServer).GetUserProfile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserService_GetUserProfileByUsername_FullMethodName,
+		FullMethod: UserService_GetUserProfile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUserProfileByUsername(ctx, req.(*GetUserProfileByUsernameRequest))
+		return srv.(UserServiceServer).GetUserProfile(ctx, req.(*GetUserProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -205,8 +211,8 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_CreateUserProfile_Handler,
 		},
 		{
-			MethodName: "GetUserProfileByUsername",
-			Handler:    _UserService_GetUserProfileByUsername_Handler,
+			MethodName: "GetUserProfile",
+			Handler:    _UserService_GetUserProfile_Handler,
 		},
 		{
 			MethodName: "ListUserProfile",
@@ -236,9 +242,14 @@ const (
 type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	// IsValidToken check jwt token for role "USER"
 	IsValidToken(ctx context.Context, in *IsValidTokenRequest, opts ...grpc.CallOption) (*IsValidTokenResponse, error)
+	// IsValidAdminToken check jwt token for role "ADMIN"
 	IsValidAdminToken(ctx context.Context, in *IsValidAdminTokenRequest, opts ...grpc.CallOption) (*IsValidAdminTokenResponse, error)
+	// IsUserExists check user exists by username
 	IsUserExists(ctx context.Context, in *IsUserExistsRequest, opts ...grpc.CallOption) (*IsUserExistsResponse, error)
+	// UpdateUserRole promotes a user's role from "USER" to "ADMIN".
+	// This function can only be performed by users with the "ADMIN" role.
 	UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UpdateUserRoleResponse, error)
 }
 
@@ -310,9 +321,14 @@ func (c *authServiceClient) UpdateUserRole(ctx context.Context, in *UpdateUserRo
 type AuthServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	// IsValidToken check jwt token for role "USER"
 	IsValidToken(context.Context, *IsValidTokenRequest) (*IsValidTokenResponse, error)
+	// IsValidAdminToken check jwt token for role "ADMIN"
 	IsValidAdminToken(context.Context, *IsValidAdminTokenRequest) (*IsValidAdminTokenResponse, error)
+	// IsUserExists check user exists by username
 	IsUserExists(context.Context, *IsUserExistsRequest) (*IsUserExistsResponse, error)
+	// UpdateUserRole promotes a user's role from "USER" to "ADMIN".
+	// This function can only be performed by users with the "ADMIN" role.
 	UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UpdateUserRoleResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -505,7 +521,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrderServiceClient interface {
+	// HandlePlaceOrder handle incoming order from client
 	HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*HandlePlaceOrderResponse, error)
+	// ListUserPlaceOrder retrives User's place order history by username
 	ListUserPlaceOrder(ctx context.Context, in *ListUserPlaceOrderRequest, opts ...grpc.CallOption) (*ListUserPlaceOrderResponse, error)
 }
 
@@ -539,7 +557,9 @@ func (c *orderServiceClient) ListUserPlaceOrder(ctx context.Context, in *ListUse
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility
 type OrderServiceServer interface {
+	// HandlePlaceOrder handle incoming order from client
 	HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*HandlePlaceOrderResponse, error)
+	// ListUserPlaceOrder retrives User's place order history by username
 	ListUserPlaceOrder(context.Context, *ListUserPlaceOrderRequest) (*ListUserPlaceOrderResponse, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
@@ -634,12 +654,14 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DeliveryServiceClient interface {
-	// tracking rider's location ( update every 10s )
-	// OrderService should only call this
+	// TrackOrder provides real-time updates on the current status and location of
+	// an order. It tracks the progress of the order from preparation to delivery,
+	// giving the user real-time status updates.
 	TrackOrder(ctx context.Context, in *TrackOrderRequest, opts ...grpc.CallOption) (*TrackOrderResponse, error)
-	// for Rider accept Order
+	// AcceptOrder handles requests indicating that a rider has accepted an order.
 	AcceptOrder(ctx context.Context, in *AcceptOrderRequest, opts ...grpc.CallOption) (*AcceptOrderResponse, error)
-	// TODO doc
+	// GetDeliveryFee calculates and returns the delivery fee based on the distance
+	// between the user's location and the restaurant's location.
 	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
 	// ConfirmCashPayment updates the payment status for cash transactions
 	// when the rider has received cash from the user.
@@ -694,12 +716,14 @@ func (c *deliveryServiceClient) ConfirmCashPayment(ctx context.Context, in *Conf
 // All implementations must embed UnimplementedDeliveryServiceServer
 // for forward compatibility
 type DeliveryServiceServer interface {
-	// tracking rider's location ( update every 10s )
-	// OrderService should only call this
+	// TrackOrder provides real-time updates on the current status and location of
+	// an order. It tracks the progress of the order from preparation to delivery,
+	// giving the user real-time status updates.
 	TrackOrder(context.Context, *TrackOrderRequest) (*TrackOrderResponse, error)
-	// for Rider accept Order
+	// AcceptOrder handles requests indicating that a rider has accepted an order.
 	AcceptOrder(context.Context, *AcceptOrderRequest) (*AcceptOrderResponse, error)
-	// TODO doc
+	// GetDeliveryFee calculates and returns the delivery fee based on the distance
+	// between the user's location and the restaurant's location.
 	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
 	// ConfirmCashPayment updates the payment status for cash transactions
 	// when the rider has received cash from the user.
@@ -847,9 +871,14 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RestaurantServiceClient interface {
+	// GetRestaurant retrieves the details of a specific restaurant
+	// using the restaurant ID.
 	GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
+	// ListRestaurant returns a list of all restaurants.
 	ListRestaurant(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListRestaurantResponse, error)
+	// RegisterRestaurant registers a new restaurant.
 	RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*RegisterRestaurantResponse, error)
+	// AddMenu adds menus to restaurant.
 	AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*AddMenuResponse, error)
 }
 
@@ -901,9 +930,14 @@ func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuReques
 // All implementations must embed UnimplementedRestaurantServiceServer
 // for forward compatibility
 type RestaurantServiceServer interface {
+	// GetRestaurant retrieves the details of a specific restaurant
+	// using the restaurant ID.
 	GetRestaurant(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error)
+	// ListRestaurant returns a list of all restaurants.
 	ListRestaurant(context.Context, *Empty) (*ListRestaurantResponse, error)
+	// RegisterRestaurant registers a new restaurant.
 	RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*RegisterRestaurantResponse, error)
+	// AddMenu adds menus to restaurant.
 	AddMenu(context.Context, *AddMenuRequest) (*AddMenuResponse, error)
 	mustEmbedUnimplementedRestaurantServiceServer()
 }
@@ -1062,13 +1096,8 @@ type CouponServiceClient interface {
 	// TODO: In the future, this method might be updated to list coupons by other condition,
 	// but currently, it responds with all coupons.
 	ListCoupon(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListCouponResponse, error)
-	// TODO remove http request because this fn should be invoked
-	// when place order success. thant's mean if AppliedCoupon failed
-	// placeOrder should be rollback too
-	//
-	// AppliedCoupon is called when an order is successfully placed, which may occur
-	// after payment success or food delivery. This method updates the status of the
-	// coupon in the database to mark it as used.
+	// AppliedCoupon is called when an order payment is success. This method
+	// updates the status of the coupon in the database to mark it as used.
 	AppliedCoupon(ctx context.Context, in *AppliedCouponRequest, opts ...grpc.CallOption) (*AppliedCouponResponse, error)
 }
 
@@ -1134,13 +1163,8 @@ type CouponServiceServer interface {
 	// TODO: In the future, this method might be updated to list coupons by other condition,
 	// but currently, it responds with all coupons.
 	ListCoupon(context.Context, *Empty) (*ListCouponResponse, error)
-	// TODO remove http request because this fn should be invoked
-	// when place order success. thant's mean if AppliedCoupon failed
-	// placeOrder should be rollback too
-	//
-	// AppliedCoupon is called when an order is successfully placed, which may occur
-	// after payment success or food delivery. This method updates the status of the
-	// coupon in the database to mark it as used.
+	// AppliedCoupon is called when an order payment is success. This method
+	// updates the status of the coupon in the database to mark it as used.
 	AppliedCoupon(context.Context, *AppliedCouponRequest) (*AppliedCouponResponse, error)
 	mustEmbedUnimplementedCouponServiceServer()
 }

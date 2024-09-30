@@ -92,7 +92,6 @@ func (r *orderRepository) SavePlaceOrder(ctx context.Context, in *pb.HandlePlace
 
 }
 
-// TODO check doc grammar
 // isDuplicateOrder prevents placing a duplicate order with same restaurant
 // An order is considered a duplicate if:
 // - The payment status is "unpaid".
@@ -105,7 +104,7 @@ func (r *orderRepository) SavePlaceOrder(ctx context.Context, in *pb.HandlePlace
 // - `errDuplicatedOrder` if a duplicate order is found.
 // - Any other error from the query or decoding process.
 //
-// If User need to change or add order information then shouuld call that function
+// If User need to change or add order information then should call other function
 // such as AddMenus, ChangeMenus, ChangeCoupon etc.
 func (r *orderRepository) isDuplicateOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) error {
 

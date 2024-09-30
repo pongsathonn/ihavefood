@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -23,7 +22,7 @@ func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
 func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, body []byte) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
-		return fmt.Errorf("failed to open a channel: %v", err)
+		return err
 	}
 	defer ch.Close()
 
@@ -37,7 +36,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, bod
 		nil,      // arguments
 	)
 	if err != nil {
-		return fmt.Errorf("failed to declare exchange: %v", err)
+		return err
 	}
 
 	err = ch.PublishWithContext(
@@ -52,7 +51,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, bod
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to publish: %v", err)
+		return err
 	}
 
 	return nil
@@ -61,7 +60,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, bod
 func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error) {
 	ch, err := r.conn.Channel()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open the channel: %v", err)
+		return nil, err
 	}
 
 	err = ch.ExchangeDeclare(
@@ -74,7 +73,7 @@ func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingKey st
 		nil,      // arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to declare an exchange: %v", err)
+		return nil, err
 	}
 
 	q, err := ch.QueueDeclare(
@@ -86,7 +85,7 @@ func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingKey st
 		nil,   // arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to declare a queue: %v", err)
+		return nil, err
 	}
 
 	err = ch.QueueBind(
@@ -97,7 +96,7 @@ func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingKey st
 		nil,        // arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to bind a queue: %v", err)
+		return nil, err
 	}
 
 	deliveries, err := ch.ConsumeWithContext(
@@ -111,7 +110,7 @@ func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingKey st
 		nil,            // arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to register a consumer: %v", err)
+		return nil, err
 	}
 
 	return deliveries, nil

@@ -62,7 +62,6 @@ func initMongoClient() *mongo.Client {
 		if !errors.As(err, &alreayExistsColl) {
 			log.Fatal(err)
 		}
-		// ensure that orderCollection always exists
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

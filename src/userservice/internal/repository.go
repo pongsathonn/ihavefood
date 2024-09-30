@@ -4,24 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"strconv"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type UserRepository interface {
-	SaveUserProfile(ctx context.Context, username, phoneNumber string, address *address) (string, error)
+	SaveUserProfile(ctx context.Context, username, phoneNumber string, address *address) (userId string, err error)
 	UserProfiles(ctx context.Context) ([]*userProfile, error)
-	UserProfile(ctx context.Context, username string) (*userProfile, error)
-	DeleteUserProfile(ctx context.Context, username string) error
+	UserProfile(ctx context.Context, userId string) (*userProfile, error)
+	DeleteUserProfile(ctx context.Context, userId string) error
 }
 
-// TODO improve doc
-// userProfile use for scan user from database
-// it has sql.Null string for empty field in postgres
-// proto.UserProfile does not have this
 type userProfile struct {
 	userId      string
 	username    string
@@ -45,15 +37,13 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNumber string, address *address) (string, error) {
+func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNumber string, address *address) (userId string, err error) {
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Printf("Failed to begin transaction: %v", err)
-		return "", status.Errorf(codes.Internal, "Failed to create user")
+		return "", err
 	}
 
-	// Insert the address first
 	var addressID int
 	addrRow := tx.QueryRowContext(ctx, `
 		INSERT INTO address (
@@ -74,11 +64,9 @@ func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNum
 	)
 	if err := addrRow.Scan(&addressID); err != nil {
 		tx.Rollback()
-		log.Printf("Failed to insert address: %v", err)
-		return "", status.Errorf(codes.Internal, "Failed to create user")
+		return "", err
 	}
 
-	// Insert the user with the address ID
 	var id int
 	userRow := tx.QueryRowContext(ctx, `
 		INSERT INTO user_profile(
@@ -96,14 +84,11 @@ func (r *userRepository) SaveUserProfile(ctx context.Context, username, phoneNum
 	)
 	if err := userRow.Scan(&id); err != nil {
 		tx.Rollback()
-		log.Printf("Failed to insert user: %v", err)
-		return "", status.Errorf(codes.Internal, "Failed to create user")
+		return "", err
 	}
 
-	// Commit the transaction
 	if err = tx.Commit(); err != nil {
-		log.Printf("Failed to commit transaction: %v", err)
-		return "", status.Errorf(codes.Internal, "Failed to create user")
+		return "", err
 	}
 
 	userID := strconv.Itoa(id)
@@ -133,9 +118,9 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*userProfile, erro
 	`)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "user not found")
+			return nil, errors.New("user not found")
 		}
-		return nil, status.Errorf(codes.NotFound, "failed to retrive users from db")
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -153,8 +138,7 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*userProfile, erro
 			&user.address.postalCode,
 		)
 		if err != nil {
-			log.Printf("failed to scan: %v", err)
-			return nil, status.Errorf(codes.Internal, "failed to retrive users")
+			return nil, err
 		}
 
 		users = append(users, user)
@@ -162,11 +146,7 @@ func (r *userRepository) UserProfiles(ctx context.Context) ([]*userProfile, erro
 	return users, nil
 }
 
-func (r *userRepository) UserProfile(ctx context.Context, username string) (*userProfile, error) {
-
-	if username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
-	}
+func (r *userRepository) UserProfile(ctx context.Context, userId string) (*userProfile, error) {
 
 	row := r.db.QueryRowContext(ctx, `
 		SELECT
@@ -185,8 +165,8 @@ func (r *userRepository) UserProfile(ctx context.Context, username string) (*use
 		ON 
 			user_profile.address_id = address.id
 		WHERE 
-			user_profile.username = $1;
-	`, username)
+			user_profile.id = $1;
+	`, userId)
 
 	var user *userProfile
 	err := row.Scan(
@@ -201,15 +181,14 @@ func (r *userRepository) UserProfile(ctx context.Context, username string) (*use
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "user not found")
+			return nil, errors.New("user not found")
 		}
-		log.Printf("Scan failed :%v", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive users from db")
+		return nil, err
 	}
 	return user, nil
 }
 
-func (r *userRepository) DeleteUserProfile(ctx context.Context, username string) error {
+func (r *userRepository) DeleteUserProfile(ctx context.Context, userId string) error {
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -221,21 +200,21 @@ func (r *userRepository) DeleteUserProfile(ctx context.Context, username string)
 		DELETE FROM 
 			user_profile
 		WHERE 
-			username=$1
+			id=$1
 		RETURNNING 
 			user_profile.address_id
-	`, username)
+	`, userId)
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, `DELETE FROM address WHERE id=$1`, addressId)
-	if err != nil {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM address WHERE id=$1`, addressId); err != nil {
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
 		return err
 	}
+
 	return nil
 }

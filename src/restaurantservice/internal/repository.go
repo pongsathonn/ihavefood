@@ -11,14 +11,11 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 )
 
-// TODO improve error response
-// TODO use id for find restaurant instead
-
 type RestaurantRepository interface {
 	Restaurant(ctx context.Context, restaurantId string) (*pb.Restaurant, error)
 	Restaurants(ctx context.Context) ([]*pb.Restaurant, error)
 	SaveRestaurant(ctx context.Context, restaurantName string, menus []*pb.Menu, address *pb.Address) (string, error)
-	UpdateMenu(ctx context.Context, restaurantName string, menus []*pb.Menu) error
+	UpdateMenu(ctx context.Context, restaurantId string, menus []*pb.Menu) error
 }
 
 // RestaurantEntity represents a MongoDB document for restaurants.
@@ -43,7 +40,6 @@ func NewRestaurantRepository(client *mongo.Client) RestaurantRepository {
 func (r *restaurantRepository) Restaurant(ctx context.Context, restaurantId string) (*pb.Restaurant, error) {
 
 	var entity RestaurantEntity
-
 	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	if restaurantId == "" {
@@ -103,7 +99,6 @@ func (r *restaurantRepository) SaveRestaurant(ctx context.Context, restaurantNam
 	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	// ignore a restaurantId and let Mongo generate _id
-	// map with it
 	restaurant := RestaurantEntity{
 		//RestaurantId:   primitive.NewObjectID(),
 		RestaurantName: restaurantName,

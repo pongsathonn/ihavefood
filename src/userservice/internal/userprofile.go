@@ -3,15 +3,13 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"log"
+	"log/slog"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
-
-//TODO be careful about return error from database , it might contians sensitive information
 
 // UserService handle UserProfile
 type UserService struct {
@@ -31,32 +29,32 @@ func NewUserService(rabbitmq RabbitMQ, repo UserRepository) *UserService {
 func (x *UserService) CreateUserProfile(ctx context.Context, in *pb.CreateUserProfileRequest) (*pb.CreateUserProfileResponse, error) {
 
 	if in.Username == "" || in.PhoneNumber == "" || in.Address == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "username,  phone number or address must be provided")
+		return nil, status.Error(codes.InvalidArgument, "username, phone number or address must be provided")
 	}
 
 	address := &address{
-		addressName: sql.NullString{String: in.Address.AddressName, Valid: true},
-		subDistrict: sql.NullString{String: in.Address.SubDistrict, Valid: true},
-		district:    sql.NullString{String: in.Address.District, Valid: true},
-		province:    sql.NullString{String: in.Address.Province, Valid: true},
-		postalCode:  sql.NullString{String: in.Address.PostalCode, Valid: true},
+		addressName: sql.NullString{String: in.Address.AddressName},
+		subDistrict: sql.NullString{String: in.Address.SubDistrict},
+		district:    sql.NullString{String: in.Address.District},
+		province:    sql.NullString{String: in.Address.Province},
+		postalCode:  sql.NullString{String: in.Address.PostalCode},
 	}
 	userID, err := x.repository.SaveUserProfile(ctx, in.Username, in.PhoneNumber, address)
 	if err != nil {
-		log.Println("insert failed: %v", err)
+		slog.Error("save user profile", "err", err)
 		return nil, status.Errorf(codes.InvalidArgument, "failed to save user to database")
 	}
 
 	return &pb.CreateUserProfileResponse{UserId: userID}, nil
 }
 
-func (x *UserService) GetUserProfileByUsername(ctx context.Context, in *pb.GetUserProfileByUsernameRequest) (*pb.GetUserProfileByUsernameResponse, error) {
+func (x *UserService) GetUserProfile(ctx context.Context, in *pb.GetUserProfileRequest) (*pb.GetUserProfileResponse, error) {
 
-	if in.Username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
+	if in.UserId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "user id must be provided")
 	}
 
-	user, err := x.repository.UserProfile(ctx, in.Username)
+	user, err := x.repository.UserProfile(ctx, in.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +71,7 @@ func (x *UserService) GetUserProfileByUsername(ctx context.Context, in *pb.GetUs
 			PostalCode:  user.address.postalCode.String,
 		},
 	}
-	return &pb.GetUserProfileByUsernameResponse{UserProfile: userProfile}, nil
+	return &pb.GetUserProfileResponse{UserProfile: userProfile}, nil
 }
 
 func (x *UserService) ListUserProfile(ctx context.Context, in *pb.ListUserProfileRequest) (*pb.ListUserProfileResponse, error) {
@@ -105,13 +103,13 @@ func (x *UserService) ListUserProfile(ctx context.Context, in *pb.ListUserProfil
 
 func (x *UserService) DeleteUserProfile(ctx context.Context, in *pb.DeleteUserProfileRequest) (*pb.DeleteUserProfileResponse, error) {
 
-	if in.Username == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username must be provided")
+	if in.UserId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "user id must be provided")
 	}
 
-	err := x.repository.DeleteUserProfile(ctx, in.Username)
+	err := x.repository.DeleteUserProfile(ctx, in.UserId)
 	if err != nil {
-		log.Println(err)
+		slog.Error("delete user profile", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to delete user")
 	}
 

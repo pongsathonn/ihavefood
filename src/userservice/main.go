@@ -45,7 +45,7 @@ func initRabbitMQ() (*amqp.Connection, error) {
 
 	conn, err := amqp.Dial(uri)
 	if err != nil {
-		return nil, fmt.Errorf("failed to dial AMQP connection: %v", err)
+		return nil, err
 	}
 
 	return conn, nil
@@ -62,32 +62,29 @@ func initPostgres() (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", uri)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database connection: %v", err)
+		return nil, err
 	}
 
 	if err = db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %v", err)
+		return nil, err
 	}
 
 	return db, nil
 
 }
 
-// startGRPCServer sets up and starts the gRPC server
 func startGRPCServer(s *internal.UserService) {
 
 	if s == nil {
 		log.Fatal("userService instance is nil")
 	}
 
-	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", os.Getenv("USER_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
 	}
 
-	// Create and start the gRPC server
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserServiceServer(grpcServer, s)
 

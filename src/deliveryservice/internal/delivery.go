@@ -69,13 +69,13 @@ func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository) *DeliveryService {
 	}
 }
 
-// TODO grammar check
-// DeliveryAssignment handles incoming orders from  "order.placed.event" and saves place order
-// to the database, finding the nearest riders, and notifies them. It waits for rider acceptance
-// and responds with order pickup details if accepted.
+// DeliveryAssignment handles incoming orders from the "order.placed.event"
+// and saves the placed order to the database, finds the nearest riders, and
+// notifies them. It waits for rider acceptance and responds with order
+// pickup details if the order is accepted.
 //
-// when save order with SaveOrderDelivery the order status still be not accept. It will accept
-// after rider accepted order.Then  change order status at function AcceptOrder
+// When saving the order with SaveOrderDelivery, the order status remains
+// "unaccepted" until a rider accepts the order.
 func (x *DeliveryService) DeliveryAssignment() {
 
 	for {
@@ -133,7 +133,7 @@ func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderReque
 
 	//TODO implement
 
-	return nil, status.Errorf(codes.Unimplemented, "method TrackOrder not implemented")
+	return nil, status.Error(codes.Unimplemented, "method TrackOrder not implemented")
 }
 
 // AcceptOrder handles requests indicating that a rider has accepted an order.
@@ -141,13 +141,12 @@ func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderReque
 func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderRequest) (*pb.AcceptOrderResponse, error) {
 
 	if in.OrderId == "" || in.RiderId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "order ID and rider ID must be provided")
+		return nil, status.Error(codes.InvalidArgument, "order ID and rider ID must be provided")
 	}
 
 	order, err := x.repository.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
-		slog.Error("retrive order delivery", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive order delivery")
+		return nil, status.Errorf(codes.Internal, "failed to retrive order delivery %v", err)
 	}
 
 	if order.IsAccepted {
@@ -168,7 +167,7 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 	select {
 	case order, ok := <-x.orderPickupCh:
 		if !ok {
-			return nil, status.Errorf(codes.Internal, "channel closed unexpectedly")
+			return nil, status.Error(codes.Internal, "channel closed unexpectedly")
 		}
 
 		if order.Error != nil {
@@ -214,27 +213,33 @@ func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.Confirm
 		return nil, status.Error(codes.Internal, "order id or rider id must be provided")
 	}
 
-	order, err := x.repository.GetOrderDeliveryById(ctx, in.OrderId)
+	res, err := x.repository.GetOrderDeliveryById(ctx, in.OrderId)
 	if err != nil {
 		slog.Error("retrive order delivery", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrive order delivery")
 	}
 
-	if order.RiderId != in.RiderId {
+	if res.RiderId != in.RiderId {
 		return nil, status.Error(codes.InvalidArgument, "rider ID mismatch with the accepted rider")
 	}
 
-	// TODO publish body
-	// - order id , rider id , paymetn methods
 	const (
 		exchange   = "delivery_exchange"
 		routingKey = "order.paid.event"
 	)
 
+	body, err := json.Marshal(map[string]string{
+		"orderId": res.OrderId,
+		"riderId": res.RiderId,
+	})
+	if err != nil {
+		slog.Error("marshal failed", "err", err)
+	}
+
 	err = x.rabbitmq.Publish(ctx,
 		exchange,
 		routingKey,
-		[]byte(""),
+		[]byte(body),
 	)
 	if err != nil {
 		slog.Error("publish failed", "routingkey", routingKey, "err", err)
@@ -248,7 +253,7 @@ func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.Confirm
 func (x *DeliveryService) receiveOrder(routingKey string) (*pb.PlaceOrder, error) {
 
 	deliveries, err := x.rabbitmq.Subscribe(
-		context.TODO(),
+		nil,
 		"order_exchange", // exchange
 		"",               // queue
 		routingKey,       // routing key
@@ -292,11 +297,10 @@ func (x *DeliveryService) generateOrderPickUp(placeOrder *pb.PlaceOrder) (*pickU
 
 }
 
-// addressToPoint use for convert Address to Locations point . this function
-// not implement actual Geocoding ( Google APIs ) yet . just response with example
-// data
+// addressToPoint convert Address to Locations point. this function not implement
+// actual Geocoding ( Google APIs ) yet . just response with example data
 //
-// TODO implememnt Geocoding ( Google APIs ), improve docs
+// TODO implememnt Geocoding ( Google APIs )
 func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
 
 	point, ok := example[addr.District]
@@ -366,11 +370,11 @@ func (x *DeliveryService) waitForRiderAccept(ctx context.Context, riders []*pb.R
 			case x.orderPickupCh <- orderPickup:
 				return nil
 			case <-ctx.Done():
-				return errors.New("failed to response order pickup information")
+				return ctx.Err()
 			}
 
 		case <-ctx.Done():
-			return errors.New("failed to wait rider accept")
+			return ctx.Err()
 		}
 	}
 

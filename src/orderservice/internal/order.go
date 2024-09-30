@@ -45,18 +45,10 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 	return resp, nil
 }
 
-// HandlePlaceOrder handle imcomming place order from client and publish to other services
-// TODO explain function does
+// HandlePlaceOrder processes an incoming order placement request from the client.
 //
-// routing key explanation
-//
-//   - "order.validate.event" occurs when place order is comming from client
-//     DeliveryService will subscribe this and provided delivery fee for and response.
-//     CouponService will validate coupon and resonse discount.
-//     consumedDeliveryFeeAndDiscount will subscribe to these
-//
-//   - "order.placed.event" occurs after saved place order into database and get orderId,TrackingId
-//     publish to other service delivery find rider etc.
+// This function validates the place order request, saves the order details to the database,
+// and publishes an "order.placed.event" to other services for further processing.
 func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*pb.HandlePlaceOrderResponse, error) {
 
 	if err := validatePlaceOrderRequest(in); err != nil {
