@@ -12,7 +12,7 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 RUN apt update 
 
-RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /gatewayb
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /gateway
 
-CMD ["/gatewayb"]
+CMD ["/gateway"]
 

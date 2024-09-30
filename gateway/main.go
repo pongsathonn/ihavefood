@@ -13,25 +13,31 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	pb "github.com/pongsathonn/ihavefood/gateway/genproto"
 	"github.com/pongsathonn/ihavefood/gateway/middleware"
+
+	pb "github.com/pongsathonn/ihavefood/gateway/genproto"
 )
 
 func main() {
-	gwmux := newGatewaymux()
-	ctx := context.Background()
 
-	if err := registerServiceHandlers(ctx, gwmux); err != nil {
+	gwmux := newGatewaymux()
+
+	if err := registerServiceHandlers(context.TODO(), gwmux); err != nil {
 		log.Fatalf("failed to register service handler: %v", err)
 	}
+	auth, err := initAuthMiddleware()
+	if err != nil {
+		log.Fatalf("failed to initialize auth middleware: %v", err)
+	}
 
-	auth, service := initMiddleware()
-	mux := setupHTTPMux(auth, service, gwmux)
+	mux := setupHTTPMuxAndAuth(auth, gwmux)
 	handler := prettierJSON(cors(mux))
 
-	log.Println("gateway starting")
+	log.Println("+++++ GATEWAY STARTING +++++")
+
 	s := fmt.Sprintf(":%s", os.Getenv("GATEWAY_PORT"))
 	log.Fatal(http.ListenAndServe(s, handler))
+
 }
 
 func newGatewaymux() *runtime.ServeMux {
@@ -90,98 +96,39 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 	return nil
 }
 
-// TODO make this function concise
-func initMiddleware() (middleware.AuthMiddleware, middleware.ServiceMiddleware) {
+func initAuthMiddleware() (middleware.AuthMiddleware, error) {
 
-	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
-
-	authConn, err := grpc.Dial(os.Getenv("AUTH_URI"), opts)
+	conn, err := grpc.Dial(
+		os.Getenv("AUTH_URI"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
-		log.Fatalf("unable to connect auth client: %v", err)
+		return nil, err
 	}
-
-	restaurantConn, err := grpc.Dial(os.Getenv("RESTAURANT_URI"), opts)
-	if err != nil {
-		log.Fatalf("unable to connect restaurant client: %v", err)
-	}
-
-	couponConn, err := grpc.Dial(os.Getenv("COUPON_URI"), opts)
-	if err != nil {
-		log.Fatalf("unable to connect coupon client: %v", err)
-	}
-
-	orderConn, err := grpc.Dial(os.Getenv("ORDER_URI"), opts)
-	if err != nil {
-		log.Fatalf("unable to connect order client: %v", err)
-	}
-
-	deliveryConn, err := grpc.Dial(os.Getenv("DELIVERY_URI"), opts)
-	if err != nil {
-		log.Fatalf("unable to connect delivery client: %v", err)
-	}
-
-	userConn, err := grpc.Dial(os.Getenv("USER_URI"), opts)
-	if err != nil {
-		log.Fatalf("unable to connect user client: %v", err)
-	}
-
-	authClient := pb.NewAuthServiceClient(authConn)
-	restaurantClient := pb.NewRestaurantServiceClient(restaurantConn)
-	couponClient := pb.NewCouponServiceClient(couponConn)
-	orderClient := pb.NewOrderServiceClient(orderConn)
-	deliveryClient := pb.NewDeliveryServiceClient(deliveryConn)
-	userClient := pb.NewUserServiceClient(userConn)
-
-	// Service Middleware Configuration
-	cfg := middleware.ServiceMiddlewareConfig{
-		RestaurantClient: restaurantClient,
-		CouponClient:     couponClient,
-		OrderClient:      orderClient,
-		DeliveryClient:   deliveryClient,
-		UserClient:       userClient,
-	}
-
-	auth := middleware.NewAuthMiddleware(authClient)
-	service := middleware.NewServiceMiddleware(cfg)
-
-	return auth, service
+	return middleware.NewAuthMiddleware(pb.NewAuthServiceClient(conn)), nil
 }
 
-func setupHTTPMux(auth middleware.AuthMiddleware, svc middleware.ServiceMiddleware, gwmux *runtime.ServeMux) http.Handler {
-
-	var (
-		authz = auth.Authz
-		authn = auth.Authn
-	)
-
+func setupHTTPMuxAndAuth(m middleware.AuthMiddleware, gwmux *runtime.ServeMux) http.Handler {
 	mux := http.NewServeMux()
-
-	/*
-		mux.Handle("POST /auth/login", gwmux)
-		mux.Handle("POST /auth/register", gwmux)
-		mux.Handle("PUT /auth/users/roles", authz(gwmux))
-
-		mux.Handle("POST /api/orders/place-order", authn(svc.VerifyPlaceOrder(gwmux)))
-		mux.Handle("POST /api/users", authn(gwmux))
-
-		mux.Handle("DELETE /api/*", authn(authz(gwmux)))
-		mux.Handle("/api/*", authn(gwmux))
-	*/
-
-	mux.Handle("/auth/users/roles", authz(gwmux))
-	mux.Handle("/api/orders/place-order", authn(svc.VerifyPlaceOrder(gwmux)))
-	mux.Handle("/api/users", authn(gwmux))
-	mux.Handle("/api/*", authn(gwmux))
-	mux.Handle("DELETE /api/*", authn(authz(gwmux)))
-
+	m.ApplyFullAuth(mux, gwmux,
+		"DELETE /api/*",
+	)
+	m.ApplyAuthorization(mux, gwmux,
+		"/auth/users/roles",
+	)
+	m.ApplyAuthentication(mux, gwmux,
+		"/api/orders/place-order",
+		"/api/users",
+		"/api/*",
+	)
 	mux.Handle("/", gwmux)
-
 	return mux
 }
 
 func cors(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		//    For production
 		// 	  swg := fmt.Sprintf("http://localhost:%s", os.Getenv("SWAGGER_UI_PORT"))
 		// 	  w.Header().Add("Access-Control-Allow-Origin", swg)
 
