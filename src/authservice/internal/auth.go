@@ -211,7 +211,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	if !ok {
 		return nil, status.Error(codes.Unknown, "missing metadata")
 	}
-	username, password, err := extractAuth(md["authorization"])
+	username, password, err := extractBasicAuth(md["authorization"])
 	if err != nil {
 		slog.Error("authorization", "err", err)
 		return nil, status.Error(codes.Unauthenticated, "invalid authorization")
@@ -256,8 +256,6 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	return &pb.LoginResponse{AccessToken: token, AccessTokenExp: exp}, nil
 }
 
-// IsValidToken checks if the provided token is valid. It returns a response
-// indicating validity and an error if any.
 func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
 
 	if in.Token == "" {
@@ -309,6 +307,11 @@ func (x *AuthService) IsUserExists(ctx context.Context, in *pb.IsUserExistsReque
 	return &pb.IsUserExistsResponse{IsExists: true}, nil
 }
 
+// UpdateUserRole updates an existing user's role to specific roles.
+//
+// NOTE: Calling this function should be preceded by middleware first to
+// prevent lower roles updating highter roles.For exmaple "USER" try to
+// update "ADMIN", which is invalid.
 func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UpdateUserRoleResponse, error) {
 
 	if in.Username == "" {
@@ -335,7 +338,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 	return &pb.UpdateUserRoleResponse{Success: true}, nil
 }
 
-func extractAuth(authorization []string) (username, password string, err error) {
+func extractBasicAuth(authorization []string) (username, password string, err error) {
 
 	if len(authorization) < 1 {
 		return "", "", errors.New("missing authorization in metadata")
@@ -351,7 +354,7 @@ func extractAuth(authorization []string) (username, password string, err error) 
 	return cred[0], cred[1], nil
 }
 
-// createNewToken generates a new JWT token with a expiration time from the current time.
+// createNewToken generates a new JWT token specific roles with an expiration time from the current time.
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
 func createNewToken(role pb.Roles) (signedToken string, expiration int64, err error) {
 
