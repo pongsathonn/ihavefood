@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,11 +13,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
-var (
-	errDuplicatedOrder = errors.New("order duplicated")
-)
-
-type SavePlaceOrderResponse struct {
+type SaveNewPlaceOrderResponse struct {
 	OrderId         string
 	OrderTrackingId string
 	PaymentStatus   pb.PaymentStatus
@@ -25,8 +22,10 @@ type SavePlaceOrderResponse struct {
 }
 
 type OrderRepository interface {
+	SaveNewPlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*SaveNewPlaceOrderResponse, error)
 	PlaceOrders(ctx context.Context, username string) (*pb.ListUserPlaceOrderResponse, error)
-	SavePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*SavePlaceOrderResponse, error)
+	UpdateOrderStatus(ctx context.Context, orderId string, status pb.OrderStatus) error
+	IsDuplicatedOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (bool, error)
 }
 
 type orderRepository struct {
@@ -35,6 +34,38 @@ type orderRepository struct {
 
 func NewOrderRepository(client *mongo.Client) OrderRepository {
 	return &orderRepository{client: client}
+}
+
+// SaveNewPlaceOrder inserts a new order into the database.
+func (r *orderRepository) SaveNewPlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*SaveNewPlaceOrderResponse, error) {
+
+	coll := r.client.Database("order_database", nil).Collection("orderCollection")
+
+	placeOrder := preparePlaceOrder(in)
+
+	res, err := coll.InsertOne(ctx, placeOrder)
+	if err != nil {
+		return nil, err
+	}
+
+	orderId, ok := res.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, errors.New("failed to convert id to primitive.ObjectId")
+	}
+
+	slog.Info("inserted new order",
+		"orderId", orderId.Hex(),
+		"createdAt", placeOrder.OrderTimeStamps.CreatedAt,
+	)
+
+	return &SaveNewPlaceOrderResponse{
+		OrderId:         orderId.Hex(),
+		OrderTrackingId: placeOrder.TrackingId.Hex(),
+		PaymentStatus:   pb.PaymentStatus(placeOrder.PaymentStatus),
+		OrderStatus:     pb.OrderStatus(placeOrder.OrderStatus),
+		Created_at:      placeOrder.OrderTimeStamps.CompletedAt,
+	}, nil
+
 }
 
 // list all user's placeorder by username ( like query placeorder history )
@@ -62,75 +93,83 @@ func (r *orderRepository) PlaceOrders(ctx context.Context, username string) (*pb
 	return &pb.ListUserPlaceOrderResponse{PlaceOrders: placeOrders}, nil
 }
 
-func (r *orderRepository) SavePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*SavePlaceOrderResponse, error) {
+// UpdateOrderStatus updates the status of a placed order.
+// Available statuses are:
+// - "PREPARING_ORDER"
+// - "FINDING_RIDER"
+// - "ONGOING"
+// - "DELIVERED"
+//
+// Updating to "PENDING" will result in an error, as it is the default status.
+// Updating to "CANCELLED" is not allowed; use this status when deleting a placed order.
+func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderId string, status pb.OrderStatus) error {
 
 	coll := r.client.Database("order_database", nil).Collection("orderCollection")
 
-	if err := r.isDuplicateOrder(ctx, in); err != nil {
-		return nil, err
-	}
-
-	placeOrder := preparePlaceOrder(in)
-
-	res, err := coll.InsertOne(ctx, placeOrder)
+	id, err := primitive.ObjectIDFromHex(orderId)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	orderId, ok := res.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return nil, errors.New("failed to convert id to primitive.ObjectId")
+	now := time.Now().Unix()
+	var timeStampField string
+
+	switch status {
+	case pb.OrderStatus_PENDING:
+		return errors.New("pending is default status")
+	case pb.OrderStatus_CANCELLED:
+		return errors.New("cannot update an order status to cancel")
+	case pb.OrderStatus_DELIVERED:
+		timeStampField = "completedAt"
+	default:
+		timeStampField = "updatedAt"
 	}
 
-	return &SavePlaceOrderResponse{
-		OrderId:         orderId.Hex(),
-		OrderTrackingId: placeOrder.TrackingId.Hex(),
-		PaymentStatus:   pb.PaymentStatus(placeOrder.PaymentStatus),
-		OrderStatus:     pb.OrderStatus(placeOrder.OrderStatus),
-		Created_at:      placeOrder.OrderTimeStamps.CompletedAt,
-	}, nil
+	filter := bson.M{"_id": id}
+	update := bson.M{
+		"orderStatus": status,
+		"orderTimeStamps": bson.M{
+			timeStampField: now,
+		},
+	}
 
+	if err := coll.FindOneAndUpdate(ctx, filter, update).Err(); err != nil {
+		return err
+	}
+
+	slog.Info("updated order status",
+		"orderId", orderId,
+		"newStatus", status.String(),
+		timeStampField, now,
+	)
+
+	return nil
 }
 
-// isDuplicateOrder prevents placing a duplicate order with same restaurant
+// IsDuplicatedOrder prevents placing a duplicate order with same restaurant
 // An order is considered a duplicate if:
 // - The payment status is "unpaid".
 // - The order was created within the last 30 minutes.
-//
-// If such an order exists, the function returns the error `errDuplicatedOrder`,
-// indicating the request is a duplicate. Otherwise, the order can be placed.
-//
-// Returns:
-// - `errDuplicatedOrder` if a duplicate order is found.
-// - Any other error from the query or decoding process.
-//
-// If User need to change or add order information then should call other function
-// such as AddMenus, ChangeMenus, ChangeCoupon etc.
-func (r *orderRepository) isDuplicateOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) error {
+func (r *orderRepository) IsDuplicatedOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (bool, error) {
 
 	coll := r.client.Database("order_database", nil).Collection("orderCollection")
 
 	halfHourAgo := time.Now().Add(-30 * time.Minute).Unix()
 
-	// duplicatedOrder checks if an order with the given OrderID exists,
-	// has an unpaid status, and was created within the last 30 minutes.
-	duplicatedOrder, err := coll.CountDocuments(ctx, bson.M{
+	filter := bson.M{
 		"restaurantId":              in.RestaurantId,
 		"username":                  in.Username,
 		"paymentStatus":             int32(pb.PaymentStatus_UNPAID),
 		"orderTimeStamps.createdAt": bson.M{"$gte": halfHourAgo},
-	},
-	)
-	if err != nil {
-		return err
 	}
 
-	if duplicatedOrder > 0 {
-		return errDuplicatedOrder
+	if err := coll.FindOne(ctx, filter).Err(); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return false, nil
+		}
+		return false, err
 	}
-
-	return nil
-
+	return true, nil
 }
 
 func preparePlaceOrder(in *pb.HandlePlaceOrderRequest) *PlaceOrderEntity {

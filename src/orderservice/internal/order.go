@@ -2,13 +2,11 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/mail"
 	"regexp"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,6 +34,8 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 		return nil, status.Error(codes.InvalidArgument, "username must be provided")
 	}
 
+	fmt.Println()
+
 	resp, err := x.repository.PlaceOrders(ctx, in.Username)
 	if err != nil {
 		slog.Error("retrive place order", "err", err)
@@ -55,7 +55,17 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
 	}
 
-	res, err := x.repository.SavePlaceOrder(ctx, in)
+	duplicated, err := x.repository.IsDuplicatedOrder(ctx, in)
+	if err != nil {
+		slog.Error("check order duplicated", "err", err)
+		return nil, status.Error(codes.Internal, "failed to check duplicated order")
+	}
+
+	if duplicated {
+		return nil, status.Error(codes.AlreadyExists, "order duplicated")
+	}
+
+	res, err := x.repository.SaveNewPlaceOrder(ctx, in)
 	if err != nil {
 		slog.Error("save place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to save place order")
@@ -76,43 +86,18 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		UserContact:       in.UserContact,
 		PaymentMethods:    in.PaymentMethods,
 		PaymentStatus:     res.PaymentStatus,
-		OrderStatus:       res.OrderStatus,
+		OrderStatus:       res.OrderStatus, // "PENDING"
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to publish event: %v", err)
 	}
 
-	slog.Info("published event", "order_id", res.OrderId)
+	slog.Info("published event", "orderId", res.OrderId)
 
 	return &pb.HandlePlaceOrderResponse{
 		OrderId:         res.OrderId,
 		OrderTrackingId: res.OrderTrackingId,
 	}, nil
-}
-
-func (x *OrderService) consumedDeliveryFeeAndDiscount() (deliveryFee, Discount int32, err error) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	delivery, err := x.rabbitmq.Subscribe(ctx, "order_exchange", "order_validate_queue", "ROUTING KEY HERE")
-	if err != nil {
-		return 0, 0, err
-	}
-
-	var order pb.PlaceOrder
-
-	select {
-	case v := <-delivery:
-		if err := json.Unmarshal(v.Body, &order); err != nil {
-			return 0, 0, err
-		}
-	case <-ctx.Done():
-		return 0, 0, ctx.Err()
-	}
-
-	return order.DeliveryFee, order.CouponDiscount, nil
-
 }
 
 func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
