@@ -31,17 +31,31 @@ var example = map[string]*pb.Point{
 
 // Example data for riders
 var riders = []*pb.Rider{
-	{RiderId: "001", RiderName: "Messi", PhoneNumber: "+1234567890"},
-	{RiderId: "002", RiderName: "Ronaldo", PhoneNumber: "+1987654321"},
-	{RiderId: "003", RiderName: "Neymar", PhoneNumber: "+1654321897"},
-	{RiderId: "004", RiderName: "Pogba", PhoneNumber: "+3334445555"},
-	{RiderId: "005", RiderName: "Halaand", PhoneNumber: "+7778889999"},
+	{Id: "001", Name: "Messi", PhoneNumber: "0846851976"},
+	{Id: "002", Name: "Ronaldo", PhoneNumber: "0987858487"},
+	{Id: "003", Name: "Neymar", PhoneNumber: "0684321352"},
+	{Id: "004", Name: "Pogba", PhoneNumber: "0868549858"},
+	{Id: "005", Name: "Halaand", PhoneNumber: "0932515487"},
 }
+
+// TODO improve channel doc
+// cookingC handle "order.cooking.event" to trigger fn notifyToRider
+// to notify nearest riders
+//
+// acceptC for trig from fn AcceptOrder to fn waitForRiderAccept
+// when rider has accepted the order
+//
+// orderPickupCh TODO
+var (
+	cookingC map[string]chan struct{}
+	acceptC  map[string]chan *pb.AcceptOrderRequest
+	pickupC  map[string]chan struct{}
+)
 
 // pickUpInfo have field same as *pb.PickupInfo
 // but add error field use in this file only
 type pickUpInfo struct {
-	OrderId        string
+	OrderNo        string
 	PickupCode     string
 	PickupLocation *pb.Point
 	Destination    *pb.Point
@@ -54,79 +68,122 @@ type DeliveryService struct {
 	mu         sync.Mutex
 	rabbitmq   RabbitMQ
 	repository DeliveryRepository
-
-	riderAcceptedCh chan *pb.AcceptOrderRequest
-	orderPickupCh   chan *pickUpInfo
 }
 
 func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository) *DeliveryService {
 	return &DeliveryService{
 		rabbitmq:   rb,
 		repository: rp,
-
-		riderAcceptedCh: make(chan *pb.AcceptOrderRequest),
-		orderPickupCh:   make(chan *pickUpInfo),
 	}
 }
 
-// DeliveryAssignment handles incoming orders from the "order.placed.event"
-// and saves the placed order to the database, finds the nearest riders, and
-// notifies them. It waits for rider acceptance and responds with order
-// pickup details if the order is accepted.
+func (x *DeliveryService) RunMessageProcessing() {
+
+	// handle incoming order start delivery assignment
+	go x.fetch("order.placed.event", x.deliveryAssignment())
+
+	// notify to riders after restaurant cooking
+	go x.fetch("order.cooking.event", nil)
+
+	select {} // TODO use waitgroup instead
+}
+
+func (x *DeliveryService) fetch(routingKey string, messages chan<- []byte) {
+
+	deliveries, err := x.rabbitmq.Subscribe(
+		context.TODO(),
+		"order_exchange", // exchange
+		"",               // queue
+		routingKey,       // routing key
+	)
+	if err != nil {
+		slog.Error("subscribe failed", "err", err)
+	}
+
+	for delivery := range deliveries {
+		messages <- delivery.Body
+	}
+}
+
+// DeliveryAssignment handles incoming orders  and saves the placed order
+// to the database, finds the nearest riders, and notifies them. It waits
+// for rider acceptance and responds with order pickup details if the order
+// is accepted.
 //
 // When saving the order with SaveOrderDelivery, the order status remains
 // "unaccepted" until a rider accepts the order.
-func (x *DeliveryService) DeliveryAssignment() {
+func (x *DeliveryService) deliveryAssignment() chan<- []byte {
 
-	for {
-		placeOrder, err := x.receiveOrder("order.placed.event")
-		if err != nil {
-			slog.Error("receive new order", "err", err)
-			return
+	messages := make(chan []byte)
+
+	for msg := range messages {
+		var placeOrder pb.PlaceOrder
+		if err := json.Unmarshal(msg, &placeOrder); err != nil {
+			slog.Error("unmarshal failed", "err", err)
+			continue
 		}
-		go func(placeOrder *pb.PlaceOrder) {
 
-			if placeOrder == nil {
+		go func(order *pb.PlaceOrder) {
+
+			if order == nil {
 				slog.Error("place order is empty")
 				return
 			}
 
-			// waitRiderDuration is time for waiting rider accept order
-			waitRiderDuration := time.Minute * 10
-			ctx, cancel := context.WithTimeout(context.Background(), waitRiderDuration)
-			defer cancel()
-
-			// save new placeOrder to deliverydb (unaccept order)
-			if err := x.repository.SaveOrderDelivery(ctx, placeOrder.OrderId); err != nil {
-				slog.Error("save new order", "err", err)
-				return
-			}
-
-			riders, err := calculateNearestRider(placeOrder.UserAddress, placeOrder.RestaurantAddress)
+			riders, orderPickup, err := x.prepareOrderDelivery(order)
 			if err != nil {
-				slog.Error("calculate nearest riders", "err", err)
+				slog.Error("prepare order delivery", "err", err)
 				return
 			}
 
-			orderPickup, err := x.generateOrderPickUp(placeOrder)
-			if err != nil {
-				slog.Error("generate order pickup", "err", err)
-				return
-			}
+			cookingC[order.No] = make(chan struct{})
 
-			if err := notifyToRider(ctx, riders, orderPickup); err != nil {
+			// notifyToRider is executed after "order.cooking.event"
+			if err := notifyToRider(cookingC[order.No], riders, orderPickup); err != nil {
 				slog.Error("notify to riders", "err", err)
 				return
 			}
 
-			if err := x.waitForRiderAccept(ctx, riders, orderPickup); err != nil {
+			// TODO publish "rider.notified.event"
+
+			acceptC[order.No] = make(chan struct{})
+
+			if err := x.waitForRiderAccept(acceptC[order.No], riders, orderPickup); err != nil {
 				slog.Error("waiting rider accept", "err", err)
 				return
 			}
 
-		}(placeOrder)
+			// TODO publish "rider.accepted.event"
+
+		}(&placeOrder)
 	}
 
+	return messages
+
+}
+
+// prepareOrderDelivery will save new placeorder to database, calculate the nearest riders
+// and generate order pickup infomations and return
+func (x *DeliveryService) prepareOrderDelivery(order *pb.PlaceOrder) ([]*pb.Rider, *pickUpInfo, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := x.repository.SaveOrderDelivery(ctx, order.No); err != nil {
+		return nil, nil, err
+	}
+
+	riders, err := calculateNearestRider(order.UserAddress, order.RestaurantAddress)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	orderPickup, err := x.generateOrderPickUp(order)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return riders, orderPickup, nil
 }
 
 func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*pb.TrackOrderResponse, error) {
@@ -248,48 +305,24 @@ func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.Confirm
 	return &pb.ConfirmCashPaymentResponse{Success: true}, nil
 }
 
-// receiveOrder subscribes to new order from OrderService
-// and returns the received order.
-func (x *DeliveryService) receiveOrder(routingKey string) (*pb.PlaceOrder, error) {
-
-	deliveries, err := x.rabbitmq.Subscribe(
-		nil,
-		"order_exchange", // exchange
-		"",               // queue
-		routingKey,       // routing key
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	for delivery := range deliveries {
-		var placeOrder pb.PlaceOrder
-		if err := json.Unmarshal(delivery.Body, &placeOrder); err != nil {
-			return nil, err
-		}
-		return &placeOrder, nil
-	}
-	return nil, nil
-}
-
 // generateOrderPickUp is a function that generate pickupcode and locations
 // to riderthat not accept order yet.
-func (x *DeliveryService) generateOrderPickUp(placeOrder *pb.PlaceOrder) (*pickUpInfo, error) {
+func (x *DeliveryService) generateOrderPickUp(order *pb.PlaceOrder) (*pickUpInfo, error) {
 
 	code := randomThreeDigits()
 
-	startPoint, err := x.addressToPoint(placeOrder.RestaurantAddress)
+	startPoint, err := x.addressToPoint(order.RestaurantAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	destinationPoint, err := x.addressToPoint(placeOrder.UserAddress)
+	destinationPoint, err := x.addressToPoint(order.UserAddress)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pickUpInfo{
-		OrderId:        placeOrder.OrderId,
+		OrderNo:        order.No,
 		PickupCode:     code,
 		PickupLocation: startPoint,
 		Destination:    destinationPoint,
@@ -319,31 +352,40 @@ func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
 //   - Sends the order pickup information to the orderPickupCh channel.
 //
 // If no rider accepts the order within 15 minutes, the function cancels the context and stops waiting.
-func (x *DeliveryService) waitForRiderAccept(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) error {
+func (x *DeliveryService) waitForRiderAccept(
+	accepted <-chan *pb.AcceptOrderRequest,
+	riders []*pb.Rider,
+	orderPickup *pickUpInfo,
+) error {
 
 	var riderIds []string
 	for _, rider := range riders {
 		riderIds = append(riderIds, rider.RiderId)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+
 	for {
 		select {
-		case accepted := <-x.riderAcceptedCh:
-			if accepted.OrderId == "" || accepted.RiderId == "" {
-				x.orderPickupCh <- &pickUpInfo{Error: errors.New("rider id or order id is empty")}
+		case v := <-accepted:
+			if v.OrderNo == "" || v.RiderId == "" {
+				x.orderPickupCh <- &pickUpInfo{
+					Error: errors.New("rider id or order number is empty"),
+				}
 				continue
 			}
 
-			if !slices.Contains(riderIds, accepted.RiderId) {
-				x.orderPickupCh <- &pickUpInfo{Error: fmt.Errorf("rider id %s not notified", accepted.RiderId)}
+			if !slices.Contains(riderIds, v.RiderId) {
+				x.orderPickupCh <- &pickUpInfo{Error: fmt.Errorf("rider id %s not notified", v.RiderId)}
 				continue
 			}
 
 			x.mu.Lock()
 			// Save order delivery after rider accepted
 			err := x.repository.UpdateOrderDelivery(ctx, &MOrderDelivery{
-				OrderId:    accepted.OrderId,
-				RiderId:    accepted.RiderId,
+				OrderNo:    v.OrderNo,
+				RiderId:    v.RiderId,
 				IsAccepted: true,
 				PickupCode: orderPickup.PickupCode,
 				PickupLocation: &MPoint{
@@ -361,8 +403,8 @@ func (x *DeliveryService) waitForRiderAccept(ctx context.Context, riders []*pb.R
 			x.mu.Unlock()
 
 			slog.Info("Rider has accepted the order",
-				"rider_id", accepted.RiderId,
-				"order_id", accepted.OrderId,
+				"orderNo", v.OrderNo,
+				"riderId", v.RiderId,
 			)
 
 			select {
@@ -400,28 +442,42 @@ func calculateNearestRider(userAddr *pb.Address, restaurantAddr *pb.Address) ([]
 	return riders, nil
 }
 
-// notifyToRider will notify to all nearest riders
+// notifyToRider will notify to all nearest riders return nil after notified
 //
-// TODO implement push notification and stop notify if context done
-func notifyToRider(ctx context.Context, riders []*pb.Rider, orderPickup *pickUpInfo) error {
+// TODO implement push notification
+func notifyToRider(
+	cooking <-chan struct{},
+	riders []*pb.Rider,
+	orderPickup *pickUpInfo,
+) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
 
 	var riderIds []string
 	for _, r := range riders {
 		riderIds = append(riderIds, r.RiderId)
 	}
 
-	notifyInfo := struct {
-		riderIds   []string
-		orderId    string
-		pickupCode string
-	}{
-		riderIds:   riderIds,
-		orderId:    orderPickup.OrderId,
-		pickupCode: orderPickup.PickupCode,
-	}
+	select {
+	case <-cooking:
 
-	// Example log notify
-	log.Printf("[NOTIFY INFO]: %+v\n", notifyInfo)
+		notifyInfo := struct {
+			riderIds   []string
+			orderNo    string
+			pickupCode string
+		}{
+			riderIds:   riderIds,
+			orderNo:    orderPickup.OrderNo,
+			pickupCode: orderPickup.PickupCode,
+		}
+
+		// Example log notify
+		log.Printf("[NOTIFY INFO]: %+v\n", notifyInfo)
+
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 
 	return nil
 }
@@ -440,14 +496,16 @@ func randomThreeDigits() string {
 	return strconv.Itoa(n)
 }
 
-// NOTE : Address point is example data use district only
+// NOTE: Address point is example data use district field only
 // others address fields will be ignored
+//
+// # TODO use actual data
 //
 // calculateDeliveryFee calculate distance from user's address to restaurant's address
 func calculateDeliveryFee(userAddr *pb.Address, restaurantAddr *pb.Address) (int32, error) {
 
-	point1, ok1 := example[userAddr.District]
-	point2, ok2 := example[restaurantAddr.District]
+	userPoint, ok1 := example[userAddr.District]
+	restaurantPoint, ok2 := example[restaurantAddr.District]
 
 	if !ok1 || !ok2 {
 		validDistricts := []string{
@@ -461,7 +519,7 @@ func calculateDeliveryFee(userAddr *pb.Address, restaurantAddr *pb.Address) (int
 	}
 
 	// distance in kilometers
-	distance := haversineDistance(point1, point2)
+	distance := haversineDistance(userPoint, restaurantPoint)
 	if distance < 0 || distance > 25 {
 		return 0, errors.New("distance must be between 0 and 25 km")
 	}

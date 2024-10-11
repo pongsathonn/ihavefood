@@ -28,18 +28,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rabbitmq := internal.NewRabbitMQ(conn)
-	repository := internal.NewDeliveryRepository(client)
-
-	deliveryService := internal.NewDeliveryService(
-		rabbitmq,
-		repository,
+	s := internal.NewDeliveryService(
+		internal.NewRabbitMQ(conn),
+		internal.NewDeliveryRepository(client),
 	)
 
-	// Start the order assignment process in a separate goroutine
-	go deliveryService.DeliveryAssignment()
+	go s.RunMessageProcessing()
 
-	startGRPCServer(deliveryService)
+	startGRPCServer(s)
 }
 
 // initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance

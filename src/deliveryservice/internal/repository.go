@@ -14,7 +14,7 @@ import (
 //
 // MOrderDelivery represent Delivery information
 type MOrderDelivery struct {
-	OrderId        string     `bson:"orderId"`
+	OrderNo        string     `bson:"orderNo"`
 	RiderId        string     `bson:"riderId"`
 	IsAccepted     bool       `bson:"isAccepted"`
 	PickupCode     string     `bson:"pickupCode"`
@@ -29,8 +29,8 @@ type MPoint struct {
 }
 
 type DeliveryRepository interface {
-	GetOrderDeliveryById(ctx context.Context, orderId string) (*MOrderDelivery, error)
-	SaveOrderDelivery(ctx context.Context, orderId string) error
+	GetOrderDelivery(ctx context.Context, orderNo string) (*MOrderDelivery, error)
+	SaveOrderDelivery(ctx context.Context, orderNo string) error
 	UpdateOrderDelivery(ctx context.Context, orderDelivery *MOrderDelivery) error
 }
 
@@ -42,10 +42,10 @@ func NewDeliveryRepository(db *mongo.Client) DeliveryRepository {
 	return &deliveryRepository{db: db}
 }
 
-func (r *deliveryRepository) GetOrderDeliveryById(ctx context.Context, orderId string) (*MOrderDelivery, error) {
+func (r *deliveryRepository) GetOrderDelivery(ctx context.Context, orderNo string) (*MOrderDelivery, error) {
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	filter := bson.M{"orderId": orderId}
+	filter := bson.M{"orderNo": orderNo}
 
 	var result MOrderDelivery
 
@@ -59,13 +59,14 @@ func (r *deliveryRepository) GetOrderDeliveryById(ctx context.Context, orderId s
 	return &result, nil
 }
 
-// SaveOrderDelivery saves only the orderId to the database with other fields empty
-func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderId string) error {
+// SaveOrderDelivery saves only the order number to the database
+// and rolls back if the context is done
+func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderNo string) error {
 
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	data := MOrderDelivery{
-		OrderId:        orderId,
+		OrderNo:        orderNo,
 		RiderId:        "",
 		PickupCode:     "",
 		PickupLocation: nil,
@@ -74,7 +75,25 @@ func (r *deliveryRepository) SaveOrderDelivery(ctx context.Context, orderId stri
 		AcceptedTime:   nil,
 	}
 
-	if _, err := coll.InsertOne(ctx, data); err != nil {
+	session, err := r.db.StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+
+		if _, err := coll.InsertOne(sessCtx, data); err != nil {
+			return nil, err
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+			return nil, nil
+		}
+	})
+	if err != nil {
 		return err
 	}
 
@@ -85,7 +104,7 @@ func (r *deliveryRepository) UpdateOrderDelivery(ctx context.Context, orderDeliv
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	filter := bson.D{
-		{"orderId", orderDelivery.OrderId},
+		{"orderNo", orderDelivery.OrderNo},
 	}
 
 	update := bson.M{
