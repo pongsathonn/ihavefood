@@ -5,7 +5,6 @@ name: ihavefood
 # port 9090 for server
 
 services:
-
   swaggerx:
     container_name: swagger_ui
     image: swaggerapi/swagger-ui:latest
@@ -25,7 +24,7 @@ services:
     build: gateway
     ports:
       - "180:180" 
-      - "4041:4040" 
+      - "4041:4041" 
     env_file:
       - path: ./gateway/.env
     networks:
@@ -56,7 +55,7 @@ services:
     networks:
       - mynetwork
     ports:
-      - "4042:4040" 
+      - "4042:4042" 
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4042","--accept-multiclient", "/order" ]
     security_opt:
     - seccomp:unconfined
@@ -79,7 +78,7 @@ services:
     networks:
       - mynetwork
     ports:
-      - "4043:4040" 
+      - "4043:4043" 
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/restaurant" ]
     security_opt:
     - seccomp:unconfined
@@ -109,7 +108,7 @@ services:
     networks:
       - mynetwork
     ports:
-      - "4044:4040"
+      - "4044:4044"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/user" ]
     security_opt:
       - seccomp:unconfined
@@ -184,7 +183,7 @@ services:
     networks:
       - mynetwork
     ports:
-      - "4046:4040"
+      - "4046:4046"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4046","--accept-multiclient", "/delivery" ]
     security_opt:
       - seccomp:unconfined
@@ -211,7 +210,7 @@ services:
     networks:
       - mynetwork
     ports:
-      - "4047:4040"
+      - "4047:4047"
     command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
     security_opt:
       - seccomp:unconfined
@@ -242,7 +241,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL","rabbitmq-diagnostics -q ping"]
       interval: 30s
-      timeout: 20s
+      timeout: 30s
       retries: 5
     networks:
       - mynetwork

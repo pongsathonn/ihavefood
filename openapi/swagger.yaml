@@ -330,7 +330,7 @@ paths:
         - bearerAuth: [] 
 
 #---------------Restaurant Service-----------------
-  /api/restaurants/{restaurant_id}:
+  /api/restaurants/{restaurantId}:
     get:
       tags:
         - restaurant

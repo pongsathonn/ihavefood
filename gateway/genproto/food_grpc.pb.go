@@ -663,8 +663,11 @@ type DeliveryServiceClient interface {
 	// GetDeliveryFee calculates and returns the delivery fee based on the distance
 	// between the user's location and the restaurant's location.
 	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
-	// ConfirmCashPayment updates the payment status for cash transactions
+	// ConfirmCashPayment updates the payment status for order
 	// when the rider has received cash from the user.
+	//
+	// TODO seperate payment logic to its service (paymentservice)
+	// For Credit Card or Promt pay implement third-party payment gateway
 	ConfirmCashPayment(ctx context.Context, in *ConfirmCashPaymentRequest, opts ...grpc.CallOption) (*ConfirmCashPaymentResponse, error)
 }
 
@@ -725,8 +728,11 @@ type DeliveryServiceServer interface {
 	// GetDeliveryFee calculates and returns the delivery fee based on the distance
 	// between the user's location and the restaurant's location.
 	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
-	// ConfirmCashPayment updates the payment status for cash transactions
+	// ConfirmCashPayment updates the payment status for order
 	// when the rider has received cash from the user.
+	//
+	// TODO seperate payment logic to its service (paymentservice)
+	// For Credit Card or Promt pay implement third-party payment gateway
 	ConfirmCashPayment(context.Context, *ConfirmCashPaymentRequest) (*ConfirmCashPaymentResponse, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
@@ -865,6 +871,7 @@ const (
 	RestaurantService_ListRestaurant_FullMethodName     = "/foodDeliveryApp.RestaurantService/ListRestaurant"
 	RestaurantService_RegisterRestaurant_FullMethodName = "/foodDeliveryApp.RestaurantService/RegisterRestaurant"
 	RestaurantService_AddMenu_FullMethodName            = "/foodDeliveryApp.RestaurantService/AddMenu"
+	RestaurantService_OrderReady_FullMethodName         = "/foodDeliveryApp.RestaurantService/OrderReady"
 )
 
 // RestaurantServiceClient is the client API for RestaurantService service.
@@ -880,6 +887,9 @@ type RestaurantServiceClient interface {
 	RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*RegisterRestaurantResponse, error)
 	// AddMenu adds menus to restaurant.
 	AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*AddMenuResponse, error)
+	// OrderReady is called by the restaurant to notify the server that
+	// the ordered have been cooked and are ready for delivery.
+	OrderReady(ctx context.Context, in *OrderReadyRequest, opts ...grpc.CallOption) (*OrderReadyResponse, error)
 }
 
 type restaurantServiceClient struct {
@@ -926,6 +936,15 @@ func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuReques
 	return out, nil
 }
 
+func (c *restaurantServiceClient) OrderReady(ctx context.Context, in *OrderReadyRequest, opts ...grpc.CallOption) (*OrderReadyResponse, error) {
+	out := new(OrderReadyResponse)
+	err := c.cc.Invoke(ctx, RestaurantService_OrderReady_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RestaurantServiceServer is the server API for RestaurantService service.
 // All implementations must embed UnimplementedRestaurantServiceServer
 // for forward compatibility
@@ -939,6 +958,9 @@ type RestaurantServiceServer interface {
 	RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*RegisterRestaurantResponse, error)
 	// AddMenu adds menus to restaurant.
 	AddMenu(context.Context, *AddMenuRequest) (*AddMenuResponse, error)
+	// OrderReady is called by the restaurant to notify the server that
+	// the ordered have been cooked and are ready for delivery.
+	OrderReady(context.Context, *OrderReadyRequest) (*OrderReadyResponse, error)
 	mustEmbedUnimplementedRestaurantServiceServer()
 }
 
@@ -957,6 +979,9 @@ func (UnimplementedRestaurantServiceServer) RegisterRestaurant(context.Context, 
 }
 func (UnimplementedRestaurantServiceServer) AddMenu(context.Context, *AddMenuRequest) (*AddMenuResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMenu not implemented")
+}
+func (UnimplementedRestaurantServiceServer) OrderReady(context.Context, *OrderReadyRequest) (*OrderReadyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OrderReady not implemented")
 }
 func (UnimplementedRestaurantServiceServer) mustEmbedUnimplementedRestaurantServiceServer() {}
 
@@ -1043,6 +1068,24 @@ func _RestaurantService_AddMenu_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RestaurantService_OrderReady_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderReadyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RestaurantServiceServer).OrderReady(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RestaurantService_OrderReady_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RestaurantServiceServer).OrderReady(ctx, req.(*OrderReadyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RestaurantService_ServiceDesc is the grpc.ServiceDesc for RestaurantService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1065,6 +1108,10 @@ var RestaurantService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMenu",
 			Handler:    _RestaurantService_AddMenu_Handler,
+		},
+		{
+			MethodName: "OrderReady",
+			Handler:    _RestaurantService_OrderReady_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

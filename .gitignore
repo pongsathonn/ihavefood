@@ -1,6 +1,7 @@
 
 *.swp
 .env
+.todo.md
 
 EventDesign.md
 UML.md
@@ -8,4 +9,5 @@ curl.md
 
 dngproto.sh
 lazycurl.sh
+temp
 
