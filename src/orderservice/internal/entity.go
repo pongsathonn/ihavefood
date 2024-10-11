@@ -11,10 +11,9 @@ import (
 // to make this model match with protobuff json name should be same as bson name tag
 // if not omitempty at id Mongo will use zero as id ( when insert )
 type PlaceOrderEntity struct {
-	OrderId           primitive.ObjectID     `bson:"_id,omitempty"`
-	TrackingId        primitive.ObjectID     `bson:"trackingId"`
+	OrderNo           primitive.ObjectID     `bson:"_id,omitempty"`
 	Username          string                 `bson:"username"`
-	RestaurantId      string                 `bson:"restaurantId"`
+	RestaurantNo      string                 `bson:"restaurantNo"`
 	Menus             []*MenuEntity          `bson:"menus"`
 	CouponCode        string                 `bson:"couponCode"`
 	CouponDiscount    int32                  `bson:"couponDiscount"`

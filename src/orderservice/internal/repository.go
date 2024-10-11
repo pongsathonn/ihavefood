@@ -14,11 +14,10 @@ import (
 )
 
 type SaveNewPlaceOrderResponse struct {
-	OrderId         string
-	OrderTrackingId string
-	PaymentStatus   pb.PaymentStatus
-	OrderStatus     pb.OrderStatus
-	Created_at      int64
+	OrderNo       string
+	PaymentStatus pb.PaymentStatus
+	OrderStatus   pb.OrderStatus
+	Created_at    int64
 }
 
 type OrderRepository interface {
@@ -48,22 +47,21 @@ func (r *orderRepository) SaveNewPlaceOrder(ctx context.Context, in *pb.HandlePl
 		return nil, err
 	}
 
-	orderId, ok := res.InsertedID.(primitive.ObjectID)
+	orderNo, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return nil, errors.New("failed to convert id to primitive.ObjectId")
+		return nil, errors.New("failed to convert order number to primitive.ObjectId")
 	}
 
 	slog.Info("inserted new order",
-		"orderId", orderId.Hex(),
+		"orderNo", orderNo.Hex(),
 		"createdAt", placeOrder.OrderTimeStamps.CreatedAt,
 	)
 
 	return &SaveNewPlaceOrderResponse{
-		OrderId:         orderId.Hex(),
-		OrderTrackingId: placeOrder.TrackingId.Hex(),
-		PaymentStatus:   pb.PaymentStatus(placeOrder.PaymentStatus),
-		OrderStatus:     pb.OrderStatus(placeOrder.OrderStatus),
-		Created_at:      placeOrder.OrderTimeStamps.CompletedAt,
+		OrderNo:       orderNo.Hex(),
+		PaymentStatus: pb.PaymentStatus(placeOrder.PaymentStatus),
+		OrderStatus:   pb.OrderStatus(placeOrder.OrderStatus),
+		Created_at:    placeOrder.OrderTimeStamps.CompletedAt,
 	}, nil
 
 }
@@ -90,6 +88,10 @@ func (r *orderRepository) PlaceOrders(ctx context.Context, username string) (*pb
 		placeOrders = append(placeOrders, placeOrder)
 	}
 
+	if err := cur.Err(); err != nil {
+		return nil, err
+	}
+
 	return &pb.ListUserPlaceOrderResponse{PlaceOrders: placeOrders}, nil
 }
 
@@ -102,11 +104,11 @@ func (r *orderRepository) PlaceOrders(ctx context.Context, username string) (*pb
 //
 // Updating to "PENDING" will result in an error, as it is the default status.
 // Updating to "CANCELLED" is not allowed; use this status when deleting a placed order.
-func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderId string, status pb.OrderStatus) error {
+func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderNo string, status pb.OrderStatus) error {
 
 	coll := r.client.Database("order_database", nil).Collection("orderCollection")
 
-	id, err := primitive.ObjectIDFromHex(orderId)
+	orderNumber, err := primitive.ObjectIDFromHex(orderNo)
 	if err != nil {
 		return err
 	}
@@ -125,7 +127,7 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderId string,
 		timeStampField = "updatedAt"
 	}
 
-	filter := bson.M{"_id": id}
+	filter := bson.M{"_id": orderNumber}
 	update := bson.M{
 		"orderStatus": status,
 		"orderTimeStamps": bson.M{
@@ -138,7 +140,7 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderId string,
 	}
 
 	slog.Info("updated order status",
-		"orderId", orderId,
+		"orderNo", orderNo,
 		"newStatus", status.String(),
 		timeStampField, now,
 	)
@@ -157,7 +159,7 @@ func (r *orderRepository) IsDuplicatedOrder(ctx context.Context, in *pb.HandlePl
 	halfHourAgo := time.Now().Add(-30 * time.Minute).Unix()
 
 	filter := bson.M{
-		"restaurantId":              in.RestaurantId,
+		"restaurantNo":              in.RestaurantNo,
 		"username":                  in.Username,
 		"paymentStatus":             int32(pb.PaymentStatus_UNPAID),
 		"orderTimeStamps.createdAt": bson.M{"$gte": halfHourAgo},
@@ -182,9 +184,8 @@ func preparePlaceOrder(in *pb.HandlePlaceOrderRequest) *PlaceOrderEntity {
 		})
 	}
 	return &PlaceOrderEntity{
-		// order id map with mongo _id (auto generate)
-		TrackingId:     primitive.NewObjectID(),
-		RestaurantId:   in.RestaurantId,
+		// Order Number map with mongo _id (auto generate)
+		RestaurantNo:   in.RestaurantNo,
 		Username:       in.Username,
 		CouponCode:     in.CouponCode,
 		CouponDiscount: in.CouponDiscount,
@@ -229,16 +230,16 @@ func entityToProtoMessage(entity *PlaceOrderEntity) *pb.PlaceOrder {
 		})
 
 	}
+
 	return &pb.PlaceOrder{
-		OrderId:         entity.OrderId.Hex(),
-		OrderTrackingId: entity.TrackingId.Hex(),
-		Username:        entity.Username,
-		RestaurantId:    entity.RestaurantId,
-		Menus:           menus,
-		CouponCode:      entity.CouponCode,
-		CouponDiscount:  entity.CouponDiscount,
-		DeliveryFee:     entity.DeliveryFee,
-		Total:           entity.Total,
+		No:             entity.OrderNo.Hex(),
+		Username:       entity.Username,
+		RestaurantNo:   entity.RestaurantNo,
+		Menus:          menus,
+		CouponCode:     entity.CouponCode,
+		CouponDiscount: entity.CouponDiscount,
+		DeliveryFee:    entity.DeliveryFee,
+		Total:          entity.Total,
 		UserAddress: &pb.Address{
 			AddressName: entity.UserAddress.AddressName,
 			SubDistrict: entity.UserAddress.SubDistrict,

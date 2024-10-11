@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -12,6 +13,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
+)
+
+// TODO add doc
+const (
+	eventOrderCooking = "order.cooking.event"
+	eventOrderReady   = "order.ready.event"
 )
 
 type OrderService struct {
@@ -34,15 +41,17 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 		return nil, status.Error(codes.InvalidArgument, "username must be provided")
 	}
 
-	fmt.Println()
-
-	resp, err := x.repository.PlaceOrders(ctx, in.Username)
+	res, err := x.repository.PlaceOrders(ctx, in.Username)
 	if err != nil {
 		slog.Error("retrive place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrieve user's place orders")
 	}
 
-	return resp, nil
+	if len(res.PlaceOrders) == 0 {
+		return nil, status.Error(codes.NotFound, "place order not found")
+	}
+
+	return res, nil
 }
 
 // HandlePlaceOrder processes an incoming order placement request from the client.
@@ -72,10 +81,9 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 	}
 
 	err = x.rabbitmq.Publish(ctx, "order_exchange", "order.placed.event", &pb.PlaceOrder{
-		OrderId:           res.OrderId,
-		OrderTrackingId:   res.OrderTrackingId,
+		No:                res.OrderNo,
 		Username:          in.Username,
-		RestaurantId:      in.RestaurantId,
+		RestaurantNo:      in.RestaurantNo,
 		Menus:             in.Menus,
 		CouponCode:        in.CouponCode,
 		CouponDiscount:    in.CouponDiscount,
@@ -92,21 +100,115 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		return nil, status.Errorf(codes.Internal, "failed to publish event: %v", err)
 	}
 
-	slog.Info("published event", "orderId", res.OrderId)
+	slog.Info("published event", "orderNo", res.OrderNo)
 
 	return &pb.HandlePlaceOrderResponse{
-		OrderId:         res.OrderId,
-		OrderTrackingId: res.OrderTrackingId,
+		OrderNo:   res.OrderNo,
+		CreatedAt: res.Created_at,
 	}, nil
 }
+
+//---------------------------------------------------------------------------------------
+
+// might move this function to main.go for making overview
+// that what application do with topic
+func (x *OrderService) RunMessageProcessing() {
+
+	go x.fetch(eventOrderCooking, x.handleOrderStatus(eventOrderCooking))
+	go x.fetch(eventOrderReady, x.handleOrderStatus(eventOrderReady))
+
+	/*
+		go x.fetch("rider.notified.event", nil)
+		go x.fetch("rider.accepted.event", nil)
+		go x.fetch("user.paid.event", nil)
+	*/
+
+	select {}
+}
+
+// TODO handle seperately exchange
+func (x *OrderService) fetch(routingKey string, messages chan<- []byte) {
+
+	deliveries, err := x.rabbitmq.Subscribe(
+		context.TODO(),
+		"order_exchange", // exchange
+		"",               // queue
+		routingKey,       // routing key
+	)
+	if err != nil {
+		slog.Error("subscribe order", "err", err)
+	}
+
+	for delivery := range deliveries {
+		messages <- delivery.Body
+	}
+}
+
+func (x *OrderService) handleOrderStatus(topic string) chan<- []byte {
+
+	messages := make(chan []byte)
+
+	go func() {
+		for msg := range messages {
+
+			var orderNo string
+			if err := json.Unmarshal(msg, &orderNo); err != nil {
+				slog.Error("unmarshal failed", "err", err)
+				continue
+			}
+
+			var newStatus pb.OrderStatus
+
+			switch topic {
+			case eventOrderCooking:
+				newStatus = pb.OrderStatus_PREPARING_ORDER
+			case eventOrderReady:
+				newStatus = pb.OrderStatus_WAIT_FOR_PICKUP
+			}
+
+			err := x.repository.UpdateOrderStatus(
+				context.TODO(),
+				orderNo,
+				newStatus,
+			)
+			if err != nil {
+				slog.Error("updated order status",
+					"err", err,
+					"orderNo", orderNo,
+					"newStatus", newStatus.String(),
+				)
+				continue
+			}
+
+		}
+	}()
+	return messages
+}
+
+func (x *OrderService) handleTODO() chan<- []byte {
+	messages := make(chan []byte)
+	go func() {
+		for msg := range messages {
+			var todo string
+			if err := json.Unmarshal(msg, &todo); err != nil {
+				slog.Error("unmarshal failed", "err", err)
+				continue
+			}
+			// DO SOMETHING after todo event
+		}
+	}()
+	return messages
+}
+
+//---------------------------------------------------------------------------------------
 
 func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 
 	switch {
 	case in.Username == "":
 		return errors.New("username must be provided")
-	case in.RestaurantId == "":
-		return errors.New("contact must be provided")
+	case in.RestaurantNo == "":
+		return errors.New("restaurant number must be provided")
 	case len(in.Menus) == 0:
 		return errors.New("menu should be at least one")
 	case in.CouponCode == "":
