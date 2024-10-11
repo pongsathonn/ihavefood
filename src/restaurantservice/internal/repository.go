@@ -22,7 +22,7 @@ type RestaurantRepository interface {
 // The RestaurantId field maps to the MongoDB _id, which is auto-generated
 // and used as the restaurant's unique identifier.
 type RestaurantEntity struct {
-	RestaurantId   primitive.ObjectID `bson:"_id,omitempty"`
+	RestaurantNo   primitive.ObjectID `bson:"_id,omitempty"`
 	RestaurantName string
 	Menus          []*pb.Menu
 	Address        *pb.Address
@@ -53,10 +53,10 @@ func (r *restaurantRepository) Restaurant(ctx context.Context, restaurantId stri
 	}
 
 	restaurant := &pb.Restaurant{
-		RestaurantId:   entity.RestaurantId.Hex(),
-		RestaurantName: entity.RestaurantName,
-		Menus:          entity.Menus,
-		Address:        entity.Address,
+		No:      entity.RestaurantNo.Hex(),
+		Name:    entity.RestaurantName,
+		Menus:   entity.Menus,
+		Address: entity.Address,
 	}
 
 	return restaurant, nil
@@ -79,10 +79,10 @@ func (r *restaurantRepository) Restaurants(ctx context.Context) ([]*pb.Restauran
 			return nil, err
 		}
 		restaurant := &pb.Restaurant{
-			RestaurantId:   entity.RestaurantId.Hex(),
-			RestaurantName: entity.RestaurantName,
-			Menus:          entity.Menus,
-			Address:        entity.Address,
+			No:      entity.RestaurantNo.Hex(),
+			Name:    entity.RestaurantName,
+			Menus:   entity.Menus,
+			Address: entity.Address,
 		}
 		restaurants = append(restaurants, restaurant)
 	}
@@ -94,13 +94,18 @@ func (r *restaurantRepository) Restaurants(ctx context.Context) ([]*pb.Restauran
 
 }
 
-func (r *restaurantRepository) SaveRestaurant(ctx context.Context, restaurantName string, menus []*pb.Menu, address *pb.Address) (string, error) {
+func (r *restaurantRepository) SaveRestaurant(
+	ctx context.Context,
+	restaurantName string,
+	menus []*pb.Menu,
+	address *pb.Address,
+) (string, error) {
 
 	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
-	// ignore a restaurantId and let Mongo generate _id
+	// ignore a restaurant number and let Mongo generate _id
 	restaurant := RestaurantEntity{
-		//RestaurantId:   primitive.NewObjectID(),
+		//No:   primitive.NewObjectID(),
 		RestaurantName: restaurantName,
 		Menus:          menus,
 		Address:        address,
@@ -115,25 +120,25 @@ func (r *restaurantRepository) SaveRestaurant(ctx context.Context, restaurantNam
 		return "", err
 	}
 
-	id, ok := res.InsertedID.(primitive.ObjectID)
+	no, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return "", errors.New("id not primitive.ObjectID type")
+		return "", errors.New("number not primitive.ObjectID type")
 	}
 
-	return id.Hex(), nil
+	return no.Hex(), nil
 
 }
 
-func (r *restaurantRepository) UpdateMenu(ctx context.Context, restaurantId string, newMenus []*pb.Menu) error {
+func (r *restaurantRepository) UpdateMenu(ctx context.Context, restaurantNo string, newMenus []*pb.Menu) error {
 
 	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
-	id, err := primitive.ObjectIDFromHex(restaurantId)
+	no, err := primitive.ObjectIDFromHex(restaurantNo)
 	if err != nil {
 		return err
 	}
 
-	filter := bson.M{"_id": id}
+	filter := bson.M{"_id": no}
 	update := bson.M{"$push": bson.M{"menus": bson.M{"$each": newMenus}}}
 
 	res, err := coll.UpdateOne(ctx, filter, update)

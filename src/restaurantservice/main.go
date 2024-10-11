@@ -13,9 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
+	amqp "github.com/rabbitmq/amqp091-go"
+
 	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/restaurantservice/internal"
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -30,12 +31,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	repository := internal.NewRestaurantRepository(client)
-	rabbitmq := internal.NewRabbitMQ(conn)
-	restaurantService := internal.NewRestaurantService(repository, rabbitmq)
+	s := internal.NewRestaurantService(
+		internal.NewRestaurantRepository(client),
+		internal.NewRabbitMQ(conn),
+	)
 
-	startGRPCServer(restaurantService)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	go s.RunMessageProcessing(ctx)
+
+	startGRPCServer(s)
 }
 
 func initMongoClient() (*mongo.Client, error) {
@@ -74,13 +80,12 @@ func initMongoClient() (*mongo.Client, error) {
 
 func initRabbitMQ() (*amqp.Connection, error) {
 
-	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("RESTAURANT_AMQP_USER"),
 		os.Getenv("RESTAURANT_AMQP_PASS"),
 		os.Getenv("RESTAURANT_AMQP_HOST"),
 		os.Getenv("RESTAURANT_AMQP_PORT"),
-	)
-	conn, err := amqp.Dial(uri)
+	))
 	if err != nil {
 		return nil, err
 	}

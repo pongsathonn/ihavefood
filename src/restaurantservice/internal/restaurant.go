@@ -2,7 +2,10 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
+	"log"
 	"log/slog"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,11 +14,11 @@ import (
 )
 
 var (
-	errNoRestaurantId   = status.Errorf(codes.InvalidArgument, "restaurant id must be provided")
-	errNoRestaurantName = status.Errorf(codes.InvalidArgument, "restaurant name must be provided")
-	errNoMenus          = status.Errorf(codes.InvalidArgument, "menu must be at least one")
-	errNoFoodName       = status.Errorf(codes.InvalidArgument, "food name must be provided")
-	errUnknownTypeMenu  = status.Errorf(codes.InvalidArgument, "menu status cannot be UNKNOWN")
+	errNoRestaurantNumber = status.Error(codes.InvalidArgument, "restaurant number must be provided")
+	errNoRestaurantName   = status.Error(codes.InvalidArgument, "restaurant name must be provided")
+	errNoMenus            = status.Error(codes.InvalidArgument, "menu must be at least one")
+	errNoFoodName         = status.Error(codes.InvalidArgument, "food name must be provided")
+	errUnknownTypeMenu    = status.Error(codes.InvalidArgument, "menu status cannot be UNKNOWN")
 )
 
 type RestaurantService struct {
@@ -33,11 +36,11 @@ func NewRestaurantService(repository RestaurantRepository, rabbitmq RabbitMQ) *R
 }
 
 func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
-	if in.RestaurantId == "" {
-		return nil, errNoRestaurantId
+	if in.RestaurantNo == "" {
+		return nil, errNoRestaurantNumber
 	}
 
-	restaurant, err := x.repository.Restaurant(ctx, in.RestaurantId)
+	restaurant, err := x.repository.Restaurant(ctx, in.RestaurantNo)
 	if err != nil {
 		slog.Error("retrive restaurant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurant")
@@ -69,30 +72,139 @@ func (x *RestaurantService) RegisterRestaurant(ctx context.Context, in *pb.Regis
 		return nil, errNoMenus
 	}
 
-	id, err := x.repository.SaveRestaurant(ctx, in.RestaurantName, in.Menus, in.Address)
+	no, err := x.repository.SaveRestaurant(ctx, in.RestaurantName, in.Menus, in.Address)
 	if err != nil {
 		slog.Error("save restaurant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save restaurant")
 	}
 
-	return &pb.RegisterRestaurantResponse{RestaurantId: id}, nil
+	return &pb.RegisterRestaurantResponse{RestaurantNo: no}, nil
 }
 
 func (x *RestaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.AddMenuResponse, error) {
 
-	if in.RestaurantId == "" {
-		return nil, errNoRestaurantId
+	if in.RestaurantNo == "" {
+		return nil, errNoRestaurantNumber
 	}
 
 	if len(in.Menus) == 0 {
 		return nil, errNoMenus
 	}
 
-	if err := x.repository.UpdateMenu(ctx, in.RestaurantId, in.Menus); err != nil {
+	if err := x.repository.UpdateMenu(ctx, in.RestaurantNo, in.Menus); err != nil {
 		slog.Error("update menu", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update menu in database")
 	}
 
 	return &pb.AddMenuResponse{Success: true}, nil
+}
 
+func (x *RestaurantService) OrderReady(ctx context.Context, in *pb.OrderReadyRequest) (*pb.OrderReadyResponse, error) {
+
+	if in.OrderNo == "" || in.RestaurantNo == "" {
+		return nil, status.Error(codes.InvalidArgument, "order number or restaurant number must be provided")
+	}
+
+	bs, err := json.Marshal(in.OrderNo)
+	if err != nil {
+		slog.Error("marshal failed", "err", err)
+	}
+
+	//TODO
+	err = x.rabbitmq.Publish(
+		ctx,
+		"order_exchange",
+		"order.ready.event",
+		bs,
+	)
+	if err != nil {
+		slog.Error("publish failed", "err", err)
+	}
+
+	slog.Info("published event",
+		"orderNo", in.OrderNo,
+		"restaurantNo", in.RestaurantNo,
+		"routingKey", "order.ready.event",
+	)
+
+	// TODO save to db ?
+
+	return &pb.OrderReadyResponse{Success: true}, nil
+}
+
+// -------------------------------------------------------
+
+func (x *RestaurantService) RunMessageProcessing(ctx context.Context) {
+
+	go x.subPlaceOrder("order.placed.event", x.handlePlaceOrder())
+
+	// go x.subTODO("order.TODOs.event", x.handleTODO())
+
+	<-ctx.Done()
+}
+
+// subPlaceOrder consume deliveries from an exchange that
+// binding wiht routingkey and sends to messages chan
+func (x *RestaurantService) subPlaceOrder(routingKey string, orderCh chan<- *pb.PlaceOrder) {
+
+	deliveries, err := x.rabbitmq.Subscribe(
+		context.TODO(),
+		"order_exchange", // exchange
+		"",               // queue
+		routingKey,       // routing key
+	)
+	if err != nil {
+		slog.Error("subscribe order", "err", err)
+	}
+
+	for delivery := range deliveries {
+		var placeOrder pb.PlaceOrder
+		if err := json.Unmarshal(delivery.Body, &placeOrder); err != nil {
+			slog.Error("unmarshal order", "err", err)
+			continue
+		}
+		orderCh <- &placeOrder
+	}
+}
+
+func (x *RestaurantService) handlePlaceOrder() chan<- *pb.PlaceOrder {
+
+	orderCh := make(chan *pb.PlaceOrder)
+
+	go func() {
+		for order := range orderCh {
+
+			// assume this logs notify to restaurant
+			log.Printf("HI RESTAURANT! you have new order %s\n", order.No)
+
+			body, err := json.Marshal(order.No)
+			if err != nil {
+				slog.Error("marshal", "err", err)
+				continue
+			}
+
+			//TODO might be update to restaurant database ?
+
+			// assume restaurant accept order after 10s
+			time.Sleep(10 * time.Second)
+
+			err = x.rabbitmq.Publish(
+				context.TODO(),
+				"order_exchange",
+				"order.cooking.event",
+				body,
+			)
+			if err != nil {
+				slog.Error("publish event", "err", err)
+				continue
+			}
+
+			slog.Info("published event",
+				"routingKey", "order.cooking.event",
+				"orderNo", order.No,
+			)
+		}
+	}()
+
+	return orderCh
 }
