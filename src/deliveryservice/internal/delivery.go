@@ -54,13 +54,12 @@ func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository) *DeliveryService {
 	}
 }
 
+// TODO doc
 func (x *DeliveryService) RunMessageProcessing() {
 
-	// handle incoming order start delivery assignment
 	go x.fetch("order.placed.event", x.deliveryAssignment())
 
-	// notify to riders after restaurant cooking
-	go x.fetch("order.cooking.event", nil)
+	//go x.fetch("X.X.event", nil)
 
 	select {} // TODO use waitgroup instead
 }
@@ -118,18 +117,30 @@ func (x *DeliveryService) deliveryAssignment() chan<- []byte {
 				return
 			}
 
-			// TODO publish "rider.notified.event"
+			err = x.rabbitmq.Publish(context.TODO(),
+				"delivery_exchange",
+				"rider.notified.event",
+				[]byte{},
+			)
+			if err != nil {
+				slog.Error("publish event", "err", err)
+				return
+			}
 
-			if err := x.waitForRiderAccept(
-				p.No,
-				riders,
-				pickup,
-			); err != nil {
+			if err := x.waitForRiderAccept(p.No, riders, pickup); err != nil {
 				slog.Error("waiting rider accept", "err", err)
 				return
 			}
 
-			// TODO publish "rider.accepted.event"
+			err = x.rabbitmq.Publish(context.TODO(),
+				"delivery_exchange",
+				"rider.accepted.event",
+				[]byte{},
+			)
+			if err != nil {
+				slog.Error("publish event", "err", err)
+				return
+			}
 
 		}(&placeOrder)
 	}
