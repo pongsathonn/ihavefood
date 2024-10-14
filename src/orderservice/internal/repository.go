@@ -13,18 +13,19 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
+type OrderRepository interface {
+	SaveNewPlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*SaveNewPlaceOrderResponse, error)
+	PlaceOrders(ctx context.Context, username string) (*pb.ListUserPlaceOrderResponse, error)
+	UpdateOrderStatus(ctx context.Context, orderNO string, status pb.OrderStatus) error
+	UpdatePaymentStatus(ctx context.Context, orderNo string, status pb.PaymentStatus) error
+	IsDuplicatedOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (bool, error)
+}
+
 type SaveNewPlaceOrderResponse struct {
 	OrderNo       string
 	PaymentStatus pb.PaymentStatus
 	OrderStatus   pb.OrderStatus
 	Created_at    int64
-}
-
-type OrderRepository interface {
-	SaveNewPlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*SaveNewPlaceOrderResponse, error)
-	PlaceOrders(ctx context.Context, username string) (*pb.ListUserPlaceOrderResponse, error)
-	UpdateOrderStatus(ctx context.Context, orderId string, status pb.OrderStatus) error
-	IsDuplicatedOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (bool, error)
 }
 
 type orderRepository struct {
@@ -143,6 +144,34 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderNo string,
 		"orderNo", orderNo,
 		"newStatus", status.String(),
 		timeStampField, now,
+	)
+
+	return nil
+}
+
+func (r *orderRepository) UpdatePaymentStatus(ctx context.Context, orderNo string, status pb.PaymentStatus) error {
+
+	coll := r.client.Database("order_database", nil).Collection("orderCollection")
+
+	orderNumber, err := primitive.ObjectIDFromHex(orderNo)
+	if err != nil {
+		return err
+	}
+
+	if status == pb.PaymentStatus_UNPAID {
+		return errors.New("unpaid is default status")
+	}
+
+	filter := bson.M{"_id": orderNumber}
+	update := bson.M{"paymentStatus": status}
+
+	if err := coll.FindOneAndUpdate(ctx, filter, update).Err(); err != nil {
+		return err
+	}
+
+	slog.Info("updated payment status",
+		"orderNo", orderNo,
+		"newStatus", status.String(),
 	)
 
 	return nil

@@ -23,6 +23,7 @@ func main() {
 	repository := internal.NewOrderRepository(initMongoClient())
 	rabbitmq := internal.NewRabbitMQ(initRabbitMQ())
 	orderService := internal.NewOrderService(repository, rabbitmq)
+
 	startGRPCServer(orderService)
 }
 
@@ -85,7 +86,6 @@ func startGRPCServer(s *internal.OrderService) {
 		log.Fatal("Failed to listen:", err)
 	}
 
-	// Create and start the gRPC server
 	grpcServer := grpc.NewServer()
 	pb.RegisterOrderServiceServer(grpcServer, s)
 

@@ -15,12 +15,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
-// TODO add doc
-const (
-	eventOrderCooking = "order.cooking.event"
-	eventOrderReady   = "order.ready.event"
-)
-
 type OrderService struct {
 	pb.UnimplementedOrderServiceServer
 
@@ -80,7 +74,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		return nil, status.Error(codes.Internal, "failed to save place order")
 	}
 
-	err = x.rabbitmq.Publish(ctx, "order_exchange", "order.placed.event", &pb.PlaceOrder{
+	err = x.rabbitmq.Publish(ctx, "order_x", "order.placed.event", &pb.PlaceOrder{
 		No:                res.OrderNo,
 		Username:          in.Username,
 		RestaurantNo:      in.RestaurantNo,
@@ -110,30 +104,27 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 
 //---------------------------------------------------------------------------------------
 
-// might move this function to main.go for making overview
-// that what application do with topic
 func (x *OrderService) RunMessageProcessing() {
 
-	go x.fetch(eventOrderCooking, x.handleOrderStatus(eventOrderCooking))
-	go x.fetch(eventOrderReady, x.handleOrderStatus(eventOrderReady))
-
-	/*
-		go x.fetch("rider.notified.event", nil)
-		go x.fetch("rider.accepted.event", nil)
-		go x.fetch("user.paid.event", nil)
-	*/
+	go x.fetch("rider.finding.event", x.handleStatus(pb.OrderStatus_FINDING_RIDER))
+	go x.fetch("restaurant.accepted.event", x.handleStatus(pb.OrderStatus_PREPARING_ORDER))
+	go x.fetch("food.ready.event", x.handleStatus(pb.OrderStatus_WAIT_FOR_PICKUP))
+	go x.fetch("rider.assigned.event", x.handleStatus(pb.OrderStatus_ONGOING))
+	go x.fetch("user.paid.event", x.handleStatus(pb.PaymentStatus_PAID))
+	go x.fetch("rider.delivered.event", x.handleStatus(pb.OrderStatus_DELIVERED))
 
 	select {}
 }
 
-// TODO handle seperately exchange
+// fetch subscribes to a message queue using a specified routing key
+// and forwards the message bodies to the provided messages channel.
 func (x *OrderService) fetch(routingKey string, messages chan<- []byte) {
 
 	deliveries, err := x.rabbitmq.Subscribe(
 		context.TODO(),
-		"order_exchange", // exchange
-		"",               // queue
-		routingKey,       // routing key
+		"order_x",  // exchange
+		"",         // queue
+		routingKey, // routing key
 	)
 	if err != nil {
 		slog.Error("subscribe order", "err", err)
@@ -144,45 +135,40 @@ func (x *OrderService) fetch(routingKey string, messages chan<- []byte) {
 	}
 }
 
-func (x *OrderService) handleOrderStatus(topic string) chan<- []byte {
+func (x *OrderService) handleStatus(newStatus any) chan<- []byte {
 
 	messages := make(chan []byte)
 
 	go func() {
 		for msg := range messages {
 
-			var orderNo string
-			if err := json.Unmarshal(msg, &orderNo); err != nil {
+			var orderNO string
+			if err := json.Unmarshal(msg, &orderNO); err != nil {
 				slog.Error("unmarshal failed", "err", err)
 				continue
 			}
 
-			var newStatus pb.OrderStatus
-
-			switch topic {
-			case eventOrderCooking:
-				newStatus = pb.OrderStatus_PREPARING_ORDER
-			case eventOrderReady:
-				newStatus = pb.OrderStatus_WAIT_FOR_PICKUP
-			}
-
-			err := x.repository.UpdateOrderStatus(
-				context.TODO(),
-				orderNo,
-				newStatus,
-			)
-			if err != nil {
-				slog.Error("updated order status",
-					"err", err,
-					"orderNo", orderNo,
-					"newStatus", newStatus.String(),
-				)
+			if err := x.updateStatus(context.TODO(), orderNO, newStatus); err != nil {
+				slog.Error("updated status", "err", err, "orderNo", orderNO)
 				continue
 			}
 
 		}
 	}()
 	return messages
+}
+
+func (x *OrderService) updateStatus(ctx context.Context, orderNo string, newStatus any) error {
+	switch status := newStatus.(type) {
+	case pb.OrderStatus:
+		return x.repository.UpdateOrderStatus(ctx, orderNo, status)
+	case pb.PaymentStatus:
+		return x.repository.UpdatePaymentStatus(ctx, orderNo, status)
+	default:
+		return errors.New("unknown status")
+	}
+
+	return nil
 }
 
 func (x *OrderService) handleTODO() chan<- []byte {
@@ -202,6 +188,7 @@ func (x *OrderService) handleTODO() chan<- []byte {
 
 //---------------------------------------------------------------------------------------
 
+// TODO implement other validation methods
 func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 
 	switch {

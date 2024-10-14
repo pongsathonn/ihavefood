@@ -67,6 +67,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, bod
 }
 
 func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingkey string) (<-chan amqp.Delivery, error) {
+
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return nil, err
