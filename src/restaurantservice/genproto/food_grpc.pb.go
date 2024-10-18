@@ -644,31 +644,27 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	DeliveryService_TrackOrder_FullMethodName         = "/foodDeliveryApp.DeliveryService/TrackOrder"
-	DeliveryService_AcceptOrder_FullMethodName        = "/foodDeliveryApp.DeliveryService/AcceptOrder"
-	DeliveryService_GetDeliveryFee_FullMethodName     = "/foodDeliveryApp.DeliveryService/GetDeliveryFee"
-	DeliveryService_ConfirmCashPayment_FullMethodName = "/foodDeliveryApp.DeliveryService/ConfirmCashPayment"
+	DeliveryService_GetOrderTracking_FullMethodName     = "/foodDeliveryApp.DeliveryService/GetOrderTracking"
+	DeliveryService_CalculateDeliveryFee_FullMethodName = "/foodDeliveryApp.DeliveryService/CalculateDeliveryFee"
+	DeliveryService_ConfirmRiderAccept_FullMethodName   = "/foodDeliveryApp.DeliveryService/ConfirmRiderAccept"
+	DeliveryService_ConfirmOrderDeliver_FullMethodName  = "/foodDeliveryApp.DeliveryService/ConfirmOrderDeliver"
 )
 
 // DeliveryServiceClient is the client API for DeliveryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DeliveryServiceClient interface {
-	// TrackOrder provides real-time updates on the current status and location of
+	// GetOrderTracking provides real-time updates on the current status and location of
 	// an order. It tracks the progress of the order from preparation to delivery,
 	// giving the user real-time status updates.
-	TrackOrder(ctx context.Context, in *TrackOrderRequest, opts ...grpc.CallOption) (*TrackOrderResponse, error)
-	// AcceptOrder handles requests indicating that a rider has accepted an order.
-	AcceptOrder(ctx context.Context, in *AcceptOrderRequest, opts ...grpc.CallOption) (*AcceptOrderResponse, error)
-	// GetDeliveryFee calculates and returns the delivery fee based on the distance
+	GetOrderTracking(ctx context.Context, in *GetOrderTrackingRequest, opts ...grpc.CallOption) (DeliveryService_GetOrderTrackingClient, error)
+	// CalculateDeliveryFee calculates and returns the delivery fee based on the distance
 	// between the user's location and the restaurant's location.
-	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
-	// ConfirmCashPayment updates the payment status for order
-	// when the rider has received cash from the user.
-	//
-	// TODO seperate payment logic to its service (paymentservice)
-	// For Credit Card or Promt pay implement third-party payment gateway
-	ConfirmCashPayment(ctx context.Context, in *ConfirmCashPaymentRequest, opts ...grpc.CallOption) (*ConfirmCashPaymentResponse, error)
+	CalculateDeliveryFee(ctx context.Context, in *CalculateDeliveryFeeRequest, opts ...grpc.CallOption) (*CalculateDeliveryFeeResponse, error)
+	// ConfirmRiderAccept updates the rider who accepted the order.
+	ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*ConfirmRiderAcceptResponse, error)
+	// ConfirmOrderDeliver updates the order status after rider has delivered.
+	ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*ConfirmOrderDeliverResponse, error)
 }
 
 type deliveryServiceClient struct {
@@ -679,36 +675,59 @@ func NewDeliveryServiceClient(cc grpc.ClientConnInterface) DeliveryServiceClient
 	return &deliveryServiceClient{cc}
 }
 
-func (c *deliveryServiceClient) TrackOrder(ctx context.Context, in *TrackOrderRequest, opts ...grpc.CallOption) (*TrackOrderResponse, error) {
-	out := new(TrackOrderResponse)
-	err := c.cc.Invoke(ctx, DeliveryService_TrackOrder_FullMethodName, in, out, opts...)
+func (c *deliveryServiceClient) GetOrderTracking(ctx context.Context, in *GetOrderTrackingRequest, opts ...grpc.CallOption) (DeliveryService_GetOrderTrackingClient, error) {
+	stream, err := c.cc.NewStream(ctx, &DeliveryService_ServiceDesc.Streams[0], DeliveryService_GetOrderTracking_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &deliveryServiceGetOrderTrackingClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type DeliveryService_GetOrderTrackingClient interface {
+	Recv() (*GetOrderTrackingResponse, error)
+	grpc.ClientStream
+}
+
+type deliveryServiceGetOrderTrackingClient struct {
+	grpc.ClientStream
+}
+
+func (x *deliveryServiceGetOrderTrackingClient) Recv() (*GetOrderTrackingResponse, error) {
+	m := new(GetOrderTrackingResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *deliveryServiceClient) CalculateDeliveryFee(ctx context.Context, in *CalculateDeliveryFeeRequest, opts ...grpc.CallOption) (*CalculateDeliveryFeeResponse, error) {
+	out := new(CalculateDeliveryFeeResponse)
+	err := c.cc.Invoke(ctx, DeliveryService_CalculateDeliveryFee_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deliveryServiceClient) AcceptOrder(ctx context.Context, in *AcceptOrderRequest, opts ...grpc.CallOption) (*AcceptOrderResponse, error) {
-	out := new(AcceptOrderResponse)
-	err := c.cc.Invoke(ctx, DeliveryService_AcceptOrder_FullMethodName, in, out, opts...)
+func (c *deliveryServiceClient) ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*ConfirmRiderAcceptResponse, error) {
+	out := new(ConfirmRiderAcceptResponse)
+	err := c.cc.Invoke(ctx, DeliveryService_ConfirmRiderAccept_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deliveryServiceClient) GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error) {
-	out := new(GetDeliveryFeeResponse)
-	err := c.cc.Invoke(ctx, DeliveryService_GetDeliveryFee_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deliveryServiceClient) ConfirmCashPayment(ctx context.Context, in *ConfirmCashPaymentRequest, opts ...grpc.CallOption) (*ConfirmCashPaymentResponse, error) {
-	out := new(ConfirmCashPaymentResponse)
-	err := c.cc.Invoke(ctx, DeliveryService_ConfirmCashPayment_FullMethodName, in, out, opts...)
+func (c *deliveryServiceClient) ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*ConfirmOrderDeliverResponse, error) {
+	out := new(ConfirmOrderDeliverResponse)
+	err := c.cc.Invoke(ctx, DeliveryService_ConfirmOrderDeliver_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -719,21 +738,17 @@ func (c *deliveryServiceClient) ConfirmCashPayment(ctx context.Context, in *Conf
 // All implementations must embed UnimplementedDeliveryServiceServer
 // for forward compatibility
 type DeliveryServiceServer interface {
-	// TrackOrder provides real-time updates on the current status and location of
+	// GetOrderTracking provides real-time updates on the current status and location of
 	// an order. It tracks the progress of the order from preparation to delivery,
 	// giving the user real-time status updates.
-	TrackOrder(context.Context, *TrackOrderRequest) (*TrackOrderResponse, error)
-	// AcceptOrder handles requests indicating that a rider has accepted an order.
-	AcceptOrder(context.Context, *AcceptOrderRequest) (*AcceptOrderResponse, error)
-	// GetDeliveryFee calculates and returns the delivery fee based on the distance
+	GetOrderTracking(*GetOrderTrackingRequest, DeliveryService_GetOrderTrackingServer) error
+	// CalculateDeliveryFee calculates and returns the delivery fee based on the distance
 	// between the user's location and the restaurant's location.
-	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
-	// ConfirmCashPayment updates the payment status for order
-	// when the rider has received cash from the user.
-	//
-	// TODO seperate payment logic to its service (paymentservice)
-	// For Credit Card or Promt pay implement third-party payment gateway
-	ConfirmCashPayment(context.Context, *ConfirmCashPaymentRequest) (*ConfirmCashPaymentResponse, error)
+	CalculateDeliveryFee(context.Context, *CalculateDeliveryFeeRequest) (*CalculateDeliveryFeeResponse, error)
+	// ConfirmRiderAccept updates the rider who accepted the order.
+	ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*ConfirmRiderAcceptResponse, error)
+	// ConfirmOrderDeliver updates the order status after rider has delivered.
+	ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*ConfirmOrderDeliverResponse, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
 
@@ -741,17 +756,17 @@ type DeliveryServiceServer interface {
 type UnimplementedDeliveryServiceServer struct {
 }
 
-func (UnimplementedDeliveryServiceServer) TrackOrder(context.Context, *TrackOrderRequest) (*TrackOrderResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TrackOrder not implemented")
+func (UnimplementedDeliveryServiceServer) GetOrderTracking(*GetOrderTrackingRequest, DeliveryService_GetOrderTrackingServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetOrderTracking not implemented")
 }
-func (UnimplementedDeliveryServiceServer) AcceptOrder(context.Context, *AcceptOrderRequest) (*AcceptOrderResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AcceptOrder not implemented")
+func (UnimplementedDeliveryServiceServer) CalculateDeliveryFee(context.Context, *CalculateDeliveryFeeRequest) (*CalculateDeliveryFeeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CalculateDeliveryFee not implemented")
 }
-func (UnimplementedDeliveryServiceServer) GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDeliveryFee not implemented")
+func (UnimplementedDeliveryServiceServer) ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*ConfirmRiderAcceptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmRiderAccept not implemented")
 }
-func (UnimplementedDeliveryServiceServer) ConfirmCashPayment(context.Context, *ConfirmCashPaymentRequest) (*ConfirmCashPaymentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ConfirmCashPayment not implemented")
+func (UnimplementedDeliveryServiceServer) ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*ConfirmOrderDeliverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmOrderDeliver not implemented")
 }
 func (UnimplementedDeliveryServiceServer) mustEmbedUnimplementedDeliveryServiceServer() {}
 
@@ -766,74 +781,77 @@ func RegisterDeliveryServiceServer(s grpc.ServiceRegistrar, srv DeliveryServiceS
 	s.RegisterService(&DeliveryService_ServiceDesc, srv)
 }
 
-func _DeliveryService_TrackOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TrackOrderRequest)
+func _DeliveryService_GetOrderTracking_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetOrderTrackingRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(DeliveryServiceServer).GetOrderTracking(m, &deliveryServiceGetOrderTrackingServer{stream})
+}
+
+type DeliveryService_GetOrderTrackingServer interface {
+	Send(*GetOrderTrackingResponse) error
+	grpc.ServerStream
+}
+
+type deliveryServiceGetOrderTrackingServer struct {
+	grpc.ServerStream
+}
+
+func (x *deliveryServiceGetOrderTrackingServer) Send(m *GetOrderTrackingResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _DeliveryService_CalculateDeliveryFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CalculateDeliveryFeeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeliveryServiceServer).TrackOrder(ctx, in)
+		return srv.(DeliveryServiceServer).CalculateDeliveryFee(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeliveryService_TrackOrder_FullMethodName,
+		FullMethod: DeliveryService_CalculateDeliveryFee_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).TrackOrder(ctx, req.(*TrackOrderRequest))
+		return srv.(DeliveryServiceServer).CalculateDeliveryFee(ctx, req.(*CalculateDeliveryFeeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeliveryService_AcceptOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AcceptOrderRequest)
+func _DeliveryService_ConfirmRiderAccept_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmRiderAcceptRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeliveryServiceServer).AcceptOrder(ctx, in)
+		return srv.(DeliveryServiceServer).ConfirmRiderAccept(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeliveryService_AcceptOrder_FullMethodName,
+		FullMethod: DeliveryService_ConfirmRiderAccept_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).AcceptOrder(ctx, req.(*AcceptOrderRequest))
+		return srv.(DeliveryServiceServer).ConfirmRiderAccept(ctx, req.(*ConfirmRiderAcceptRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeliveryService_GetDeliveryFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDeliveryFeeRequest)
+func _DeliveryService_ConfirmOrderDeliver_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmOrderDeliverRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeliveryServiceServer).GetDeliveryFee(ctx, in)
+		return srv.(DeliveryServiceServer).ConfirmOrderDeliver(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeliveryService_GetDeliveryFee_FullMethodName,
+		FullMethod: DeliveryService_ConfirmOrderDeliver_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).GetDeliveryFee(ctx, req.(*GetDeliveryFeeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeliveryService_ConfirmCashPayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ConfirmCashPaymentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeliveryServiceServer).ConfirmCashPayment(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeliveryService_ConfirmCashPayment_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).ConfirmCashPayment(ctx, req.(*ConfirmCashPaymentRequest))
+		return srv.(DeliveryServiceServer).ConfirmOrderDeliver(ctx, req.(*ConfirmOrderDeliverRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -846,23 +864,25 @@ var DeliveryService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DeliveryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "TrackOrder",
-			Handler:    _DeliveryService_TrackOrder_Handler,
+			MethodName: "CalculateDeliveryFee",
+			Handler:    _DeliveryService_CalculateDeliveryFee_Handler,
 		},
 		{
-			MethodName: "AcceptOrder",
-			Handler:    _DeliveryService_AcceptOrder_Handler,
+			MethodName: "ConfirmRiderAccept",
+			Handler:    _DeliveryService_ConfirmRiderAccept_Handler,
 		},
 		{
-			MethodName: "GetDeliveryFee",
-			Handler:    _DeliveryService_GetDeliveryFee_Handler,
-		},
-		{
-			MethodName: "ConfirmCashPayment",
-			Handler:    _DeliveryService_ConfirmCashPayment_Handler,
+			MethodName: "ConfirmOrderDeliver",
+			Handler:    _DeliveryService_ConfirmOrderDeliver_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetOrderTracking",
+			Handler:       _DeliveryService_GetOrderTracking_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "food.proto",
 }
 

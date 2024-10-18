@@ -29,7 +29,7 @@ type DeliveryService struct {
 	// identifies each channel, and the value is the
 	// channel for the riderID, indicating which rider has
 	// accepted the order.
-	acceptc map[string]chan *pb.AcceptOrderRequest
+	acceptc map[string]chan *pb.ConfirmRiderAcceptRequest
 
 	// accepte is a map of channels used to communicate
 	// any errors encountered during the execution of
@@ -37,11 +37,9 @@ type DeliveryService struct {
 	// the value is a channel for error responses.
 	accepte map[string]chan error
 
-	rabbitmq RabbitMQ
-
+	rabbitmq   RabbitMQ
 	repository DeliveryRepository
-
-	mu sync.Mutex
+	mu         sync.Mutex
 }
 
 func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository) *DeliveryService {
@@ -49,28 +47,29 @@ func NewDeliveryService(rb RabbitMQ, rp DeliveryRepository) *DeliveryService {
 		rabbitmq:   rb,
 		repository: rp,
 
-		acceptc: make(map[string]chan *pb.AcceptOrderRequest),
+		acceptc: make(map[string]chan *pb.ConfirmRiderAcceptRequest),
 		accepte: make(map[string]chan error),
 	}
 }
 
-// TODO doc
-func (x *DeliveryService) RunMessageProcessing() {
+func (x *DeliveryService) RunDeliveryProcessing() {
 
 	go x.fetch("order.placed.event", x.deliveryAssignment())
 
-	//go x.fetch("X.X.event", nil)
+	//go x.fetch("todo.event", nil)
 
-	select {} // TODO use waitgroup instead
+	select {}
 }
 
+// Fetch subscribes to a message queue using a specified routing key
+// and forwards the message bodies to the provided messages channel.
 func (x *DeliveryService) fetch(routingKey string, messages chan<- []byte) {
 
 	deliveries, err := x.rabbitmq.Subscribe(
 		context.TODO(),
-		"order_exchange", // exchange
-		"",               // queue
-		routingKey,       // routing key
+		"order_x",  // exchange
+		"",         // queue
+		routingKey, // routing key
 	)
 	if err != nil {
 		slog.Error("subscribe failed", "err", err)
@@ -117,16 +116,6 @@ func (x *DeliveryService) deliveryAssignment() chan<- []byte {
 				return
 			}
 
-			err = x.rabbitmq.Publish(context.TODO(),
-				"delivery_exchange",
-				"rider.notified.event",
-				[]byte{},
-			)
-			if err != nil {
-				slog.Error("publish event", "err", err)
-				return
-			}
-
 			if err := x.waitForRiderAccept(p.No, riders, pickup); err != nil {
 				slog.Error("waiting rider accept", "err", err)
 				return
@@ -134,7 +123,7 @@ func (x *DeliveryService) deliveryAssignment() chan<- []byte {
 
 			err = x.rabbitmq.Publish(context.TODO(),
 				"delivery_exchange",
-				"rider.accepted.event",
+				"rider.assigned.event",
 				[]byte{},
 			)
 			if err != nil {
@@ -185,16 +174,83 @@ func (x *DeliveryService) prepareOrderDelivery(order *pb.PlaceOrder) ([]*pb.Ride
 	return riders, pickup, nil
 }
 
-func (x *DeliveryService) TrackOrder(ctx context.Context, in *pb.TrackOrderRequest) (*pb.TrackOrderResponse, error) {
+// GetOrderTracking response rider location and timestamp
+// every 1 minute, this function will stop when rider has
+// delivered the order and update delivery timestamp
+func (x *DeliveryService) GetOrderTracking(
+	in *pb.GetOrderTrackingRequest,
+	stream pb.DeliveryService_GetOrderTrackingServer,
+) error {
 
-	//TODO implement
+	var (
+		timestamp time.Time
+		delivered time.Time
+	)
 
-	return nil, status.Error(codes.Unimplemented, "method TrackOrder not implemented")
+	for {
+
+		d, err := x.repository.GetDelivery(context.TODO(), in.OrderNo)
+		if err != nil {
+			slog.Error("failed to retrives delivery", "err", err)
+			return status.Errorf(codes.Internal, "failed to retrives delivery: %v", err)
+		}
+		delivered = d.Timestamps.DeliveredAt
+
+		timestamp = time.Now()
+		if delivered != nil {
+			timestamp = d.Timestamps.DeliveredAt
+		}
+
+		err = stream.Send(&pb.GetOrderTrackingResponse{
+			OrderNo: d.OrderNO,
+			RiderId: d.RiderID,
+			RiderLocation: &pb.Point{
+				Latitude:  d.RiderLocation.Latitude,
+				Longitude: d.RiderLocation.Longitude,
+			},
+			Timestamp: timestamp.Unix(),
+		})
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to response stream: %v", err)
+		}
+
+		if delivered != nil {
+			break
+		}
+
+		time.Sleep(time.Minute)
+	}
+
+}
+
+func (x *DeliveryService) CalculateDeliveryFee(
+	ctx context.Context,
+	in *pb.CalculateDeliveryFeeRequest,
+) (*pb.CalculateDeliveryFeeResponse, error) {
+
+	if in.UserAddress == nil {
+		return nil, status.Error(codes.InvalidArgument, "user address must be provided")
+	}
+
+	if in.RestaurantAddress == nil {
+		return nil, status.Error(codes.InvalidArgument, "restaurant address must be provided")
+	}
+
+	deliveryFee, err := calculateDeliveryFee(in.RestaurantAddress, in.UserAddress)
+	if err != nil {
+		slog.Error("calculate delivery fee", "err", err)
+		return nil, status.Error(codes.Internal, "failed to calculate delivery fee")
+	}
+
+	return &pb.CalculateDeliveryFeeResponse{DeliveryFee: deliveryFee}, nil
 }
 
 // AcceptOrder handles requests indicating that a rider has accepted an order.
 // It saves the delivery order to the database. Each order should only be accepted once.
-func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderRequest) (*pb.AcceptOrderResponse, error) {
+func (x *DeliveryService) AcceptOrder(
+	ctx context.Context,
+	in *pb.AcceptOrderRequest,
+) (*pb.AcceptOrderResponse, error) {
 
 	if in.OrderNo == "" || in.RiderId == "" {
 		return nil, status.Error(codes.InvalidArgument, "order number and rider id must be provided")
@@ -222,7 +278,7 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 		return nil, status.Error(codes.Internal, "failed to notify server that order accepted")
 	}
 
-	// TODO wait for response error accepte
+	// TODO wait for response error accept
 
 	return &pb.AcceptOrderResponse{
 		PickupInfo: &pb.PickupInfo{
@@ -241,25 +297,11 @@ func (x *DeliveryService) AcceptOrder(ctx context.Context, in *pb.AcceptOrderReq
 
 }
 
-func (x *DeliveryService) GetDeliveryFee(ctx context.Context, in *pb.GetDeliveryFeeRequest) (*pb.GetDeliveryFeeResponse, error) {
-	if in.UserAddress == nil {
-		return nil, status.Error(codes.InvalidArgument, "user address must be provided")
-	}
+func (x *DeliveryService) ConfirmCashPayment(
+	ctx context.Context,
+	in *pb.ConfirmCashPaymentRequest,
+) (*pb.ConfirmCashPaymentResponse, error) {
 
-	if in.RestaurantAddress == nil {
-		return nil, status.Error(codes.InvalidArgument, "restaurant address must be provided")
-	}
-
-	deliveryFee, err := calculateDeliveryFee(in.RestaurantAddress, in.UserAddress)
-	if err != nil {
-		slog.Error("calculate delivery fee", "err", err)
-		return nil, status.Error(codes.Internal, "failed to calculate delivery fee")
-	}
-
-	return &pb.GetDeliveryFeeResponse{DeliveryFee: deliveryFee}, nil
-}
-
-func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.ConfirmCashPaymentRequest) (*pb.ConfirmCashPaymentResponse, error) {
 	if in.OrderNo == "" || in.RiderId == "" {
 		return nil, status.Error(codes.Internal, "order number or rider id must be provided")
 	}
@@ -275,8 +317,8 @@ func (x *DeliveryService) ConfirmCashPayment(ctx context.Context, in *pb.Confirm
 	}
 
 	const (
-		exchange   = "delivery_exchange"
-		routingKey = "order.paid.event"
+		exchange   = "order_x"
+		routingKey = "user.paid.event"
 	)
 
 	body, err := json.Marshal(map[string]string{
@@ -376,7 +418,7 @@ func (x *DeliveryService) waitForRiderAccept(
 			}
 
 			// Save order delivery after rider accepted
-			err := x.repository.UpdateDelivery(ctx, &DeliveryEntity{
+			err := x.repository.UpdateRiderAccept(ctx, &DeliveryEntity{
 				OrderNO:    v.OrderNo,
 				RiderID:    v.RiderId,
 				IsAccepted: true,

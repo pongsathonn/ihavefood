@@ -1,52 +1,86 @@
 
-ihavefood is a food-delivery microservice personal app written by Go 
+ihavefood is a food-delivery microservice personal project written in Go .
+
+Technologies in this project
 Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 application protobuff message need to manual generate
 
 <pre>
 
-How to run genproto.sh ?  
-# assume that you have install go grpc plugins if not run this command 
-$ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
-$ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
-
-1) give permission to script file $ chmod +x genproto.sh  
-2) execute $ ./genproto.sh
-
 #---------------------------------------------------------------------
 
 // All exchange type is topic
 // OrderService handle status for order
- +=================================================================================================+
- | Publish    | Exchange |       Routing Key         |      Queue       | Subscribe  |   STATUS    |
- |=================================================================================================|
- |            |          |                           |                  |            | PENDING     | when new order is coming (default order status)
- | Order      | order    | order.placed.event        | restaurant queue | Restaurant |    "        | notify restaurant new order
- | Order      | order    | order.placed.event        | delivery queue   | Delivery   |    "        | save new order to deliverydb
- | Restaurant | order    | order.cooking.event       | order queue      | Order      | PREPARE     | after restaurant accepted order
- | Restaurant | order    | order.cooking.event       | delivery queue   | Delivery   |    "        | start delivery assignemnt (notify to rider)
- | Delivery   | delivery | rider.notified.event      | order queue      | Order      | FIND_RIDER  | update order status to "FIND_RIDER" 
- | Restaurant | order    | order.ready.event         | order queue      | Order      | WAIT_PICKUP | update order status to "WAiT_PICKUP"
- | Delivery   | delivery | rider.accepted.event      | order queue      | Order      | ONGOING     | update order status to "ONGOING"
- | Delivery   | delivery | user.paid.event           | order queue      | Order      |    "        | update payment status to "PAID"
- | Delivery   | delivery | user.paid.event           | coupon queue     | Coupon     |    "        | update coupon being used
- | Order      | order    | order.confirmed.event     |                  |            | DELIVERED   | after user confirmed or rider delivered
- +=================================================================================================+
+//
+// use exchange "order_x" for entire app
+//
+// every message body must include orderNO in body
+// every services MUST include orderid in body
+ +==============================================================================+================+
+ | Publisher            |     Routing Key           |    Queue     | Subscriber |  ORDER STATUS  |  below this explain what subscriber does
+ |===============================================================================================|
+ |                      |                           |              |            | PENDING        | default order status
+ | Order                | order.placed.event        | restaurant.q | Restaurant |    "           | notify restaurant new order
+ |    "                 |        "                  | delivery.q   | Delivery   |    "           | send push noti to riders and generate pickup info
+ | Delivery             | rider.finding.event       | order.q      | Order      | FINDING_RIDER  | update order status
+ | Restaurant           | restaurant.accepted.event | order.q      | Order      | PREPARING      | update order status
+ | Restaurant           | food.ready.event          | order.q      | Order      | WAIT_PICKUP    | update order status
+ | Delivery             | rider.assigned.event      | order.q      | Order      | ONGOING        | update order status
+ | Payment | Delivery   | user.paid.event           | order.q      | Order      |    "           | update payment status to "PAID"
+ |    "         "       |        "                  | coupon.q     | Coupon     |    "           | update coupon being used in database
+ | Delivery             | rider.delivered.event     | order.q      | Order      | DELIVERED      | update order status to "delivered"
+ +==============================================================================+================+
 
+ Routing key explanation
+  "order.placed.event" The OrderService has received a new order.
+
+  "rider.finding.event" The DeliveryService has started finding a rider.
+
+  "restaurant.accepted.event" The restaurant has accepted the order and has started cooking
+
+  "food.ready.event" The food has been cooked and is ready for pickup by the rider.
+  
+  "rider.assigned.event" A rider has been successfully assigned to pick up the order.
+
+  "user.paid.event" The user has completed payment for the order.  
+    - PaymentService publish this if promptpay or credit card transaction successfully.
+    - DeliveryService publish when rider has receive cash from user after delivery.
+                     
+  "rider.delivered.event" The rider has confirmed that the order has been delivered.
 
 
  Canceling Order 
- +================================================================================================+
- | Publish    | Exchange |       Routing Key          |      Queue       | Subscribe  |  STATUS   |
- |====================================================================================|===========|
- | Order      | order    | payment.failed.event       | order queue      |   *        | CANCELLED | order is unpaid within XX minutes other services
- |   "        |   "      |           "                |      "           |   "        |    "      | need to cancel order process
- | Delivery   | delivery | rider.unaccepted.event     | order queue      | Order      | CANCELLED | rider not found in XX minutes
- | Restaurant | order    | restaurant.cancelled.event | order queue      | Order      | CANCELLED | cancel from restaurant i.e menus unavailable
- | User       | order    | user.cancelled.event       | order queue      | Order      | CANCELLED | cancel from user i.e user reconsider
- +================================================================================================+
+ +========================================================================+
+ | Publisher  |       Routing Key                | Subscriber |  STATUS   |
+ |===============================================|============|===========|
+ | payment    | error.payment.failed.event       |     *      | CANCELLED | 
+ | Delivery   | error.rider.unaccepted.event     |     *      | CANCELLED | 
+ | Restaurant | error.restaurant.cancelled.event |     *      | CANCELLED | 
+ +========================================================================+
+
+ The publisher should attach the error message in the body and use a routing 
+ key that starts with "error." The errors may include anything critical that
+ leads to the cancellation of an order, such as payment transaction failures,
+ the inability to find a rider within a specified time, restaurant cancellations,
+ and any other internal server errors. Therefore, every service must subscribe 
+ to the "error.#" routing key to handle the rollback or deletion of order information.
+
+</pre>
 
 
+
+
+
+<pre>
+
+How to execute genproto.sh ?  
+# If you haven't installed Go grpc plugins run these lines.
+  $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+  $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+
+then, proceed with following
+1) Give permission to script file $ chmod +x genproto.sh  
+2) Execute $ ./genproto.sh
 
 </pre>
 

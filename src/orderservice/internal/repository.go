@@ -55,14 +55,14 @@ func (r *orderRepository) SaveNewPlaceOrder(ctx context.Context, in *pb.HandlePl
 
 	slog.Info("inserted new order",
 		"orderNo", orderNo.Hex(),
-		"createdAt", placeOrder.OrderTimeStamps.CreatedAt,
+		"createdAt", placeOrder.Timestamps.CreatedAt,
 	)
 
 	return &SaveNewPlaceOrderResponse{
 		OrderNo:       orderNo.Hex(),
 		PaymentStatus: pb.PaymentStatus(placeOrder.PaymentStatus),
 		OrderStatus:   pb.OrderStatus(placeOrder.OrderStatus),
-		Created_at:    placeOrder.OrderTimeStamps.CompletedAt,
+		Created_at:    placeOrder.Timestamps.CreatedAt.Unix(),
 	}, nil
 
 }
@@ -96,13 +96,6 @@ func (r *orderRepository) PlaceOrders(ctx context.Context, username string) (*pb
 	return &pb.ListUserPlaceOrderResponse{PlaceOrders: placeOrders}, nil
 }
 
-// UpdateOrderStatus updates the status of a placed order.
-// Available statuses are:
-// - "PREPARING_ORDER"
-// - "FINDING_RIDER"
-// - "ONGOING"
-// - "DELIVERED"
-//
 // Updating to "PENDING" will result in an error, as it is the default status.
 // Updating to "CANCELLED" is not allowed; use this status when deleting a placed order.
 func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderNo string, status pb.OrderStatus) error {
@@ -114,7 +107,7 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, orderNo string,
 		return err
 	}
 
-	now := time.Now().Unix()
+	now := time.Now()
 	var timeStampField string
 
 	switch status {
@@ -177,21 +170,23 @@ func (r *orderRepository) UpdatePaymentStatus(ctx context.Context, orderNo strin
 	return nil
 }
 
+// TODO might use other techniques to prevent duplicated order
+//
 // IsDuplicatedOrder prevents placing a duplicate order with same restaurant
 // An order is considered a duplicate if:
+// - User try to order same restaurant within the last 30 minutes.
 // - The payment status is "unpaid".
-// - The order was created within the last 30 minutes.
 func (r *orderRepository) IsDuplicatedOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (bool, error) {
 
 	coll := r.client.Database("order_database", nil).Collection("orderCollection")
 
-	halfHourAgo := time.Now().Add(-30 * time.Minute).Unix()
+	halfHourAgo := time.Now().Add(-30 * time.Minute)
 
 	filter := bson.M{
-		"restaurantNo":              in.RestaurantNo,
-		"username":                  in.Username,
-		"paymentStatus":             int32(pb.PaymentStatus_UNPAID),
-		"orderTimeStamps.createdAt": bson.M{"$gte": halfHourAgo},
+		"restaurantNo":         in.RestaurantNo,
+		"username":             in.Username,
+		"paymentStatus":        int32(pb.PaymentStatus_UNPAID),
+		"timestamps.createdAt": bson.M{"$gte": halfHourAgo},
 	}
 
 	if err := coll.FindOne(ctx, filter).Err(); err != nil {
@@ -242,10 +237,10 @@ func preparePlaceOrder(in *pb.HandlePlaceOrderRequest) *PlaceOrderEntity {
 		PaymentMethods: PaymentMethodsEntity(in.PaymentMethods),
 		PaymentStatus:  PaymentStatusEntity(pb.PaymentStatus_UNPAID),
 		OrderStatus:    OrderStatusEntity(pb.OrderStatus_PENDING),
-		OrderTimeStamps: &OrderTimestampsEntity{
-			CreatedAt:   time.Now().Unix(),
-			UpdatedAt:   0,
-			CompletedAt: 0,
+		Timestamps: &TimestampsEntity{
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Time{},
+			CompletedAt: time.Time{},
 		},
 	}
 }
@@ -291,9 +286,9 @@ func entityToProtoMessage(entity *PlaceOrderEntity) *pb.PlaceOrder {
 		PaymentStatus:  pb.PaymentStatus(entity.PaymentStatus),
 		OrderStatus:    pb.OrderStatus(entity.OrderStatus),
 		OrderTimestamps: &pb.OrderTimestamps{
-			CreatedAt:   entity.OrderTimeStamps.CompletedAt,
-			UpdatedAt:   entity.OrderTimeStamps.UpdatedAt,
-			CompletedAt: entity.OrderTimeStamps.CompletedAt,
+			CreatedAt:   entity.Timestamps.CompletedAt.Unix(),
+			UpdatedAt:   entity.Timestamps.UpdatedAt.Unix(),
+			CompletedAt: entity.Timestamps.CompletedAt.Unix(),
 		},
 	}
 

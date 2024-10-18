@@ -22,9 +22,11 @@ import (
 func main() {
 	repository := internal.NewOrderRepository(initMongoClient())
 	rabbitmq := internal.NewRabbitMQ(initRabbitMQ())
-	orderService := internal.NewOrderService(repository, rabbitmq)
+	s := internal.NewOrderService(repository, rabbitmq)
 
-	startGRPCServer(orderService)
+	go s.RunOrderProcessing()
+
+	startGRPCServer(s)
 }
 
 func initRabbitMQ() *amqp.Connection {

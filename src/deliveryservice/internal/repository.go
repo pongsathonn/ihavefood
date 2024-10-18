@@ -9,26 +9,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// DeliveryEntity represent Delivery information
-type DeliveryEntity struct {
-	OrderNO        string     `bson:"orderNo"`
-	RiderID        string     `bson:"riderId"`
-	IsAccepted     bool       `bson:"isAccepted"`
-	PickupCode     string     `bson:"pickupCode"`
-	PickupLocation *Point     `bson:"pickupLocation"`
-	Destination    *Point     `bson:"destination"`
-	AcceptedTime   *time.Time `bson:"acceptedTime"`
-}
-
-type Point struct {
-	Latitude  float64 `bson:"latitude"`
-	Longitude float64 `bson:"longtitude"`
-}
-
+// TODO doc
 type DeliveryRepository interface {
 	GetDelivery(ctx context.Context, orderNO string) (*DeliveryEntity, error)
+
 	SaveDelivery(ctx context.Context, delivery *DeliveryEntity) error
-	UpdateDelivery(ctx context.Context, delivery *DeliveryEntity) error
+
+	UpdateRiderAccept(ctx context.Context, delivery *DeliveryEntity) error
+
+	UpdateRiderLocation(ctx context.Context, riderId string, point *Point) error
+
+	IsRiderAccept(ctx context.Context, orderNO string) (bool, error)
+
+	IsDeliver(ctx context.Context, orderNO string) (bool, error)
 }
 
 type deliveryRepository struct {
@@ -82,9 +75,10 @@ func (r *deliveryRepository) SaveDelivery(ctx context.Context, delivery *Deliver
 				Latitude:  delivery.Destination.Latitude,
 				Longitude: delivery.Destination.Longitude,
 			},
-			IsAccepted:   false,
-			AcceptedTime: nil,
+			RiderLocation: nil,
+			CreatedAt:     time.Now(),
 		})
+
 		if err != nil {
 			return nil, err
 		}
@@ -104,18 +98,20 @@ func (r *deliveryRepository) SaveDelivery(ctx context.Context, delivery *Deliver
 	return nil
 }
 
-func (r *deliveryRepository) UpdateDelivery(ctx context.Context, delivery *DeliveryEntity) error {
+func (r *deliveryRepository) UpdateRiderAccept(
+	ctx context.Context,
+	delivery *DeliveryEntity,
+) error {
 	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
 	filter := bson.D{
 		{"orderNo", delivery.OrderNO},
 	}
 
-	update := bson.M{
-		"$set": bson.M{
-			"riderId":      delivery.RiderID,
-			"isAccepted":   delivery.IsAccepted,
-			"acceptedTime": time.Now(),
+	update := bson.D{
+		"$set": bson.D{
+			"riderId":               delivery.RiderID,
+			"timestamps.acceptedAt": time.Now(),
 		},
 	}
 
@@ -125,4 +121,46 @@ func (r *deliveryRepository) UpdateDelivery(ctx context.Context, delivery *Deliv
 	}
 
 	return nil
+}
+
+func (r *deliveryRepository) UpdateRiderLocation(
+	ctx context.Context,
+	riderId string,
+	point *Point,
+) error {
+
+	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
+
+	filter := bson.D{{"riderId", riderId}}
+	update := bson.D{"$set": bson.D{"riderLocation": point}}
+
+	_, err := coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+// IsRiderAccept check whether order has accept by check delivery fields
+// acceptedAt is assign or not with IsZero()
+// "true" if rider has NOT accepted.
+// "false" rider has already accepted the order.
+func (r *deliveryRepository) IsRiderAccept(ctx context.Context, orderNO string) (bool, error) {
+	coll := r.db.Database("delivery_database", nil).Collection("deliveryCollection")
+
+	filter := bson.D{{"orderNo", orderNO}}
+
+	var res DeliveryEntity
+	if err := coll.FindOne(ctx, filter).Decode(&res); err != nil {
+		return false, err
+	}
+
+	// AcceptedAt is zero mean rider not accept yet
+	return res.AcceptedAt.IsZero(), nil
+}
+
+func (r *deliveryRepository) IsDeliver(ctx context.Context, orderNO string) (bool, error) {
+	//TODO
 }

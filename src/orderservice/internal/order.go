@@ -87,8 +87,8 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		RestaurantAddress: in.RestaurantAddress,
 		UserContact:       in.UserContact,
 		PaymentMethods:    in.PaymentMethods,
-		PaymentStatus:     res.PaymentStatus,
-		OrderStatus:       res.OrderStatus, // "PENDING"
+		PaymentStatus:     res.PaymentStatus, // "UNPAID"
+		OrderStatus:       res.OrderStatus,   // "PENDING"
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to publish event: %v", err)
@@ -104,14 +104,15 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 
 //---------------------------------------------------------------------------------------
 
-func (x *OrderService) RunMessageProcessing() {
+func (x *OrderService) RunOrderProcessing() {
 
-	go x.fetch("rider.finding.event", x.handleStatus(pb.OrderStatus_FINDING_RIDER))
-	go x.fetch("restaurant.accepted.event", x.handleStatus(pb.OrderStatus_PREPARING_ORDER))
-	go x.fetch("food.ready.event", x.handleStatus(pb.OrderStatus_WAIT_FOR_PICKUP))
-	go x.fetch("rider.assigned.event", x.handleStatus(pb.OrderStatus_ONGOING))
-	go x.fetch("user.paid.event", x.handleStatus(pb.PaymentStatus_PAID))
-	go x.fetch("rider.delivered.event", x.handleStatus(pb.OrderStatus_DELIVERED))
+	go x.fetch("rider.finding.event", x.handleOrderStatus(pb.OrderStatus_FINDING_RIDER))
+	go x.fetch("restaurant.accepted.event", x.handleOrderStatus(pb.OrderStatus_PREPARING_ORDER))
+	go x.fetch("food.ready.event", x.handleOrderStatus(pb.OrderStatus_WAIT_FOR_PICKUP))
+	go x.fetch("rider.assigned.event", x.handleOrderStatus(pb.OrderStatus_ONGOING))
+	go x.fetch("rider.delivered.event", x.handleOrderStatus(pb.OrderStatus_DELIVERED))
+
+	go x.fetch("user.paid.event", x.handlePaymentStatus(pb.PaymentStatus_PAID))
 
 	select {}
 }
@@ -135,7 +136,7 @@ func (x *OrderService) fetch(routingKey string, messages chan<- []byte) {
 	}
 }
 
-func (x *OrderService) handleStatus(newStatus any) chan<- []byte {
+func (x *OrderService) handleOrderStatus(status pb.OrderStatus) chan<- []byte {
 
 	messages := make(chan []byte)
 
@@ -148,27 +149,41 @@ func (x *OrderService) handleStatus(newStatus any) chan<- []byte {
 				continue
 			}
 
-			if err := x.updateStatus(context.TODO(), orderNO, newStatus); err != nil {
+			err := x.repository.UpdateOrderStatus(context.TODO(), orderNO, status)
+			if err != nil {
 				slog.Error("updated status", "err", err, "orderNo", orderNO)
 				continue
 			}
-
 		}
 	}()
 	return messages
 }
 
-func (x *OrderService) updateStatus(ctx context.Context, orderNo string, newStatus any) error {
-	switch status := newStatus.(type) {
-	case pb.OrderStatus:
-		return x.repository.UpdateOrderStatus(ctx, orderNo, status)
-	case pb.PaymentStatus:
-		return x.repository.UpdatePaymentStatus(ctx, orderNo, status)
-	default:
-		return errors.New("unknown status")
-	}
+// handlePaymentStatus updates payment status of an order after
+// it has been successfully processed.
+//   - Cash method update when rider received cash from user after delivery.
+//   - PromptPay and Credit card upon succussful transaction.
+func (x *OrderService) handlePaymentStatus(status pb.PaymentStatus) chan<- []byte {
 
-	return nil
+	messages := make(chan []byte)
+
+	go func() {
+		for msg := range messages {
+
+			var orderNO string
+			if err := json.Unmarshal(msg, &orderNO); err != nil {
+				slog.Error("unmarshal failed", "err", err)
+				continue
+			}
+
+			err := x.repository.UpdatePaymentStatus(context.TODO(), orderNO, status)
+			if err != nil {
+				slog.Error("updated status", "err", err, "orderNo", orderNO)
+				continue
+			}
+		}
+	}()
+	return messages
 }
 
 func (x *OrderService) handleTODO() chan<- []byte {

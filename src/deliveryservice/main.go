@@ -33,7 +33,7 @@ func main() {
 		internal.NewDeliveryRepository(client),
 	)
 
-	go s.RunMessageProcessing()
+	go s.RunDeliveryProcessing()
 
 	startGRPCServer(s)
 }

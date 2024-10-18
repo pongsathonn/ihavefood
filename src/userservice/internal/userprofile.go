@@ -11,7 +11,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/userservice/genproto"
 )
 
-// UserService handle UserProfile
+// UserService manages user profile.
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 

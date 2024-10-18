@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -11,21 +13,21 @@ import (
 // to make this model match with protobuff json name should be same as bson name tag
 // if not omitempty at id Mongo will use zero as id ( when insert )
 type PlaceOrderEntity struct {
-	OrderNo           primitive.ObjectID     `bson:"_id,omitempty"`
-	Username          string                 `bson:"username"`
-	RestaurantNo      string                 `bson:"restaurantNo"`
-	Menus             []*MenuEntity          `bson:"menus"`
-	CouponCode        string                 `bson:"couponCode"`
-	CouponDiscount    int32                  `bson:"couponDiscount"`
-	DeliveryFee       int32                  `bson:"deliveryFee"`
-	Total             int32                  `bson:"total"`
-	UserAddress       *AddressEntity         `bson:"userAddress"`
-	RestaurantAddress *AddressEntity         `bson:"restaurantAddress"`
-	UserContact       *ContactInfoEntity     `bson:"userContact"`
-	PaymentMethods    PaymentMethodsEntity   `bson:"paymentMethods"`
-	PaymentStatus     PaymentStatusEntity    `bson:"paymentStatus"`
-	OrderStatus       OrderStatusEntity      `bson:"orderStatus"`
-	OrderTimeStamps   *OrderTimestampsEntity `bson:"orderTimeStamps"`
+	OrderNo           primitive.ObjectID   `bson:"_id,omitempty"`
+	Username          string               `bson:"username"`
+	RestaurantNo      string               `bson:"restaurantNo"`
+	Menus             []*MenuEntity        `bson:"menus"`
+	CouponCode        string               `bson:"couponCode"`
+	CouponDiscount    int32                `bson:"couponDiscount"`
+	DeliveryFee       int32                `bson:"deliveryFee"`
+	Total             int32                `bson:"total"`
+	UserAddress       *AddressEntity       `bson:"userAddress"`
+	RestaurantAddress *AddressEntity       `bson:"restaurantAddress"`
+	UserContact       *ContactInfoEntity   `bson:"userContact"`
+	PaymentMethods    PaymentMethodsEntity `bson:"paymentMethods"`
+	PaymentStatus     PaymentStatusEntity  `bson:"paymentStatus"`
+	OrderStatus       OrderStatusEntity    `bson:"orderStatus"`
+	Timestamps        *TimestampsEntity    `bson:"timestamps"`
 }
 
 type MenuEntity struct {
@@ -71,8 +73,9 @@ const (
 	OrderStatus_CANCELLED       OrderStatusEntity = 5
 )
 
-type OrderTimestampsEntity struct {
-	CreatedAt   int64 `bson:"createdAt"`
-	UpdatedAt   int64 `bson:"updatedAt"`
-	CompletedAt int64 `bson:"completedAt"`
+// TODO use time.Time for readable
+type TimestampsEntity struct {
+	CreatedAt   time.Time `bson:"createdAt"`
+	UpdatedAt   time.Time `bson:"updatedAt"`
+	CompletedAt time.Time `bson:"completedAt"`
 }

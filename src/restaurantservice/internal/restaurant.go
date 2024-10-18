@@ -110,11 +110,12 @@ func (x *RestaurantService) OrderReady(ctx context.Context, in *pb.OrderReadyReq
 		slog.Error("marshal failed", "err", err)
 	}
 
-	//TODO
+	//TODO might save order to database or not
+
 	err = x.rabbitmq.Publish(
 		ctx,
-		"order_exchange",
-		"order.ready.event",
+		"order_x",
+		"food.ready.event",
 		bs,
 	)
 	if err != nil {
@@ -124,10 +125,8 @@ func (x *RestaurantService) OrderReady(ctx context.Context, in *pb.OrderReadyReq
 	slog.Info("published event",
 		"orderNo", in.OrderNo,
 		"restaurantNo", in.RestaurantNo,
-		"routingKey", "order.ready.event",
+		"routingKey", "food.ready.event",
 	)
-
-	// TODO save to db ?
 
 	return &pb.OrderReadyResponse{Success: true}, nil
 }
@@ -149,9 +148,9 @@ func (x *RestaurantService) subPlaceOrder(routingKey string, orderCh chan<- *pb.
 
 	deliveries, err := x.rabbitmq.Subscribe(
 		context.TODO(),
-		"order_exchange", // exchange
-		"",               // queue
-		routingKey,       // routing key
+		"order_x",  // exchange
+		"",         // queue
+		routingKey, // routing key
 	)
 	if err != nil {
 		slog.Error("subscribe order", "err", err)
@@ -167,6 +166,9 @@ func (x *RestaurantService) subPlaceOrder(routingKey string, orderCh chan<- *pb.
 	}
 }
 
+// handlePlaceOrder will notify to restaurant
+// and wait for restaurant accept the order
+// thne publish "restaurant.accepted.event"
 func (x *RestaurantService) handlePlaceOrder() chan<- *pb.PlaceOrder {
 
 	orderCh := make(chan *pb.PlaceOrder)
@@ -174,7 +176,7 @@ func (x *RestaurantService) handlePlaceOrder() chan<- *pb.PlaceOrder {
 	go func() {
 		for order := range orderCh {
 
-			// assume this logs notify to restaurant
+			// Assume this logs notify to restaurant
 			log.Printf("HI RESTAURANT! you have new order %s\n", order.No)
 
 			body, err := json.Marshal(order.No)
@@ -183,15 +185,16 @@ func (x *RestaurantService) handlePlaceOrder() chan<- *pb.PlaceOrder {
 				continue
 			}
 
-			//TODO might be update to restaurant database ?
+			// TODO wait for restaurant accept here
+			// <- AcceptOrder()
 
 			// assume restaurant accept order after 10s
 			time.Sleep(10 * time.Second)
 
 			err = x.rabbitmq.Publish(
 				context.TODO(),
-				"order_exchange",
-				"order.cooking.event",
+				"order_x",
+				"restaurant.accepted.event",
 				body,
 			)
 			if err != nil {
@@ -200,7 +203,7 @@ func (x *RestaurantService) handlePlaceOrder() chan<- *pb.PlaceOrder {
 			}
 
 			slog.Info("published event",
-				"routingKey", "order.cooking.event",
+				"routingKey", "restaurant.accepted.event",
 				"orderNo", order.No,
 			)
 		}
