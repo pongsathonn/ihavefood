@@ -3,9 +3,6 @@ ihavefood is a food-delivery microservice personal project written in Go .
 
 Technologies in this project
 Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
-application protobuff message need to manual generate
-
-<pre>
 
 #---------------------------------------------------------------------
 
@@ -16,9 +13,9 @@ application protobuff message need to manual generate
 //
 // every message body must include orderNO in body
 // every services MUST include orderid in body
- +==============================================================================+================+
+
  | Publisher            |     Routing Key           |    Queue     | Subscriber |  ORDER STATUS  |  below this explain what subscriber does
- |===============================================================================================|
+ |----------------------|---------------------------|--------------|------------|----------------|
  |                      |                           |              |            | PENDING        | default order status
  | Order                | order.placed.event        | restaurant.q | Restaurant |    "           | notify restaurant new order
  |    "                 |        "                  | delivery.q   | Delivery   |    "           | send push noti to riders and generate pickup info
@@ -29,9 +26,8 @@ application protobuff message need to manual generate
  | Payment | Delivery   | user.paid.event           | order.q      | Order      |    "           | update payment status to "PAID"
  |    "         "       |        "                  | coupon.q     | Coupon     |    "           | update coupon being used in database
  | Delivery             | rider.delivered.event     | order.q      | Order      | DELIVERED      | update order status to "delivered"
- +==============================================================================+================+
 
- Routing key explanation
+### Routing key explanation
   "order.placed.event" The OrderService has received a new order.
 
   "rider.finding.event" The DeliveryService has started finding a rider.
@@ -49,14 +45,14 @@ application protobuff message need to manual generate
   "rider.delivered.event" The rider has confirmed that the order has been delivered.
 
 
- Canceling Order 
- +========================================================================+
+### Canceling Order 
+
  | Publisher  |       Routing Key                | Subscriber |  STATUS   |
- |===============================================|============|===========|
+ |------------|----------------------------------|------------|-----------|
  | payment    | error.payment.failed.event       |     *      | CANCELLED | 
  | Delivery   | error.rider.unaccepted.event     |     *      | CANCELLED | 
  | Restaurant | error.restaurant.cancelled.event |     *      | CANCELLED | 
- +========================================================================+
+
 
  The publisher should attach the error message in the body and use a routing 
  key that starts with "error." The errors may include anything critical that
@@ -65,24 +61,14 @@ application protobuff message need to manual generate
  and any other internal server errors. Therefore, every service must subscribe 
  to the "error.#" routing key to handle the rollback or deletion of order information.
 
-</pre>
 
 
 
 
 
-<pre>
+ 
 
-How to execute genproto.sh ?  
-# If you haven't installed Go grpc plugins run these lines.
-  $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
-  $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
-then, proceed with following
-1) Give permission to script file $ chmod +x genproto.sh  
-2) Execute $ ./genproto.sh
-
-</pre>
 
 
 # API design
@@ -119,4 +105,10 @@ Methods names
 
 
 
+### install protobuff complier
+ $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+ $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
+## How to execute genproto.sh ?  
+1) Give permission to script file $ chmod +x genproto.sh  
+2) Execute $ ./genproto.sh
