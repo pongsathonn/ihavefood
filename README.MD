@@ -4,7 +4,6 @@ ihavefood is a food-delivery microservice personal project written in Go .
 Technologies in this project
 Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 
-#---------------------------------------------------------------------
 
 // All exchange type is topic
 // OrderService handle status for order
@@ -51,12 +50,15 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 
  | Publisher  |       Routing Key                | Subscriber |  STATUS   |
  |------------|----------------------------------|------------|-----------|
- | payment    | error.payment.failed.event       |     *      | CANCELLED | 
+ | Payment    | error.payment.failed.event       |     *      | CANCELLED | 
  | Delivery   | error.rider.unaccepted.event     |     *      | CANCELLED | 
  | Restaurant | error.restaurant.cancelled.event |     *      | CANCELLED | 
 
 
- The publisher should attach the error message in the body and use a routing 
+> this is blockquotes
+> also blockquotes
+
+ > The publisher should attach the error message in the body and use a routing 
  key that starts with "error." The errors may include anything critical that
  leads to the cancellation of an order, such as payment transaction failures,
  the inability to find a rider within a specified time, restaurant cancellations,
@@ -102,15 +104,16 @@ Methods names
 | Delete | Book | DeleteBook       | DeleteBookRequest       | google.protobuf.Empty     |
 
 
-> this is blockquotes
-> also blockquotes
 
 
 
-### install protobuff complier
- $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+### Install protobuff complier
+
+<pre>
+ $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28 
  $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+</pre>
 
 ## How to execute genproto.sh ?  
 1) Give permission to script file $ chmod +x genproto.sh  
-2) Execute $ ./genproto.sh
+2) Execute $ ./genproto.sh 
