@@ -1,37 +1,23 @@
-# API design 
-
-**"TRY"** to follow Google api design <https://cloud.google.com/apis/design>
 
 
-Naming should be simple, intuitive and consistent
+```
+ -I is where protoc search for imports
+ --go_out generates .pb.go  (protobuf messages)
+ --go-grpc_out generates .grpc.pb.go (gRPC service definitions)
+ --grpc-gateway_out generates .gw.go (gRPC-Gateway for REST support)
 
-## gRPC methods
+ syntax --go*=OUT_DIR
 
-You **are not** late. (indicative)
-**Don't be** late! (imperative)
+for more see [https://protobuf.dev/reference/go/go-generated]
 
-Methods names
-- The verb portion of the method name should use the imperative mood, which is for 
-  orders or commands rather than the indicative mood which is for questions.
-- the noun portion of the method name must be singular for all methods except List.
-- custome methods may be singular or plural as appropriate.
-- Batch methods **must** use the plural noun.
+**for gRPC-gateway copy these files from googleapis to source code
+  and run go mod tidy to resolve
 
-| Verb   | Noun | Method Name      | Request Message         | Response Message          |
-|--------|------|------------------|-------------------------|---------------------------|
-| List   | Book | ListBooks        | ListBooksRequest        | ListBooksResponse         |
-| Get    | Book | GetBook          | GetBookRequest          | Book                      |
-| Create | Book | CreateBook       | CreateBookRequest       | Book                      |
-| Update | Book | UpdateBook       | UpdateBookRequest       | Book                      |
-| Rename | Book | RenameBook       | RenameBookRequest       | RenameBookResponse        |
-| Delete | Book | DeleteBook       | DeleteBookRequest       | google.protobuf.Empty     |
+    google/api/annotations.proto
+    google/api/field_behavior.proto
+    google/api/http.proto
+    google/api/httpbody.proto
+```
 
 
-
-
-
-
-
-> this is blockquotes
-> also blockquotes
 
