@@ -77,14 +77,13 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 
 # API design
 
-**"TRY"** to follow Google api design <https://cloud.google.com/apis/design>
-
+follow some of Google api design <https://cloud.google.com/apis/design>
 
 Naming should be simple, intuitive and consistent
 
 ## gRPC methods
 
-You **are not** late. (indicative)
+You **are not** late. (indicative) <br>
 **Don't be** late! (imperative)
 
 Methods names
@@ -108,12 +107,11 @@ Methods names
 
 
 ### Install protobuff complier
-
 <pre>
  $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28 
  $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 </pre>
 
-## How to execute genproto.sh ?  
+### How to execute genproto.sh ?  
 1) Give permission to script file $ chmod +x genproto.sh  
 2) Execute $ ./genproto.sh 
