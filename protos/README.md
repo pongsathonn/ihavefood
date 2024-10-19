@@ -1,10 +1,10 @@
 
 
 ```
- -I is where protoc search for imports
- --go_out generates .pb.go  (protobuf messages)
- --go-grpc_out generates .grpc.pb.go (gRPC service definitions)
- --grpc-gateway_out generates .gw.go (gRPC-Gateway for REST support)
+ ==-I== is where protoc search for imports
+ ==--go_out== generates .pb.go  (protobuf messages)
+ ==--go-grpc_out== generates .grpc.pb.go (gRPC service definitions)
+ ==--grpc-gateway_out== generates .gw.go (gRPC-Gateway for REST support)
 
  syntax --go*=OUT_DIR
 
