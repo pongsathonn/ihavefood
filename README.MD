@@ -14,6 +14,7 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 // every message body must include orderNO in body
 // every services MUST include orderid in body
 
+<pre>
  | Publisher            |     Routing Key           |    Queue     | Subscriber |  ORDER STATUS  |  below this explain what subscriber does
  |----------------------|---------------------------|--------------|------------|----------------|
  |                      |                           |              |            | PENDING        | default order status
@@ -26,6 +27,7 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
  | Payment | Delivery   | user.paid.event           | order.q      | Order      |    "           | update payment status to "PAID"
  |    "         "       |        "                  | coupon.q     | Coupon     |    "           | update coupon being used in database
  | Delivery             | rider.delivered.event     | order.q      | Order      | DELIVERED      | update order status to "delivered"
+</pre>
 
 ### Routing key explanation
   "order.placed.event" The OrderService has received a new order.
