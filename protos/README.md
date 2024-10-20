@@ -13,13 +13,16 @@ flags
 
 more see [https://protobuf.dev/reference/go/go-generated]
 
-**for gRPC-gateway copy these files from googleapis to source code
-  and run go mod tidy to resolve
+ for gRPC-gateway copy these files from googleapis to source code
+ and run go mod tidy to resolve
 
     google/api/annotations.proto
     google/api/field_behavior.proto
     google/api/http.proto
     google/api/httpbody.proto
 
+
+a
+sdoasd
 
 
