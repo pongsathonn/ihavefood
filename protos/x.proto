@@ -9,15 +9,13 @@ import "google/protobuf/empty.proto";
 
 //--------------------------------
 
-enum AvailStatus{
-    UNKNOWN = 0;
-    AVAILABLE = 1;
-    UNVAILABLE = 2;
-}
 
-enum Status{
-    CLOSED = 0;
-    OPEN = 1;
+message Address {
+    string address_name = 1;
+	string sub_district = 2;
+	string district = 3;    
+	string province = 4;    
+	string postal_code = 5;
 }
 
 // ---------------------USER SERVICE------------------------------
@@ -242,14 +240,6 @@ message PlaceOrder {
     OrderTimestamps order_timestamps = 16;
 }
 
-message Address {
-    string address_name = 1;
-	string sub_district = 2;
-	string district = 3;    
-	string province = 4;    
-	string postal_code = 5;
-}
-
 message ContactInfo {
     string phone_number = 1;
     string email = 2;
@@ -266,7 +256,6 @@ enum PaymentStatus {
     UNPAID = 0;
     PAID = 1;
 }
-
 
 enum OrderStatus {
     PENDING = 0;   
@@ -456,18 +445,22 @@ service RestaurantService {
 
 }
 
+enum RestaurantStatus{
+    CLOSED = 0;
+    OPEN = 1;
+}
+
 message Restaurant {
-    string no = 1;
+    string restaurant_no = 1;
     string name = 2;
     repeated Menu menus = 3;
     Address address = 4;
-    Status status = 5;
+    RestaurantStatus status = 5;
 }
 
 message Menu {
     string food_name = 1;
     int32 price = 2;
-    //AvailStatus available = 3;
 }
 
 message GetRestaurantRequest{
@@ -656,7 +649,6 @@ message DeleteOrderReviewRequest {
 // TODO 
 // implement third-party payment gateway for 
 // credit card and prompt pay
-
 
 
 
