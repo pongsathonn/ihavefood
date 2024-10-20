@@ -1,0 +1,675 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+//--------------------------------
+
+enum AvailStatus{
+    UNKNOWN = 0;
+    AVAILABLE = 1;
+    UNVAILABLE = 2;
+}
+
+enum Status{
+    CLOSED = 0;
+    OPEN = 1;
+}
+
+// ---------------------USER SERVICE------------------------------
+// Manages user profiles
+service UserService {
+
+    rpc ListProfiles(ListProfilesRequest) returns(ListProfilesResponse){
+        option (google.api.http) = {
+            get: "/api/users" 
+        };
+    }
+
+    rpc GetProfile(GetProfileRequest) returns(Profile){
+        option (google.api.http) = {
+            get: "/api/users/{user_id}" 
+        };
+    }
+
+    rpc CreateProfile(CreateProfileRequest) returns(Profile) {}
+
+    // Draft 
+    // rpc UpdateProfile(UpdateProfileRequest) returns (Profile){}
+    // rpc RenameProfile(RenameProfileRequest) returns (RenameProfileResponse){}
+    // rpc ValidateProfileSocial() returns(){}
+
+    rpc DeleteProfile(DeleteProfileRequest) returns(google.protobuf.Empty){
+        option (google.api.http) = {
+            delete: "/api/users/{user_id}" 
+        };
+    }
+}
+
+
+message Profile {
+    string user_id = 1;
+    string username = 2;
+    bytes picture = 3;
+    string bio = 4;
+    oneof social {
+        string facebook = 5;
+        string instagram = 6;
+        string line = 7;
+    }
+    Address address = 8;
+}
+
+message ListProfilesRequest {
+}
+
+message ListProfilesResponse{
+    repeated Profile user_profiles = 1;
+}
+
+message GetProfileRequest{
+    string user_id = 1;
+}
+
+message CreateProfileRequest {
+    string username = 1;
+    string phone_number = 2;
+    Address address = 3;
+}
+
+message DeleteProfileRequest {
+    string user_id = 1;
+}
+
+// ---------------------AUTH SERVICE------------------------------
+// Manages user credentials
+service AuthService {
+
+    rpc Register(RegisterRequest) returns(RegisterResponse) {
+        option (google.api.http) = {
+            post: "/auth/register" 
+            body: "*"
+        };
+    }
+    rpc Login(LoginRequest) returns(LoginResponse){
+        option (google.api.http) = {
+            get: "/auth/login" 
+        };
+    }
+
+    // IsValidToken check jwt token for role "USER"
+    rpc IsValidToken(IsValidTokenRequest) returns(IsValidTokenResponse) {}
+
+    // IsValidAdminToken check jwt token for role "ADMIN"
+    rpc IsValidAdminToken(IsValidAdminTokenRequest) returns (IsValidAdminTokenResponse){}
+
+    // IsUserExists check user exists by username
+    rpc IsUserExists(IsUserExistsRequest) returns (IsUserExistsResponse) {}
+
+    // UpdateUserRole promotes a user's role from "USER" to "ADMIN".
+    // This function can only be performed by users with the "ADMIN" role.
+    rpc UpdateUserRole(UpdateUserRoleRequest) returns (UpdateUserRoleResponse){
+        option (google.api.http) = {
+            put: "/auth/users/roles"
+            body: "*"
+       };
+    }
+
+    /*
+        rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
+
+        // Retrieves user credentials by username, responding only "USER" role.
+        rpc GetUserCredentials() returns(){}   endpoint /auth/users
+    */
+}
+
+message UserCredentials {
+    string username = 1;
+    string email = 2;
+    string password = 3;
+    string phone_number =4;
+    Roles role = 5;
+    string access_token = 6;
+    int64 access_token_exp = 7;
+}
+
+enum Roles {
+    VISITOR = 0;
+    USER = 1;
+    ADMIN = 2;
+}
+
+// username, email, password will be saved in AuthService
+// username email phone_number will be saved in UserService
+message RegisterRequest {
+   string username = 1;
+   string email = 2;
+   string password = 3;
+   string phone_number = 4;
+   Address address = 5;
+}
+
+message RegisterResponse {
+    bool success = 1;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    int64 access_token_exp =2;
+}
+
+message IsValidTokenRequest {
+    string token = 1;
+}
+
+message IsValidTokenResponse {
+    bool is_valid = 1;
+}
+
+message IsValidAdminTokenRequest {
+    string token = 1;
+}
+
+message IsValidAdminTokenResponse {
+    bool is_valid = 1;
+}
+
+message IsUserExistsRequest{
+    string username = 1;
+}
+
+message IsUserExistsResponse{
+    bool is_exists = 1;
+}
+
+message UpdateUserRoleRequest {
+    string username = 1;
+    Roles role = 2;
+}
+
+message UpdateUserRoleResponse {
+    bool success = 1;
+}
+
+// ---------------------ORDER SERVICE------------------------------
+// Manages place order process.
+service OrderService {
+
+    // HandlePlaceOrder handle incoming order from client
+    rpc HandlePlaceOrder(HandlePlaceOrderRequest) returns(HandlePlaceOrderResponse){
+        option (google.api.http) = {
+            post: "/api/orders/place-order" 
+            body: "*"
+        };
+    }
+
+
+    // ListUserPlaceOrder retrives User's place order history by username
+    rpc ListUserPlaceOrder(ListUserPlaceOrderRequest) returns (ListUserPlaceOrderResponse){
+        option (google.api.http) = {
+            get: "/api/orders/{username}" 
+        };
+    }
+
+}
+
+message PlaceOrder {
+    // A unique request ID for server to detect duplicated requests.
+    string request_id = 1;
+    string order_no = 1 ;
+    string username = 3;
+    string restaurant_no = 4;
+    repeated Menu menus = 5;
+    string coupon_code = 6;
+    int32 coupon_discount =7;
+    int32 delivery_fee = 8;
+    int32 total = 9;
+    Address user_address = 10;
+    Address restaurant_address = 11;
+    ContactInfo user_contact = 12;
+    PaymentMethods payment_methods = 13;
+    PaymentStatus payment_status = 14;
+    OrderStatus order_status = 15;
+    OrderTimestamps order_timestamps = 16;
+}
+
+message Address {
+    string address_name = 1;
+	string sub_district = 2;
+	string district = 3;    
+	string province = 4;    
+	string postal_code = 5;
+}
+
+message ContactInfo {
+    string phone_number = 1;
+    string email = 2;
+}
+
+enum PaymentMethods {
+    PAYMENT_METHOD_UNSPECIFIED = 0;
+    PAYMENT_METHOD_CASH = 1;
+    PAYMENT_METHOD_CREDIT_CARD = 2; 
+    PAYMENT_METHOD_PROMPT_PAY = 3;
+}
+
+enum PaymentStatus {
+    UNPAID = 0;
+    PAID = 1;
+}
+
+
+enum OrderStatus {
+    PENDING = 0;   
+    PREPARING_ORDER =1;
+    FINDING_RIDER =2;
+    WAIT_FOR_PICKUP = 3; 
+    ONGOING = 4;
+    DELIVERED =5;
+    CANCELLED =6;
+}
+
+message OrderTimestamps {
+    int64 create_time = 1;
+    int64 update_time = 2;
+    int64 complete_time = 3;
+}
+
+message HandlePlaceOrderRequest {
+    string request_id = 12;
+    string username = 1;
+    string restaurant_no = 2;
+    repeated Menu menus = 3;
+    string coupon_code = 4;
+    int32 coupon_discount =5;
+    int32 delivery_fee = 6;
+    int32 total = 7;
+    Address user_address = 8;
+    Address restaurant_address = 9;
+    ContactInfo user_contact = 10;
+    PaymentMethods payment_methods = 11;
+}
+
+message HandlePlaceOrderResponse {
+    string order_no = 1 ;
+    int64 create_time = 2;
+}
+
+message ListUserPlaceOrderRequest {
+    string username = 1;
+}
+
+message ListUserPlaceOrderResponse {
+    repeated PlaceOrder place_orders = 1;
+}
+
+// ---------------------DELIVERY SERVICE---------------------------
+// Manages riders and delivery process.
+service DeliveryService {
+
+
+    // GetOrderTracking provides real-time updates on the current status and location of 
+    // an order. It tracks the progress of the order from preparation to delivery, 
+    // giving the user real-time status updates.
+    rpc GetOrderTracking(GetOrderTrackingRequest) returns(stream GetOrderTrackingResponse){
+        //option (google.api.http) = {
+        //    get: "/api/deliveries/fee/{order_id}"   
+        //};
+    }
+
+    // CalculateDeliveryFee calculates and returns the delivery fee based on the distance
+    // between the user's location and the restaurant's location.
+    rpc CalculateDeliveryFee(CalculateDeliveryFeeRequest) returns(CalculateDeliveryFeeResponse) {
+        option (google.api.http) = {
+            post: "/api/deliveries/fee"   
+            body: "*"
+        };
+    }
+
+
+    // ConfirmRiderAccept updates the rider who accepted the order.
+    rpc ConfirmRiderAccept(ConfirmRiderAcceptRequest) returns(ConfirmRiderAcceptResponse){
+        option (google.api.http) = {
+            post: "/api/deliveries/riders/accepted" 
+            body: "*"
+        };
+    }
+
+    // ConfirmOrderDeliver updates the order status after rider has delivered.
+    rpc ConfirmOrderDeliver(ConfirmOrderDeliverRequest) returns(ConfirmOrderDeliverResponse){
+        option (google.api.http) = {
+            post: "/api/deliveries/orders/delivered" 
+            body: "*"
+        };
+    }
+
+
+}
+
+
+message Point {
+    double latitude = 1;
+    double longitude = 2;
+}
+
+message Rider {
+    string id = 1;
+    string name = 2;
+    string phone_number = 3;
+}
+
+message PickupInfo {
+    string order_no = 1;
+
+    // pickup_code is a simplified code used for identifying an order for the rider.
+    // use three digit i.e 712 , 415
+    string pickup_code = 2;
+    Point pickup_location = 3;
+    Point destination = 4;
+}
+
+message GetOrderTrackingRequest {
+    string order_no = 1;
+}
+
+message GetOrderTrackingResponse {
+    string order_no = 1;
+    string rider_id = 2;
+    Point rider_location = 3;
+    int64 update_time = 4;
+}
+
+message CalculateDeliveryFeeRequest {
+    Address user_address = 1;
+    Address restaurant_address = 2;
+}
+
+message CalculateDeliveryFeeResponse {
+    int32 delivery_fee =1;
+}
+
+message ConfirmRiderAcceptRequest {
+    string rider_id = 1;
+    string order_no = 2;
+}
+
+message ConfirmRiderAcceptResponse {
+    PickupInfo pickup_info = 1;
+}
+
+message ConfirmOrderDeliverRequest {
+    string order_no = 1;
+}
+
+message ConfirmOrderDeliverResponse {
+    bool success = 1;
+}
+
+// ---------------------RESTAURANT SERVICE------------------------
+// Manages restaurant 
+service RestaurantService {
+
+    // GetRestaurant retrieves the details of a specific restaurant 
+    // using the restaurant ID.
+    rpc GetRestaurant(GetRestaurantRequest) returns(GetRestaurantResponse){
+        option (google.api.http) = {
+            get: "/api/restaurants/{restaurant_no}" 
+        };
+    }
+
+    // ListRestaurant returns a list of all restaurants.
+    rpc ListRestaurant(google.protobuf.Empty) returns(ListRestaurantResponse){
+        option (google.api.http) = {
+            get: "/api/restaurants" 
+        };
+    }
+
+    // RegisterRestaurant registers a new restaurant.
+    rpc RegisterRestaurant(RegisterRestaurantRequest) returns(RegisterRestaurantResponse){
+        option (google.api.http) = {
+            post: "/api/restaurants" 
+            body: "*"
+        };
+    }
+
+    // AddMenu adds menus to restaurant.
+    rpc AddMenu(AddMenuRequest) returns(AddMenuResponse){
+        option (google.api.http) = {
+            post: "/api/restaurants/menus"
+            body: "*"
+        };
+    }
+
+
+    // OrderReady is called by the restaurant to notify the server that
+    // the ordered have been cooked and are ready for delivery.
+    rpc OrderReady(OrderReadyRequest) returns (OrderReadyResponse) {}
+
+}
+
+message Restaurant {
+    string no = 1;
+    string name = 2;
+    repeated Menu menus = 3;
+    Address address = 4;
+    Status status = 5;
+}
+
+message Menu {
+    string food_name = 1;
+    int32 price = 2;
+    //AvailStatus available = 3;
+}
+
+message GetRestaurantRequest{
+    string restaurant_no = 1;
+}
+
+message GetRestaurantResponse{
+    Restaurant restaurant = 1;
+}
+
+message ListRestaurantResponse{
+    repeated Restaurant restaurants = 1;
+}
+
+message RegisterRestaurantRequest {
+    string restaurant_name = 1;
+    repeated Menu menus = 2;
+    Address address =3;
+}
+
+message RegisterRestaurantResponse {
+    string restaurant_no = 1;
+}
+
+message AddMenuRequest {
+    string restaurant_no = 1;
+    repeated Menu menus = 2;
+}
+
+message AddMenuResponse {
+    bool success = 1;
+}
+
+message OrderReadyRequest {
+    string order_no = 1;
+    string restaurant_no = 2;
+}
+
+message OrderReadyResponse {
+    bool success = 1;
+}
+
+// ---------------------COUPON SERVICE-----------------------------
+// Manages coupons.
+service CouponService {
+    // AddCoupon creates a new coupon with the specified details. There are two types of coupons:
+    // Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
+    // If the coupon type is Free, the discount field is ignored and automatically set to zero.
+    rpc AddCoupon(AddCouponRequest) returns(AddCouponResponse){
+        option (google.api.http) = {
+            post: "/api/coupons"
+            body: "*"
+        };
+    }
+    // GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and 
+    // has sufficient quantity.
+    rpc GetCoupon(GetCouponRequest) returns(GetCouponResponse) {
+        option (google.api.http) = {
+            get: "/api/coupons/{code}" 
+        };
+    }
+    // ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
+    // This method is intended to be used by the frontend to display a list of all coupons to users, 
+    // regardless of their validity or availability.
+    //
+    // TODO: In the future, this method might be updated to list coupons by other condition,
+    // but currently, it responds with all coupons.
+    rpc ListCoupon(google.protobuf.Empty) returns(ListCouponResponse){
+        option (google.api.http) = {
+            get: "/api/coupons" 
+        };
+    }
+    // AppliedCoupon is called when an order payment is success. This method 
+    // updates the status of the coupon in the database to mark it as used.
+    rpc AppliedCoupon(AppliedCouponRequest) returns (AppliedCouponResponse){}
+}
+
+
+message Coupon {
+    CouponTypes types = 1;
+    string code = 2;
+    // The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.
+    // The server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY.
+    int32 discount = 3;
+    int64 expire_time = 4;
+    int32 quantity_count = 5; 
+}
+
+enum CouponTypes{
+
+    COUPON_TYPE_UNSPECIFICED = 0;
+
+    // Discount is a fixed amount, not a percentage.
+    COUPON_TYPE_DISCOUNT = 1; 
+
+    COUPON_TYPE_FREE_DELIVERY = 2; 
+}
+
+
+message AddCouponRequest {
+    CouponTypes coupon_types = 1;
+    int32 discount = 2;
+
+    // The coupon expiration time in hours from now.
+    // For example expire_in_hour is 72 means the coupon will be expired
+    // in 3 days (72 hours) from now.
+    int32 expire_in_hour = 3;
+
+    int32 quantity = 4;
+}
+
+message AddCouponResponse {
+    bool success = 1;
+}
+
+message GetCouponRequest {
+    string code = 1;
+}
+
+message GetCouponResponse {
+    Coupon coupon  = 1;
+}
+
+message ListCouponResponse {
+    repeated Coupon coupons = 1;
+}
+
+message AppliedCouponRequest {
+    string code = 1;
+}
+
+message AppliedCouponResponse { 
+    bool success = 1;
+}
+
+
+
+// ---------------------REVIEW SERVICE-----------------------------
+// Manages ( TODO docuement )
+service ReviewService {
+    rpc AddOrderReview(AddOrderReviewRequest) returns(AddOrderReviewResponse){}
+    rpc UpdateOrderReview(UpdateOrderReviewRequest) returns(UpdateOrderReviewResponse){}
+    rpc DeleteOrderReview(DeleteOrderReviewRequest) returns(google.protobuf.Empty){}
+}
+
+message Review {
+    string username = 1;
+    string order_no =2;
+
+    string rating = 3;
+    string review_topic = 4;
+    string body = 5;
+    bytes image = 6;
+}
+
+message AddOrderReviewRequest {
+    Review review  = 1;
+}
+
+message AddOrderReviewResponse {
+    string review_id= 1;
+}
+
+message UpdateOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+
+    oneof new_order_review_field{
+        string new_rating = 3;
+        string new_topic = 4;
+        string new_body = 5;
+        Image new_image = 6;
+    }
+}
+
+message UpdateOrderReviewResponse {
+    string resp = 1;
+}
+
+message DeleteOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+}
+
+// ---------------------PAYMENT SERVICE----------------------------
+// TODO 
+// implement third-party payment gateway for 
+// credit card and prompt pay
+
+
+
+
+
+// EOF
+
+
+
+
+
+
+
+
+
+
+
