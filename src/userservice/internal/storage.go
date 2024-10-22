@@ -32,16 +32,16 @@ func (r *userStorage) Create(ctx context.Context, newProfile *dbProfile) (*dbPro
 	res := r.db.QueryRowContext(ctx, `
 		INSERT INTO profile(
 			username,
-       		picture,
-       		bio,
-       		facebook,
-       		instagram,
-       		line,
-       		address_name,
-       		sub_district,
-       		district,
-       		province,
-       		postal_code,
+			picture,
+			bio,
+			facebook,
+			instagram,
+			line,
+			address_name,
+			sub_district,
+			district,
+			province,
+			postal_code,
 			create_time,
 		)
 		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW())
