@@ -22,33 +22,29 @@ psql -v ON_ERROR_STOP=1 --username "postgres"  <<-EOSQL
     GRANT ALL PRIVILEGES ON DATABASE "$USER_DB" TO "$USER_USER";
 EOSQL
 
-# Connect to the newly created database and create the table
 psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$USER_DB" <<-EOSQL
     GRANT ALL PRIVILEGES ON SCHEMA public TO "$USER_USER";
 
-    CREATE TABLE address (
+    CREATE TABLE profile (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255),
-        sub_district VARCHAR(255),
-        district VARCHAR(255),
-        province VARCHAR(255),
-        postal_code VARCHAR(20)
+        username VARCHAR(255) UNIQUE NOT NULL,     
+        picture BYTEA,                             
+        bio TEXT,                                  
+        facebook VARCHAR(255),                     
+        instagram VARCHAR(255),                    
+        line VARCHAR(255),                         
+        address_name VARCHAR(255),                 
+        sub_district VARCHAR(255),                 
+        district VARCHAR(255),                     
+        province VARCHAR(255),                     
+        postal_code VARCHAR(20),                   
+        create_time TIMESTAMP NOT NULL DEFAULT NOW()
     );
 
-    CREATE TABLE user_profile (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) UNIQUE NOT NULL,
-        phone_number VARCHAR(255) NOT NULL,
-        address_id INT REFERENCES address(id) ON DELETE SET NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );
-
-    GRANT SELECT, INSERT, UPDATE, DELETE ON address TO "$USER_USER";
-    GRANT SELECT, INSERT, UPDATE, DELETE ON user_profile TO "$USER_USER";
-
-    GRANT USAGE, SELECT ON SEQUENCE address_id_seq TO ${USER_USER};
-    GRANT USAGE, SELECT ON SEQUENCE user_profile_id_seq TO ${USER_USER};
+    GRANT SELECT, INSERT, UPDATE, DELETE ON profile TO "$USER_USER";
+    GRANT USAGE, SELECT ON SEQUENCE profile_id_seq TO ${USER_USER};
 EOSQL
+
 
 
 

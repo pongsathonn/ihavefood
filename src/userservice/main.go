@@ -26,9 +26,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	repository := internal.NewUserRepository(db)
-	rabbitmq := internal.NewRabbitMQ(amqpConn)
-	userService := internal.NewUserService(rabbitmq, repository)
+	userService := internal.NewUserService(
+		internal.NewRabbitMQ(amqpConn),
+		internal.NewUserStorage(db),
+	)
+
 	startGRPCServer(userService)
 
 }
