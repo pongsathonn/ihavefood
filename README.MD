@@ -94,13 +94,14 @@ In the Application Layer, I use structs generated from Protobuf (protoc).
 For the database models, I add the prefix "db" to distinguish them.
 
 ```
-Protobuff message                       App Layer                            Database Layer
-                                                                             
-message Book {                          type Book struct {                   type dbBook struct {         
-    string id = 1;                          ID    string  `protobuf:"x"`           ID    string   `db:"x"`
-    string name = 2;     generate to        Name  string  `protobuf:"x"`           Name  string   `db:"x"`          
-    Color color = 3;                        Color Color   `protobuf:"x"`           Color dbColor  `db:"x"`         
-}                                       }                                    }                            
+ Protobuff message        App Layer                            Database Layer                
+                                                                                              
+ message Book {           type Book struct {                   type dbBook struct {          
+     string id = 1;           ID    string  `protobuf:"x"`           ID    string   `db:"x"` 
+     string name = 2;         Name  string  `protobuf:"x"`           Name  string   `db:"x"`          
+     Color color = 3;         Color Color   `protobuf:"x"`           Color dbColor  `db:"x"`         
+ }                        }                                    }                            
+
 ```
 
 
