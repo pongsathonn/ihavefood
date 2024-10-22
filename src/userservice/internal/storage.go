@@ -29,15 +29,9 @@ func NewUserStorage(db *sql.DB) UserStorage {
 }
 
 func (r *userStorage) Create(ctx context.Context, newProfile *dbProfile) (*dbProfile, error) {
-	r.db.QueryRowContext(ctx, `
-		INSERT INTO profile(
-			asdasd,
-			asdasd,
-	`, asdasd)
-
 	res := r.db.QueryRowContext(ctx, `
 		INSERT INTO profile(
-   	   	 	username,
+			username,
        		picture,
        		bio,
        		facebook,
