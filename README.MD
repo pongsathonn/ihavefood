@@ -55,9 +55,6 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
  | Restaurant | error.restaurant.cancelled.event |     *      | CANCELLED | 
 
 
-> this is blockquotes
-> also blockquotes
-
  > The publisher should attach the error message in the body and use a routing 
  key that starts with "error." The errors may include anything critical that
  leads to the cancellation of an order, such as payment transaction failures,
@@ -66,32 +63,11 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
  to the "error.#" routing key to handle the rollback or deletion of order information.
 
 
-
-
-
-
- 
-
-
-
-
 # API design
 
 follow some of Google api design <https://cloud.google.com/apis/design>
 
-Naming should be simple, intuitive and consistent
-
 ## gRPC methods
-
-You **are not** late. (indicative) <br>
-**Don't be** late! (imperative)
-
-Methods names
-- The verb portion of the method name should use the imperative mood, which is for
-  orders or commands rather than the indicative mood which is for questions.
-- the noun portion of the method name must be singular for all methods except List.
-- custome methods may be singular or plural as appropriate.
-- Batch methods **must** use the plural noun.
 
 | Verb   | Noun | Method Name      | Request Message         | Response Message          |
 |--------|------|------------------|-------------------------|---------------------------|
@@ -102,16 +78,38 @@ Methods names
 | Rename | Book | RenameBook       | RenameBookRequest       | RenameBookResponse        |
 | Delete | Book | DeleteBook       | DeleteBookRequest       | google.protobuf.Empty     |
 
+# Database
+
+Services in my application use Posgres and Mongo.
+For AuthService and UserService use Postgres, other service use Mongo
+
+Postgres driver <https://pkg.go.dev/github.com/lib/pq#section-readme>
+Mongo driver <https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo>
+
+Postgres write query statement with Exec and Query standard pkg Go "database/sql"
+Mongo query with driver methods i.e FindOne(), InsertOne()
+
+
+In the Application Layer, I use structs generated from Protobuf (protoc). 
+For the database models, I add the prefix "db" to distinguish them.
+
+```
+Protobuff message                       App Layer                            Database Layer
+                                                                             
+message Book {                          type Book struct {                   type dbBook struct {         
+    string id = 1;                          ID    string  `protobuf:"x"`           ID    string   `db:"x"`
+    string name = 2;     generate to        Name  string  `protobuf:"x"`           Name  string   `db:"x"`          
+    Color color = 3;                        Color Color   `protobuf:"x"`           Color dbColor  `db:"x"`         
+}                                       }                                    }                            
+```
 
 
 
 
-### Install protobuff complier
-<pre>
- $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28 
- $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
-</pre>
+ 
 
-### How to execute genproto.sh ?  
-1) Give permission to script file $ chmod +x genproto.sh  
-2) Execute $ ./genproto.sh 
+       
+        
+
+
+
