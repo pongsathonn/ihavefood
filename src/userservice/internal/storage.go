@@ -69,6 +69,12 @@ func (r *userStorage) Create(ctx context.Context, newProfile *dbProfile) (*dbPro
 
 func (r *userStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
 
+	res := r.db.QueryRowContext(ctx, `
+		SELECT
+			profile.id,
+			profile.id,
+	`, asds)
+
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
 			profile.id, 
