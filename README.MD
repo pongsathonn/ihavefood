@@ -78,6 +78,12 @@ follow some of Google api design <https://cloud.google.com/apis/design>
 | Rename | Book | RenameBook       | RenameBookRequest       | RenameBookResponse        |
 | Delete | Book | DeleteBook       | DeleteBookRequest       | google.protobuf.Empty     |
 
+
+
+
+
+
+
 # Database
 
 Services in my application use Posgres and Mongo.
@@ -103,6 +109,7 @@ For the database models, I add the prefix "db" to distinguish them.
  }                        }                                    }                            
 
 ```
+
 
 
 
