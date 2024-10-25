@@ -14,8 +14,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -25,6 +23,7 @@ import (
 
 var signingKey []byte
 
+// TODO might move to error.go file
 var (
 	errNoUsername         = status.Error(codes.InvalidArgument, "username must be provided")
 	errNoPassword         = status.Error(codes.InvalidArgument, "password must be provided")
@@ -41,6 +40,7 @@ var (
 )
 
 type AuthClaims struct {
+	ID   string
 	Role pb.Roles `json:"role"`
 	jwt.RegisteredClaims
 }
@@ -48,14 +48,14 @@ type AuthClaims struct {
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
-	db         *sql.DB
+	store      AuthStorage
 	rabbitmq   RabbitMQ
 	userClient pb.UserServiceClient
 }
 
-func NewAuthService(db *sql.DB, rabbitmq RabbitMQ, userClient pb.UserServiceClient) *AuthService {
+func NewAuthService(store AuthStorage, rabbitmq RabbitMQ, userClient pb.UserServiceClient) *AuthService {
 	return &AuthService{
-		db:         db,
+		store:      store,
 		rabbitmq:   rabbitmq,
 		userClient: userClient,
 	}
@@ -130,8 +130,8 @@ func InitAdminUser(db *sql.DB) error {
 // If any error occurs, the transaction is rolled back to maintain data integrity. Returns
 // a success response if all operations complete successfully, or an appropriate error
 // if any operation fails.
-func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 
+func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
 	if err := validateUsernameAndPassword(in.Username, in.Password); err != nil {
 		slog.Error("validate user", "err", err)
 		return nil, status.Error(codes.InvalidArgument, "username or password invalid")
@@ -145,62 +145,40 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, "email invalid: %v", err)
 	}
 
-	hashedPass, err := hashPassword(in.Password)
-	if err != nil {
-		slog.Error("password hasing", "err", err)
-		return nil, errPasswordHashing
-	}
+	user, err := x.store.Create(ctx, &NewUserCredentials{
+		Username:    in.Username,
+		Email:       in.Email,
+		Password:    in.Password,
+		PhoneNumber: in.PhoneNumber,
+	})
 
-	tx, err := x.db.BeginTx(ctx, nil)
-	if err != nil {
-		slog.Error("begin transaction", "err", err)
-		return nil, status.Error(codes.Internal, "failed to begin transaction")
-	}
-	defer tx.Rollback()
-
-	_, err = tx.ExecContext(ctx, `
-		INSERT INTO user_credentials(
-			username,
-			email,
-			password,
-			role
-		)
-		VALUES($1, $2, $3, $4)
-	`,
-		in.Username,
-		in.Email,
-		string(hashedPass),
-		pb.Roles_USER,
-	)
-	if err != nil {
-		var pqError *pq.Error
-		// 23505 = Unique constraint violation postgres
-		if errors.As(err, &pqError) && pqError.Code == "23505" {
-			slog.Error("insert user credentials", "err", err)
-			return nil, status.Error(codes.AlreadyExists, "username or email duplicated")
-		}
-		slog.Error("insert user credentials", "err", err)
-		return nil, status.Error(codes.Internal, "failed to insert user into database")
-	}
+	// TODO remove UserService call. publish user credentials with event instead
 
 	// Calling UserService to create new UserProfile
-	req := &pb.CreateUserProfileRequest{
-		Username:    in.Username,
-		PhoneNumber: in.PhoneNumber,
-		Address:     in.Address,
-	}
-	_, err = x.userClient.CreateUserProfile(ctx, req)
+	_, err = x.userClient.CreateProfile(ctx,
+		&pb.CreateProfileRequest{
+			Username: user.Username,
+		})
 	if err != nil {
-		slog.Error("create user profile in user service", "err", err)
-		return nil, status.Error(codes.Internal, "failed to create user profile in UserService")
+		slog.Error("failed to create user profile",
+			"err", fmt.Errorf("error user service: %v", err),
+		)
+
+		// to ensure that AuthService and UserService syn
+		if err := x.store.Delete(ctx, user.UserID); err != nil {
+			slog.Error("failed to delete user credential", "err", err)
+		}
+
+		return nil, status.Error(codes.Internal, "failed to create user")
 	}
 
-	if err := tx.Commit(); err != nil {
-		slog.Error("commit transaction new user credentials", "err", err)
-		return nil, status.Error(codes.Internal, "failed to commit transaction")
-	}
-
-	return &pb.RegisterResponse{Success: true}, nil
+	return &pb.UserCredentials{
+		UserId:      user.UserID,
+		Username:    user.Username,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		Role:        pb.Roles(user.Role),
+	}, nil
 }
 
 // Login handles user login. It verifies the provided credentials, generates a JWT token on success,
@@ -221,33 +199,13 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, errNoUsernamePassword
 	}
 
-	var res pb.UserCredentials
-	row := x.db.QueryRowContext(ctx, `
-		SELECT 
-			username, 
-			password,
-			role
-		FROM 
-			user_credentials 
-		WHERE 
-			username=$1
-	`,
-		username,
-	)
-	if err := row.Scan(&res.Username, &res.Password, &res.Role); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errUserNotFound
-		}
-		slog.Error("scan user credentials", "err", err)
-		return nil, status.Error(codes.Internal, "scan user credentials failed")
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(res.Password), []byte(password)); err != nil {
-		slog.Error("verify password", "err", err)
+	user, err := x.store.ValidateLogin(ctx, in.Username, in.Password)
+	if err != nil {
+		slog.Error("failed to validate user login", "err", err)
 		return nil, errUserIncorrect
 	}
 
-	token, exp, err := createNewToken(res.Role)
+	token, exp, err := createNewToken(user.UserID, pb.Roles(user.Role))
 	if err != nil {
 		slog.Error("generate new token", "err", err)
 		return nil, errGenerateToken
@@ -256,7 +214,8 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	return &pb.LoginResponse{AccessToken: token, AccessTokenExp: exp}, nil
 }
 
-func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenRequest) (*pb.IsValidTokenResponse, error) {
+// TODO might user "Validate" instead "Check"
+func (x *AuthService) CheckUserToken(ctx context.Context, in *pb.CheckUserTokenRequest) (*pb.CheckUserTokenResponse, error) {
 
 	if in.Token == "" {
 		return nil, errNoToken
@@ -266,10 +225,10 @@ func (x *AuthService) IsValidToken(ctx context.Context, in *pb.IsValidTokenReque
 		slog.Error("validate token", "err", err)
 		return nil, errInvalidToken
 	}
-	return &pb.IsValidTokenResponse{IsValid: true}, nil
+	return &pb.CheckUserTokenResponse{IsValid: true}, nil
 }
 
-func (x *AuthService) IsValidAdminToken(ctx context.Context, in *pb.IsValidAdminTokenRequest) (*pb.IsValidAdminTokenResponse, error) {
+func (x *AuthService) CheckAdminToken(ctx context.Context, in *pb.CheckAdminTokenRequest) (*pb.CheckAdminTokenResponse, error) {
 
 	if in.Token == "" {
 		return nil, errNoToken
@@ -279,32 +238,29 @@ func (x *AuthService) IsValidAdminToken(ctx context.Context, in *pb.IsValidAdmin
 		slog.Error("validate admin token", "err", err)
 		return nil, errInvalidToken
 	}
-	return &pb.IsValidAdminTokenResponse{IsValid: true}, nil
+	return &pb.CheckAdminTokenResponse{IsValid: true}, nil
 }
 
-func (x *AuthService) IsUserExists(ctx context.Context, in *pb.IsUserExistsRequest) (*pb.IsUserExistsResponse, error) {
+func (x *AuthService) CheckUserExists(ctx context.Context, in *pb.CheckUserExistsRequest) (*pb.CheckUserExistsResponse, error) {
+
 	if in.Username == "" {
 		return nil, errNoUsername
 	}
 
-	var user *pb.UserCredentials
-	err := x.db.QueryRowContext(ctx, `
-		SELECT EXISTS (
-			SELECT 1
-			FROM user_credentials
-			WHERE username=$1
-		);
-		`,
-		in.Username).Scan(user)
+	exists, err := x.store.CheckUserExists(ctx, in.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errUserNotFound
 		}
-		slog.Error("check user credentials exists", "err", err)
-		return nil, status.Error(codes.Internal, "failed to check existence user credentials")
+		slog.Error("failed to check existence user", "err", err)
+		return nil, status.Error(codes.Internal, "failed to check existence user")
 	}
 
-	return &pb.IsUserExistsResponse{IsExists: true}, nil
+	if !exists {
+		return nil, status.Error(codes.NotFound, "user not exists")
+	}
+
+	return &pb.CheckUserExistsResponse{IsExists: true}, nil
 }
 
 // UpdateUserRole updates an existing user's role to specific roles.
@@ -322,16 +278,8 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.Role.String())
 	}
 
-	_, err := x.db.ExecContext(ctx, `
-		UPDATE user_credentials
-		SET role = $1
-		WHERE username = $2
-	`,
-		in.Role,
-		in.Username,
-	)
-	if err != nil {
-		slog.Error("update role", "err", err)
+	if err := x.store.UpdateRole(ctx, in.Username, dbRoles(in.Role)); err != nil {
+		slog.Error("failed to update role", "err", err)
 		return nil, status.Error(codes.Internal, "failed to update role")
 	}
 
@@ -356,12 +304,13 @@ func extractBasicAuth(authorization []string) (username, password string, err er
 
 // createNewToken generates a new JWT token specific roles with an expiration time from the current time.
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
-func createNewToken(role pb.Roles) (signedToken string, expiration int64, err error) {
+func createNewToken(id string, role pb.Roles) (signedToken string, expiration int64, err error) {
 
 	day := 24 * time.Hour
 	exp := time.Now().Add(7 * day).Unix()
 
 	claims := &AuthClaims{
+		ID:   id,
 		Role: role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "authentication",
@@ -417,18 +366,6 @@ func validateAdminToken(tokenString string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func hashPassword(password string) ([]byte, error) {
-	hashedPass, err := bcrypt.GenerateFromPassword(
-		[]byte(password),
-		bcrypt.DefaultCost,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return hashedPass, nil
-
 }
 
 func validateUsernameAndPassword(username, password string) error {
