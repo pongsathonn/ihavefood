@@ -23,13 +23,13 @@ type AuthStorage interface {
 	Create(ctx context.Context, newUser *NewUserCredentials) (*dbUserCredentials, error)
 
 	//Updates user role.
-	UpdateRole(ctx context.Context, username string, updateRole dbRoles) error
+	UpdateRole(ctx context.Context, username string, newRole dbRoles) (*dbUserCredentials, error)
 
 	// Deletes the user credential.
 	Delete(ctx context.Context, userID string) error
 
-	// ValidateLogin validates username and password return user credentials
-	ValidateLogin(ctx context.Context, username, password string) (*dbUserCredentials, error)
+	// Login validates username password and return user credentials
+	Login(ctx context.Context, username, password string) (*dbUserCredentials, error)
 
 	// Check user exists by username
 	CheckUserExists(ctx context.Context, username string) (bool, error)
@@ -45,7 +45,17 @@ func NewAuthStorage(db *sql.DB) AuthStorage {
 
 func (s *authStorage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 
-	rows, err := s.db.QueryContext(ctx, `SELECT * FROM user_credentials`)
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT 
+			id,
+			username, 
+			email,
+			role
+			phone_number,
+			create_time
+		FROM 
+			user_credentials 
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +63,15 @@ func (s *authStorage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 	var users []*dbUserCredentials
 	for rows.Next() {
 		var user dbUserCredentials
-		if err := rows.Scan(&user); err != nil {
+		err := rows.Scan(
+			&user.UserID,
+			&user.Username,
+			&user.Email,
+			&user.Role,
+			&user.PhoneNumber,
+			&user.CreateTime,
+		)
+		if err != nil {
 			return nil, err
 		}
 
@@ -69,10 +87,31 @@ func (s *authStorage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 
 func (s *authStorage) User(ctx context.Context, userID string) (*dbUserCredentials, error) {
 
-	rows := s.db.QueryRowContext(ctx, `SELECT  * FROM user_credentials WHERE id=$1`, userID)
+	row := s.db.QueryRowContext(ctx, `
+		SELECT 
+			id,
+			username, 
+			email,
+			role
+			phone_number,
+			create_time
+		FROM 
+			user_credentials
+		WHERE
+			id=$1
+	`,
+		userID)
 
 	var user dbUserCredentials
-	if err := rows.Scan(&user); err != nil {
+	err := row.Scan(
+		&user.UserID,
+		&user.Username,
+		&user.Email,
+		&user.Role,
+		&user.PhoneNumber,
+		&user.CreateTime,
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -113,7 +152,7 @@ func (s *authStorage) Create(ctx context.Context, newUser *NewUserCredentials) (
 		&user.UserID,
 		&user.Username,
 		&user.Email,
-		&user.PasswordHash,
+		nil,
 		&user.Role,
 		&user.PhoneNumber,
 		&user.CreateTime,
@@ -130,21 +169,36 @@ func (s *authStorage) Create(ctx context.Context, newUser *NewUserCredentials) (
 	return &user, nil
 }
 
-func (s *authStorage) UpdateRole(ctx context.Context, username string, updateRole dbRoles) error {
+func (s *authStorage) UpdateRole(ctx context.Context, username string, newRole dbRoles) (*dbUserCredentials, error) {
 
-	_, err := s.db.ExecContext(ctx, `
-		UPDATE user_credentials
-		SET role = $1
-		WHERE username = $2
+	row := s.db.QueryRowContext(ctx, `
+		UPDATE 
+			user_credentials
+		SET 
+			role = $1
+		WHERE 
+			username = $2
+		RETURNING * ;
 	`,
-		updateRole,
+		newRole,
 		username,
 	)
+
+	var user dbUserCredentials
+	err := row.Scan(
+		&user.UserID,
+		&user.Username,
+		&user.Email,
+		nil,
+		&user.Role,
+		&user.PhoneNumber,
+		&user.CreateTime,
+	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &user, nil
 
 }
 
@@ -157,15 +211,22 @@ func (s *authStorage) Delete(ctx context.Context, userID string) error {
 
 	return nil
 }
-func (s *authStorage) ValidateLogin(ctx context.Context, username, password string) (*dbUserCredentials, error) {
+func (s *authStorage) Login(ctx context.Context, username, password string) (*dbUserCredentials, error) {
 
-	var user dbUserCredentials
+	var (
+		user         dbUserCredentials
+		passwordHash string
+	)
+
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
 			id,
 			username, 
 			password,
+			email,
 			role
+			phone_number,
+			create_time
 		FROM 
 			user_credentials 
 		WHERE 
@@ -176,13 +237,17 @@ func (s *authStorage) ValidateLogin(ctx context.Context, username, password stri
 	err := row.Scan(
 		&user.UserID,
 		&user.Username,
-		&user.PasswordHash,
-		&user.Role)
+		&passwordHash,
+		&user.Email,
+		&user.Role,
+		&user.PhoneNumber,
+		&user.CreateTime,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password)); err != nil {
 		return nil, errors.New("username or password incorrect")
 	}
 

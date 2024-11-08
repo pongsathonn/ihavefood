@@ -21,30 +21,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-var signingKey []byte
-
-// TODO might move to error.go file
-var (
-	errNoUsername         = status.Error(codes.InvalidArgument, "username must be provided")
-	errNoPassword         = status.Error(codes.InvalidArgument, "password must be provided")
-	errNoEmail            = status.Error(codes.InvalidArgument, "email must be provided")
-	errNoUsernamePassword = status.Error(codes.InvalidArgument, "username or password must be provided")
-
-	errUserIncorrect   = status.Error(codes.InvalidArgument, "username or password incorrect")
-	errUserNotFound    = status.Error(codes.NotFound, "user not found")
-	errPasswordHashing = status.Error(codes.Internal, "password hashing failed")
-
-	errNoToken       = status.Error(codes.InvalidArgument, "token must be provided")
-	errInvalidToken  = status.Error(codes.Unauthenticated, "invalid token")
-	errGenerateToken = status.Error(codes.Internal, "failed to generate authentication token")
-)
-
-type AuthClaims struct {
-	ID   string
-	Role pb.Roles `json:"role"`
-	jwt.RegisteredClaims
-}
-
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
@@ -71,6 +47,7 @@ func InitSigningKey() error {
 	return nil
 }
 
+// TODO move sql to storage
 // InitAdminUser creates the default admin user if it doesn't already exist.
 func InitAdminUser(db *sql.DB) error {
 
@@ -130,7 +107,6 @@ func InitAdminUser(db *sql.DB) error {
 // If any error occurs, the transaction is rolled back to maintain data integrity. Returns
 // a success response if all operations complete successfully, or an appropriate error
 // if any operation fails.
-
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
 	if err := validateUsernameAndPassword(in.Username, in.Password); err != nil {
 		slog.Error("validate user", "err", err)
@@ -214,8 +190,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	return &pb.LoginResponse{AccessToken: token, AccessTokenExp: exp}, nil
 }
 
-// TODO might user "Validate" instead "Check"
-func (x *AuthService) CheckUserToken(ctx context.Context, in *pb.CheckUserTokenRequest) (*pb.CheckUserTokenResponse, error) {
+func (x *AuthService) ValidateUserToken(ctx context.Context, in *pb.CheckUserTokenRequest) (*pb.CheckUserTokenResponse, error) {
 
 	if in.Token == "" {
 		return nil, errNoToken
@@ -228,7 +203,7 @@ func (x *AuthService) CheckUserToken(ctx context.Context, in *pb.CheckUserTokenR
 	return &pb.CheckUserTokenResponse{IsValid: true}, nil
 }
 
-func (x *AuthService) CheckAdminToken(ctx context.Context, in *pb.CheckAdminTokenRequest) (*pb.CheckAdminTokenResponse, error) {
+func (x *AuthService) ValidateAdminToken(ctx context.Context, in *pb.CheckAdminTokenRequest) (*pb.CheckAdminTokenResponse, error) {
 
 	if in.Token == "" {
 		return nil, errNoToken
@@ -266,8 +241,7 @@ func (x *AuthService) CheckUserExists(ctx context.Context, in *pb.CheckUserExist
 // UpdateUserRole updates an existing user's role to specific roles.
 //
 // NOTE: Calling this function should be preceded by middleware first to
-// prevent lower roles updating highter roles.For exmaple "USER" try to
-// update "ADMIN", which is invalid.
+// prevent lower roles updating highter roles.
 func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UpdateUserRoleResponse, error) {
 
 	if in.Username == "" {

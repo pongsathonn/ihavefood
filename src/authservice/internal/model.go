@@ -2,10 +2,15 @@
 // the app and the database
 package internal
 
-import "time"
+import (
+	"time"
 
-// NewUserCredential contains information to create new user
-// credential
+	"github.com/golang-jwt/jwt/v5"
+	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
+)
+
+// NewUserCredential contains information to create
+// new user credential
 type NewUserCredentials struct {
 	Username    string
 	Email       string
@@ -13,6 +18,10 @@ type NewUserCredentials struct {
 	PhoneNumber string
 }
 
+// dbUserCredentials contains ... TODO .
+//
+// NOTE: Using this struct for response usercredentials
+// must ignore PasswordHash field.
 type dbUserCredentials struct {
 	UserID       string
 	Username     string
@@ -30,3 +39,16 @@ const (
 	Roles_USER    dbRoles = 1
 	Roles_ADMIN   dbRoles = 2
 )
+
+// JWT signing key
+var signingKey []byte
+
+// AuthClaims is custom claims use when
+// register new jwt claims.
+type AuthClaims struct {
+	// ID is used as unique identifier for User
+	// or Admin depending on the Role.
+	ID   string
+	Role pb.Roles `json:"role"`
+	jwt.RegisteredClaims
+}
