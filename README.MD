@@ -70,9 +70,14 @@ follow some of Google api design <https://cloud.google.com/apis/design>
 | Rename | Book | RenameBook       | RenameBookRequest       | RenameBookResponse        |
 | Delete | Book | DeleteBook       | DeleteBookRequest       | google.protobuf.Empty     |
 
-When design follow this table. Client expected resources after write methods back.
-but almost every database it doesn't return that resoruce back , so application layer
-need to call method read again to retrives those resources. 
+When a client performs a write operation (such as creating or updating a resource), it often
+expects the full resource data returned upon completion of that operation. However, most databases
+return only basic information, like the newly created resource ID, instead of the full resource
+details. To meet the client's expectation, the application layer must perform an additional read 
+operation to retrieve the full resource data, resulting in the following sequence.
+
+This design not only ensures that the client's expectations are met but also provides a cleaner
+separation of concerns for database operations "READ" and "WRITE".
 
 Example flow
 
