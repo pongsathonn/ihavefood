@@ -77,10 +77,10 @@ need to call method read again to retrives those resources.
 Example flow
 
 ```
-[Client]  ->   CreateBookRequest   ->   [ Server  ->     Create{request}   ->   DB Layer ]
-[      ]                                [                response{ID}      <-   DB Layer ]
-[      ]                                [                Find{ID}          ->   DB Layer ]
-[Client]  <-       Book            <-   [ Server  <-     response{Book}    <-   DB Layer ]
+|Client|  ->   CreateBookRequest   ->   | Server  ->     Create{request}   ->   DB Layer |
+|      |                                |                response{ID}      <-   DB Layer |
+|      |                                |                Find{ID}          ->   DB Layer |
+|Client|  <-       Book            <-   | Server  <-     response{Book}    <-   DB Layer |
 
 ```
 
