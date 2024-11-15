@@ -5,45 +5,35 @@ Technologies in this project
 Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
 
 
-// All exchange type is topic
-// OrderService handle status for order
-//
-// use exchange "order_x" for entire app
-//
-// every message body must include orderNO in body
-// every services MUST include orderid in body
+//  RabbitMQ conventions for every services
+// - exchange name: "my_exchange"
+// - exchange type: "direct"
+
+ 
+### Food Delivery Process Table
 
 <pre>
- | Publisher            |     Routing Key           |    Queue     | Subscriber |  ORDER STATUS  |  below this explain what subscriber does
- |----------------------|---------------------------|--------------|------------|----------------|
- |                      |                           |              |            | PENDING        | default order status
- | Order                | order.placed.event        | restaurant.q | Restaurant |    "           | notify restaurant new order
- |    "                 |        "                  | delivery.q   | Delivery   |    "           | send push noti to riders and generate pickup info
- | Delivery             | rider.finding.event       | order.q      | Order      | FINDING_RIDER  | update order status
- | Restaurant           | restaurant.accepted.event | order.q      | Order      | PREPARING      | update order status
- | Restaurant           | food.ready.event          | order.q      | Order      | WAIT_PICKUP    | update order status
- | Delivery             | rider.assigned.event      | order.q      | Order      | ONGOING        | update order status
- | Payment | Delivery   | user.paid.event           | order.q      | Order      |    "           | update payment status to "PAID"
- |    "         "       |        "                  | coupon.q     | Coupon     |    "           | update coupon being used in database
- | Delivery             | rider.delivered.event     | order.q      | Order      | DELIVERED      | update order status to "delivered"
+
+ | Publisher            |     Routing Key           |           Queue              | Subscriber |  ORDER STATUS  |
+ |----------------------|---------------------------|------------------------------|------------|----------------|
+ |                      |                           |                              |            | PENDING        |
+ | Order                | order.placed.event        | restaurant_assign_queue      | Restaurant |    "           | 
+ | Order                | order.placed.event        | rider_assign_queue           | Delivery   |    "           | 
+ |                      |                           |                              |            |                |
+ | Delivery             | rider.finding.event       | order_status_update_queue    | Order      | FINDING_RIDER  | 
+ |                      |                           |                              |            |                |
+ | Restaurant           | restaurant.accepted.event | order_status_update_queue    | Order      | PREPARING      | 
+ |                      |                           |                              |            |                |
+ | Restaurant           | food.ready.event          | order_status_update_queue    | Order      | WAIT_PICKUP    | 
+ |                      |                           |                              |            |                |
+ | Delivery             | rider.assigned.event      | order_status_update_queue    | Order      | ONGOING        | 
+ |                      |                           |                              |            |                |
+ | Payment or Delivery  | order.paid.event          | payment_status_update_queue  | Order      |    "           | 
+ | Payment or Delivery  | order.paid.event          | coupon_update_queue          | Coupon     |    "           |
+ |                      |                           |                              |            |                |
+ | Delivery             | rider.delivered.event     | order_status_update_queue    | Order      | DELIVERED      |
+
 </pre>
-
-### Routing key explanation
-  "order.placed.event" The OrderService has received a new order.
-
-  "rider.finding.event" The DeliveryService has started finding a rider.
-
-  "restaurant.accepted.event" The restaurant has accepted the order and has started cooking
-
-  "food.ready.event" The food has been cooked and is ready for pickup by the rider.
-  
-  "rider.assigned.event" A rider has been successfully assigned to pick up the order.
-
-  "user.paid.event" The user has completed payment for the order.  
-    - PaymentService publish this if promptpay or credit card transaction successfully.
-    - DeliveryService publish when rider has receive cash from user after delivery.
-                     
-  "rider.delivered.event" The rider has confirmed that the order has been delivered.
 
 
 ### Canceling Order 
@@ -55,19 +45,21 @@ Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
  | Restaurant | error.restaurant.cancelled.event |     *      | CANCELLED | 
 
 
- > The publisher should attach the error message in the body and use a routing 
- key that starts with "error." The errors may include anything critical that
- leads to the cancellation of an order, such as payment transaction failures,
- the inability to find a rider within a specified time, restaurant cancellations,
- and any other internal server errors. Therefore, every service must subscribe 
- to the "error.#" routing key to handle the rollback or deletion of order information.
+
+
+## User
+The application manages user with two services AuthService and UserService. 
+AuthService handles user credentials, whereas UserService manages the user profile.
+
+To keep user information, such as UserID and Username, synchronized between both services, 
+I use gRPC communication directly between AuthService and UserService.
 
 
 # API design
 
 follow some of Google api design <https://cloud.google.com/apis/design>
 
-## gRPC methods
+## gRPC methods example
 
 | Verb   | Noun | Method Name      | Request Message         | Response Message          |
 |--------|------|------------------|-------------------------|---------------------------|
@@ -78,10 +70,19 @@ follow some of Google api design <https://cloud.google.com/apis/design>
 | Rename | Book | RenameBook       | RenameBookRequest       | RenameBookResponse        |
 | Delete | Book | DeleteBook       | DeleteBookRequest       | google.protobuf.Empty     |
 
+When design follow this table. Client expected resources after write methods back.
+but almost every database it doesn't return that resoruce back , so application layer
+need to call method read again to retrives those resources. 
 
+Example flow
 
+```
+[Client]  ->   CreateBookRequest   ->   [ Server  ->     Create{request}   ->   DB Layer ]
+[      ]                                [                response{ID}      <-   DB Layer ]
+[      ]                                [                Find{ID}          ->   DB Layer ]
+[Client]  <-       Book            <-   [ Server  <-     response{Book}    <-   DB Layer ]
 
-
+```
 
 
 # Database
@@ -92,21 +93,17 @@ For AuthService and UserService use Postgres, other service use Mongo
 Postgres driver <https://pkg.go.dev/github.com/lib/pq#section-readme>
 Mongo driver <https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo>
 
-Postgres write query statement with Exec and Query standard pkg Go "database/sql"
-Mongo query with driver methods i.e FindOne(), InsertOne()
-
-
-In the Application Layer, I use structs generated from Protobuf (protoc). 
-For the database models, I add the prefix "db" to distinguish them.
+In the Application Layer, I use structs generated from protobuf complier(protoc) . 
+For the database access layer, add the prefix "db" to distinguish them.
 
 ```
- Protobuff message        App Layer                            Database Layer                
-                                                                                              
- message Book {           type Book struct {                   type dbBook struct {          
-     string id = 1;           ID    string  `protobuf:"x"`           ID    string   `db:"x"` 
-     string name = 2;         Name  string  `protobuf:"x"`           Name  string   `db:"x"`          
-     Color color = 3;         Color Color   `protobuf:"x"`           Color dbColor  `db:"x"`         
- }                        }                                    }                            
+ Protobuff message           App Layer                            Data Layer                
+                                                                                                 
+ message Book {              type Book struct {                   type dbBook struct {          
+     string id = 1;              ID    string  `protobuf:"x"`           ID    string   
+     string name = 2;            Name  string  `protobuf:"x"`           Name  string   
+     Color color = 3;            Color Color   `protobuf:"x"`           Color dbColor  
+ }                           }                                    }                            
 
 ```
 
