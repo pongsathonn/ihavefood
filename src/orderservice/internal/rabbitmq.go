@@ -2,14 +2,13 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type RabbitMQ interface {
-	Publish(ctx context.Context, exchange, routingKey string, body any) error
-	Subscribe(ctx context.Context, exchange, queue, routingKey string) (<-chan amqp.Delivery, error)
+	Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error
+	Subscribe(ctx context.Context, queue, routingkey string) (<-chan amqp.Delivery, error)
 }
 
 type rabbitMQ struct {
@@ -20,53 +19,42 @@ func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
 	return &rabbitMQ{conn: conn}
 }
 
-func (r *rabbitMQ) Publish(ctx context.Context, exchange, routingKey string, body any) error {
-
+func (r *rabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return err
 	}
-
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		exchange, // name
-		"topic",  // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		"my_exchange", // name
+		"direct",      // type
+		true,          // durable
+		false,         // auto-deleted
+		false,         // internal
+		false,         // no-wait
+		nil,           // arguments
 	)
-	if err != nil {
-		return err
-	}
-
-	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
 
 	err = ch.PublishWithContext(
 		ctx,
-		exchange,   // exchange
-		routingKey, // routing key
-		false,      // mandatory
-		false,      // immediate
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        jsonBody,
-		},
+		"my_exchange", // exchange
+		routingKey,    // routing key
+		false,         // mandatory
+		false,         // immediate
+		msg,
 	)
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
-func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingkey string) (<-chan amqp.Delivery, error) {
+func (r *rabbitMQ) Subscribe(ctx context.Context, queue, routingkey string) (<-chan amqp.Delivery, error) {
 
 	ch, err := r.conn.Channel()
 	if err != nil {
@@ -74,13 +62,13 @@ func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingkey st
 	}
 
 	err = ch.ExchangeDeclare(
-		exchange, // name
-		"topic",  // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		"my_exchange", // name
+		"direct",      // type
+		true,          // durable
+		false,         // auto-deleted
+		false,         // internal
+		false,         // no-wait
+		nil,           // arguments
 	)
 	if err != nil {
 		return nil, err
@@ -99,11 +87,11 @@ func (r *rabbitMQ) Subscribe(ctx context.Context, exchange, queue, routingkey st
 	}
 
 	err = ch.QueueBind(
-		q.Name,     // queue name
-		routingkey, // routing key
-		exchange,   // exchange
-		false,      // no-wait
-		nil,        // arguments
+		q.Name,        // queue name
+		routingkey,    // routing key
+		"my_exchange", // exchange
+		false,         // no-wait
+		nil,           // arguments
 	)
 	if err != nil {
 		return nil, err

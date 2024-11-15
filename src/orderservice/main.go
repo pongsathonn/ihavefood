@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
@@ -20,11 +22,13 @@ import (
 )
 
 func main() {
-	repository := internal.NewOrderRepository(initMongoClient())
-	rabbitmq := internal.NewRabbitMQ(initRabbitMQ())
-	s := internal.NewOrderService(repository, rabbitmq)
 
-	go s.RunOrderProcessing()
+	s := internal.NewOrderService(
+		internal.NewOrderStorage(initMongoClient()),
+		internal.NewRabbitMQ(initRabbitMQ()),
+	)
+
+	go s.StartConsume()
 
 	startGRPCServer(s)
 }
@@ -59,15 +63,27 @@ func initMongoClient() *mongo.Client {
 		log.Fatal(err)
 	}
 
-	err = client.Database("order_database").CreateCollection(context.TODO(), "orderCollection")
-	if err != nil {
+	db := client.Database("order_database")
+	if err := db.CreateCollection(context.TODO(), "orderCollection"); err != nil {
 		var alreayExistsColl mongo.CommandError
 		if !errors.As(err, &alreayExistsColl) {
 			log.Fatal(err)
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	coll := db.Collection("orderCollection")
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{"requestId", 1}}, //prevent duplicate order
+		Options: options.Index().SetUnique(true),
+	}
+	newIndex, err := coll.Indexes().CreateOne(context.TODO(), indexModel)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Info("created new mongo index", "name", newIndex)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	if err := client.Ping(ctx, nil); err != nil {

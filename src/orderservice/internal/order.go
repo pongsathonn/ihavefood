@@ -8,24 +8,27 @@ import (
 	"log/slog"
 	"net/mail"
 	"regexp"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type OrderService struct {
 	pb.UnimplementedOrderServiceServer
 
-	repository OrderRepository
-	rabbitmq   RabbitMQ
+	storage  OrderStorage
+	rabbitmq RabbitMQ
 }
 
-func NewOrderService(repository OrderRepository, rabbitmq RabbitMQ) *OrderService {
+func NewOrderService(storage OrderStorage, rabbitmq RabbitMQ) *OrderService {
 	return &OrderService{
-		repository: repository,
-		rabbitmq:   rabbitmq,
+		storage:  storage,
+		rabbitmq: rabbitmq,
 	}
 }
 
@@ -35,123 +38,124 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 		return nil, status.Error(codes.InvalidArgument, "username must be provided")
 	}
 
-	res, err := x.repository.PlaceOrders(ctx, in.Username)
+	dbOrders, err := x.storage.PlaceOrders(ctx, in.Username)
 	if err != nil {
 		slog.Error("retrive place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrieve user's place orders")
 	}
 
-	if len(res.PlaceOrders) == 0 {
-		return nil, status.Error(codes.NotFound, "place order not found")
+	var placeOrders []*pb.PlaceOrder
+	for _, dbOrder := range dbOrders {
+		placeOrder := dbToProto(dbOrder)
+		placeOrders = append(placeOrders, placeOrder)
 	}
 
-	return res, nil
+	return &pb.ListUserPlaceOrderResponse{PlaceOrders: placeOrders}, nil
 }
 
 // HandlePlaceOrder processes an incoming order placement request from the client.
 //
 // This function validates the place order request, saves the order details to the database,
 // and publishes an "order.placed.event" to other services for further processing.
-func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*pb.HandlePlaceOrderResponse, error) {
+func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*pb.PlaceOrder, error) {
 
 	if err := validatePlaceOrderRequest(in); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
 	}
 
-	duplicated, err := x.repository.IsDuplicatedOrder(ctx, in)
+	dbOrder, err := x.storage.SaveNewPlaceOrder(ctx, prepareNewOrder(in))
 	if err != nil {
-		slog.Error("check order duplicated", "err", err)
-		return nil, status.Error(codes.Internal, "failed to check duplicated order")
-	}
-
-	if duplicated {
-		return nil, status.Error(codes.AlreadyExists, "order duplicated")
-	}
-
-	res, err := x.repository.SaveNewPlaceOrder(ctx, in)
-	if err != nil {
-		slog.Error("save place order", "err", err)
+		slog.Error("failed to save place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to save place order")
 	}
+	order := dbToProto(dbOrder)
 
-	err = x.rabbitmq.Publish(ctx, "order_x", "order.placed.event", &pb.PlaceOrder{
-		No:                res.OrderNo,
-		Username:          in.Username,
-		RestaurantNo:      in.RestaurantNo,
-		Menus:             in.Menus,
-		CouponCode:        in.CouponCode,
-		CouponDiscount:    in.CouponDiscount,
-		DeliveryFee:       in.DeliveryFee,
-		Total:             in.Total,
-		UserAddress:       in.UserAddress,
-		RestaurantAddress: in.RestaurantAddress,
-		UserContact:       in.UserContact,
-		PaymentMethods:    in.PaymentMethods,
-		PaymentStatus:     res.PaymentStatus, // "UNPAID"
-		OrderStatus:       res.OrderStatus,   // "PENDING"
+	body, err := proto.Marshal(order)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to marshal: %v", err)
+	}
+
+	err = x.rabbitmq.Publish(ctx, "order.placed.event", amqp.Publishing{
+		Type: "ihavefood.PlaceOrder",
+		Body: body,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to publish event: %v", err)
 	}
 
-	slog.Info("published event", "orderNo", res.OrderNo)
+	slog.Info("published event", "orderNo", order.OrderNo)
 
-	return &pb.HandlePlaceOrderResponse{
-		OrderNo:   res.OrderNo,
-		CreatedAt: res.Created_at,
-	}, nil
+	return order, nil
 }
 
 //---------------------------------------------------------------------------------------
 
-func (x *OrderService) RunOrderProcessing() {
+func (x *OrderService) StartConsume() {
 
-	go x.fetch("rider.finding.event", x.handleOrderStatus(pb.OrderStatus_FINDING_RIDER))
-	go x.fetch("restaurant.accepted.event", x.handleOrderStatus(pb.OrderStatus_PREPARING_ORDER))
-	go x.fetch("food.ready.event", x.handleOrderStatus(pb.OrderStatus_WAIT_FOR_PICKUP))
-	go x.fetch("rider.assigned.event", x.handleOrderStatus(pb.OrderStatus_ONGOING))
-	go x.fetch("rider.delivered.event", x.handleOrderStatus(pb.OrderStatus_DELIVERED))
+	registerEvent := []struct {
+		queue   string
+		key     string
+		handler chan<- amqp.Delivery
+	}{
+		{"order_status_update_queue", "rider.finding.event", x.handleOrderStatus()},
+		{"order_status_update_queue", "restaurant.accepted.event", x.handleOrderStatus()},
+		{"order_status_update_queue", "rider.assigned.event", x.handleOrderStatus()},
+		{"order_status_update_queue", "rider.delivered.event", x.handleOrderStatus()},
+		{"payment_status_update_queue", "order.paid.event", x.handlePaymentStatus()},
+	}
 
-	go x.fetch("user.paid.event", x.handlePaymentStatus(pb.PaymentStatus_PAID))
+	for _, r := range registerEvent {
+		go func(queue, key string, handler chan<- amqp.Delivery) {
+
+			deliveries, err := x.rabbitmq.Subscribe(context.TODO(), queue, key)
+			if err != nil {
+				slog.Error("subscribe order", "err", err)
+			}
+
+			for delivery := range deliveries {
+				handler <- delivery
+			}
+
+		}(r.queue, r.key, r.handler)
+	}
 
 	select {}
 }
 
-// fetch subscribes to a message queue using a specified routing key
-// and forwards the message bodies to the provided messages channel.
-func (x *OrderService) fetch(routingKey string, messages chan<- []byte) {
+func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 
-	deliveries, err := x.rabbitmq.Subscribe(
-		context.TODO(),
-		"order_x",  // exchange
-		"",         // queue
-		routingKey, // routing key
-	)
-	if err != nil {
-		slog.Error("subscribe order", "err", err)
-	}
+	messages := make(chan amqp.Delivery)
 
-	for delivery := range deliveries {
-		messages <- delivery.Body
-	}
-}
-
-func (x *OrderService) handleOrderStatus(status pb.OrderStatus) chan<- []byte {
-
-	messages := make(chan []byte)
+	var status pb.OrderStatus
 
 	go func() {
 		for msg := range messages {
 
+			switch msg.RoutingKey {
+			case "rider.finding.event":
+				status = pb.OrderStatus_FINDING_RIDER
+			case "restaurant.accepted.event":
+				status = pb.OrderStatus_PREPARING_ORDER
+			case "food.ready.event":
+				status = pb.OrderStatus_WAIT_FOR_PICKUP
+			case "rider.assigned.event":
+				status = pb.OrderStatus_ONGOING
+			case "rider.delivered.event":
+				status = pb.OrderStatus_DELIVERED
+			default:
+				slog.Error("unknown routing key %s", msg.RoutingKey)
+				continue
+			}
+
 			var orderNO string
-			if err := json.Unmarshal(msg, &orderNO); err != nil {
+			if err := json.Unmarshal(msg.Body, &orderNO); err != nil {
 				slog.Error("unmarshal failed", "err", err)
 				continue
 			}
 
-			err := x.repository.UpdateOrderStatus(context.TODO(), orderNO, status)
+			dbOrder, err := x.storage.UpdateOrderStatus(context.TODO(), orderNO, dbOrderStatus(status))
 			if err != nil {
-				slog.Error("updated status", "err", err, "orderNo", orderNO)
+				slog.Error("updated status", "err", err, "orderNo", dbOrder.OrderNo)
 				continue
 			}
 		}
@@ -163,47 +167,141 @@ func (x *OrderService) handleOrderStatus(status pb.OrderStatus) chan<- []byte {
 // it has been successfully processed.
 //   - Cash method update when rider received cash from user after delivery.
 //   - PromptPay and Credit card upon succussful transaction.
-func (x *OrderService) handlePaymentStatus(status pb.PaymentStatus) chan<- []byte {
+func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 
-	messages := make(chan []byte)
+	messages := make(chan amqp.Delivery)
 
 	go func() {
 		for msg := range messages {
 
+			if msg.RoutingKey != "user.paid.event" {
+				slog.Error("unknown routing key %s", msg.RoutingKey)
+				continue
+			}
+
 			var orderNO string
-			if err := json.Unmarshal(msg, &orderNO); err != nil {
+			if err := json.Unmarshal(msg.Body, &orderNO); err != nil {
 				slog.Error("unmarshal failed", "err", err)
 				continue
 			}
 
-			err := x.repository.UpdatePaymentStatus(context.TODO(), orderNO, status)
-			if err != nil {
+			if _, err := x.storage.UpdatePaymentStatus(
+				context.TODO(),
+				orderNO,
+				PaymentStatus_PAID,
+			); err != nil {
 				slog.Error("updated status", "err", err, "orderNo", orderNO)
 				continue
 			}
+
+			// TODO publish update
 		}
 	}()
 	return messages
 }
 
-func (x *OrderService) handleTODO() chan<- []byte {
-	messages := make(chan []byte)
-	go func() {
-		for msg := range messages {
-			var todo string
-			if err := json.Unmarshal(msg, &todo); err != nil {
-				slog.Error("unmarshal failed", "err", err)
-				continue
-			}
-			// DO SOMETHING after todo event
-		}
-	}()
-	return messages
+func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
+
+	var menus []*dbMenu
+	for _, m := range in.Menus {
+		menus = append(menus, &dbMenu{
+			FoodName: m.FoodName,
+			Price:    m.Price,
+		})
+	}
+
+	createTime := time.Now()
+
+	return &dbPlaceOrder{
+		//OrderNo:  - ,
+		RequestID:      in.RequestId,
+		Username:       in.Username,
+		RestaurantNo:   in.RestaurantNo,
+		Menus:          menus,
+		CouponCode:     in.CouponCode,
+		CouponDiscount: in.CouponDiscount,
+		DeliveryFee:    in.DeliveryFee,
+		Total:          in.Total,
+		UserAddress: &dbAddress{
+			AddressName: in.UserAddress.AddressName,
+			SubDistrict: in.UserAddress.SubDistrict,
+			District:    in.UserAddress.District,
+			Province:    in.UserAddress.Province,
+			PostalCode:  in.UserAddress.Province,
+		},
+		RestaurantAddress: &dbAddress{
+			AddressName: in.UserAddress.AddressName,
+			SubDistrict: in.UserAddress.SubDistrict,
+			District:    in.UserAddress.District,
+			Province:    in.UserAddress.Province,
+			PostalCode:  in.UserAddress.Province,
+		},
+		UserContact: &dbContactInfo{
+			PhoneNumber: in.UserContact.PhoneNumber,
+			Email:       in.UserContact.Email,
+		},
+		PaymentMethods: dbPaymentMethods(in.PaymentMethods),
+		PaymentStatus:  PaymentStatus_UNPAID, //DEFAULT
+		OrderStatus:    OrderStatus_PENDING,  //DEFAULT
+		Timestamps: &dbTimestamps{
+			CreateTime:   createTime,
+			UpdateTime:   time.Time{},
+			CompleteTime: time.Time{},
+		}}
 }
 
-//---------------------------------------------------------------------------------------
+func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 
-// TODO implement other validation methods
+	var menus []*pb.Menu
+	for _, m := range order.Menus {
+		menus = append(menus, &pb.Menu{
+			FoodName: m.FoodName,
+			Price:    m.Price,
+		})
+
+	}
+
+	return &pb.PlaceOrder{
+		OrderNo:        order.OrderNo.Hex(),
+		RequestId:      order.RequestID,
+		Username:       order.Username,
+		RestaurantNo:   order.RestaurantNo,
+		Menus:          menus,
+		CouponCode:     order.CouponCode,
+		CouponDiscount: order.CouponDiscount,
+		DeliveryFee:    order.DeliveryFee,
+		Total:          order.Total,
+		UserAddress: &pb.Address{
+			AddressName: order.UserAddress.AddressName,
+			SubDistrict: order.UserAddress.SubDistrict,
+			District:    order.UserAddress.District,
+			Province:    order.UserAddress.Province,
+			PostalCode:  order.UserAddress.PostalCode,
+		},
+		RestaurantAddress: &pb.Address{
+			AddressName: order.RestaurantAddress.AddressName,
+			SubDistrict: order.RestaurantAddress.SubDistrict,
+			District:    order.RestaurantAddress.District,
+			Province:    order.RestaurantAddress.Province,
+			PostalCode:  order.RestaurantAddress.PostalCode,
+		},
+		UserContact: &pb.ContactInfo{
+			PhoneNumber: order.UserContact.PhoneNumber,
+			Email:       order.UserContact.Email,
+		},
+		PaymentMethods: pb.PaymentMethods(order.PaymentMethods),
+		PaymentStatus:  pb.PaymentStatus(order.PaymentStatus),
+		OrderStatus:    pb.OrderStatus(order.OrderStatus),
+		OrderTimestamps: &pb.OrderTimestamps{
+			CreateTime:   order.Timestamps.CreateTime.Unix(),
+			UpdateTime:   order.Timestamps.UpdateTime.Unix(),
+			CompleteTime: order.Timestamps.CompleteTime.Unix(),
+		},
+	}
+
+}
+
+// TODO implement other validation technique
 func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 
 	switch {
