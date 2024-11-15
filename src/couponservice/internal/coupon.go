@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "github.com/pongsathonn/ihavefood/src/couponservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -22,15 +23,15 @@ var (
 type CouponService struct {
 	pb.UnimplementedCouponServiceServer
 
-	rabbitmq   *amqp.Connection
-	repository CouponRepository
+	rabbitmq *amqp.Connection
+	storage  CouponStorage
 }
 
-func NewCouponService(rb *amqp.Connection, rp CouponRepository) *CouponService {
-	return &CouponService{rabbitmq: rb, repository: rp}
+func NewCouponService(rb *amqp.Connection, rp CouponStorage) *CouponService {
+	return &CouponService{rabbitmq: rb, storage: rp}
 }
 
-func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) (*pb.AddCouponResponse, error) {
+func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) (*pb.Coupon, error) {
 
 	var (
 		code     string
@@ -57,7 +58,7 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 
 	expiration := time.Now().Add(time.Duration(in.ExpireInHour) * time.Hour)
 
-	err := x.repository.SaveCoupon(ctx, &Coupon{
+	coupon, err := x.storage.Add(ctx, &dbCoupon{
 		Types:      int32(in.CouponTypes),
 		Code:       code,
 		Discount:   discount,
@@ -69,16 +70,22 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		return nil, status.Error(codes.Internal, "failed to save coupon")
 	}
 
-	return &pb.AddCouponResponse{Success: true}, nil
+	return &pb.Coupon{
+		Types:         pb.CouponTypes(coupon.Types),
+		Code:          coupon.Code,
+		Discount:      coupon.Discount,
+		ExpireTime:    coupon.Expiration,
+		QuantityCount: coupon.Quantity,
+	}, nil
 }
 
-func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.GetCouponResponse, error) {
+func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) (*pb.Coupon, error) {
 
 	if in.Code == "" {
 		return nil, errNoCouponCode
 	}
 
-	coupon, err := x.repository.Coupon(ctx, in.Code)
+	coupon, err := x.storage.Coupon(ctx, in.Code)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			slog.Error("retrive coupon", "err", err)
@@ -96,18 +103,18 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 		return nil, status.Error(codes.FailedPrecondition, "coupon quantity is insufficient")
 	}
 
-	return &pb.GetCouponResponse{Coupon: &pb.Coupon{
-		Types:      pb.CouponTypes(coupon.Types),
-		Code:       coupon.Code,
-		Discount:   coupon.Discount,
-		Expiration: coupon.Expiration,
-		Quantity:   coupon.Quantity,
-	}}, nil
+	return &pb.Coupon{
+		Types:         pb.CouponTypes(coupon.Types),
+		Code:          coupon.Code,
+		Discount:      coupon.Discount,
+		ExpireTime:    coupon.Expiration,
+		QuantityCount: coupon.Quantity,
+	}, nil
 }
 
-func (x *CouponService) ListCoupon(ctx context.Context, empty *pb.Empty) (*pb.ListCouponResponse, error) {
+func (x *CouponService) ListCoupon(ctx context.Context, empty *emptypb.Empty) (*pb.ListCouponResponse, error) {
 
-	listCoupons, err := x.repository.Coupons(ctx)
+	listCoupons, err := x.storage.Coupons(ctx)
 	if err != nil {
 		slog.Error("retrive coupons", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrive list coupons")
@@ -116,11 +123,11 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *pb.Empty) (*pb.Li
 	var coupons []*pb.Coupon
 	for _, c := range listCoupons {
 		coupon := &pb.Coupon{
-			Types:      pb.CouponTypes(c.Types),
-			Code:       c.Code,
-			Discount:   c.Discount,
-			Expiration: c.Expiration,
-			Quantity:   c.Quantity,
+			Types:         pb.CouponTypes(c.Types),
+			Code:          c.Code,
+			Discount:      c.Discount,
+			ExpireTime:    c.Expiration,
+			QuantityCount: c.Quantity,
 		}
 		coupons = append(coupons, coupon)
 	}
@@ -133,7 +140,7 @@ func (x *CouponService) AppliedCoupon(ctx context.Context, in *pb.AppliedCouponR
 		return nil, errNoCouponCode
 	}
 
-	if err := x.repository.UpdateCouponQuantity(ctx, in.Code); err != nil {
+	if err := x.storage.UpdateQuantity(ctx, in.Code); err != nil {
 		slog.Error("update coupon quantity", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update coupon quantity")
 	}

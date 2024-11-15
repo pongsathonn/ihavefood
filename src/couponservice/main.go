@@ -19,14 +19,17 @@ import (
 )
 
 func main() {
-	rabbitmq := initRabbitMQ()
+
 	mongo := initMongoClient()
 
-	repository := internal.NewCouponRepository(mongo)
-	couponService := internal.NewCouponService(rabbitmq, repository)
+	couponService := internal.NewCouponService(
+		initRabbitMQ(),
+		internal.NewCouponStorage(mongo),
+	)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	go cleanUpCoupons(ctx, mongo)
 
 	startGRPCServer(couponService)
