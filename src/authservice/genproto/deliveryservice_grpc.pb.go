@@ -38,7 +38,7 @@ type DeliveryServiceClient interface {
 	CalculateDeliveryFee(ctx context.Context, in *CalculateDeliveryFeeRequest, opts ...grpc.CallOption) (*CalculateDeliveryFeeResponse, error)
 	// ConfirmRiderAccept updates the rider who accepted the order.
 	ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*ConfirmRiderAcceptResponse, error)
-	// ConfirmOrderDeliver updates the order status after rider has delivered.
+	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
 	ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*ConfirmOrderDeliverResponse, error)
 }
 
@@ -122,7 +122,7 @@ type DeliveryServiceServer interface {
 	CalculateDeliveryFee(context.Context, *CalculateDeliveryFeeRequest) (*CalculateDeliveryFeeResponse, error)
 	// ConfirmRiderAccept updates the rider who accepted the order.
 	ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*ConfirmRiderAcceptResponse, error)
-	// ConfirmOrderDeliver updates the order status after rider has delivered.
+	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
 	ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*ConfirmOrderDeliverResponse, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }

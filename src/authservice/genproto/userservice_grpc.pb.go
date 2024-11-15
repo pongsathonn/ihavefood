@@ -23,6 +23,7 @@ const (
 	UserService_ListProfiles_FullMethodName  = "/ihavefood.UserService/ListProfiles"
 	UserService_GetProfile_FullMethodName    = "/ihavefood.UserService/GetProfile"
 	UserService_CreateProfile_FullMethodName = "/ihavefood.UserService/CreateProfile"
+	UserService_UpdateProfile_FullMethodName = "/ihavefood.UserService/UpdateProfile"
 	UserService_DeleteProfile_FullMethodName = "/ihavefood.UserService/DeleteProfile"
 )
 
@@ -32,8 +33,10 @@ const (
 type UserServiceClient interface {
 	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*Profile, error)
-	// Creates a user profile, and returns the new user profile.
+	// CreateProfile should be called from AuthService that why request
+	// only has 2 fields UserID and Username which is generated in AuthService
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
+	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -72,6 +75,15 @@ func (c *userServiceClient) CreateProfile(ctx context.Context, in *CreateProfile
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*Profile, error) {
+	out := new(Profile)
+	err := c.cc.Invoke(ctx, UserService_UpdateProfile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, UserService_DeleteProfile_FullMethodName, in, out, opts...)
@@ -87,8 +99,10 @@ func (c *userServiceClient) DeleteProfile(ctx context.Context, in *DeleteProfile
 type UserServiceServer interface {
 	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
 	GetProfile(context.Context, *GetProfileRequest) (*Profile, error)
-	// Creates a user profile, and returns the new user profile.
+	// CreateProfile should be called from AuthService that why request
+	// only has 2 fields UserID and Username which is generated in AuthService
 	CreateProfile(context.Context, *CreateProfileRequest) (*Profile, error)
+	UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
@@ -105,6 +119,9 @@ func (UnimplementedUserServiceServer) GetProfile(context.Context, *GetProfileReq
 }
 func (UnimplementedUserServiceServer) CreateProfile(context.Context, *CreateProfileRequest) (*Profile, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProfile not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
 }
 func (UnimplementedUserServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
@@ -176,6 +193,24 @@ func _UserService_CreateProfile_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UpdateProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateProfile(ctx, req.(*UpdateProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_DeleteProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteProfileRequest)
 	if err := dec(in); err != nil {
@@ -212,6 +247,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateProfile",
 			Handler:    _UserService_CreateProfile_Handler,
+		},
+		{
+			MethodName: "UpdateProfile",
+			Handler:    _UserService_UpdateProfile_Handler,
 		},
 		{
 			MethodName: "DeleteProfile",

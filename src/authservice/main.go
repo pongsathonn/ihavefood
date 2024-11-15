@@ -30,7 +30,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
 	}
-	if err := internal.InitAdminUser(db); err != nil {
+	storage := internal.NewAuthStorage(db)
+
+	if err := internal.InitAdminUser(storage); err != nil {
 		log.Printf("Failed to initialize create admin user: %v", err)
 	}
 
@@ -45,7 +47,7 @@ func main() {
 	}
 
 	authService := internal.NewAuthService(
-		internal.NewAuthStorage(db),
+		storage,
 		internal.NewRabbitMQ(amqpConn),
 		userClient,
 	)

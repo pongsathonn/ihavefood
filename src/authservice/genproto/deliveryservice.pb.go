@@ -147,8 +147,8 @@ type PickupInfo struct {
 	unknownFields protoimpl.UnknownFields
 
 	OrderNo string `protobuf:"bytes,1,opt,name=order_no,json=orderNo,proto3" json:"order_no,omitempty"`
-	// pickup_code is a simplified code used for identifying an order for the rider.
-	// use three digit i.e 712 , 415
+	// pickup_code is a simplified code used for identifying an order
+	// for the rider. use three digit i.e 712 , 415
 	PickupCode     string `protobuf:"bytes,2,opt,name=pickup_code,json=pickupCode,proto3" json:"pickup_code,omitempty"`
 	PickupLocation *Point `protobuf:"bytes,3,opt,name=pickup_location,json=pickupLocation,proto3" json:"pickup_location,omitempty"`
 	Destination    *Point `protobuf:"bytes,4,opt,name=destination,proto3" json:"destination,omitempty"`

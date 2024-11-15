@@ -10,18 +10,19 @@ import (
 )
 
 // NewUserCredential contains information to create
-// new user credential
+// both new user credential and admin
 type NewUserCredentials struct {
 	Username    string
 	Email       string
 	Password    string
 	PhoneNumber string
+	Role        dbRoles
 }
 
 // dbUserCredentials contains ... TODO .
 //
-// NOTE: Using this struct for response usercredentials
-// must ignore PasswordHash field.
+// NOTE: PasswordHash must not be contained
+// in response
 type dbUserCredentials struct {
 	UserID       string
 	Username     string
