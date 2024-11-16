@@ -56,13 +56,13 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		return nil, status.Error(codes.InvalidArgument, "quantity must be at least 1")
 	}
 
-	expiration := time.Now().Add(time.Duration(in.ExpireInHour) * time.Hour)
+	expiration := time.Now().UTC().Add(time.Hour * time.Duration(in.ExpireInHour))
 
 	coupon, err := x.storage.Add(ctx, &dbCoupon{
 		Types:      int32(in.CouponTypes),
 		Code:       code,
 		Discount:   discount,
-		Expiration: expiration.Unix(),
+		Expiration: expiration,
 		Quantity:   in.Quantity,
 	})
 	if err != nil {
@@ -95,7 +95,7 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 		return nil, status.Error(codes.InvalidArgument, "failed to retrive coupon from database")
 	}
 
-	if coupon.Expiration <= time.Now().Unix() {
+	if coupon.Expiration.Before(time.Now().UTC()) {
 		return nil, status.Error(codes.FailedPrecondition, "coupon has expired")
 	}
 
@@ -134,7 +134,7 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *emptypb.Empty) (*
 	return &pb.ListCouponResponse{Coupons: coupons}, nil
 }
 
-func (x *CouponService) AppliedCoupon(ctx context.Context, in *pb.AppliedCouponRequest) (*pb.AppliedCouponResponse, error) {
+func (x *CouponService) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponRequest) (*pb.RedeemCouponResponse, error) {
 
 	if in.Code == "" {
 		return nil, errNoCouponCode
@@ -145,5 +145,5 @@ func (x *CouponService) AppliedCoupon(ctx context.Context, in *pb.AppliedCouponR
 		return nil, status.Errorf(codes.Internal, "failed to update coupon quantity")
 	}
 
-	return &pb.AppliedCouponResponse{Success: true}, nil
+	return &pb.RedeemCouponResponse{Success: true}, nil
 }
