@@ -1,12 +1,21 @@
+# IHAVEFOOD
 
-IHAVEFOOD
+ihavefood is a microservice food-delivery project written in Go .
 
 ![xd](architecture.png)
 
-ihavefood is a food-delivery microservice personal project written in Go .
 
-Technologies in this project
-Golang, gRPC, HTTP, Docker, MongoDB, PostgreSQL, RabbitMQ
+Tech Stack and Tools
+- Programming Languages: Go, SQL, Shell Script
+- Communication Protocols: REST, gRPC, gRPC-Gateway
+- Databases: PostgreSQL, MongoDB
+- Message Brokers: RabbitMQ
+- Caching : TODO 
+- Containerization: Docker
+- Authentication: JWT(JSON Web Tokens)
+- Development Environments : Vim, Linux(Ubuntu)
+- API Documentation : Swagger/OpenAPI
+
 
 
 //  RabbitMQ conventions for every services
