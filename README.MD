@@ -89,6 +89,29 @@ Client <-      Book         <- Server <-    Book         <- Database
 
 ```
 
+"READ" returns rerource.
+"WRITE" returns identifier(ID).
+
+### database methods example
+
+| Verb      | Noun | Method Name      | Request Message         | Response |
+|-----------|------|------------------|-------------------------|----------|
+| List      | User | Users            | FindsUserRequest(filter)| Users    |
+| Get       | User | User             | UserID                  | User     |
+| Create    | User | Create           | NewUserRequest          | UserID   |
+| Update    | User | Update           | UserID,User             | UserID   |
+| Update    | User | UpdateUserName   | UserID,newName          | UserID   |
+| Delete    | User | DeleteUser       | DeleteUserRequest       |          |
+| Check     | User | CheckExists      | UserName | Email        | boolean  |
+| Validate  | User | ValidateLogin    | UserName,Password       | boolean  |
+
+
+NOTE: Method Update updates many fields at once
+
+- Check to ensure no duplicate resources or fields exist.
+- Validate inputs, such as login credentials or token authenticity.
+
+
 
 # Database
 
@@ -111,6 +134,18 @@ For the database access layer, add the prefix "db" to distinguish them.
  }                           }                                    }                            
 
 ```
+
+
+# Time
+
+My application is based in Thailand, and the local timezone should be 'Asia/Bangkok'.
+However, converting times to this format can be cumbersome. When reading logs in the 
+application, I primarily need to focus on the time differences, and Unix time is difficult
+to read for me. Therefore, to define a consistent standard for the application, 
+all time-related values, including responses to clients, should be in 'UTC' format.
+
+
+
 
 
 
