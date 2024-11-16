@@ -6,7 +6,7 @@ ihavefood is a microservice food-delivery project written in Go .
 
 
 Tech Stack and Tools
-- Programming Languages: Go, SQL, Shell Script
+- Languages: Go, SQL, Shell Script
 - Communication Protocols: REST, gRPC, gRPC-Gateway
 - Databases: PostgreSQL, MongoDB
 - Message Brokers: RabbitMQ
@@ -18,12 +18,12 @@ Tech Stack and Tools
 
 
 
-//  RabbitMQ conventions for every services
-// - exchange name: "my_exchange"
-// - exchange type: "direct"
+RabbitMQ conventions for every services
+- exchange name: "my_exchange"
+- exchange type: "direct"
 
  
-### Food Delivery Process Table
+### Event Routing Table (Order processing)
 
 <pre>
 
@@ -61,15 +61,13 @@ Tech Stack and Tools
 
 
 ## User
-The application manages user with two services AuthService and UserService. 
-AuthService handles user credentials, whereas UserService manages the user profile.
-
-To keep user information, such as UserID and Username, synchronized between both services, 
-I use gRPC communication directly between AuthService and UserService.
+The application manages user with two services AuthService and UserService. AuthService 
+handles user credentials, whereas UserService manages the user profile.To keep user information, 
+such as UserID and Username, synchronized between both services,I use gRPC communication directly
+between AuthService and UserService.
 
 
 # API design
-
 follow some of Google api design <https://cloud.google.com/apis/design>
 
 ## gRPC methods example
