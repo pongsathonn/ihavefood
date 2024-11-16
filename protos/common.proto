@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+
+// This file contains message or enum being used across services
+
+message Address {
+    string address_name = 1;
+	string sub_district = 2;
+	string district = 3;    
+	string province = 4;    
+	string postal_code = 5;
+}
+
+message Social {
+    string facebook = 1;
+    string instagram = 2;
+    string line = 3;
+}

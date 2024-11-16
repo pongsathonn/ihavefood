@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "common.proto";
+
+
+// ---------------------RESTAURANT SERVICE------------------------
+// Manages restaurant 
+service RestaurantService {
+
+    // GetRestaurant retrieves the details of a specific restaurant 
+    // using the restaurant ID.
+    rpc GetRestaurant(GetRestaurantRequest) returns(GetRestaurantResponse){
+        option (google.api.http) = {
+            get: "/api/restaurants/{restaurant_no}" 
+        };
+    }
+
+    // ListRestaurant returns a list of all restaurants.
+    rpc ListRestaurant(google.protobuf.Empty) returns(ListRestaurantResponse){
+        option (google.api.http) = {
+            get: "/api/restaurants" 
+        };
+    }
+
+    // RegisterRestaurant registers a new restaurant.
+    rpc RegisterRestaurant(RegisterRestaurantRequest) returns(RegisterRestaurantResponse){
+        option (google.api.http) = {
+            post: "/api/restaurants" 
+            body: "*"
+        };
+    }
+
+    // AddMenu adds menus to restaurant.
+    rpc AddMenu(AddMenuRequest) returns(AddMenuResponse){
+        option (google.api.http) = {
+            post: "/api/restaurants/menus"
+            body: "*"
+        };
+    }
+
+
+    // OrderReady is called by the restaurant to notify the server that
+    // the ordered have been cooked and are ready for delivery.
+    rpc OrderReady(OrderReadyRequest) returns (OrderReadyResponse) {}
+
+}
+
+enum RestaurantStatus{
+    CLOSED = 0;
+    OPEN = 1;
+}
+
+message Restaurant {
+    string restaurant_no = 1;
+    string name = 2;
+    repeated Menu menus = 3;
+    Address address = 4;
+    RestaurantStatus status = 5;
+}
+
+message Menu {
+    string food_name = 1;
+    int32 price = 2;
+}
+
+message GetRestaurantRequest{
+    string restaurant_no = 1;
+}
+
+message GetRestaurantResponse{
+    Restaurant restaurant = 1;
+}
+
+message ListRestaurantResponse{
+    repeated Restaurant restaurants = 1;
+}
+
+message RegisterRestaurantRequest {
+    string restaurant_name = 1;
+    repeated Menu menus = 2;
+    Address address =3;
+}
+
+message RegisterRestaurantResponse {
+    string restaurant_no = 1;
+}
+
+message AddMenuRequest {
+    string restaurant_no = 1;
+    repeated Menu menus = 2;
+}
+
+message AddMenuResponse {
+    bool success = 1;
+}
+
+message OrderReadyRequest {
+    string order_no = 1;
+    string restaurant_no = 2;
+}
+
+message OrderReadyResponse {
+    bool success = 1;
+}
+

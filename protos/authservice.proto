@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+// import "google/protobuf/empty.proto";
+
+
+// ---------------------AUTH SERVICE------------------------------
+// Manages user credentials
+service AuthService {
+
+    rpc Register(RegisterRequest) returns(UserCredentials) {
+        option (google.api.http) = {
+            post: "/auth/register" 
+            body: "*"
+        };
+    }
+    rpc Login(LoginRequest) returns(LoginResponse){
+        option (google.api.http) = {
+            post: "/auth/login" 
+            body: "*"
+        };
+    }
+
+    // Check jwt token for role "USER"
+    rpc CheckUserToken(CheckUserTokenRequest) returns(CheckUserTokenResponse) {}
+
+    // Check jwt token for role "ADMIN"
+    rpc CheckAdminToken(CheckAdminTokenRequest) returns (CheckAdminTokenResponse){}
+
+    // Check whether username already exists
+    rpc CheckUsernameExists(CheckUsernameExistsRequest) returns (CheckUsernameExistsResponse) {}
+
+    // Promotes a user's role from "USER" to "ADMIN".
+    // This function can only be performed by users with the "ADMIN" role.
+    rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserCredentials){
+        option (google.api.http) = {
+            put: "/auth/users/roles"
+            body: "*"
+       };
+    }
+
+    /*
+        rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
+
+        // Retrieves user credentials by username, responding only "USER" role.
+        rpc GetUserCredentials() returns(){}   endpoint /auth/users
+    */
+}
+
+message UserCredentials {
+    string user_id = 1;
+    string username = 2;
+    string email = 3;
+    string password = 4;
+    string phone_number = 5;
+    Roles role = 6;
+
+    // string access_token = 7;
+    // int64 access_token_exp = 8;
+}
+
+enum Roles {
+    VISITOR = 0;
+    USER = 1;
+    ADMIN = 2;
+}
+
+message RegisterRequest {
+   string username = 1;
+   string email = 2;
+   string password = 3;
+   string phone_number = 4;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string access_token = 1;
+    int64 access_token_exp =2;
+}
+
+message CheckUserTokenRequest {
+    string access_token = 1;
+}
+
+message CheckUserTokenResponse {
+    bool is_valid = 1;
+}
+
+message CheckAdminTokenRequest {
+    string access_token = 1;
+}
+
+message CheckAdminTokenResponse {
+    bool is_valid = 1;
+}
+
+message CheckUsernameExistsRequest{
+    string username = 1;
+}
+
+message CheckUsernameExistsResponse{
+    bool is_exists = 1;
+}
+
+message UpdateUserRoleRequest {
+    string user_id = 1;
+    Roles role = 2;
+}
+

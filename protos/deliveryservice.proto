@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "common.proto";
+
+
+// ---------------------DELIVERY SERVICE---------------------------
+// Manages riders and delivery process.
+service DeliveryService {
+
+
+    // GetOrderTracking provides real-time updates on the current status and location of 
+    // an order. It tracks the progress of the order from preparation to delivery, 
+    // giving the user real-time status updates.
+    rpc GetOrderTracking(GetOrderTrackingRequest) returns(stream GetOrderTrackingResponse){
+        //option (google.api.http) = {
+        //    get: "/api/deliveries/fee/{order_id}"   
+        //};
+    }
+
+    // CalculateDeliveryFee calculates and returns the delivery fee based on the distance
+    // between the user's location and the restaurant's location.
+    rpc CalculateDeliveryFee(CalculateDeliveryFeeRequest) returns(CalculateDeliveryFeeResponse) {
+        option (google.api.http) = {
+            post: "/api/deliveries/fee"   
+            body: "*"
+        };
+    }
+
+
+    // ConfirmRiderAccept updates the rider who accepted the order.
+    rpc ConfirmRiderAccept(ConfirmRiderAcceptRequest) returns(ConfirmRiderAcceptResponse){
+        option (google.api.http) = {
+            post: "/api/deliveries/riders/accepted" 
+            body: "*"
+        };
+    }
+
+    // ConfirmOrderDeliver updates the delivery status after rider has delivered.
+    rpc ConfirmOrderDeliver(ConfirmOrderDeliverRequest) returns(ConfirmOrderDeliverResponse){
+        option (google.api.http) = {
+            post: "/api/deliveries/orders/delivered" 
+            body: "*"
+        };
+    }
+
+}
+
+message Point {
+    // The latitude in degrees. It must be in the range [-90.0, +90.0].
+    double latitude = 1;
+    // The longitude in degrees. It must be in the range [-180.0, +180.0].
+    double longitude = 2;
+}
+
+message Rider {
+    string id = 1;
+    string name = 2;
+    string phone_number = 3;
+}
+
+message PickupInfo {
+    string order_no = 1;
+    // pickup_code is a simplified code used for identifying an order 
+    // for the rider. use three digit i.e 712 , 415
+    string pickup_code = 2;
+    Point pickup_location = 3;
+    Point destination = 4;
+}
+
+message GetOrderTrackingRequest {
+    string order_no = 1;
+}
+
+message GetOrderTrackingResponse {
+    string order_no = 1;
+    string rider_id = 2;
+    Point rider_location = 3;
+    // The timestamp of the most recent update to the rider's location.
+    int64 update_time = 4;
+}
+
+message CalculateDeliveryFeeRequest {
+    Address user_address = 1;
+    Address restaurant_address = 2;
+}
+
+message CalculateDeliveryFeeResponse {
+    int32 delivery_fee =1;
+}
+
+message ConfirmRiderAcceptRequest {
+    string rider_id = 1;
+    string order_no = 2;
+}
+
+message ConfirmRiderAcceptResponse {
+    PickupInfo pickup_info = 1;
+}
+
+message ConfirmOrderDeliverRequest {
+    string order_no = 1;
+}
+
+message ConfirmOrderDeliverResponse {
+    bool success = 1;
+}
+

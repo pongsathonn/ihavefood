@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "restaurantservice.proto";
+import "common.proto";
+
+
+
+// ---------------------ORDER SERVICE------------------------------
+// Manages place order process.
+service OrderService {
+
+    // ListUserPlaceOrder retrives User's place order history by username
+    rpc ListUserPlaceOrder(ListUserPlaceOrderRequest) returns (ListUserPlaceOrderResponse){
+        option (google.api.http) = {
+            get: "/api/orders/{username}" 
+        };
+    }
+
+    // HandlePlaceOrder handle incoming order from client
+    rpc HandlePlaceOrder(HandlePlaceOrderRequest) returns(PlaceOrder){
+        option (google.api.http) = {
+            post: "/api/orders/place-order" 
+            body: "*"
+        };
+    }
+
+}
+
+message PlaceOrder {
+    // A unique request ID for server to detect duplicated requests.
+    string request_id = 1;
+    string order_no = 2 ;
+    string username = 3;
+    string restaurant_no = 4;
+    repeated Menu menus = 5;
+    string coupon_code = 6;
+    int32 coupon_discount =7;
+    int32 delivery_fee = 8;
+    int32 total = 9;
+    Address user_address = 10;
+    Address restaurant_address = 11;
+    ContactInfo user_contact = 12;
+    PaymentMethods payment_methods = 13;
+    PaymentStatus payment_status = 14;
+    OrderStatus order_status = 15;
+    OrderTimestamps order_timestamps = 16;
+}
+
+message ContactInfo {
+    string phone_number = 1;
+    string email = 2;
+}
+
+enum PaymentMethods {
+    PAYMENT_METHOD_UNSPECIFIED = 0;
+    PAYMENT_METHOD_CASH = 1;
+    PAYMENT_METHOD_CREDIT_CARD = 2; 
+    PAYMENT_METHOD_PROMPT_PAY = 3;
+}
+
+enum PaymentStatus {
+    UNPAID = 0;
+    PAID = 1;
+}
+
+enum OrderStatus {
+    PENDING = 0;   
+    PREPARING_ORDER =1;
+    FINDING_RIDER =2;
+    WAIT_FOR_PICKUP = 3; 
+    ONGOING = 4;
+    DELIVERED =5;
+    CANCELLED =6;
+}
+
+message OrderTimestamps {
+    int64 create_time = 1;
+    int64 update_time = 2;
+    int64 complete_time = 3;
+}
+
+message ListUserPlaceOrderRequest {
+    string username = 1;
+}
+
+message ListUserPlaceOrderResponse {
+    repeated PlaceOrder place_orders = 1;
+}
+
+
+message HandlePlaceOrderRequest {
+    string request_id = 12;
+    string username = 1;
+    string restaurant_no = 2;
+    repeated Menu menus = 3;
+    string coupon_code = 4;
+    int32 coupon_discount =5;
+    int32 delivery_fee = 6;
+    int32 total = 7;
+    Address user_address = 8;
+    Address restaurant_address = 9;
+    ContactInfo user_contact = 10;
+    PaymentMethods payment_methods = 11;
+}
+

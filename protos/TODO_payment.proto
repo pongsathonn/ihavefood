@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+// ---------------------PAYMENT SERVICE----------------------------
+// TODO 
+// implement third-party payment gateway for 
+// credit card and prompt pay
+
+
+
+
+// EOF
+
+
+
+
+
+
+
+
+
+
+
+
