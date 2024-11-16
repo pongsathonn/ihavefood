@@ -44,9 +44,8 @@ service RestaurantService {
         };
     }
 
-
-    // OrderReady is called by the restaurant to notify the server that
-    // the ordered have been cooked and are ready for delivery.
+    // OrderReady is called by the restaurant to notify the server(RestaurantService)
+    // that the ordered have been cooked and are ready for delivery.
     rpc OrderReady(OrderReadyRequest) returns (OrderReadyResponse) {}
 
 }
