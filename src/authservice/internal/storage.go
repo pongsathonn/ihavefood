@@ -11,20 +11,20 @@ import (
 
 type AuthStorage interface {
 
-	// Finds returns a list of user credentials.
-	Finds(ctx context.Context) ([]*dbUserCredentials, error)
+	// Users returns a list of user credentials.
+	Users(ctx context.Context) ([]*dbUserCredentials, error)
 
-	// Find returns the user credentials.
-	Find(ctx context.Context, userID string) (*dbUserCredentials, error)
+	// User returns the user credentials.
+	User(ctx context.Context, userID string) (*dbUserCredentials, error)
 
-	// FindByUsername finds by username and return the user credentials.
-	FindByUsername(ctx context.Context, username string) (*dbUserCredentials, error)
+	// UserByUsername finds by username and return the user credentials.
+	UserByUsername(ctx context.Context, username string) (*dbUserCredentials, error)
 
 	// Create creates new user credential and return its ID.
 	Create(ctx context.Context, newUser *NewUserCredentials) (string, error)
 
 	// UpdateRole updates user role and returns ID.
-	UpdateRole(ctx context.Context, userID string, newRole dbRoles) error
+	UpdateRole(ctx context.Context, userID string, newRole dbRoles) (string, error)
 
 	// Delete deletes the user credential.
 	Delete(ctx context.Context, userID string) error
@@ -54,7 +54,7 @@ func NewAuthStorage(db *sql.DB) AuthStorage {
 	return &authStorage{db: db}
 }
 
-func (s *authStorage) Finds(ctx context.Context) ([]*dbUserCredentials, error) {
+func (s *authStorage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT 
@@ -95,7 +95,7 @@ func (s *authStorage) Finds(ctx context.Context) ([]*dbUserCredentials, error) {
 	return users, nil
 }
 
-func (s *authStorage) Find(ctx context.Context, userID string) (*dbUserCredentials, error) {
+func (s *authStorage) User(ctx context.Context, userID string) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
@@ -129,7 +129,7 @@ func (s *authStorage) Find(ctx context.Context, userID string) (*dbUserCredentia
 
 }
 
-func (s *authStorage) FindByUsername(ctx context.Context, username string) (*dbUserCredentials, error) {
+func (s *authStorage) UserByUsername(ctx context.Context, username string) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
@@ -199,14 +199,16 @@ func (s *authStorage) Create(ctx context.Context, newUser *NewUserCredentials) (
 	return userID, nil
 }
 
-func (s *authStorage) UpdateRole(ctx context.Context, userID string, newRole dbRoles) error {
+func (s *authStorage) UpdateRole(ctx context.Context, userID string, newRole dbRoles) (string, error) {
 
 	query := `UPDATE user_credentials SET role = $2 WHERE id = $1 RETURNING id `
 
-	if err := s.db.QueryRowContext(ctx, query, userID, newRole).Scan(&userID); err != nil {
-		return err
+	var updatedID string
+	if err := s.db.QueryRowContext(ctx, query, userID, newRole).Scan(&updatedID); err != nil {
+		return "", err
 	}
-	return nil
+
+	return updatedID, nil
 }
 
 func (s *authStorage) Delete(ctx context.Context, userID string) error {
@@ -225,7 +227,6 @@ func (s *authStorage) ValidateLogin(ctx context.Context, username, password stri
 	var passwordHash string
 
 	query := `SELECT password FROM user_credentials WHERE username=$1`
-
 	err := s.db.QueryRowContext(ctx, query, username).Scan(&passwordHash)
 
 	// invalid username

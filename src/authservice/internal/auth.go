@@ -54,7 +54,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
 	}
 
-	user, err := x.store.Find(ctx, userID)
+	user, err := x.store.User(ctx, userID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrive user %v", err)
 	}
@@ -108,7 +108,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, errUserIncorrect
 	}
 
-	user, err := x.store.FindByUsername(ctx, in.Username)
+	user, err := x.store.UserByUsername(ctx, in.Username)
 	if err != nil {
 		slog.Error("failed to find user credentials", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to find user credentials %v", err)
@@ -180,12 +180,13 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.Role.String())
 	}
 
-	if err := x.store.UpdateRole(ctx, in.UserId, dbRoles(in.Role)); err != nil {
-		slog.Error("failed to update role", "err", err)
+	updatedID, err := x.store.UpdateRole(ctx, in.UserId, dbRoles(in.Role))
+	if err != nil {
+		slog.Error("failed to update user role", "err", err)
 		return nil, status.Error(codes.Internal, "failed to update role")
 	}
 
-	user, err := x.store.Find(ctx, in.UserId)
+	user, err := x.store.User(ctx, updatedID)
 	if err != nil {
 		slog.Error("failed to find user credentials", "err", err)
 		return nil, status.Error(codes.Internal, "failed to find user credentials")

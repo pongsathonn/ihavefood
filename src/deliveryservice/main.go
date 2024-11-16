@@ -18,22 +18,22 @@ import (
 
 func main() {
 
-	conn, err := initRabbitMQ()
+	rabbitmq, err := initRabbitMQ()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client, err := initMongoDB()
+	mongo, err := initMongoDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	s := internal.NewDeliveryService(
-		internal.NewRabbitMQ(conn),
-		internal.NewDeliveryRepository(client),
+		internal.NewRabbitMQ(rabbitmq),
+		internal.NewDeliveryStorage(mongo),
 	)
 
-	go s.RunDeliveryProcessing()
+	go s.StartConsume()
 
 	startGRPCServer(s)
 }

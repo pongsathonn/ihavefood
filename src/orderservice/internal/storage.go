@@ -12,16 +12,18 @@ import (
 )
 
 type OrderStorage interface {
-	SaveNewPlaceOrder(ctx context.Context, in *dbPlaceOrder) (*dbPlaceOrder, error)
 
 	// Retrieves the order history for a specified user by username
 	PlaceOrders(ctx context.Context, username string) ([]*dbPlaceOrder, error)
 
 	PlaceOrder(ctx context.Context, orderNO string) (*dbPlaceOrder, error)
 
-	UpdateOrderStatus(ctx context.Context, orderNO string, status dbOrderStatus) (*dbPlaceOrder, error)
+	// Create inserts new place order into database and returns the order number.
+	Create(ctx context.Context, in *dbPlaceOrder) (string, error)
 
-	UpdatePaymentStatus(ctx context.Context, orderNO string, status dbPaymentStatus) (*dbPlaceOrder, error)
+	UpdateOrderStatus(ctx context.Context, orderNO string, status dbOrderStatus) (string, error)
+
+	UpdatePaymentStatus(ctx context.Context, orderNO string, status dbPaymentStatus) (string, error)
 
 	//DeletePlaceOrder(ctx context.Context, orderNO string) error
 }
@@ -34,7 +36,7 @@ func NewOrderStorage(client *mongo.Client) OrderStorage {
 	return &orderStorage{client: client}
 }
 
-func (s *orderStorage) SaveNewPlaceOrder(ctx context.Context, in *dbPlaceOrder) (*dbPlaceOrder, error) {
+func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (*dbPlaceOrder, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 

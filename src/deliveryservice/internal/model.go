@@ -6,37 +6,73 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 )
 
-type DeliveryEntity struct {
-	OrderNO string `bson:"orderNo"`
+type newDelivery struct {
+
+	// OrderNO must be insert as _id
+	OrderNO        string           `bson:"_id"`
+	PickupCode     string           `bson:"pickupCode"`
+	PickupLocation *dbPoint         `bson:"pickupLocation"`
+	Destination    *dbPoint         `bson:"destination"`
+	Status         dbDeliveryStatus `bson:"status"`
+	Timestamp      *dbTimeStamp     `bson:"timestamp"`
+}
+
+// dbDelivery represent delivery information for an order
+type dbDelivery struct {
+
+	// OrderNO must be insert as _id
+	OrderNO string `bson:"_id"`
 
 	// PickupCode is code 3 digit for rider pickup
 	PickupCode string `bson:"pickupCode"`
 
 	// PickupLocation is Restaurant address
-	PickupLocation *Point `bson:"pickupLocation"`
+	PickupLocation *dbPoint `bson:"pickupLocation"`
 
 	// Destination is User address
-	Destination *Point `bson:"destination"`
+	Destination *dbPoint `bson:"destination"`
 
 	// RiderID who accept the order
 	RiderID string `bson:"riderId"`
 
-	// RiderLocation current rider location
-	RiderLocation *Point `bson:"riderLocation"`
+	// Current rider location
+	RiderLocation *dbPoint `bson:"riderLocation"`
 
-	// CreatedAt is the timestamp when insert new order.
-	CreatedAt time.Time `bson:"assignedAt"`
+	// Delivery status
+	Status dbDeliveryStatus `bson:"status"`
 
-	// AcceptedAt is the timestamp when the rider accepts the order.
-	AcceptedAt time.Time `bson:"acceptedAt"`
-
-	// DeliveredAt is the timestamp when the rider delivers the order.
-	DeliveredAt time.Time `bson:"deliveredAt"`
+	Timestamp *dbTimeStamp `bson:"timestamp"`
 }
 
-type Point struct {
-	Latitude  float64 `bson:"latitude"`
-	Longitude float64 `bson:"longtitude"`
+type dbPoint struct {
+	Latitude float64 `bson:"latitude"`
+
+	Longitude float64 `bson:"longitude"`
+}
+
+type dbDeliveryStatus int32
+
+const (
+	// UNACCEPTED indicates the rider has not yet accepted the order.
+	UNACCEPT dbDeliveryStatus = 0
+
+	// ACCEPTED indicates the rider has accepted the order.
+	ACCEPTED dbDeliveryStatus = 1
+
+	// DELIVERED indicates the order has been delivered by the rider.
+	DELIVERED dbDeliveryStatus = 2
+)
+
+type dbTimeStamp struct {
+	// CreateTime is the timestamp when the DeliveryService receives
+	// a new order.
+	CreateTime time.Time `bson:"createTime"`
+
+	// AcceptTime is the timestamp when the rider accepts the order.
+	AcceptTime time.Time `bson:"acceptTime"`
+
+	// DeliverTime is the timestamp when the order is delivered.
+	DeliverTime time.Time `bson:"deliverTime"`
 }
 
 //------------- EXAMPLE DATA ---------------------------------

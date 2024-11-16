@@ -7,11 +7,6 @@ USER_USER="${USER_POSTGRES_USER}"
 USER_PASSWORD="${USER_POSTGRES_PASS}"
 USER_DB="${USER_POSTGRES_DATABASE}"
 
-if [ -z "${USER_USER}" ] || [ -z "${USER_PASSWORD}" ] || [ -z "${USER_DB}" ]; then
-    echo "Error: Required environment variables are not set."
-    exit 1
-fi
-
 
 psql -v ON_ERROR_STOP=1 --username "postgres"  <<-EOSQL
     CREATE USER "$USER_USER" WITH PASSWORD '$USER_PASSWORD';
@@ -26,7 +21,7 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$USER_DB" <<-EOSQL
     GRANT ALL PRIVILEGES ON SCHEMA public TO "$USER_USER";
 
     CREATE TABLE profile (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,     
         picture BYTEA,                             
         bio TEXT,                                  

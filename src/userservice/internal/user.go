@@ -100,44 +100,53 @@ func (x *UserService) CreateProfile(ctx context.Context, in *pb.CreateProfileReq
 	// TODO validate input
 
 	newProfile := &dbProfile{
+		UserID:   in.UserId,
 		Username: in.Username,
-		Picture:  in.Picture,
-		Bio:      in.Bio,
-		Social: &dbSocial{
-			Facebook:   in.Social.Facebook,
-			Instragram: in.Social.Instagram,
-			Line:       in.Social.Line,
-		},
-		Address: &dbAddress{
-			AddressName: sql.NullString{String: in.Address.AddressName},
-			SubDistrict: sql.NullString{String: in.Address.SubDistrict},
-			District:    sql.NullString{String: in.Address.District},
-			Province:    sql.NullString{String: in.Address.Province},
-			PostalCode:  sql.NullString{String: in.Address.PostalCode},
-		},
 	}
 
 	res, err := x.store.Create(ctx, newProfile)
 	if err != nil {
-		slog.Error("create user profile", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "failed to insert user profile to database")
+		return nil, err
 	}
 
 	return &pb.Profile{
 		UserId:   res.UserID,
 		Username: res.Username,
-		Picture:  res.Picture,
-		Bio:      res.Bio,
-		Social: &pb.Social{
-			Facebook:  res.Social.Facebook,
-			Instagram: res.Social.Instragram,
-			Line:      res.Social.Line,
-		},
-		Address: &pb.Address{
-			AddressName: res.Address.AddressName.String,
-		},
-		CreateTime: res.CreateTime.Unix(),
 	}, nil
+
+}
+
+func (x *UserService) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.Profile, error) {
+
+	if in.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "userID must be provided")
+	}
+
+	update := &dbProfile{
+		Username: in.NewUsername,
+		Picture:  in.NewPicture,
+		Bio:      in.NewBio,
+		Social: &dbSocial{
+			Facebook:   in.NewSocial.Facebook,
+			Instragram: in.NewSocial.Instagram,
+			Line:       in.NewSocial.Line,
+		},
+		Address: &dbAddress{
+			AddressName: sql.NullString{String: in.NewAddress.AddressName},
+			SubDistrict: sql.NullString{String: in.NewAddress.SubDistrict},
+			District:    sql.NullString{String: in.NewAddress.District},
+			Province:    sql.NullString{String: in.NewAddress.Province},
+			PostalCode:  sql.NullString{String: in.NewAddress.PostalCode},
+		},
+	}
+
+	profile, err := x.store.Update(ctx, in.UserId, update)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update profile %v", err)
+	}
+
+	return &profile, nil
+
 }
 
 func (x *UserService) DeleteProfile(ctx context.Context, in *pb.DeleteProfileRequest) (*emptypb.Empty, error) {

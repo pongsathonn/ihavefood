@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// UserID and Username is generated from AuthService
+// to ensure sync both user credentials and user Profile
 type dbProfile struct {
 	UserID     string
 	Username   string
