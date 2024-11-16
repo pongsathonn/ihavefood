@@ -138,11 +138,29 @@ For the database access layer, add the prefix "db" to distinguish them.
 
 # Time
 
-My application is based in Thailand, and the local timezone should be 'Asia/Bangkok'.
-However, converting times to this format can be cumbersome. When reading logs in the 
-application, I primarily need to focus on the time differences, and Unix time is difficult
-to read for me. Therefore, to define a consistent standard for the application, 
-all time-related values, including responses to clients, should be in 'UTC' format.
+My application is based in Thailand, and the local timezone is 'Asia/Bangkok'. However, 
+converting times to this format can be cumbersome. When reading logs within the application, 
+I primarily need to focus on time differences, and Unix time (since it's difficult to read) 
+isn't ideal for monitoring. Therefore, to define a consistent time standard for the application, 
+I have designed the time handling as follows:
+
+- Transport Layer: I use Unix timestamps (int64) for communication, as they are compatible 
+with the int64 type and do not require any special formatting or types, such as timestamp in 
+Protobuf. This makes it easier to work with external systems.
+
+- Application and Data Layers: These layers use UTC as the standard time format. Since logs 
+and data in the database need to be easily readable and consistent, UTC is the best choice. 
+It ensures that time differences across various components are clear and provides a consistent 
+format for both internal application logic and database storage.
+
+application need to convert request to UTC and convert back to Unix in response.
+
+```
+External(Unix) < ---request/response---> Application(UTC) 
+```
+
+
+
 
 
 
