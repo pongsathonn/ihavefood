@@ -56,13 +56,13 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		return nil, status.Error(codes.InvalidArgument, "quantity must be at least 1")
 	}
 
-	expiration := time.Now().UTC().Add(time.Hour * time.Duration(in.ExpireInHour))
+	expiration := time.Now().Add(time.Hour * time.Duration(in.ExpireInHour))
 
 	coupon, err := x.storage.Add(ctx, &dbCoupon{
 		Types:      int32(in.CouponTypes),
 		Code:       code,
 		Discount:   discount,
-		Expiration: expiration,
+		Expiration: expiration.UTC(),
 		Quantity:   in.Quantity,
 	})
 	if err != nil {
@@ -95,7 +95,7 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 		return nil, status.Error(codes.InvalidArgument, "failed to retrive coupon from database")
 	}
 
-	if coupon.Expiration.Before(time.Now().UTC()) {
+	if coupon.Expiration.Before(time.Now()) {
 		return nil, status.Error(codes.FailedPrecondition, "coupon has expired")
 	}
 

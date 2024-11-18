@@ -55,10 +55,8 @@ type dbDeliveryStatus int32
 const (
 	// UNACCEPTED indicates the rider has not yet accepted the order.
 	UNACCEPT dbDeliveryStatus = 0
-
 	// ACCEPTED indicates the rider has accepted the order.
 	ACCEPTED dbDeliveryStatus = 1
-
 	// DELIVERED indicates the order has been delivered by the rider.
 	DELIVERED dbDeliveryStatus = 2
 )
@@ -67,10 +65,8 @@ type dbTimeStamp struct {
 	// CreateTime is the timestamp when the DeliveryService receives
 	// a new order.
 	CreateTime time.Time `bson:"createTime"`
-
 	// AcceptTime is the timestamp when the rider accepts the order.
 	AcceptTime time.Time `bson:"acceptTime"`
-
 	// DeliverTime is the timestamp when the order is delivered.
 	DeliverTime time.Time `bson:"deliverTime"`
 }

@@ -95,6 +95,7 @@ func (r *couponStorage) Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, e
 		SetReturnDocument(options.After)
 
 	var addedCoupon *dbCoupon
+
 	if err := coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(addedCoupon); err != nil {
 		return nil, err
 	}
