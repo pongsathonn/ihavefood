@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -36,14 +35,10 @@ type AuthStorage interface {
 	// the boolean result.
 	ValidateLogin(ctx context.Context, username, password string) (bool, error)
 
-	// CheckUsernameExists checks username already exists in the database.
+	// CheckUsernameExists checks if the provided username already exists.
+	// It returns true if the username exists, false if it does not exist,
+	// and an error if any issues occur during the query process.
 	CheckUsernameExists(ctx context.Context, username string) (bool, error)
-
-	// CheckExists checks if a user with the given username, email, or phone number
-	// already exists. It returns the name of the first field that already exists with
-	// a nil error. If the query operation fails, it returns an empty string and an error.
-	// Returns an empty string and nil if no fields are found in used.
-	CheckExists(ctx context.Context, username, email, phoneNumber string) (string, error)
 }
 
 type authStorage struct {
@@ -248,42 +243,14 @@ func (s *authStorage) ValidateLogin(ctx context.Context, username, password stri
 
 func (s *authStorage) CheckUsernameExists(ctx context.Context, username string) (bool, error) {
 
-	var exists bool
-
 	query := `SELECT EXISTS (SELECT 1 FROM user_credentials WHERE username=$1);`
+
+	var exists bool
 	if err := s.db.QueryRowContext(ctx, query, username).Scan(&exists); err != nil {
 		return false, err
 	}
 
 	return exists, nil
-}
-
-func (s *authStorage) CheckExists(ctx context.Context, username, email, phoneNumber string) (string, error) {
-
-	var existingField string
-
-	row := s.db.QueryRowContext(ctx, `
-		SELECT
-			CASE
-				WHEN username = $1 THEN 'username'
-				WHEN email = $2 THEN 'email'
-				WHEN phone_number = $3 THEN 'phone_number'
-				ELSE NULL
-			END AS existing_field
-		FROM
-			user_credentials
-		WHERE
-			username = $1 OR email = $2 OR phone_number = $3
-		LIMIT 1;`, username, email, phoneNumber)
-
-	if err := row.Scan(&existingField); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", nil
-		}
-		return "", err
-	}
-
-	return existingField, nil
 }
 
 func hashPassword(password string) ([]byte, error) {

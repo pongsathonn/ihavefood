@@ -3,12 +3,12 @@ package internal
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type OrderStorage interface {
@@ -36,21 +36,21 @@ func NewOrderStorage(client *mongo.Client) OrderStorage {
 	return &orderStorage{client: client}
 }
 
-func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (*dbPlaceOrder, error) {
+func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (string, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
 	res, err := coll.InsertOne(ctx, in)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	var order dbPlaceOrder
-	if err := coll.FindOne(ctx, bson.D{{"_id", res.InsertedID}}).Decode(order); err != nil {
-		return nil, err
+	orderNO, ok := res.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", errors.New("failed to convert insertedID to primitive.objectID")
 	}
 
-	return &order, nil
+	return orderNO.Hex(), nil
 
 }
 
@@ -95,14 +95,14 @@ func (s *orderStorage) PlaceOrder(ctx context.Context, orderNO string) (*dbPlace
 	return &order, nil
 }
 
-func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderNo string,
-	status dbOrderStatus) (*dbPlaceOrder, error) {
+func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderNO string,
+	status dbOrderStatus) (string, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
-	orderNumber, err := primitive.ObjectIDFromHex(orderNo)
+	ID, err := primitive.ObjectIDFromHex(orderNO)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	var timestamp string
@@ -110,7 +110,7 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderNo string,
 
 	// Updating to "PENDING" will result in an error, as it is the default status.
 	if status == OrderStatus_PENDING {
-		return nil, errors.New("pending is default status can not be updated")
+		return "", errors.New("pending is default status can not be updated")
 	}
 
 	if status == OrderStatus_DELIVERED {
@@ -126,41 +126,56 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderNo string,
 		}},
 	}
 
-	filter := bson.D{{"_id", orderNumber}}
-	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
-
-	var order dbPlaceOrder
-	if err := coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(&order); err != nil {
-		return nil, err
+	res, err := coll.UpdateByID(ctx, ID, update)
+	if err != nil {
+		return "", err
 	}
 
-	return &order, nil
+	if res.ModifiedCount == 0 {
+		slog.Info("order number %s not found", orderNO)
+		return "", errors.New("order not found")
+	}
+
+	updatedNO, ok := res.UpsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", errors.New("failed to convert upsertedID to primitive.ObjectID")
+	}
+
+	return updatedNO.Hex(), nil
 }
 
-func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderNo string,
-	status dbPaymentStatus) (*dbPlaceOrder, error) {
+func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderNO string,
+	status dbPaymentStatus) (string, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
-	orderNumber, err := primitive.ObjectIDFromHex(orderNo)
+	ID, err := primitive.ObjectIDFromHex(orderNO)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if status == PaymentStatus_UNPAID {
-		return nil, errors.New("unpaid is default status")
+		return "", errors.New("unpaid is default status")
 	}
-
-	filter := bson.D{{"_id", orderNumber}}
 
 	update := bson.D{{"$set", bson.D{
 		{"paymentStatus", status},
 	}}}
 
-	var order dbPlaceOrder
-	if err := coll.FindOneAndUpdate(ctx, filter, update).Decode(&order); err != nil {
-		return nil, err
+	res, err := coll.UpdateByID(ctx, ID, update)
+	if err != nil {
+		return "", err
 	}
 
-	return &order, nil
+	if res.ModifiedCount == 0 {
+		slog.Info("order number %s not found", orderNO)
+		return "", errors.New("order not found")
+	}
+
+	updatedNO, ok := res.UpsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", errors.New("failed to convert upsertedID to primitive.ObjectID")
+	}
+
+	return updatedNO.Hex(), nil
 }

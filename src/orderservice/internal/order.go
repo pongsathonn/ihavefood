@@ -63,11 +63,18 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceO
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
 	}
 
-	dbOrder, err := x.storage.SaveNewPlaceOrder(ctx, prepareNewOrder(in))
+	orderNO, err := x.storage.Create(ctx, prepareNewOrder(in))
 	if err != nil {
-		slog.Error("failed to save place order", "err", err)
+		slog.Error("failed to insert place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to save place order")
 	}
+
+	dbOrder, err := x.storage.PlaceOrder(ctx, orderNO)
+	if err != nil {
+		slog.Error("failed to retrive place order", "err", err)
+		return nil, status.Error(codes.Internal, "failed to retrive place order")
+	}
+
 	order := dbToProto(dbOrder)
 
 	body, err := proto.Marshal(order)
@@ -153,9 +160,8 @@ func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 				continue
 			}
 
-			dbOrder, err := x.storage.UpdateOrderStatus(context.TODO(), orderNO, dbOrderStatus(status))
-			if err != nil {
-				slog.Error("updated status", "err", err, "orderNo", dbOrder.OrderNo)
+			if _, err := x.storage.UpdateOrderStatus(context.TODO(), orderNO, dbOrderStatus(status)); err != nil {
+				slog.Error("updated status", "err", err, "orderNo", orderNO)
 				continue
 			}
 		}

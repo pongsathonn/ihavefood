@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -229,10 +228,8 @@ func InitSigningKey() error {
 	return errors.New("JWT_SIGNING_KEY environment variable is empty")
 }
 
-// InitAdminUser creates the default admin user.
-//
-// The reason the default admin is created in Go is to ensure that the password is hashed
-// using the same hashing function.
+// InitAdminUser creates the default admin user. The reason the default admin is created
+// in Go is to ensure that the password is hashed using the same hashing function.
 func InitAdminUser(storage AuthStorage) error {
 
 	admin := os.Getenv("INIT_ADMIN_USER")
@@ -240,16 +237,7 @@ func InitAdminUser(storage AuthStorage) error {
 	password := os.Getenv("INIT_ADMIN_PASS")
 
 	if admin == "" || email == "" || password == "" {
-		return errors.New("required environment variables are not set")
-	}
-
-	existsField, err := storage.CheckExists(context.TODO(), admin, email, "")
-	if err != nil {
-		return err
-	}
-
-	if existsField != "" {
-		return fmt.Errorf("%s already exists", existsField)
+		return errors.New("some of admin environment variables are not set")
 	}
 
 	if _, err := storage.Create(context.TODO(), &NewUserCredentials{
@@ -262,6 +250,7 @@ func InitAdminUser(storage AuthStorage) error {
 	}
 
 	slog.Info("admin successfully innitialized")
+
 	return nil
 }
 
