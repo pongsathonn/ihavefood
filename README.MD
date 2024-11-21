@@ -1,5 +1,3 @@
-# TODO change doc UserService to ProfileService 
-
 # IHAVEFOOD
 
 ihavefood is a microservice food-delivery project written in Go .
@@ -61,13 +59,13 @@ RabbitMQ conventions for every services
 
 
 
-## User
+# User
 The application manages user with two services AuthService and UserService. AuthService 
 handles user credentials, whereas UserService manages the user profile.To keep user information, 
 such as UserID and Username, synchronized between both services,I use gRPC communication directly
 between AuthService and UserService when user information is manipulated.
 
-# Why Separate UserService into AuthService and ProfileService?
+## Why Separate User  into AuthService and ProfileService?
 Initially, when I built my application, I had a single UserService that managed all user-related 
 information.However, a problem arose when I integrated JWT into the application.
 
@@ -80,9 +78,7 @@ validation must happen first.
 To solve this issue, I decided to split UserService into two separate services:
 - AuthService: Handles authentication-related operations and token validation. It is coupled with the 
 gateway for authentication purposes.
-- ProfileService: Manages user profile information and synchronizes user data.
-This separation ensures a clear distinction of responsibilities and avoids circular dependencies between 
-the gateway and UserService.
+- ProfileService: Manages user profile information and synchronizes user data with AuthService.
 
 
 # API design
@@ -144,11 +140,10 @@ NOTE: Method Update updates many fields at once
 
 # Database
 
-Services in my application use Posgres and Mongo.
-For AuthService and UserService use Postgres, other service use Mongo
 
-Postgres driver <https://pkg.go.dev/github.com/lib/pq#section-readme>
-Mongo driver <https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo>
+My application use two databvase PostgersDB and MongoDB.
+
+Postgers is used wuth AuthService and UserService,other service use Mongo
 
 In the Application Layer, I use structs generated from protobuf complier(protoc) . 
 For the database access layer, add the prefix "db" to distinguish them.
@@ -173,25 +168,22 @@ I primarily need to focus on time differences, and Unix time (since it's difficu
 isn't ideal for monitoring. Therefore, to define a consistent time standard for the application, 
 I have designed the time handling as follows:
 
-- Transport Layer: I use Unix timestamps (int64) for communication, as they are compatible 
+- Transport Layer: Use Unix timestamps (int64) for communication, as they are compatible 
 with the int64 type and do not require any special formatting or types, such as timestamp in 
 Protobuf. This makes it easier to work with external systems.
 
-- Application and Data Layers: These layers use UTC as the standard time format. Since logs 
-and data in the database need to be easily readable and consistent, UTC is the best choice. 
-It ensures that time differences across various components are clear and provides a consistent 
-format for both internal application logic and database storage.
+- Application and Data Layer: Use local time which generated from time.Now() as the standard time format. 
+Since logs and data in the database need to be easily readable. for Data Layer not need to worry because 
+those driver work fine with time.Time in Go. 
 
+
+NOTE: MongoDB will store UTC internally while PostgresDB timestamp type will store local time.
 NOTE: handle int64 from protobuf with time.Unix() in Go.
 
 time.Now() returns local time which does not has conflict with UTC when validate.
 
-```
-External(Unix) < ---request/response---> Application(UTC) 
-```
 
-
-# Error
+# Error TODO improve doc
 
 error from initialization use log.Fatal() for connection might try to retry first then use
 log.Fatal. 
