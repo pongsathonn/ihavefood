@@ -37,27 +37,8 @@ func (x *UserService) ListProfile(ctx context.Context, in *pb.ListProfilesReques
 	}
 
 	var profiles []*pb.Profile
-	for _, result := range results {
-		profile := &pb.Profile{
-			UserId:   result.UserID,
-			Username: result.Username,
-			Picture:  result.Picture,
-			Bio:      result.Bio,
-			Social: &pb.Social{
-				Facebook:  result.Social.Facebook,
-				Instagram: result.Social.Instragram,
-				Line:      result.Social.Line,
-			},
-			Address: &pb.Address{
-				AddressName: result.Address.AddressName.String,
-				SubDistrict: result.Address.SubDistrict.String,
-				District:    result.Address.District.String,
-				Province:    result.Address.Province.String,
-				PostalCode:  result.Address.PostalCode.String,
-			},
-			CreateTime: result.CreateTime.Unix(),
-		}
-		profiles = append(profiles, profile)
+	for _, profile := range results {
+		profiles = append(profiles, dbToProto(profile))
 	}
 
 	return &pb.ListProfilesResponse{Profiles: profiles}, nil
@@ -65,34 +46,14 @@ func (x *UserService) ListProfile(ctx context.Context, in *pb.ListProfilesReques
 
 func (x *UserService) GetProfile(ctx context.Context, in *pb.GetProfileRequest) (*pb.Profile, error) {
 
-	if in.UserId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "user id must be provided")
-	}
+	//TODO validate
 
-	result, err := x.store.Profile(ctx, in.UserId)
+	profile, err := x.store.Profile(ctx, in.UserId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.Profile{
-		UserId:   result.UserID,
-		Username: result.Username,
-		Picture:  result.Picture,
-		Bio:      result.Bio,
-		Social: &pb.Social{
-			Facebook:  result.Social.Facebook,
-			Instagram: result.Social.Instragram,
-			Line:      result.Social.Line,
-		},
-		Address: &pb.Address{
-			AddressName: result.Address.AddressName.String,
-			SubDistrict: result.Address.SubDistrict.String,
-			District:    result.Address.District.String,
-			Province:    result.Address.Province.String,
-			PostalCode:  result.Address.PostalCode.String,
-		},
-		CreateTime: result.CreateTime.Unix(),
-	}, nil
+	return dbToProto(profile), nil
 }
 
 func (x *UserService) CreateProfile(ctx context.Context, in *pb.CreateProfileRequest) (*pb.Profile, error) {
@@ -104,23 +65,24 @@ func (x *UserService) CreateProfile(ctx context.Context, in *pb.CreateProfileReq
 		Username: in.Username,
 	}
 
-	res, err := x.store.Create(ctx, newProfile)
+	userID, err := x.store.Create(ctx, newProfile)
 	if err != nil {
-		return nil, err
+		slog.Error("failed to create user profile", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to create user profile")
 	}
 
-	return &pb.Profile{
-		UserId:   res.UserID,
-		Username: res.Username,
-	}, nil
+	profile, err := x.store.Profile(ctx, userID)
+	if err != nil {
+		slog.Error("failed to retrive user profile", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrive user profile")
+	}
 
+	return dbToProto(profile), nil
 }
 
 func (x *UserService) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.Profile, error) {
 
-	if in.UserId == "" {
-		return nil, status.Error(codes.InvalidArgument, "userID must be provided")
-	}
+	// TODO validate input
 
 	update := &dbProfile{
 		Username: in.NewUsername,
@@ -140,20 +102,25 @@ func (x *UserService) UpdateProfile(ctx context.Context, in *pb.UpdateProfileReq
 		},
 	}
 
-	profile, err := x.store.Update(ctx, in.UserId, update)
+	userID, err := x.store.Update(ctx, in.UserId, update)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update profile %v", err)
+		slog.Error("failed to update profile", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to update profile")
 	}
 
-	return &profile, nil
+	profile, err := x.store.Profile(ctx, userID)
+	if err != nil {
+		slog.Error("failed to retrive profile", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrive profile")
+	}
+
+	return dbToProto(profile), nil
 
 }
 
 func (x *UserService) DeleteProfile(ctx context.Context, in *pb.DeleteProfileRequest) (*emptypb.Empty, error) {
 
-	if in.UserId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "user id must be provided")
-	}
+	//TODO validate intput
 
 	err := x.store.Delete(ctx, in.UserId)
 	if err != nil {
@@ -162,4 +129,26 @@ func (x *UserService) DeleteProfile(ctx context.Context, in *pb.DeleteProfileReq
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func dbToProto(user *dbProfile) *pb.Profile {
+	return &pb.Profile{
+		UserId:   user.UserID,
+		Username: user.Username,
+		Picture:  user.Picture,
+		Bio:      user.Bio,
+		Social: &pb.Social{
+			Facebook:  user.Social.Facebook,
+			Instagram: user.Social.Instragram,
+			Line:      user.Social.Line,
+		},
+		Address: &pb.Address{
+			AddressName: user.Address.AddressName.String,
+			SubDistrict: user.Address.SubDistrict.String,
+			District:    user.Address.District.String,
+			Province:    user.Address.Province.String,
+			PostalCode:  user.Address.PostalCode.String,
+		},
+		CreateTime: user.CreateTime.Unix(),
+	}
 }

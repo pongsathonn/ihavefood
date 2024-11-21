@@ -14,10 +14,10 @@ type UserStorage interface {
 	Profile(ctx context.Context, userID string) (*dbProfile, error)
 
 	// Create creates new user profile.
-	Create(ctx context.Context, newProfile *dbProfile) (*dbProfile, error)
+	Create(ctx context.Context, newProfile *dbProfile) (string, error)
 
 	// Update user profile.
-	Update(ctx context.Context, userID string, update *dbProfile) (*dbProfile, error)
+	Update(ctx context.Context, userID string, update *dbProfile) (string, error)
 
 	// Delete deletes the user profile.
 	Delete(ctx context.Context, userID string) error
@@ -129,10 +129,12 @@ func (s *userStorage) Profile(ctx context.Context, userID string) (*dbProfile, e
 	if err != nil {
 		return nil, err
 	}
+
 	return &profile, nil
 }
 
-func (s *userStorage) Create(ctx context.Context, newProfile *dbProfile) (*dbProfile, error) {
+func (s *userStorage) Create(ctx context.Context, newProfile *dbProfile) (string, error) {
+
 	res := s.db.QueryRowContext(ctx, `
 		INSERT INTO profile(
 			id,
@@ -150,6 +152,7 @@ func (s *userStorage) Create(ctx context.Context, newProfile *dbProfile) (*dbPro
 			create_time,
 		)
 		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+		RETURNING id
 	`,
 		newProfile.UserID,
 		newProfile.Username,
@@ -164,13 +167,13 @@ func (s *userStorage) Create(ctx context.Context, newProfile *dbProfile) (*dbPro
 		newProfile.Address.Province,
 		newProfile.Address.PostalCode,
 	)
-	var profile dbProfile
-	if err := res.Scan(&profile); err != nil {
-		return nil, err
+
+	var userID string
+	if err := res.Scan(&userID); err != nil {
+		return "", err
 	}
 
-	return &profile, nil
-
+	return userID, nil
 }
 
 // Update updates the specified fields in a user profile. Only non-empty fields
@@ -189,7 +192,7 @@ func (s *userStorage) Create(ctx context.Context, newProfile *dbProfile) (*dbPro
 // if the value matches the empty or default case.
 //
 // NULLIF(expr1, expr2) returns NULL if `expr1` and `expr2` are equal.
-func (s *userStorage) Update(ctx context.Context, userID string, update *dbProfile) (*dbProfile, error) {
+func (s *userStorage) Update(ctx context.Context, userID string, update *dbProfile) (string, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		UPDATE 
@@ -210,7 +213,7 @@ func (s *userStorage) Update(ctx context.Context, userID string, update *dbProfi
 		    postal_code = COALESCE(NULLIF($12,''), postal_code)
 
 		WHERE id = $1
-		RETURNING *;
+		RETURNING id;
 	`,
 		userID,
 		update.Username,
@@ -228,21 +231,20 @@ func (s *userStorage) Update(ctx context.Context, userID string, update *dbProfi
 		update.Address.PostalCode.String,
 	)
 
-	var profile dbProfile
-	if err := row.Scan(&profile); err != nil {
-		return nil, err
+	var updatedID string
+	if err := row.Scan(&updatedID); err != nil {
+		return "", err
 	}
 
-	return &profile, nil
+	return updatedID, nil
 
 }
 
 func (s *userStorage) Delete(ctx context.Context, userID string) error {
 
-	_, err := s.db.ExecContext(ctx, `DELETE FROM profile WHERE id=$1`, userID)
-	if err != nil {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM profile WHERE id=$1`, userID); err != nil {
 		return err
 	}
-
 	return nil
+
 }
