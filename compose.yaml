@@ -33,7 +33,7 @@ services:
     security_opt:
     - seccomp:unconfined
     depends_on:
-      - user
+      - profile
       - coupon
       - order
       - restaurant
@@ -100,34 +100,34 @@ services:
     networks:
       - mynetwork
 
-  user:
-    container_name: user
-    build: ./src/userservice
+  profile:
+    container_name: profile
+    build: ./src/profileservice
     env_file:
-      - path: ./src/userservice/.env
+      - path: ./src/profileservice/.env
     networks:
       - mynetwork
     ports:
       - "4044:4044"
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/user" ]
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/profile" ]
     security_opt:
       - seccomp:unconfined
     depends_on:
-      userdb:
+      profiledb:
         condition: service_healthy
         restart: true
       rabbitmqx: 
         condition: service_healthy
         restart: true
-  userdb:
-    container_name: userdb
+  profiledb:
+    container_name: profiledb
     image: postgres
     ports:
       - "5432:5432"
     volumes:
-      - ./src/userservice/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./src/profileservice/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     env_file:
-      - path: ./src/userservice/.env
+      - path: ./src/profileservice/.env
     environment:
       - POSTGRES_PASSWORD=donkpassword
     healthcheck:

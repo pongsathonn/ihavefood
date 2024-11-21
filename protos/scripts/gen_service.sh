@@ -81,5 +81,21 @@ protoc -I $protos \
     $protos/orderservice.proto \
     $protos/couponservice.proto
 
-echo "Code generation completed for $service_name!"
+# gateway
+rm -rf ../../gateway/genproto
+outdir_gateway=../../gateway
+
+protoc -I $protos \
+    --go_out=$outdir_gateway \
+    --go-grpc_out=$outdir_gateway \
+    --grpc-gateway_out=$outdir_gateway \
+    $protos/common.proto \
+    $protos/profileservice.proto \
+    $protos/authservice.proto \
+    $protos/restaurantservice.proto \
+    $protos/deliveryservice.proto \
+    $protos/orderservice.proto \
+    $protos/couponservice.proto
+
+echo "Code generation completed for $service_name and gateway"
 

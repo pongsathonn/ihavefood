@@ -41,9 +41,9 @@ func main() {
 		log.Fatalf("Failed to initialize RabbitMQ connection: %v", err)
 	}
 
-	userClient, err := newUserServiceClient()
+	userClient, err := newProfileServiceClient()
 	if err != nil {
-		log.Fatalf("Failed to initialize UserService connection: %v", err)
+		log.Fatalf("Failed to initialize ProfileService connection: %v", err)
 	}
 
 	authService := internal.NewAuthService(
@@ -55,14 +55,14 @@ func main() {
 
 }
 
-func newUserServiceClient() (pb.UserServiceClient, error) {
+func newProfileServiceClient() (pb.ProfileServiceClient, error) {
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	conn, err := grpc.NewClient(os.Getenv("USER_URI"), opt)
 	if err != nil {
 		return nil, err
 	}
-	client := pb.NewUserServiceClient(conn)
+	client := pb.NewProfileServiceClient(conn)
 
 	return client, nil
 }

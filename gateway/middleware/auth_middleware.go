@@ -41,7 +41,7 @@ func NewAuthMiddleware(a pb.AuthServiceClient) AuthMiddleware {
 //		m.ApplyAuthentication(mux, handler,
 //	        "POST /api/foo",
 //	        "GET /api/bar",
-//		    "/api/users",
+//		    "/api/profiles",
 //		)
 func (m *authMiddleware) ApplyAuthentication(mux *http.ServeMux, handler http.Handler, routes ...string) {
 	for _, route := range routes {
@@ -126,50 +126,47 @@ func (m *authMiddleware) authz(next http.Handler) http.Handler {
 	})
 }
 
-// validateUserExists checks whether a user with the given username exists by
-// calling the AuthService.
-//
-// "IsExists" will be true if User exist
-func (m *authMiddleware) validateUserExists(username string) (bool, error) {
-	v, err := m.authClient.IsUserExists(context.TODO(), &pb.IsUserExistsRequest{Username: username})
+// checkUserExists checks whether a user with the given username exists by
+// calling the AuthService. returns true if username already exists, otherwise
+// false
+func (m *authMiddleware) checkUsernameExists(username string) (bool, error) {
+
+	res, err := m.authClient.CheckUsernameExists(
+		context.TODO(),
+		&pb.CheckUsernameExistsRequest{Username: username},
+	)
 	if err != nil {
 		return false, err
 	}
 
-	if !v.IsExists {
-		return false, errors.New("user does not exists")
-	}
-	return true, nil
+	return res.Exists, nil
 }
 
 // validateToken checks if the provided token is valid by calling the AuthService.
 func (m *authMiddleware) validateUserToken(token string) (bool, error) {
 
-	v, err := m.authClient.IsValidToken(context.TODO(), &pb.IsValidTokenRequest{Token: token})
+	res, err := m.authClient.ValidateUserToken(context.TODO(), &pb.ValidateUserTokenRequest{
+		AccessToken: token,
+	})
 	if err != nil {
 		return false, err
 	}
 
-	if !v.IsValid {
-		return false, errors.New("token invalid")
-	}
-	return true, nil
+	return res.Valid, nil
 }
 
 // validateAdminToken check if a Token is valid for admin role permission
 func (m *authMiddleware) validateAdminToken(token string) (bool, error) {
 
-	v, err := m.authClient.IsValidAdminToken(context.TODO(), &pb.IsValidAdminTokenRequest{Token: token})
+	res, err := m.authClient.ValidateAdminToken(
+		context.TODO(),
+		&pb.ValidateAdminTokenRequest{AccessToken: token},
+	)
 	if err != nil {
 		return false, err
 	}
 
-	if !v.IsValid {
-		log.Println(ErrTokenInvalid)
-		return false, nil
-	}
-
-	return true, nil
+	return res.Valid, nil
 }
 
 // extractAuth retrieves and splits the Authorization header, returning the token part.

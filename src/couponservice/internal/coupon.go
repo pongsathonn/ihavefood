@@ -74,7 +74,7 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		Types:         pb.CouponTypes(coupon.Types),
 		Code:          coupon.Code,
 		Discount:      coupon.Discount,
-		ExpireTime:    coupon.Expiration,
+		ExpireTime:    coupon.Expiration.Unix(),
 		QuantityCount: coupon.Quantity,
 	}, nil
 }
@@ -107,7 +107,7 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 		Types:         pb.CouponTypes(coupon.Types),
 		Code:          coupon.Code,
 		Discount:      coupon.Discount,
-		ExpireTime:    coupon.Expiration,
+		ExpireTime:    coupon.Expiration.Unix(),
 		QuantityCount: coupon.Quantity,
 	}, nil
 }
@@ -126,7 +126,7 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *emptypb.Empty) (*
 			Types:         pb.CouponTypes(c.Types),
 			Code:          c.Code,
 			Discount:      c.Discount,
-			ExpireTime:    c.Expiration,
+			ExpireTime:    c.Expiration.Unix(),
 			QuantityCount: c.Quantity,
 		}
 		coupons = append(coupons, coupon)
@@ -140,7 +140,7 @@ func (x *CouponService) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponReq
 		return nil, errNoCouponCode
 	}
 
-	if err := x.storage.UpdateQuantity(ctx, in.Code); err != nil {
+	if _, err := x.storage.UpdateQuantity(ctx, in.Code); err != nil {
 		slog.Error("update coupon quantity", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update coupon quantity")
 	}

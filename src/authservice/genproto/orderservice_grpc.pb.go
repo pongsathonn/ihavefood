@@ -19,18 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	OrderService_HandlePlaceOrder_FullMethodName   = "/ihavefood.OrderService/HandlePlaceOrder"
 	OrderService_ListUserPlaceOrder_FullMethodName = "/ihavefood.OrderService/ListUserPlaceOrder"
+	OrderService_HandlePlaceOrder_FullMethodName   = "/ihavefood.OrderService/HandlePlaceOrder"
 )
 
 // OrderServiceClient is the client API for OrderService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrderServiceClient interface {
-	// HandlePlaceOrder handle incoming order from client
-	HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*HandlePlaceOrderResponse, error)
 	// ListUserPlaceOrder retrives User's place order history by username
 	ListUserPlaceOrder(ctx context.Context, in *ListUserPlaceOrderRequest, opts ...grpc.CallOption) (*ListUserPlaceOrderResponse, error)
+	// HandlePlaceOrder handle incoming order from client
+	HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrder, error)
 }
 
 type orderServiceClient struct {
@@ -39,15 +39,6 @@ type orderServiceClient struct {
 
 func NewOrderServiceClient(cc grpc.ClientConnInterface) OrderServiceClient {
 	return &orderServiceClient{cc}
-}
-
-func (c *orderServiceClient) HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*HandlePlaceOrderResponse, error) {
-	out := new(HandlePlaceOrderResponse)
-	err := c.cc.Invoke(ctx, OrderService_HandlePlaceOrder_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *orderServiceClient) ListUserPlaceOrder(ctx context.Context, in *ListUserPlaceOrderRequest, opts ...grpc.CallOption) (*ListUserPlaceOrderResponse, error) {
@@ -59,14 +50,23 @@ func (c *orderServiceClient) ListUserPlaceOrder(ctx context.Context, in *ListUse
 	return out, nil
 }
 
+func (c *orderServiceClient) HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrder, error) {
+	out := new(PlaceOrder)
+	err := c.cc.Invoke(ctx, OrderService_HandlePlaceOrder_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility
 type OrderServiceServer interface {
-	// HandlePlaceOrder handle incoming order from client
-	HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*HandlePlaceOrderResponse, error)
 	// ListUserPlaceOrder retrives User's place order history by username
 	ListUserPlaceOrder(context.Context, *ListUserPlaceOrderRequest) (*ListUserPlaceOrderResponse, error)
+	// HandlePlaceOrder handle incoming order from client
+	HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*PlaceOrder, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -74,11 +74,11 @@ type OrderServiceServer interface {
 type UnimplementedOrderServiceServer struct {
 }
 
-func (UnimplementedOrderServiceServer) HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*HandlePlaceOrderResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HandlePlaceOrder not implemented")
-}
 func (UnimplementedOrderServiceServer) ListUserPlaceOrder(context.Context, *ListUserPlaceOrderRequest) (*ListUserPlaceOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUserPlaceOrder not implemented")
+}
+func (UnimplementedOrderServiceServer) HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*PlaceOrder, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HandlePlaceOrder not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 
@@ -91,24 +91,6 @@ type UnsafeOrderServiceServer interface {
 
 func RegisterOrderServiceServer(s grpc.ServiceRegistrar, srv OrderServiceServer) {
 	s.RegisterService(&OrderService_ServiceDesc, srv)
-}
-
-func _OrderService_HandlePlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HandlePlaceOrderRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrderService_HandlePlaceOrder_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, req.(*HandlePlaceOrderRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _OrderService_ListUserPlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -129,6 +111,24 @@ func _OrderService_ListUserPlaceOrder_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_HandlePlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandlePlaceOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_HandlePlaceOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, req.(*HandlePlaceOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -137,12 +137,12 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OrderServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "HandlePlaceOrder",
-			Handler:    _OrderService_HandlePlaceOrder_Handler,
-		},
-		{
 			MethodName: "ListUserPlaceOrder",
 			Handler:    _OrderService_ListUserPlaceOrder_Handler,
+		},
+		{
+			MethodName: "HandlePlaceOrder",
+			Handler:    _OrderService_HandlePlaceOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

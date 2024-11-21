@@ -69,13 +69,20 @@ func newGatewaymux() *runtime.ServeMux {
 
 }
 
-// setStatus handle specific response types
+// setStatus sets response code for specific type.
+//
+// the default behavior success code for gRPC-gateway is 200.
+// if you want to modify such as change created response from 200 to 201
+// then add case in setStatus code
 func setStatus(ctx context.Context, w http.ResponseWriter, m protoreflect.ProtoMessage) error {
 
-	switch m.(type) {
-	case *pb.RegisterResponse:
-		w.WriteHeader(http.StatusCreated)
-	}
+	/*
+		switch m.(type) {
+		case *pb.RegisterUserResponse:
+			w.WriteHeader(http.StatusCreated)
+		}
+	*/
+
 	// keep default behavior
 	return nil
 }
@@ -91,7 +98,7 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 		registerFunc func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error
 		endpoint     string
 	}{
-		{pb.RegisterUserServiceHandlerFromEndpoint, "USER_URI"},
+		{pb.RegisterProfileServiceHandlerFromEndpoint, "PROFILE_URI"},
 		{pb.RegisterCouponServiceHandlerFromEndpoint, "COUPON_URI"},
 		{pb.RegisterOrderServiceHandlerFromEndpoint, "ORDER_URI"},
 		{pb.RegisterRestaurantServiceHandlerFromEndpoint, "RESTAURANT_URI"},
@@ -126,11 +133,11 @@ func setupHTTPMuxAndAuth(m middleware.AuthMiddleware, gwmux *runtime.ServeMux) h
 		"DELETE /api/*",
 	)
 	m.ApplyAuthorization(mux, gwmux,
-		"/auth/users/roles",
+		"/auth/profiles/roles",
 	)
 	m.ApplyAuthentication(mux, gwmux,
 		"/api/orders/place-order",
-		"/api/users",
+		"/api/profiles",
 		"/api/*",
 	)
 	mux.Handle("/", gwmux)

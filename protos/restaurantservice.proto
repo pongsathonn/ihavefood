@@ -13,14 +13,6 @@ import "common.proto";
 // Manages restaurant 
 service RestaurantService {
 
-    // GetRestaurant retrieves the details of a specific restaurant 
-    // using the restaurant ID.
-    rpc GetRestaurant(GetRestaurantRequest) returns(GetRestaurantResponse){
-        option (google.api.http) = {
-            get: "/api/restaurants/{restaurant_no}" 
-        };
-    }
-
     // ListRestaurant returns a list of all restaurants.
     rpc ListRestaurant(google.protobuf.Empty) returns(ListRestaurantResponse){
         option (google.api.http) = {
@@ -28,8 +20,17 @@ service RestaurantService {
         };
     }
 
+    // GetRestaurant retrieves the details of a specific restaurant 
+    // using the restaurant ID.
+    rpc GetRestaurant(GetRestaurantRequest) returns(Restaurant){
+        option (google.api.http) = {
+            get: "/api/restaurants/{restaurant_no}" 
+        };
+    }
+
+
     // RegisterRestaurant registers a new restaurant.
-    rpc RegisterRestaurant(RegisterRestaurantRequest) returns(RegisterRestaurantResponse){
+    rpc RegisterRestaurant(RegisterRestaurantRequest) returns(Restaurant){
         option (google.api.http) = {
             post: "/api/restaurants" 
             body: "*"
@@ -37,7 +38,7 @@ service RestaurantService {
     }
 
     // AddMenu adds menus to restaurant.
-    rpc AddMenu(AddMenuRequest) returns(AddMenuResponse){
+    rpc AddMenu(AddMenuRequest) returns(Restaurant){
         option (google.api.http) = {
             post: "/api/restaurants/menus"
             body: "*"
@@ -46,7 +47,7 @@ service RestaurantService {
 
     // OrderReady is called by the restaurant to notify the server(RestaurantService)
     // that the ordered have been cooked and are ready for delivery.
-    rpc OrderReady(OrderReadyRequest) returns (OrderReadyResponse) {}
+    rpc OrderReady(OrderReadyRequest) returns (google.protobuf.Empty) {}
 
 }
 
@@ -72,10 +73,6 @@ message GetRestaurantRequest{
     string restaurant_no = 1;
 }
 
-message GetRestaurantResponse{
-    Restaurant restaurant = 1;
-}
-
 message ListRestaurantResponse{
     repeated Restaurant restaurants = 1;
 }
@@ -86,25 +83,13 @@ message RegisterRestaurantRequest {
     Address address =3;
 }
 
-message RegisterRestaurantResponse {
-    string restaurant_no = 1;
-}
-
 message AddMenuRequest {
     string restaurant_no = 1;
     repeated Menu menus = 2;
 }
 
-message AddMenuResponse {
-    bool success = 1;
-}
-
 message OrderReadyRequest {
     string order_no = 1;
     string restaurant_no = 2;
-}
-
-message OrderReadyResponse {
-    bool success = 1;
 }
 

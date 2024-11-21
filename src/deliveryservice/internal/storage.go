@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -16,11 +17,11 @@ type DeliveryStorage interface {
 	// Create inserts new delivery when order is placed and return order number.
 	Create(ctx context.Context, delivery *newDelivery) (string, error)
 
-	UpdateRiderAccept(ctx context.Context, orderNO, riderID string) error
+	UpdateRiderAccept(ctx context.Context, orderNO, riderID string) (string, error)
 
-	UpdateRiderLocation(ctx context.Context, orderNO, riderID string, lo *dbPoint) error
+	UpdateRiderLocation(ctx context.Context, orderNO, riderID string, lo *dbPoint) (string, error)
 
-	UpdateStatus(ctx context.Context, orderNO string, newStatus dbDeliveryStatus) error
+	UpdateStatus(ctx context.Context, orderNO string, newStatus dbDeliveryStatus) (string, error)
 
 	CheckRiderAccept(ctx context.Context, orderNO string) (bool, error)
 
@@ -66,10 +67,13 @@ func (s *deliveryStorage) Create(ctx context.Context, delivery *newDelivery) (st
 	return orderNO, nil
 }
 
-func (s *deliveryStorage) UpdateRiderAccept(ctx context.Context, orderNO, riderID string) error {
+func (s *deliveryStorage) UpdateRiderAccept(ctx context.Context, orderNO, riderID string) (string, error) {
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	filter := bson.D{{"orderNo", orderNO}}
+	ID, err := primitive.ObjectIDFromHex(orderNO)
+	if err != nil {
+		return "", err
+	}
 
 	update := bson.D{{"$set", bson.D{
 		{"riderId", riderID},
@@ -77,20 +81,34 @@ func (s *deliveryStorage) UpdateRiderAccept(ctx context.Context, orderNO, riderI
 		{"timestamps.acceptTime", time.Now()},
 	}}}
 
-	_, err := coll.UpdateOne(ctx, filter, update)
+	res, err := coll.UpdateByID(ctx, ID, update)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	if res.MatchedCount == 0 {
+		return "", errors.New("orer not found")
+	}
+
+	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", errors.New("convert ID to primitive.ObjectID failed")
+	}
+
+	return updatedID.Hex(), nil
 }
 
-func (s *deliveryStorage) UpdateRiderLocation(ctx context.Context, orderNO, riderID string, lo *dbPoint) error {
+func (s *deliveryStorage) UpdateRiderLocation(ctx context.Context, orderNO, riderID string, lo *dbPoint) (string, error) {
 
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
+	ID, err := primitive.ObjectIDFromHex(orderNO)
+	if err != nil {
+		return "", err
+	}
+
 	filter := bson.D{
-		{"orderNo", orderNO},
+		{"_id", ID},
 		{"riderId", riderID},
 	}
 
@@ -99,27 +117,49 @@ func (s *deliveryStorage) UpdateRiderLocation(ctx context.Context, orderNO, ride
 		{"riderLocation.longitude", lo.Longitude},
 	}}}
 
-	_, err := coll.UpdateOne(ctx, filter, update)
+	res, err := coll.UpdateOne(ctx, filter, update)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	if res.MatchedCount == 0 {
+		return "", errors.New("orderNO or riderID not match")
+	}
+
+	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", errors.New("ID not primitive.ObjectID")
+	}
+
+	return updatedID.Hex(), nil
 
 }
 
-func (s *deliveryStorage) UpdateStatus(ctx context.Context, orderNO string, newStatus dbDeliveryStatus) error {
+func (s *deliveryStorage) UpdateStatus(ctx context.Context, orderNO string, newStatus dbDeliveryStatus) (string, error) {
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	filter := bson.D{{"orderNo", orderNO}}
-	update := bson.D{{"$set", bson.D{{"status", newStatus}}}}
-
-	_, err := coll.UpdateOne(ctx, filter, update)
+	ID, err := primitive.ObjectIDFromHex(orderNO)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	update := bson.D{{"$set", bson.D{{"status", newStatus}}}}
+
+	res, err := coll.UpdateByID(ctx, ID, update)
+	if err != nil {
+		return "", err
+	}
+
+	if res.MatchedCount == 0 {
+		return "", errors.New("order not found")
+	}
+
+	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", errors.New("ID not primitive.ObjectID")
+	}
+
+	return updatedID.Hex(), nil
 }
 
 func (s *deliveryStorage) CheckRiderAccept(ctx context.Context, orderNO string) (bool, error) {

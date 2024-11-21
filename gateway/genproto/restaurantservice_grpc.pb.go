@@ -20,8 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	RestaurantService_GetRestaurant_FullMethodName      = "/ihavefood.RestaurantService/GetRestaurant"
 	RestaurantService_ListRestaurant_FullMethodName     = "/ihavefood.RestaurantService/ListRestaurant"
+	RestaurantService_GetRestaurant_FullMethodName      = "/ihavefood.RestaurantService/GetRestaurant"
 	RestaurantService_RegisterRestaurant_FullMethodName = "/ihavefood.RestaurantService/RegisterRestaurant"
 	RestaurantService_AddMenu_FullMethodName            = "/ihavefood.RestaurantService/AddMenu"
 	RestaurantService_OrderReady_FullMethodName         = "/ihavefood.RestaurantService/OrderReady"
@@ -31,18 +31,18 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RestaurantServiceClient interface {
-	// GetRestaurant retrieves the details of a specific restaurant
-	// using the restaurant ID.
-	GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
 	// ListRestaurant returns a list of all restaurants.
 	ListRestaurant(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListRestaurantResponse, error)
+	// GetRestaurant retrieves the details of a specific restaurant
+	// using the restaurant ID.
+	GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*Restaurant, error)
 	// RegisterRestaurant registers a new restaurant.
-	RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*RegisterRestaurantResponse, error)
+	RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*Restaurant, error)
 	// AddMenu adds menus to restaurant.
-	AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*AddMenuResponse, error)
-	// OrderReady is called by the restaurant to notify the server that
-	// the ordered have been cooked and are ready for delivery.
-	OrderReady(ctx context.Context, in *OrderReadyRequest, opts ...grpc.CallOption) (*OrderReadyResponse, error)
+	AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*Restaurant, error)
+	// OrderReady is called by the restaurant to notify the server(RestaurantService)
+	// that the ordered have been cooked and are ready for delivery.
+	OrderReady(ctx context.Context, in *OrderReadyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type restaurantServiceClient struct {
@@ -51,15 +51,6 @@ type restaurantServiceClient struct {
 
 func NewRestaurantServiceClient(cc grpc.ClientConnInterface) RestaurantServiceClient {
 	return &restaurantServiceClient{cc}
-}
-
-func (c *restaurantServiceClient) GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error) {
-	out := new(GetRestaurantResponse)
-	err := c.cc.Invoke(ctx, RestaurantService_GetRestaurant_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *restaurantServiceClient) ListRestaurant(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListRestaurantResponse, error) {
@@ -71,8 +62,17 @@ func (c *restaurantServiceClient) ListRestaurant(ctx context.Context, in *emptyp
 	return out, nil
 }
 
-func (c *restaurantServiceClient) RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*RegisterRestaurantResponse, error) {
-	out := new(RegisterRestaurantResponse)
+func (c *restaurantServiceClient) GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*Restaurant, error) {
+	out := new(Restaurant)
+	err := c.cc.Invoke(ctx, RestaurantService_GetRestaurant_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *restaurantServiceClient) RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*Restaurant, error) {
+	out := new(Restaurant)
 	err := c.cc.Invoke(ctx, RestaurantService_RegisterRestaurant_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -80,8 +80,8 @@ func (c *restaurantServiceClient) RegisterRestaurant(ctx context.Context, in *Re
 	return out, nil
 }
 
-func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*AddMenuResponse, error) {
-	out := new(AddMenuResponse)
+func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*Restaurant, error) {
+	out := new(Restaurant)
 	err := c.cc.Invoke(ctx, RestaurantService_AddMenu_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -89,8 +89,8 @@ func (c *restaurantServiceClient) AddMenu(ctx context.Context, in *AddMenuReques
 	return out, nil
 }
 
-func (c *restaurantServiceClient) OrderReady(ctx context.Context, in *OrderReadyRequest, opts ...grpc.CallOption) (*OrderReadyResponse, error) {
-	out := new(OrderReadyResponse)
+func (c *restaurantServiceClient) OrderReady(ctx context.Context, in *OrderReadyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, RestaurantService_OrderReady_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -102,18 +102,18 @@ func (c *restaurantServiceClient) OrderReady(ctx context.Context, in *OrderReady
 // All implementations must embed UnimplementedRestaurantServiceServer
 // for forward compatibility
 type RestaurantServiceServer interface {
-	// GetRestaurant retrieves the details of a specific restaurant
-	// using the restaurant ID.
-	GetRestaurant(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error)
 	// ListRestaurant returns a list of all restaurants.
 	ListRestaurant(context.Context, *emptypb.Empty) (*ListRestaurantResponse, error)
+	// GetRestaurant retrieves the details of a specific restaurant
+	// using the restaurant ID.
+	GetRestaurant(context.Context, *GetRestaurantRequest) (*Restaurant, error)
 	// RegisterRestaurant registers a new restaurant.
-	RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*RegisterRestaurantResponse, error)
+	RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*Restaurant, error)
 	// AddMenu adds menus to restaurant.
-	AddMenu(context.Context, *AddMenuRequest) (*AddMenuResponse, error)
-	// OrderReady is called by the restaurant to notify the server that
-	// the ordered have been cooked and are ready for delivery.
-	OrderReady(context.Context, *OrderReadyRequest) (*OrderReadyResponse, error)
+	AddMenu(context.Context, *AddMenuRequest) (*Restaurant, error)
+	// OrderReady is called by the restaurant to notify the server(RestaurantService)
+	// that the ordered have been cooked and are ready for delivery.
+	OrderReady(context.Context, *OrderReadyRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedRestaurantServiceServer()
 }
 
@@ -121,19 +121,19 @@ type RestaurantServiceServer interface {
 type UnimplementedRestaurantServiceServer struct {
 }
 
-func (UnimplementedRestaurantServiceServer) GetRestaurant(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRestaurant not implemented")
-}
 func (UnimplementedRestaurantServiceServer) ListRestaurant(context.Context, *emptypb.Empty) (*ListRestaurantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRestaurant not implemented")
 }
-func (UnimplementedRestaurantServiceServer) RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*RegisterRestaurantResponse, error) {
+func (UnimplementedRestaurantServiceServer) GetRestaurant(context.Context, *GetRestaurantRequest) (*Restaurant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRestaurant not implemented")
+}
+func (UnimplementedRestaurantServiceServer) RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*Restaurant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterRestaurant not implemented")
 }
-func (UnimplementedRestaurantServiceServer) AddMenu(context.Context, *AddMenuRequest) (*AddMenuResponse, error) {
+func (UnimplementedRestaurantServiceServer) AddMenu(context.Context, *AddMenuRequest) (*Restaurant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMenu not implemented")
 }
-func (UnimplementedRestaurantServiceServer) OrderReady(context.Context, *OrderReadyRequest) (*OrderReadyResponse, error) {
+func (UnimplementedRestaurantServiceServer) OrderReady(context.Context, *OrderReadyRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OrderReady not implemented")
 }
 func (UnimplementedRestaurantServiceServer) mustEmbedUnimplementedRestaurantServiceServer() {}
@@ -147,24 +147,6 @@ type UnsafeRestaurantServiceServer interface {
 
 func RegisterRestaurantServiceServer(s grpc.ServiceRegistrar, srv RestaurantServiceServer) {
 	s.RegisterService(&RestaurantService_ServiceDesc, srv)
-}
-
-func _RestaurantService_GetRestaurant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRestaurantRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RestaurantServiceServer).GetRestaurant(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: RestaurantService_GetRestaurant_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RestaurantServiceServer).GetRestaurant(ctx, req.(*GetRestaurantRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _RestaurantService_ListRestaurant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -181,6 +163,24 @@ func _RestaurantService_ListRestaurant_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RestaurantServiceServer).ListRestaurant(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RestaurantService_GetRestaurant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRestaurantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RestaurantServiceServer).GetRestaurant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RestaurantService_GetRestaurant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RestaurantServiceServer).GetRestaurant(ctx, req.(*GetRestaurantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -247,12 +247,12 @@ var RestaurantService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*RestaurantServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetRestaurant",
-			Handler:    _RestaurantService_GetRestaurant_Handler,
-		},
-		{
 			MethodName: "ListRestaurant",
 			Handler:    _RestaurantService_ListRestaurant_Handler,
+		},
+		{
+			MethodName: "GetRestaurant",
+			Handler:    _RestaurantService_GetRestaurant_Handler,
 		},
 		{
 			MethodName: "RegisterRestaurant",

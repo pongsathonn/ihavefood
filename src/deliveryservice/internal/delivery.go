@@ -173,7 +173,7 @@ func (x *DeliveryService) ConfirmOrderDeliver(ctx context.Context, in *pb.Confir
 		return nil, status.Error(codes.InvalidArgument, "order number must be provided")
 	}
 
-	if err := x.storage.UpdateStatus(ctx, in.OrderNo, DELIVERED); err != nil {
+	if _, err := x.storage.UpdateStatus(ctx, in.OrderNo, DELIVERED); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update delivery status %v", err)
 	}
 
@@ -345,11 +345,8 @@ func notifyToRider(riders []*pb.Rider, pickup *pb.PickupInfo) error {
 //   - Sends the order pickup information to the orderPickupCh channel.
 //
 // If no rider accepts the order within 15 minutes, the function cancels the context and stops waiting.
-func (x *DeliveryService) waitForRiderAccept(
-	orderNO string,
-	riders []*pb.Rider,
-	pickup *pb.PickupInfo,
-) error {
+func (x *DeliveryService) waitForRiderAccept(orderNO string, riders []*pb.Rider,
+	pickup *pb.PickupInfo) error {
 
 	var riderIDs []string
 	for _, rider := range riders {
@@ -375,8 +372,7 @@ func (x *DeliveryService) waitForRiderAccept(
 			}
 
 			// Save order delivery after rider accepted
-			err := x.storage.UpdateRiderAccept(ctx, v.OrderNo, v.RiderId)
-			if err != nil {
+			if _, err := x.storage.UpdateRiderAccept(ctx, v.OrderNo, v.RiderId); err != nil {
 				slog.Error("update delivery", "err", err)
 				continue
 			}

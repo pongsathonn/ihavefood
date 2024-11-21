@@ -1,3 +1,5 @@
+# TODO change doc UserService to ProfileService 
+
 # IHAVEFOOD
 
 ihavefood is a microservice food-delivery project written in Go .
@@ -59,12 +61,28 @@ RabbitMQ conventions for every services
 
 
 
-
 ## User
 The application manages user with two services AuthService and UserService. AuthService 
 handles user credentials, whereas UserService manages the user profile.To keep user information, 
 such as UserID and Username, synchronized between both services,I use gRPC communication directly
-between AuthService and UserService.
+between AuthService and UserService when user information is manipulated.
+
+# Why Separate UserService into AuthService and ProfileService?
+Initially, when I built my application, I had a single UserService that managed all user-related 
+information.However, a problem arose when I integrated JWT into the application.
+
+When a client needs to use an API to access resources, the token must be validated first. This works 
+fine for other services because the gateway can validate the token with UserService before performing 
+any further validations. But what happens if the client needs to use UserService's API? How will the 
+gateway validate the token in that case? It can't call UserService to validate the token because token 
+validation must happen first.
+
+To solve this issue, I decided to split UserService into two separate services:
+- AuthService: Handles authentication-related operations and token validation. It is coupled with the 
+gateway for authentication purposes.
+- ProfileService: Manages user profile information and synchronizes user data.
+This separation ensures a clear distinction of responsibilities and avoids circular dependencies between 
+the gateway and UserService.
 
 
 # API design
@@ -164,11 +182,53 @@ and data in the database need to be easily readable and consistent, UTC is the b
 It ensures that time differences across various components are clear and provides a consistent 
 format for both internal application logic and database storage.
 
-application need to convert request to UTC and convert back to Unix in response.
+NOTE: handle int64 from protobuf with time.Unix() in Go.
+
+time.Now() returns local time which does not has conflict with UTC when validate.
 
 ```
 External(Unix) < ---request/response---> Application(UTC) 
 ```
+
+
+# Error
+
+error from initialization use log.Fatal() for connection might try to retry first then use
+log.Fatal. 
+
+For error response to client the first thing i need to aware is return sensitive information.
+to prevent this case happen, always return error messsage that i know what message will be
+such as if i check user information in database and i know error from this is "notfound then
+an error must be something like "username not found", but if i don't know what error will be
+return then i will use internal error which message contains what i do. such as 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

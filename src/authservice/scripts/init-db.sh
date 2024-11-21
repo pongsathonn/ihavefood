@@ -24,7 +24,7 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$AUTH_DB" <<-EOSQL
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         role SMALLINT NOT NULL,
-        phone_number UNIQUE VARCHAR(255),
+        phone_number VARCHAR(255) UNIQUE,
         create_time TIMESTAMP NOT NULL DEFAULT NOW()
     );
 

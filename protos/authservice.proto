@@ -18,6 +18,7 @@ service AuthService {
             body: "*"
         };
     }
+
     rpc Login(LoginRequest) returns(LoginResponse){
         option (google.api.http) = {
             post: "/auth/login" 
@@ -25,17 +26,17 @@ service AuthService {
         };
     }
 
-    // Check jwt token for role "USER"
-    rpc CheckUserToken(CheckUserTokenRequest) returns(CheckUserTokenResponse) {}
+    // Validate token for role "USER" returns true if token valid, otherwise false.
+    rpc ValidateUserToken(ValidateUserTokenRequest) returns(ValidateUserTokenResponse) {}
 
-    // Check jwt token for role "ADMIN"
-    rpc CheckAdminToken(CheckAdminTokenRequest) returns (CheckAdminTokenResponse){}
+    // Validate token for role "ADMIN" returns true if token valid, otherwise false.
+    rpc ValidateAdminToken(ValidateAdminTokenRequest) returns (ValidateAdminTokenResponse){}
 
-    // Check whether username already exists
+    // Check whether username already exists returns true if username already exists, otherwise false.
     rpc CheckUsernameExists(CheckUsernameExistsRequest) returns (CheckUsernameExistsResponse) {}
 
     // Promotes a user's role from "USER" to "ADMIN".
-    // This function can only be performed by users with the "ADMIN" role.
+    // This function intends to performe by users with the "ADMIN" role.
     rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserCredentials){
         option (google.api.http) = {
             put: "/auth/users/roles"
@@ -76,6 +77,14 @@ message RegisterRequest {
    string phone_number = 4;
 }
 
+// Return RegisterResponse message instead UserCredentials
+// if gateway want to use this message to config code response
+// such as change success code RegisterResponse from 200 to 201.
+//
+// message RegisterResponse {
+//    UserCredentials user = 1;
+// }
+
 message LoginRequest {
     string username = 1;
     string password = 2;
@@ -86,20 +95,20 @@ message LoginResponse {
     int64 access_token_exp =2;
 }
 
-message CheckUserTokenRequest {
+message ValidateUserTokenRequest {
     string access_token = 1;
 }
 
-message CheckUserTokenResponse {
-    bool is_valid = 1;
+message ValidateUserTokenResponse {
+    bool valid = 1;
 }
 
-message CheckAdminTokenRequest {
+message ValidateAdminTokenRequest {
     string access_token = 1;
 }
 
-message CheckAdminTokenResponse {
-    bool is_valid = 1;
+message ValidateAdminTokenResponse {
+    bool valid = 1;
 }
 
 message CheckUsernameExistsRequest{
@@ -107,7 +116,7 @@ message CheckUsernameExistsRequest{
 }
 
 message CheckUsernameExistsResponse{
-    bool is_exists = 1;
+    bool exists = 1;
 }
 
 message UpdateUserRoleRequest {

@@ -19,16 +19,16 @@ import (
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
-	store      AuthStorage
-	rabbitmq   RabbitMQ
-	userClient pb.UserServiceClient
+	store         AuthStorage
+	rabbitmq      RabbitMQ
+	profileClient pb.ProfileServiceClient
 }
 
-func NewAuthService(store AuthStorage, rabbitmq RabbitMQ, userClient pb.UserServiceClient) *AuthService {
+func NewAuthService(store AuthStorage, rabbitmq RabbitMQ, profileClient pb.ProfileServiceClient) *AuthService {
 	return &AuthService{
-		store:      store,
-		rabbitmq:   rabbitmq,
-		userClient: userClient,
+		store:         store,
+		rabbitmq:      rabbitmq,
+		profileClient: profileClient,
 	}
 }
 
@@ -122,7 +122,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	return &pb.LoginResponse{AccessToken: token, AccessTokenExp: exp}, nil
 }
 
-func (x *AuthService) ValidateUserToken(ctx context.Context, in *pb.CheckUserTokenRequest) (*pb.CheckUserTokenResponse, error) {
+func (x *AuthService) ValidateUserToken(ctx context.Context, in *pb.ValidateUserTokenRequest) (*pb.ValidateUserTokenResponse, error) {
 
 	if in.AccessToken == "" {
 		return nil, errNoToken
@@ -132,10 +132,10 @@ func (x *AuthService) ValidateUserToken(ctx context.Context, in *pb.CheckUserTok
 		slog.Error("validate token", "err", err)
 		return nil, errInvalidToken
 	}
-	return &pb.CheckUserTokenResponse{IsValid: true}, nil
+	return &pb.ValidateUserTokenResponse{Valid: true}, nil
 }
 
-func (x *AuthService) ValidateAdminToken(ctx context.Context, in *pb.CheckAdminTokenRequest) (*pb.CheckAdminTokenResponse, error) {
+func (x *AuthService) ValidateAdminToken(ctx context.Context, in *pb.ValidateAdminTokenRequest) (*pb.ValidateAdminTokenResponse, error) {
 
 	if in.AccessToken == "" {
 		return nil, errNoToken
@@ -145,7 +145,7 @@ func (x *AuthService) ValidateAdminToken(ctx context.Context, in *pb.CheckAdminT
 		slog.Error("validate admin token", "err", err)
 		return nil, errInvalidToken
 	}
-	return &pb.CheckAdminTokenResponse{IsValid: true}, nil
+	return &pb.ValidateAdminTokenResponse{Valid: true}, nil
 }
 
 func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsernameExistsRequest) (*pb.CheckUsernameExistsResponse, error) {
@@ -162,7 +162,7 @@ func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsern
 		return nil, errUserNotFound
 	}
 
-	return &pb.CheckUsernameExistsResponse{IsExists: true}, nil
+	return &pb.CheckUsernameExistsResponse{Exists: true}, nil
 }
 
 // UpdateUserRole updates an existing user's role to specific roles.
@@ -205,7 +205,7 @@ func (x *AuthService) createUserProfile(userID, username string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	profile, err := x.userClient.CreateProfile(ctx, &pb.CreateProfileRequest{
+	profile, err := x.profileClient.CreateProfile(ctx, &pb.CreateProfileRequest{
 		UserId:   userID,
 		Username: username,
 	})

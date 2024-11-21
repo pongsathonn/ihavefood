@@ -269,7 +269,8 @@ type GetOrderTrackingResponse struct {
 	OrderNo       string `protobuf:"bytes,1,opt,name=order_no,json=orderNo,proto3" json:"order_no,omitempty"`
 	RiderId       string `protobuf:"bytes,2,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
 	RiderLocation *Point `protobuf:"bytes,3,opt,name=rider_location,json=riderLocation,proto3" json:"rider_location,omitempty"`
-	UpdateTime    int64  `protobuf:"varint,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	// The timestamp of the most recent update to the rider's location.
+	UpdateTime int64 `protobuf:"varint,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 }
 
 func (x *GetOrderTrackingResponse) Reset() {

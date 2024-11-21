@@ -32,7 +32,8 @@ func NewOrderService(storage OrderStorage, rabbitmq RabbitMQ) *OrderService {
 	}
 }
 
-func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
+func (x *OrderService) ListUserPlaceOrder(ctx context.Context,
+	in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
 
 	if in.Username == "" {
 		return nil, status.Error(codes.InvalidArgument, "username must be provided")
@@ -57,7 +58,8 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context, in *pb.ListUserPl
 //
 // This function validates the place order request, saves the order details to the database,
 // and publishes an "order.placed.event" to other services for further processing.
-func (x *OrderService) HandlePlaceOrder(ctx context.Context, in *pb.HandlePlaceOrderRequest) (*pb.PlaceOrder, error) {
+func (x *OrderService) HandlePlaceOrder(ctx context.Context,
+	in *pb.HandlePlaceOrderRequest) (*pb.PlaceOrder, error) {
 
 	if err := validatePlaceOrderRequest(in); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
@@ -132,7 +134,6 @@ func (x *OrderService) StartConsume() {
 func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 
 	messages := make(chan amqp.Delivery)
-
 	var status pb.OrderStatus
 
 	go func() {
@@ -160,7 +161,8 @@ func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 				continue
 			}
 
-			if _, err := x.storage.UpdateOrderStatus(context.TODO(), orderNO, dbOrderStatus(status)); err != nil {
+			if _, err := x.storage.UpdateOrderStatus(context.TODO(),
+				orderNO, dbOrderStatus(status)); err != nil {
 				slog.Error("updated status", "err", err, "orderNo", orderNO)
 				continue
 			}

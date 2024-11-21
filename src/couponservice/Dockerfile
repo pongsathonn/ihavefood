@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.22
-WORKDIR coupon
+FROM golang:1.22 AS builder
+WORKDIR /coupon
 
 # restore dependencies
 COPY go.mod go.sum .
@@ -12,6 +12,16 @@ RUN go mod tidy
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /coupon
+
+
+# Stage 2: Runtime
+FROM alpine:latest
+COPY --from=builder /coupon /coupon
+
+# for development stage(debugging)
+COPY --from=builder /go/bin/dlv /go/bin/dlv
+ENV PATH=$PATH:/go/bin
+
 
 CMD ["/coupon"]
 
