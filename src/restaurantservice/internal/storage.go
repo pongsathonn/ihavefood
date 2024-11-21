@@ -7,15 +7,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-
-	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 )
 
 type RestaurantStorage interface {
 	Restaurant(ctx context.Context, restaurantNO string) (*dbRestaurant, error)
+
 	Restaurants(ctx context.Context) ([]*dbRestaurant, error)
-	SaveRestaurant(ctx context.Context, restaurantName string, menus []*dbMenu, address *dbAddress) (string, error)
-	UpdateMenu(ctx context.Context, restaurantId string, menus []*dbMenu) error
+
+	SaveRestaurant(ctx context.Context, newRestaurant *newRestaurant) (string, error)
+
+	UpdateMenu(ctx context.Context, restaurantNO string, newMenus []*dbMenu) (string, error)
 }
 
 type restaurantStorage struct {
@@ -28,32 +29,26 @@ func NewRestaurantStorage(client *mongo.Client) RestaurantStorage {
 
 func (s *restaurantStorage) Restaurant(ctx context.Context, restaurantNO string) (*dbRestaurant, error) {
 
-	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := s.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
-	if restaurantId == "" {
-		return nil, errors.New("restaurant id must be provided")
-	}
-
-	filter := bson.M{"_id": restaurantId}
-	var restaurant dbRestaurant
-
-	err := coll.FindOne(ctx, filter).Decode(&restaurant)
+	ID, err := primitive.ObjectIDFromHex(restaurantNO)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.Restaurant{
-		No:      restaurant.No.Hex(),
-		Name:    restaurant.Name,
-		Menus:   restaurant.Menus,
-		Address: restaurant.Address,
-	}, nil
+	filter := bson.M{"_id": ID}
 
+	var restaurant dbRestaurant
+	if err := coll.FindOne(ctx, filter).Decode(&restaurant); err != nil {
+		return nil, err
+	}
+
+	return &restaurant, nil
 }
 
 func (s *restaurantStorage) Restaurants(ctx context.Context) ([]*dbRestaurant, error) {
 
-	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := s.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	cursor, err := coll.Find(ctx, bson.D{})
 	if err != nil {
@@ -61,22 +56,16 @@ func (s *restaurantStorage) Restaurants(ctx context.Context) ([]*dbRestaurant, e
 	}
 	defer cursor.Close(ctx)
 
-	var restaurants []*pb.Restaurant
-
+	var restaurants []*dbRestaurant
 	for cursor.Next(ctx) {
 
 		var restaurant dbRestaurant
 		if err := cursor.Decode(&restaurant); err != nil {
 			return nil, err
 		}
-
-		restaurants = append(restaurants, &pb.Restaurant{
-			No:      restaurant.RestaurantNo.Hex(),
-			Name:    restaurant.RestaurantName,
-			Menus:   restaurant.Menus,
-			Address: restaurant.Address,
-		})
+		restaurants = append(restaurants, &restaurant)
 	}
+
 	if err := cursor.Err(); err != nil {
 		return nil, err
 	}
@@ -86,16 +75,16 @@ func (s *restaurantStorage) Restaurants(ctx context.Context) ([]*dbRestaurant, e
 }
 
 // ignore a restaurant number and let Mongo generate _id
-func (s *restaurantStorage) SaveRestaurant(ctx context.Context, restaurantName string, menus []*dbMenu, address *dbAddress) (string, error) {
+func (s *restaurantStorage) SaveRestaurant(ctx context.Context,
+	newRestaurant *newRestaurant) (string, error) {
 
-	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := s.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
 	res, err := coll.InsertOne(ctx, dbRestaurant{
-		//No:   primitive.NewObjectID(),
-		RestaurantName: restaurantName,
-		Menus:          menus,
-		Address:        address,
-		Status:         pb.Status(pb.Status_OPEN),
+		Name:    newRestaurant.RestaurantName,
+		Menus:   newRestaurant.Menus,
+		Address: newRestaurant.address,
+		Status:  dbStatus(Status_CLOSED),
 	})
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
@@ -104,39 +93,39 @@ func (s *restaurantStorage) SaveRestaurant(ctx context.Context, restaurantName s
 		return "", err
 	}
 
-	restaurantNO, ok := res.InsertedID.(primitive.ObjectID)
+	insertedID, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return "", errors.New("number not primitive.ObjectID type")
+		return "", errors.New("ID not primitive.ObjectID")
 	}
 
-	return restaurantNO.Hex(), nil
+	return insertedID.Hex(), nil
 
 }
 
-func (s *restaurantStorage) UpdateMenu(ctx context.Context, restaurantNO string, menus []*dbMenu) error {
+func (s *restaurantStorage) UpdateMenu(ctx context.Context, restaurantNO string, newMenus []*dbMenu) (string, error) {
 
-	coll := r.client.Database("restaurant_database", nil).Collection("restaurantCollection")
+	coll := s.client.Database("restaurant_database", nil).Collection("restaurantCollection")
 
-	no, err := primitive.ObjectIDFromHex(restaurantNO)
+	ID, err := primitive.ObjectIDFromHex(restaurantNO)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	filter := bson.M{"_id": no}
 	update := bson.M{"$push": bson.M{"menus": bson.M{"$each": newMenus}}}
 
-	res, err := coll.UpdateOne(ctx, filter, update)
+	res, err := coll.UpdateByID(ctx, ID, update)
 	if err != nil {
-		return err
-	}
-
-	if res.MatchedCount == 0 {
-		return errors.New("restaurant not found")
+		return "", err
 	}
 
 	if res.ModifiedCount == 0 {
-		return errors.New("update menu failed")
+		return "", errors.New("restaurant not found")
 	}
 
-	return nil
+	upsertedID, ok := res.UpsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", errors.New("ID not primitive.ObjectID")
+	}
+
+	return upsertedID.Hex(), nil
 }

@@ -6,25 +6,31 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type newRestaurant struct {
+	RestaurantName string
+	Menus          []*dbMenu
+	address        *dbAddress
+}
+
 type dbRestaurant struct {
-	No      primitive.ObjectID `bson:"_id,omitempty"`
-	Name    string
-	Menus   []*dbMenu
-	Address *dbAddress
-	Status  dbStatus
+	No      primitive.ObjectID `bson:"_id"`
+	Name    string             `bson:"name"`
+	Menus   []*dbMenu          `bson:"menus"`
+	Address *dbAddress         `bson:"address"`
+	Status  dbStatus           `bson:"status"`
 }
 
 type dbMenu struct {
-	FoodName string
-	Price    int32
+	FoodName string `bson:"foodName"`
+	Price    int32  `bson:"price"`
 }
 
 type dbAddress struct {
-	AddressName string
-	SubDistrict string
-	District    string
-	Province    string
-	PostalCode  string
+	AddressName string `bson:"addressName"`
+	SubDistrict string `bson:"subDistrict"`
+	District    string `bson:"district"`
+	Province    string `bson:"province"`
+	PostalCode  string `bson:"postalCode"`
 }
 
 type dbStatus int32

@@ -9,17 +9,10 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "github.com/pongsathonn/ihavefood/src/restaurantservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
-)
-
-var (
-	errNoRestaurantNumber = status.Error(codes.InvalidArgument, "restaurant number must be provided")
-	errNoRestaurantName   = status.Error(codes.InvalidArgument, "restaurant name must be provided")
-	errNoMenus            = status.Error(codes.InvalidArgument, "menu must be at least one")
-	errNoFoodName         = status.Error(codes.InvalidArgument, "food name must be provided")
-	errUnknownTypeMenu    = status.Error(codes.InvalidArgument, "menu status cannot be UNKNOWN")
 )
 
 type RestaurantService struct {
@@ -36,130 +29,107 @@ func NewRestaurantService(storage RestaurantStorage, rabbitmq RabbitMQ) *Restaur
 	}
 }
 
-func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
-	if in.RestaurantNo == "" {
-		return nil, errNoRestaurantNumber
-	}
+func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaurantRequest) (*pb.Restaurant, error) {
 
-	res, err := x.storage.Restaurant(ctx, in.RestaurantNo)
+	// TODO validate input
+
+	restaurant, err := x.storage.Restaurant(ctx, in.RestaurantNo)
 	if err != nil {
 		slog.Error("failed to retrive restaurant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurant")
 	}
-
-	var menus []*pb.Menu
-	for _, m := range res.Menus {
-		menus = append(menus, &pb.Menu{
-			FoodName: m.FoodName,
-			Price:    m.Price,
-		})
-	}
-
-	return &pb.GetRestaurantResponse{
-		Restaurant: &pb.Restaurant{
-			No:    res.No.Hex(),
-			Name:  res.Name,
-			Menus: menus,
-			Address: &pb.Address{
-				AddressName: res.Address.AddressName,
-				SubDistrict: res.Address.SubDistrict,
-				District:    res.Address.District,
-				Province:    res.Address.Province,
-				PostalCode:  res.Address.PostalCode,
-			},
-			Status: pb.Status(res.Status),
-		}}, nil
+	return dbToProto(restaurant), nil
 }
 
-func (x *RestaurantService) ListRestaurant(ctx context.Context, empty *pb.Empty) (*pb.ListRestaurantResponse, error) {
+func (x *RestaurantService) ListRestaurant(ctx context.Context, empty *emptypb.Empty) (*pb.ListRestaurantResponse, error) {
 
-	res, err := x.storage.Restaurants(ctx)
+	// TODO validate input
+
+	results, err := x.storage.Restaurants(ctx)
 	if err != nil {
 		slog.Error("failed to retrive restaurants", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurants")
 	}
 
 	var restaurants []*pb.Restaurant
-	for _, restaurant := range res {
-
-		var menus []*pb.Menu
-		for _, menu := range restaurant.Menus {
-			menus = append(menus, &pb.Menu{
-				FoodName: menu.FoodName,
-				Price:    menu.Price,
-			})
-		}
-
-		restaurants = append(restaurants, &pb.Restaurant{
-			No:    restaurant.No.Hex(),
-			Name:  restaurant.Name,
-			Menus: menus,
-			Address: &pb.Address{
-				AddressName: restaurant.Address.AddressName,
-				SubDistrict: restaurant.Address.SubDistrict,
-				District:    restaurant.Address.District,
-				Province:    restaurant.Address.Province,
-				PostalCode:  restaurant.Address.PostalCode,
-			},
-			Status: pb.Status(restaurant.Status),
-		})
+	for _, result := range results {
+		restaurant := dbToProto(result)
+		restaurants = append(restaurants, restaurant)
 	}
 
 	return &pb.ListRestaurantResponse{Restaurants: restaurants}, nil
 }
 
-func (x *RestaurantService) RegisterRestaurant(ctx context.Context, in *pb.RegisterRestaurantRequest) (*pb.RegisterRestaurantResponse, error) {
+func (x *RestaurantService) RegisterRestaurant(ctx context.Context, in *pb.RegisterRestaurantRequest) (*pb.Restaurant, error) {
 
-	if in.RestaurantName == "" {
-		return nil, errNoRestaurantName
+	// TODO validate input
+
+	var menus []*dbMenu
+	for _, m := range in.Menus {
+		menus = append(menus, &dbMenu{
+			FoodName: m.FoodName,
+			Price:    m.Price,
+		})
 	}
 
-	if len(in.Menus) == 0 {
-		return nil, errNoMenus
-	}
-
-	restaurantNO, err := x.storage.SaveRestaurant(ctx, in.RestaurantName, in.Menus, in.Address)
+	restaurantNO, err := x.storage.SaveRestaurant(ctx, &newRestaurant{
+		RestaurantName: in.RestaurantName,
+		Menus:          menus,
+		address: &dbAddress{
+			AddressName: in.Address.AddressName,
+			SubDistrict: in.Address.SubDistrict,
+			District:    in.Address.District,
+			Province:    in.Address.Province,
+			PostalCode:  in.Address.PostalCode,
+		},
+	})
 	if err != nil {
 		slog.Error("failed to save restaurant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save restaurant")
 	}
 
-	return &pb.RegisterRestaurantResponse{RestaurantNo: restaurantNO}, nil
+	restaurant, err := x.storage.Restaurant(ctx, restaurantNO)
+	if err != nil {
+		slog.Error("failed to retrive restaurant", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrive restaurant")
+	}
+
+	return dbToProto(restaurant), nil
 }
 
-func (x *RestaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.AddMenuResponse, error) {
+func (x *RestaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) (*pb.Restaurant, error) {
 
-	if in.RestaurantNo == "" {
-		return nil, errNoRestaurantNumber
+	// TODO validate input
+
+	var menus []*dbMenu
+	for _, m := range in.Menus {
+		menus = append(menus, &dbMenu{
+			FoodName: m.FoodName,
+			Price:    m.Price,
+		})
 	}
 
-	if len(in.Menus) == 0 {
-		return nil, errNoMenus
-	}
-
-	if err := x.storage.UpdateMenu(ctx, in.RestaurantNo, in.Menus); err != nil {
+	restaurantNO, err := x.storage.UpdateMenu(ctx, in.RestaurantNo, menus)
+	if err != nil {
 		slog.Error("failed to update menu", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update menu in database")
 	}
 
-	return &pb.AddMenuResponse{Success: true}, nil
-}
-
-func (x *RestaurantService) OrderReady(ctx context.Context, in *pb.OrderReadyRequest) (*pb.OrderReadyResponse, error) {
-
-	if in.OrderNo == "" || in.RestaurantNo == "" {
-		return nil, status.Error(codes.InvalidArgument, "order number or restaurant number must be provided")
+	restaurant, err := x.storage.Restaurant(ctx, restaurantNO)
+	if err != nil {
+		slog.Error("failed to retrive restaurant", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrive restaurant")
 	}
 
-	//TODO might save order to database or not
-	//x.storage.SaveRestaurant()
+	return dbToProto(restaurant), nil
+}
 
-	err := x.rabbitmq.Publish(
-		ctx,
-		"food.ready.event",
-		amqp.Publishing{Body: []byte(in.OrderNo)},
-	)
-	if err != nil {
+func (x *RestaurantService) OrderReady(ctx context.Context, in *pb.OrderReadyRequest) (*emptypb.Empty, error) {
+
+	// TODO validate input
+
+	msg := amqp.Publishing{Body: []byte(in.OrderNo)}
+	if err := x.rabbitmq.Publish(ctx, "food.ready.event", msg); err != nil {
 		slog.Error("failed to publish ", "err", err)
 	}
 
@@ -169,7 +139,7 @@ func (x *RestaurantService) OrderReady(ctx context.Context, in *pb.OrderReadyReq
 		"routingKey", "food.ready.event",
 	)
 
-	return &pb.OrderReadyResponse{Success: true}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // -------------------------------------------------------
@@ -209,7 +179,7 @@ func (x *RestaurantService) handlePlaceOrder() chan<- amqp.Delivery {
 			}
 
 			// assume this logs is push notification to restaurant
-			log.Printf("HI RESTAURANT! you have new order %s\n", order.No)
+			log.Printf("HI RESTAURANT! you have new order %s\n", order.OrderNo)
 
 			// TODO wait for restaurant accept here
 			// <- AcceptOrder()
@@ -222,7 +192,7 @@ func (x *RestaurantService) handlePlaceOrder() chan<- amqp.Delivery {
 				context.TODO(),
 				rk,
 				amqp.Publishing{
-					Body: []byte(order.No),
+					Body: []byte(order.OrderNo),
 				},
 			)
 			if err != nil {
@@ -232,10 +202,35 @@ func (x *RestaurantService) handlePlaceOrder() chan<- amqp.Delivery {
 
 			slog.Info("published event",
 				"routingKey", rk,
-				"orderNo", order.No,
+				"orderNo", order.OrderNo,
 			)
 		}
 	}()
 
 	return messages
+}
+
+func dbToProto(restaurant *dbRestaurant) *pb.Restaurant {
+
+	var menus []*pb.Menu
+	for _, m := range restaurant.Menus {
+		menus = append(menus, &pb.Menu{
+			FoodName: m.FoodName,
+			Price:    m.Price,
+		})
+	}
+
+	return &pb.Restaurant{
+		RestaurantNo: restaurant.No.Hex(),
+		Name:         restaurant.Name,
+		Menus:        menus,
+		Address: &pb.Address{
+			AddressName: restaurant.Address.AddressName,
+			SubDistrict: restaurant.Address.SubDistrict,
+			District:    restaurant.Address.District,
+			Province:    restaurant.Address.Province,
+			PostalCode:  restaurant.Address.PostalCode,
+		},
+		Status: pb.RestaurantStatus(restaurant.Status),
+	}
 }

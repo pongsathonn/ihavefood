@@ -7,9 +7,9 @@ import (
 )
 
 type RabbitMQ interface {
-	Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error
+	Publish(ctx context.Context, key string, msg amqp.Publishing) error
 
-	Subscribe(ctx context.Context, queue, routingkey string) (<-chan amqp.Delivery, error)
+	Subscribe(ctx context.Context, queue, key string) (<-chan amqp.Delivery, error)
 }
 
 type rabbitMQ struct {
@@ -20,7 +20,7 @@ func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
 	return &rabbitMQ{conn: conn}
 }
 
-func (r *rabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
+func (r *rabbitMQ) Publish(ctx context.Context, key string, msg amqp.Publishing) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publ
 	err = ch.PublishWithContext(
 		ctx,
 		"my_exchange", // exchange
-		routingKey,    // routing key
+		key,           // routing key
 		false,         // mandatory
 		false,         // immediate
 		msg,
@@ -55,7 +55,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publ
 	return nil
 }
 
-func (r *rabbitMQ) Subscribe(ctx context.Context, queue, routingKey string) (<-chan amqp.Delivery, error) {
+func (r *rabbitMQ) Subscribe(ctx context.Context, queue, key string) (<-chan amqp.Delivery, error) {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (r *rabbitMQ) Subscribe(ctx context.Context, queue, routingKey string) (<-c
 
 	err = ch.QueueBind(
 		q.Name,        // queue name
-		routingKey,    // routing key
+		key,           // routing key
 		"my_exchange", // exchange
 		false,         // no-wait
 		nil,           // arguments

@@ -21,19 +21,19 @@ import (
 
 func main() {
 
-	client, err := initMongoClient()
+	mongo, err := initMongoClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	conn, err := initRabbitMQ()
+	rabbitmq, err := initRabbitMQ()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	s := internal.NewRestaurantService(
-		internal.NewRestaurantRepository(client),
-		internal.NewRabbitMQ(conn),
+		internal.NewRestaurantStorage(mongo),
+		internal.NewRabbitMQ(rabbitmq),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
