@@ -1,0 +1,36 @@
+
+    get:
+      tags:
+        - profile
+      summary: "Returns user profile"
+      description: "Returns a user from the system."
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: "The username of the user to retrieve."
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ssss
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - profile
+      summary: "delete a user"
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: "The username of the user to delete."
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ssss
+      security:
+        - bearerAuth: []
+
+

@@ -1,0 +1,20 @@
+    get:
+      tags:
+        - order
+      summary: Get user order history
+      description: Returns the order history for a specific user.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: The username whose orders are to be retrieved.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of orders for the user
+        '404':
+          description: User not found
+      security:
+        - bearerAuth: [] 
+

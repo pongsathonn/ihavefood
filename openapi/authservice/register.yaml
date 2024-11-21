@@ -1,0 +1,53 @@
+    post:
+      tags:
+        - auth
+      summary: Register a new user
+      description: Register a new user  TEST
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                phoneNumber:
+                  type: string
+                address:
+                  type: object
+                  properties:
+                    addressName:
+                      type: string
+                    subDistrict:
+                      type: string
+                    district:
+                      type: string
+                    province:
+                      type: string
+                    postalCode:
+                      type: string
+            examples:
+              example1:
+                value: 
+                  username: "yuki002"
+                  email: "yuki_sleep@mail.com"
+                  password: "pPassword."
+                  phoneNumber: "0619286355"
+                  address:
+                    addressName: "Jai Dee Hotel"
+                    subDistrict: "Mueang"
+                    district: "Chiang Mai"
+                    province: "Chiang Mai"
+                    postalCode: "50200"
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Invalid input
+

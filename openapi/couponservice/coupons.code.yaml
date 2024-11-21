@@ -1,0 +1,37 @@
+    get:
+      tags:
+        - coupon
+      summary: Get coupon details
+      description: Retrieve details of a specific coupon by code.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: The coupon code to retrieve.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Coupon details
+        '404':
+          description: Coupon not found
+      security:
+        - bearerAuth: [] 
+    put:
+      tags:
+        - coupon
+      summary: Apply coupon
+      description: TODO
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: The coupon being used
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+      security:
+        - bearerAuth: [] 
+

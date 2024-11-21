@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: "ihavefood"
-  description: "Based on Chaing Mai, Only this Chiang Mai district [Mueang,Hang Dong,San Sai,Mae Rim,Doi Saket]"
+  description: "Chiang Mai district only [Mueang,Hang Dong,San Sai,Mae Rim,Doi Saket]"
   version: 0.1.0
 servers:
     - url: "http://localhost:180"
@@ -18,534 +18,63 @@ components:
       
 paths:
 
-#---------------Auth Service-----------------
+#---------------Auth Service--------------------
   /auth/register:
-    post:
-      tags:
-        - auth
-      summary: Register a new user
-      description: Register a new user 
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                phoneNumber:
-                  type: string
-                address:
-                  type: object
-                  properties:
-                    addressName:
-                      type: string
-                    subDistrict:
-                      type: string
-                    district:
-                      type: string
-                    province:
-                      type: string
-                    postalCode:
-                      type: string
-            examples:
-              example1:
-                value: 
-                  username: "yuki002"
-                  email: "yuki_sleep@mail.com"
-                  password: "pPassword."
-                  phoneNumber: "0619286355"
-                  address:
-                    addressName: "Jai Dee Hotel"
-                    subDistrict: "Mueang"
-                    district: "Chiang Mai"
-                    province: "Chiang Mai"
-                    postalCode: "50200"
-      responses:
-        '201':
-          description: User registered successfully
-        '400':
-          description: Invalid input
-
+    $ref: 'authservice/register.yaml'
   /auth/login:
-    get:
-      tags:
-        - auth
-      summary: Logs user into the system
-      description: "XXXXXXXXXXX"
-      responses:
-        '200':
-          description: Successful login with access token and token expiration time (Unix)
-      security:
-        - basicAuth: []
-
+    $ref: 'authservice/login.yaml'
   /auth/users/roles:
-    put:
-      tags:
-        - auth
-      summary: Assign role to User
-      description: "0 Visitor, 1 User, 2 Admin"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  default: yuki002
-                role:
-                  type: integer
-                  default: 2
-      responses:
-        '200':
-          description: Successful login with access token and token expiration time (Unix)
-      security:
-        - bearerAuth: []
+    $ref: 'authservice/users.roles.yaml'
 
-#---------------User Service-----------------
-# TODO add more methods
-  /api/users/{username}:
-    get:
-      tags: 
-        - user
-      summary: "Returns a user"
-      description: "Returns a user from the system."
-      parameters:
-        - name: username
-          in: path
-          required: true
-          description: "The username of the user to retrieve."
-          schema:
-            type: string
-      responses:
-        '200':
-          description: ssss
-      security:
-        - bearerAuth: []
-    delete:
-      tags: 
-        - user
-      summary: "delete a user"
-      parameters:
-        - name: username
-          in: path
-          required: true
-          description: "The username of the user to delete."
-          schema:
-            type: string
-      responses:
-        '200':
-          description: ssss
-      security:
-        - bearerAuth: []
 
-  /api/users:
-    get:
-      tags: 
-        - user
-      summary: "Returns a list of users"
-      description: "Returns a list of users from the system."
-      responses:
-        '200':
-          description: ssss
-      security:
-        - bearerAuth: []
+
+#---------------Profile Service-----------------
+  /api/profiles/{username}:
+    $ref: 'profileservice/users.username.yaml'
+  /api/profiles:
+    $ref: 'profileservice/users.yaml'
+
+
 
 
 #---------------Order Service-----------------
   /api/orders/place-order:
-    post:
-      tags:
-      - order 
-      summary: Place an order
-      description: xxxxxxxxxx
-      operationId: placeOrder
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                restaurantId:
-                  type: string
-                menus:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      foodName:
-                        type: string
-                      price:
-                        type: integer
-                couponCode:
-                  type: string
-                couponDiscount:
-                  type: integer
-                deliveryFee:
-                  type: integer
-                total:
-                  type: integer
-                userAddress:
-                  type: object
-                  properties:
-                    addressName:
-                      type: string
-                    subDistrict:
-                      type: string
-                    district:
-                      type: string
-                    province:
-                      type: string
-                    postalCode:
-                      type: string
-                    country:
-                      type: string
-                restaurantAddress:
-                  type: object
-                  properties:
-                    addressName:
-                      type: string
-                    subDistrict:
-                      type: string
-                    district:
-                      type: string
-                    province:
-                      type: string
-                    postalCode:
-                      type: string
-                    country:
-                      type: string
-                contact:
-                  type: object
-                  properties:
-                    phoneNumber:
-                      type: string
-                    email:
-                      type: string
-                      format: email
-                paymentMethods:
-                  type: integer
-                  description: "1 = Cash, 2 = Credit Card"
-            examples:
-              User Place Order:
-                value:
-                  username: "yuki002"
-                  restaurantId: "19201230123"
-                  menus:
-                    - foodName: "Pad Thai"
-                      price: 50
-                    - foodName: "Kra pao"
-                      price: 60
-                  couponCode: "SAVE40FORYOU"
-                  couponDiscount: 40
-                  deliveryFee: 50
-                  total: 120
-                  userAddress:
-                    addressName: "Home"
-                    subDistrict: "Nong Hoi"
-                    district: "Mueang"
-                    province: "Chiang Mai"
-                    postalCode: "50000"
-                    country: "Thailand"
-                  restaurantAddress:
-                    addressName: "HaiDeeLhao"
-                    subDistrict: "Blabla"
-                    district: "Hang Dong"
-                    province: "Chiang Mai"
-                    postalCode: "50000"
-                    country: "Thailand"
-                  userContact:
-                    phoneNumber: "0982736541"
-                    email: "test@mail.com"
-                  paymentMethods: 1
-      responses:
-        '200':
-          description: Successfully placed an order wait for user
-        '400':
-          description: Invalid request
-      security:
-        - bearerAuth: [] 
-
+    $ref: 'orderservice/orders.placeorder.yaml'
   /api/orders/{username}:
-    get:
-      tags:
-        - order
-      summary: Get user order history
-      description: Returns the order history for a specific user.
-      parameters:
-        - name: username
-          in: path
-          required: true
-          description: The username whose orders are to be retrieved.
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of orders for the user
-        '404':
-          description: User not found
-      security:
-        - bearerAuth: [] 
+    $ref: 'orderservice/orders.username.yaml'
+
+
+
 
 #---------------Delivery Service-----------------
   /api/deliveries/riders/accept:
-    post:
-      tags:
-        - delivery
-      summary: Accept an order
-      description: Endpoint for a rider to accept an order.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                riderId:
-                  type: string
-                orderId:
-                  type: string
-            examples:
-              ex:
-                value: 
-                  riderId: "rider002"
-                  orderId: "66af00af1687c32893d15693"
-      responses:
-        '200':
-          description: Order accepted successfully
-        '400':
-          description: Invalid request
-      security:
-        - bearerAuth: [] 
+    $ref: 'deliveryservice/deliveries.riders.accept.yaml'
+
+
+
+
 
 #---------------Restaurant Service-----------------
   /api/restaurants/{restaurantId}:
-    get:
-      tags:
-        - restaurant
-      summary: List menus of a restaurant
-      description: Returns the menus of a specific restaurant.
-      parameters:
-        - name: restaurantId
-          in: path
-          required: true
-          description: The id of the restaurant.
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Menus of the restaurant
-        '404':
-          description: Restaurant not found
-      security:
-        - bearerAuth: [] 
-
+    $ref: 'restaurantservice/restaurants.id.yaml'
   /api/restaurants:
-    get:
-      tags:
-        - restaurant
-      summary: List all restaurants
-      description: Returns a list of all registered restaurants.
-      responses:
-        '200':
-          description: List of all restaurants
-      security:
-        - bearerAuth: [] 
-    post:
-      tags:
-        - restaurant
-      summary: Register a new restaurant
-      description: Register a new restaurant in the system.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                restaurantName:
-                  type: string
-                menus:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      foodName:
-                        type: string
-                      price:
-                        type: number
-                address:
-                  type: object
-                  properties:
-                    addressName:
-                      type: string
-                    subDistrict:
-                      type: string
-                    district:
-                      type: string
-                    province:
-                      type: string
-                    postalCode:
-                      type: string
-            examples:
-              ex1:
-                 value:
-                  restaurantName: "HaiDee"
-                  menus:
-                  - foodName: "Pad Thai"
-                    price: 50
-                  address:
-                    addressName: "my restaurant"
-                    subDistrict: "Mueang"
-                    district: "asdasd"
-                    province: "Chiang Mai"
-                    postalCode: "50200"
-      responses:
-        '201':
-          description: Restaurant registered successfully
-        '400':
-          description: Invalid request
-      security:
-        - bearerAuth: [] 
-
+    $ref: 'restaurantservice/restaurants.yaml'
   /api/restaurants/menus:
-    post:
-      tags:
-        - restaurant
-      summary: Add menu to restaurant
-      description: Add a new menu item to a restaurant's menu.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                restaurantId:
-                  type: string
-                menus:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      foodName:
-                        type: string
-                      price:
-                        type: number
-              restaurantId: "dj12d91h922"
-              menus:
-                - foodName: "Pad Thai"
-                  price: 50
-              required:
-                - restaurantName
-                - menus
-      responses:
-        '201':
-          description: Menu added successfully
-        '400':
-          description: Invalid request
-      security:
-        - bearerAuth: [] 
+    $ref: 'restaurantservice/restaurants.menus.yaml'
+
+
+
 
 #---------------Coupon Service-----------------
   /api/coupons:
-    get:
-      tags:
-        - coupon
-      summary: Get list of coupon details
-      description: TODO
-      responses:
-        '200':
-          description: Coupon details
-      security:
-        - bearerAuth: [] 
-    post:
-      tags:
-        - coupon
-      summary: Add Coupon ( for admin )
-      description: TODO
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                couponTypes:
-                  type: integer
-                  description: 0=UNSPECIFIED, 1=DISCOUNT, 2=FREE_DELIVERY
-                discount:
-                  type: integer
-                expireInHour:
-                  type: integer
-                quantity:
-                  type: integer
-            examples:
-              discount_request:
-                value:
-                  couponTypes: 1
-                  discount: 20
-                  expireInHour: 72
-                  quantity: 5
-              freeDeliveryRequest:
-                value:
-                  couponTypes: 2
-                  discount: 0
-                  expireInHour: 48
-                  quantity: 3
-      responses:
-        '200':
-          description: Coupon details
-      security:
-        - bearerAuth: [] 
-
+    $ref: 'couponservice/coupons.yaml'
   /api/coupons/{code}:
-    get:
-      tags:
-        - coupon
-      summary: Get coupon details
-      description: Retrieve details of a specific coupon by code.
-      parameters:
-        - name: code
-          in: path
-          required: true
-          description: The coupon code to retrieve.
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Coupon details
-        '404':
-          description: Coupon not found
-      security:
-        - bearerAuth: [] 
-    put:
-      tags:
-        - coupon
-      summary: Apply coupon
-      description: TODO
-      parameters:
-        - name: code
-          in: path
-          required: true
-          description: The coupon being used
-          schema:
-            type: string
-      responses:
-        '200':
-          description: success
-      security:
-        - bearerAuth: [] 
+    $ref: 'couponservice/coupons.code.yaml'
+
+
+
+
+
+
 #---------------END-----------------
 

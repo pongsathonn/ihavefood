@@ -1,0 +1,117 @@
+
+    post:
+      tags:
+      - order
+      summary: Place an order
+      description: xxxxxxxxxx
+      operationId: placeOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                restaurantId:
+                  type: string
+                menus:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      foodName:
+                        type: string
+                      price:
+                        type: integer
+                couponCode:
+                  type: string
+                couponDiscount:
+                  type: integer
+                deliveryFee:
+                  type: integer
+                total:
+                  type: integer
+                userAddress:
+                  type: object
+                  properties:
+                    addressName:
+                      type: string
+                    subDistrict:
+                      type: string
+                    district:
+                      type: string
+                    province:
+                      type: string
+                    postalCode:
+                      type: string
+                    country:
+                      type: string
+                restaurantAddress:
+                  type: object
+                  properties:
+                    addressName:
+                      type: string
+                    subDistrict:
+                      type: string
+                    district:
+                      type: string
+                    province:
+                      type: string
+                    postalCode:
+                      type: string
+                    country:
+                      type: string
+                contact:
+                  type: object
+                  properties:
+                    phoneNumber:
+                      type: string
+                    email:
+                      type: string
+                      format: email
+                paymentMethods:
+                  type: integer
+                  description: "1 = Cash, 2 = Credit Card"
+            examples:
+              User Place Order:
+                value:
+                  username: "yuki002"
+                  restaurantId: "19201230123"
+                  menus:
+                    - foodName: "Pad Thai"
+                      price: 50
+                    - foodName: "Kra pao"
+                      price: 60
+                  couponCode: "SAVE40FORYOU"
+                  couponDiscount: 40
+                  deliveryFee: 50
+                  total: 120
+                  userAddress:
+                    addressName: "Home"
+                    subDistrict: "Nong Hoi"
+                    district: "Mueang"
+                    province: "Chiang Mai"
+                    postalCode: "50000"
+                    country: "Thailand"
+                  restaurantAddress:
+                    addressName: "HaiDeeLhao"
+                    subDistrict: "Blabla"
+                    district: "Hang Dong"
+                    province: "Chiang Mai"
+                    postalCode: "50000"
+                    country: "Thailand"
+                  userContact:
+                    phoneNumber: "0982736541"
+                    email: "test@mail.com"
+                  paymentMethods: 1
+      responses:
+        '200':
+          description: Successfully placed an order wait for user
+        '400':
+          description: Invalid request
+      security:
+        - bearerAuth: []
+
+

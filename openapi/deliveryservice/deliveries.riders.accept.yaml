@@ -1,0 +1,29 @@
+    post:
+      tags:
+        - delivery
+      summary: Accept an order
+      description: Endpoint for a rider to accept an order.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                riderId:
+                  type: string
+                orderId:
+                  type: string
+            examples:
+              ex:
+                value: 
+                  riderId: "rider002"
+                  orderId: "66af00af1687c32893d15693"
+      responses:
+        '200':
+          description: Order accepted successfully
+        '400':
+          description: Invalid request
+      security:
+        - bearerAuth: [] 
+

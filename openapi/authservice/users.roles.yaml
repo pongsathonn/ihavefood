@@ -1,0 +1,24 @@
+    put:
+      tags:
+        - auth
+      summary: Assign role to User
+      description: "0 Visitor, 1 User, 2 Admin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  default: yuki002
+                role:
+                  type: integer
+                  default: 2
+      responses:
+        '200':
+          description: Successful login with access token and token expiration time (Unix)
+      security:
+        - bearerAuth: []
+  
