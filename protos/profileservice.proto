@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "common.proto";
+
+// ---------------------USER SERVICE------------------------------
+// Manages user profiles
+service ProfileService {
+
+    rpc ListProfiles(ListProfilesRequest) returns(ListProfilesResponse){
+        option (google.api.http) = {get: "/api/profiles"};
+    }
+
+    rpc GetProfile(GetProfileRequest) returns(Profile){
+        option (google.api.http) = {get: "/api/profiles/{user_id}"};
+    }
+
+    // Profile should be create from AuthService that why CreateProfileRequest
+    // only has 2 fields UserID and Username which is generated in AuthService
+    rpc CreateProfile(CreateProfileRequest) returns(Profile){}
+
+    rpc UpdateProfile(UpdateProfileRequest) returns (Profile){
+        option (google.api.http) = {
+            put: "/api/profiles/{user_id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteProfile(DeleteProfileRequest) returns(google.protobuf.Empty){
+        option (google.api.http) = {delete: "/api/profiles/{user_id}"};
+    }
+
+
+    // Draft 
+    // rpc RenameProfile(RenameProfileRequest) returns (RenameProfileResponse){}
+    // rpc ValidateProfileSocial() returns(){}
+
+}
+
+message Profile {
+    string user_id = 1; 
+    string username = 2;
+    bytes picture = 3;
+    string bio = 4;
+    Social social = 5;
+    Address address = 6;
+    int64 create_time = 7;
+}
+
+message ListProfilesRequest {
+    // TODO filter here
+}
+
+message ListProfilesResponse{
+    repeated Profile profiles = 1;
+}
+
+message GetProfileRequest{
+    string user_id = 1;
+}
+
+message CreateProfileRequest {
+    string user_id = 1; 
+    string username = 2;
+}
+
+message UpdateProfileRequest {
+    string user_id = 1;
+    // username must has constraint for update
+    // such as update every XX months.
+    string new_username = 2;
+    bytes new_picture = 3;
+    string new_bio = 4;
+    Social new_social = 5;
+    Address new_address = 6;
+}
+
+message DeleteProfileRequest {
+    string user_id = 1;
+}
+
