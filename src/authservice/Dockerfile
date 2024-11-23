@@ -1,24 +1,26 @@
 # syntax=docker/dockerfile:1
 
-# Stage 1: Build
+# stage 1: build
 FROM golang:1.22 AS builder
-WORKDIR /auth
-
-COPY go.mod go.sum .
+WORKDIR /app
+COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY . .
 
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
-RUN CGO_ENABLED=0 GOOS=linux go build -gcflags="all=-N -l" -o /auth
+# CGO_ENABLED=0 is build as staticaly-linked binary
+# default is 1 it will rely on some C lib
 
-# Stage 2: Runtime
+# GOOS=linux is target os which is linux is this case
+RUN CGO_ENABLED=0 GOOS=linux go build -o /auth
+
 FROM alpine:latest
-COPY --from=builder /auth /auth
 
-# for development stage(debugging)
-COPY --from=builder /go/bin/dlv /go/bin/dlv
-ENV PATH=$PATH:/go/bin
+RUN apk add --no-cache libc6-compat
+
+COPY --from=builder /auth /auth
+COPY --from=builder /go/bin/dlv /usr/local/bin/dlv
 
 CMD ["/auth"]
 
