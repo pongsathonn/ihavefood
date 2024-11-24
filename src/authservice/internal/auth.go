@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"log"
 	"log/slog"
 	"os"
 	"strings"
@@ -224,6 +225,7 @@ func (x *AuthService) createUserProfile(userID, username string) error {
 func InitSigningKey() error {
 	if key := os.Getenv("JWT_SIGNING_KEY"); key != "" {
 		signingKey = []byte(key)
+		return nil
 	}
 	return errors.New("JWT_SIGNING_KEY environment variable is empty")
 }
@@ -249,7 +251,7 @@ func InitAdminUser(storage AuthStorage) error {
 		return err
 	}
 
-	slog.Info("admin successfully innitialized")
+	log.Println("admin successfully innitialized")
 
 	return nil
 }

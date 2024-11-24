@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -33,9 +34,12 @@ func main() {
 
 	gwmux := newGatewaymux()
 
+	slog.Info("Gateway initialization starting")
+	log.Print(ihavefood)
 	if err := registerServiceHandlers(context.TODO(), gwmux); err != nil {
 		log.Fatalf("failed to register service handler: %v", err)
 	}
+
 	auth, err := initAuthMiddleware()
 	if err != nil {
 		log.Fatalf("failed to initialize auth middleware: %v", err)
@@ -44,11 +48,12 @@ func main() {
 	mux := setupHTTPMuxAndAuth(auth, gwmux)
 	handler := prettierJSON(cors(mux))
 
-	log.Println("+++++ GATEWAY STARTING +++++")
-	log.Println(ihavefood)
+	gwport := os.Getenv("GATEWAY_PORT")
+	addr := fmt.Sprintf(":%s", gwport)
 
-	s := fmt.Sprintf(":%s", os.Getenv("GATEWAY_PORT"))
-	log.Fatal(http.ListenAndServe(s, handler))
+	slog.Info(fmt.Sprintf("Gateway listening on port :%s", gwport))
+
+	log.Fatal(http.ListenAndServe(addr, handler))
 
 }
 
@@ -95,35 +100,41 @@ func registerServiceHandlers(ctx context.Context, gwmux *runtime.ServeMux) error
 	}
 
 	services := []struct {
+		name         string
 		registerFunc func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error
 		endpoint     string
 	}{
-		{pb.RegisterProfileServiceHandlerFromEndpoint, "PROFILE_URI"},
-		{pb.RegisterCouponServiceHandlerFromEndpoint, "COUPON_URI"},
-		{pb.RegisterOrderServiceHandlerFromEndpoint, "ORDER_URI"},
-		{pb.RegisterRestaurantServiceHandlerFromEndpoint, "RESTAURANT_URI"},
-		{pb.RegisterDeliveryServiceHandlerFromEndpoint, "DELIVERY_URI"},
-		{pb.RegisterAuthServiceHandlerFromEndpoint, "AUTH_URI"},
+		{"ProfileService", pb.RegisterProfileServiceHandlerFromEndpoint, "PROFILE_URI"},
+		{"CouponService", pb.RegisterCouponServiceHandlerFromEndpoint, "COUPON_URI"},
+		{"OrderService", pb.RegisterOrderServiceHandlerFromEndpoint, "ORDER_URI"},
+		{"RestaurantService", pb.RegisterRestaurantServiceHandlerFromEndpoint, "RESTAURANT_URI"},
+		{"DeliveryService", pb.RegisterDeliveryServiceHandlerFromEndpoint, "DELIVERY_URI"},
+		{"AuthService", pb.RegisterAuthServiceHandlerFromEndpoint, "AUTH_URI"},
 	}
 
 	for _, handler := range services {
-		if err := handler.registerFunc(ctx, gwmux, os.Getenv(handler.endpoint), opts); err != nil {
+		addr := os.Getenv(handler.endpoint)
+		if err := handler.registerFunc(ctx, gwmux, addr, opts); err != nil {
 			return err
 		}
 	}
 
+	slog.Info("Register every services successfully")
 	return nil
 }
 
 func initAuthMiddleware() (middleware.AuthMiddleware, error) {
 
+	addr := os.Getenv("AUTH_URI")
 	conn, err := grpc.Dial(
-		os.Getenv("AUTH_URI"),
+		addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return nil, err
 	}
+	slog.Info("Auth middleware initialized successfully", "address", addr)
+
 	return middleware.NewAuthMiddleware(pb.NewAuthServiceClient(conn)), nil
 }
 
@@ -133,7 +144,7 @@ func setupHTTPMuxAndAuth(m middleware.AuthMiddleware, gwmux *runtime.ServeMux) h
 		"DELETE /api/*",
 	)
 	m.ApplyAuthorization(mux, gwmux,
-		"/auth/profiles/roles",
+		"/auth/users/roles",
 	)
 	m.ApplyAuthentication(mux, gwmux,
 		"/api/orders/place-order",

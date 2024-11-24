@@ -58,28 +58,31 @@ func main() {
 func newProfileServiceClient() (pb.ProfileServiceClient, error) {
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+
 	conn, err := grpc.NewClient(os.Getenv("USER_URI"), opt)
 	if err != nil {
 		return nil, err
 	}
-	client := pb.NewProfileServiceClient(conn)
 
-	return client, nil
+	slog.Info("Channel for ProfileServiceClient created successfully")
+	return pb.NewProfileServiceClient(conn), nil
 }
 
 func initPostgres() (*sql.DB, error) {
 
-	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/auth_database?sslmode=disable",
-		os.Getenv("AUTH_POSTGRES_USER"),
-		os.Getenv("AUTH_POSTGRES_PASS"),
-		os.Getenv("AUTH_POSTGRES_HOST"),
-		os.Getenv("AUTH_POSTGRES_PORT"),
-	)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	db, err := sql.Open("postgres", uri)
+	dbName := "postgres"
+	host := os.Getenv("AUTH_POSTGRES_HOST")
+	port := os.Getenv("AUTH_POSTGRES_PORT")
+
+	db, err := sql.Open(dbName, fmt.Sprintf("postgres://%s:%s@%s:%s/auth_database?sslmode=disable",
+		os.Getenv("AUTH_POSTGRES_USER"),
+		os.Getenv("AUTH_POSTGRES_PASS"),
+		host,
+		port,
+	))
 	if err != nil {
 		return nil, err
 	}
@@ -88,14 +91,16 @@ func initPostgres() (*sql.DB, error) {
 		return nil, err
 	}
 
+	slog.Info("Database initialized successfully",
+		"db", dbName,
+		"host", host,
+		"port", port,
+	)
+
 	return db, nil
 }
 
 func initRabbitMQ() (*amqp.Connection, error) {
-
-	const maxRetries = 5
-	var errDialRabbitmq error
-
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("AUTH_AMQP_USER"),
 		os.Getenv("AUTH_AMQP_PASS"),
@@ -103,35 +108,42 @@ func initRabbitMQ() (*amqp.Connection, error) {
 		os.Getenv("AUTH_AMQP_PORT"),
 	)
 
-	for _ = range maxRetries {
+	maxRetries := 5
+
+	for i := 0; i < maxRetries; i++ {
 		conn, err := amqp.Dial(uri)
 		if err == nil {
+			slog.Info("RabbitMQ initialization successful",
+				"host", os.Getenv("AUTH_AMQP_HOST"),
+				"port", os.Getenv("AUTH_AMQP_PORT"),
+			)
 			return conn, nil
 		}
-		errDialRabbitmq = err
+
+		slog.Warn(fmt.Sprintf("Failed to connect to RabbitMQ, retrying... (%d/5)", i+1))
 	}
 
-	return nil, errDialRabbitmq
+	return nil, fmt.Errorf("failed to connect to RabbitMQ after %d attempts", maxRetries)
 }
 
 // startGRPCServer sets up and starts the gRPC server
 // func startGRPCServer(s *internal.AuthService) {
-func startGRPCServer(s *internal.AuthService) {
+func startGRPCServer(auths *internal.AuthService) {
 
-	// Set up the server port from environment variable
 	uri := fmt.Sprintf(":%s", os.Getenv("AUTH_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	// Create and start the gRPC server
-	grpcServer := grpc.NewServer()
-	pb.RegisterAuthServiceServer(grpcServer, s)
+	s := grpc.NewServer()
+	pb.RegisterAuthServiceServer(s, auths)
 
-	log.Printf("auth service is running on port %s\n", os.Getenv("AUTH_SERVER_PORT"))
+	slog.Info("AuthService initialized successfully",
+		"port", os.Getenv("AUTH_SERVER_PORT"),
+	)
 
-	if err := grpcServer.Serve(lis); err != nil {
+	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 

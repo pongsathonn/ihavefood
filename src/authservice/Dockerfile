@@ -2,7 +2,7 @@
 
 # stage 1: build
 FROM golang:1.22 AS builder
-WORKDIR /app
+WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY . .
@@ -17,6 +17,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /auth
 
 FROM alpine:latest
 
+# libc6 makes alpine compatible with dlv
 RUN apk add --no-cache libc6-compat
 
 COPY --from=builder /auth /auth

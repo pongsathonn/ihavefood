@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -165,8 +164,6 @@ func (s *authStorage) Create(ctx context.Context, newUser *NewUserCredentials) (
 		return "", err
 	}
 
-	createTime := time.Now()
-
 	row := s.db.QueryRowContext(ctx, `
 		INSERT INTO user_credentials(
 			username,
@@ -176,14 +173,14 @@ func (s *authStorage) Create(ctx context.Context, newUser *NewUserCredentials) (
 			phone_number,
 			create_time
 		)
-		VALUES($1, $2, $3, $4,$5)
+		VALUES($1, $2, $3, $4,$5,now())
 		RETURNING id
 	`,
 		newUser.Username,
 		newUser.Email,
 		string(hashedPass),
 		newUser.Role,
-		createTime,
+		newUser.PhoneNumber,
 	)
 
 	var userID string
