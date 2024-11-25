@@ -19,6 +19,4 @@
       responses:
         '200':
           description: Successful login with access token and token expiration time (Unix)
-      security:
-        - bearerAuth: []
   

@@ -46,6 +46,4 @@
       responses:
         '200':
           description: Coupon details
-      security:
-        - bearerAuth: []
 

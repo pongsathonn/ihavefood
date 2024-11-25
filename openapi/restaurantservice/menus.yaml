@@ -34,6 +34,4 @@
           description: Menu added successfully
         '400':
           description: Invalid request
-      security:
-        - bearerAuth: [] 
 

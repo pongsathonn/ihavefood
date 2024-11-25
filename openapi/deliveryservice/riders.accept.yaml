@@ -24,6 +24,4 @@
           description: Order accepted successfully
         '400':
           description: Invalid request
-      security:
-        - bearerAuth: [] 
 

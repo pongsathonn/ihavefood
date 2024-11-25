@@ -30,7 +30,5 @@
       responses:
         '200':
           description: ssss
-      security:
-        - bearerAuth: []
 
 

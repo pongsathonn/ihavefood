@@ -15,14 +15,20 @@ components:
     basicAuth:
       type: http
       scheme: basic
+
+# Apply bearer authentication every apis(global)
+security:
+  - bearerAuth: []
       
 paths:
 
 #---------------Auth Service--------------------
   /auth/register:
     $ref: 'authservice/register.yaml'
+
   /auth/login:
     $ref: 'authservice/login.yaml'
+
   /auth/users/roles:
     $ref: 'authservice/users.roles.yaml'
 
@@ -30,16 +36,15 @@ paths:
 
 #---------------Profile Service-----------------
   /api/profiles/{username}:
-    $ref: 'profileservice/users.username.yaml'
+    $ref: 'profileservice/profiles.username.yaml'
   /api/profiles:
-    $ref: 'profileservice/users.yaml'
-
+    $ref: 'profileservice/profiles.yaml'
 
 
 
 #---------------Order Service-----------------
   /api/orders/place-order:
-    $ref: 'orderservice/orders.placeorder.yaml'
+    $ref: 'orderservice/placeorder.yaml'
   /api/orders/{username}:
     $ref: 'orderservice/orders.username.yaml'
 
@@ -48,10 +53,7 @@ paths:
 
 #---------------Delivery Service-----------------
   /api/deliveries/riders/accept:
-    $ref: 'deliveryservice/deliveries.riders.accept.yaml'
-
-
-
+    $ref: 'deliveryservice/riders.accept.yaml'
 
 
 #---------------Restaurant Service-----------------
@@ -60,7 +62,7 @@ paths:
   /api/restaurants:
     $ref: 'restaurantservice/restaurants.yaml'
   /api/restaurants/menus:
-    $ref: 'restaurantservice/restaurants.menus.yaml'
+    $ref: 'restaurantservice/menus.yaml'
 
 
 

@@ -63,6 +63,4 @@
           description: Restaurant registered successfully
         '400':
           description: Invalid request
-      security:
-        - bearerAuth: []
 

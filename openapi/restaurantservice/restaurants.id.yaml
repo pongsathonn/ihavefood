@@ -16,6 +16,4 @@
           description: Menus of the restaurant
         '404':
           description: Restaurant not found
-      security:
-        - bearerAuth: []
 
