@@ -71,8 +71,6 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 
-	// pb.Roles_name[user.Role])
-
 	return &pb.UserCredentials{
 		UserId:      user.UserID,
 		Username:    user.Username,
@@ -194,6 +192,8 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		slog.Error("failed to find user credentials", "err", err)
 		return nil, status.Error(codes.Internal, "failed to find user credentials")
 	}
+
+	//TODO add update_time
 
 	return &pb.UserCredentials{
 		UserId:      user.UserID,
