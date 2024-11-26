@@ -13,8 +13,9 @@ type ProfileStorage interface {
 	// Profile returns the user profile.
 	Profile(ctx context.Context, userID string) (*dbProfile, error)
 
-	// Create creates new user profile.
-	Create(ctx context.Context, newProfile *dbProfile) (string, error)
+	// Create creates new user profile with empty fields. it intends to create
+	// column before update fields.
+	Create(ctx context.Context, newProfile *newProfile) (string, error)
 
 	// Update user profile.
 	Update(ctx context.Context, userID string, update *dbProfile) (string, error)
@@ -35,19 +36,18 @@ func (s *profileStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT
-			profile.id,
-			profile.username,
-			profile.picture,
-			profile.bio,
-			profile.facebook,
-			profile.instagram,
-			profile.line,
-			profile.address_name,
-			profile.sub_district,
-			profile.district,
-			profile.province,
-			profile.postal_code,
-			profile.create_time,
+			id,
+			username,
+			bio,
+			facebook,
+			instagram,
+			line,
+			address_name,
+			sub_district,
+			district,
+			province,
+			postal_code,
+			create_time,
 		FROM
 			profile
 	`)
@@ -58,11 +58,13 @@ func (s *profileStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
 
 	var profiles []*dbProfile
 	for rows.Next() {
-		var profile dbProfile
+		profile := dbProfile{
+			Social:  &dbSocial{},
+			Address: &dbAddress{},
+		}
 		err := rows.Scan(
 			&profile.UserID,
 			&profile.Username,
-			&profile.Picture,
 			&profile.Bio,
 			&profile.Social.Facebook,
 			&profile.Social.Instragram,
@@ -91,30 +93,35 @@ func (s *profileStorage) Profile(ctx context.Context, userID string) (*dbProfile
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT
-			profile.id,
-			profile.username,
-			profile.picture,
-			profile.bio,
-			profile.facebook,
-			profile.instagram,
-			profile.line,
-			profile.address_name,
-			profile.sub_district,
-			profile.district,
-			profile.province,
-			profile.postal_code,
-			profile.create_time,
+			id,
+			username,
+			bio,
+			facebook,
+			instagram,
+			line,
+			address_name,
+			sub_district,
+			district,
+			province,
+			postal_code,
+			create_time
 		FROM
 			profile
 		WHERE
-			profile.id = $1;
+			id = $1;
 	`, userID)
 
-	var profile dbProfile
+	// Dereferencing uninitilized embedded struct in GO will cause
+	// a runtime error. To fix this  initialize the embedded structs
+	// before using them.
+	profile := dbProfile{
+		Social:  &dbSocial{},
+		Address: &dbAddress{},
+	}
+
 	err := row.Scan(
 		&profile.UserID,
 		&profile.Username,
-		&profile.Picture,
 		&profile.Bio,
 		&profile.Social.Facebook,
 		&profile.Social.Instragram,
@@ -133,39 +140,19 @@ func (s *profileStorage) Profile(ctx context.Context, userID string) (*dbProfile
 	return &profile, nil
 }
 
-func (s *profileStorage) Create(ctx context.Context, newProfile *dbProfile) (string, error) {
+func (s *profileStorage) Create(ctx context.Context, newProfile *newProfile) (string, error) {
 
 	res := s.db.QueryRowContext(ctx, `
 		INSERT INTO profile(
 			id,
 			username,
-			picture,
-			bio,
-			facebook,
-			instagram,
-			line,
-			address_name,
-			sub_district,
-			district,
-			province,
-			postal_code,
-			create_time,
+			create_time
 		)
-		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+		VALUES($1,$2,NOW())
 		RETURNING id
 	`,
 		newProfile.UserID,
 		newProfile.Username,
-		newProfile.Picture,
-		newProfile.Bio,
-		newProfile.Social.Facebook,
-		newProfile.Social.Instragram,
-		newProfile.Social.Line,
-		newProfile.Address.AddressName,
-		newProfile.Address.SubDistrict,
-		newProfile.Address.District,
-		newProfile.Address.Province,
-		newProfile.Address.PostalCode,
 	)
 
 	var userID string
@@ -199,7 +186,6 @@ func (s *profileStorage) Update(ctx context.Context, userID string, update *dbPr
 			profile
 		SET
 		    username = COALESCE(NULLIF($2, ''), username),
-		    picture = COALESCE($3, picture),
 		    bio = COALESCE(NULLIF($4,''), bio),
 
 		    facebook = COALESCE(NULLIF($5,''), facebook),
@@ -217,7 +203,6 @@ func (s *profileStorage) Update(ctx context.Context, userID string, update *dbPr
 	`,
 		userID,
 		update.Username,
-		update.Picture,
 		update.Bio,
 
 		update.Social.Facebook,

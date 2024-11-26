@@ -60,12 +60,10 @@ func (x *ProfileService) CreateProfile(ctx context.Context, in *pb.CreateProfile
 
 	// TODO validate input
 
-	newProfile := &dbProfile{
+	userID, err := x.store.Create(ctx, &newProfile{
 		UserID:   in.UserId,
 		Username: in.Username,
-	}
-
-	userID, err := x.store.Create(ctx, newProfile)
+	})
 	if err != nil {
 		slog.Error("failed to create user profile", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to create user profile")
@@ -86,12 +84,11 @@ func (x *ProfileService) UpdateProfile(ctx context.Context, in *pb.UpdateProfile
 
 	update := &dbProfile{
 		Username: in.NewUsername,
-		Picture:  in.NewPicture,
-		Bio:      in.NewBio,
+		Bio:      sql.NullString{String: in.NewBio},
 		Social: &dbSocial{
-			Facebook:   in.NewSocial.Facebook,
-			Instragram: in.NewSocial.Instagram,
-			Line:       in.NewSocial.Line,
+			Facebook:   sql.NullString{String: in.NewSocial.Facebook},
+			Instragram: sql.NullString{String: in.NewSocial.Instagram},
+			Line:       sql.NullString{String: in.NewSocial.Line},
 		},
 		Address: &dbAddress{
 			AddressName: sql.NullString{String: in.NewAddress.AddressName},
@@ -131,16 +128,40 @@ func (x *ProfileService) DeleteProfile(ctx context.Context, in *pb.DeleteProfile
 	return &emptypb.Empty{}, nil
 }
 
+// TODO
+func protoToDb(profile *pb.Profile) *dbProfile {
+
+	return &dbProfile{
+		//UserID: "",
+		Username: profile.Username,
+		Bio:      sql.NullString{String: profile.Bio},
+		Social: &dbSocial{
+			Facebook:   sql.NullString{String: profile.Social.Facebook},
+			Instragram: sql.NullString{String: profile.Social.Instagram},
+			Line:       sql.NullString{String: profile.Social.Line},
+		},
+		Address: &dbAddress{
+			AddressName: sql.NullString{String: profile.Address.AddressName},
+			SubDistrict: sql.NullString{String: profile.Address.SubDistrict},
+			District:    sql.NullString{String: profile.Address.District},
+			Province:    sql.NullString{String: profile.Address.Province},
+			PostalCode:  sql.NullString{String: profile.Address.PostalCode},
+		},
+		// CreateTime: nil,
+	}
+
+}
+
 func dbToProto(profile *dbProfile) *pb.Profile {
+
 	return &pb.Profile{
 		UserId:   profile.UserID,
 		Username: profile.Username,
-		Picture:  profile.Picture,
-		Bio:      profile.Bio,
+		Bio:      profile.Bio.String,
 		Social: &pb.Social{
-			Facebook:  profile.Social.Facebook,
-			Instagram: profile.Social.Instragram,
-			Line:      profile.Social.Line,
+			Facebook:  profile.Social.Facebook.String,
+			Instagram: profile.Social.Instragram.String,
+			Line:      profile.Social.Line.String,
 		},
 		Address: &pb.Address{
 			AddressName: profile.Address.AddressName.String,
