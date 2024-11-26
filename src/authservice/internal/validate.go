@@ -33,10 +33,10 @@ func validateUser(in any) []error {
 		"PhoneNumber": "required,vphone",
 	}
 
-	rule2 := map[string]string{}
+	// rule2 := map[string]string{}
 
 	validate.RegisterStructValidationMapRules(registerRule, pb.RegisterRequest{})
-	validate.RegisterStructValidationMapRules(rule2, nil)
+	// validate.RegisterStructValidationMapRules(rule2, nil)
 
 	validate.RegisterValidation("vpass", validatePassword)
 	validate.RegisterValidation("vphone", validatePhone)

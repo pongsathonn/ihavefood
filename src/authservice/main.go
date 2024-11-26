@@ -59,7 +59,7 @@ func newProfileServiceClient() (pb.ProfileServiceClient, error) {
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 
-	conn, err := grpc.NewClient(os.Getenv("USER_URI"), opt)
+	conn, err := grpc.NewClient(os.Getenv("PROFILE_URI"), opt)
 	if err != nil {
 		return nil, err
 	}

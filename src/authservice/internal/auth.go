@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/golang-jwt/jwt/v5"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
@@ -33,8 +34,8 @@ func NewAuthService(store AuthStorage, rabbitmq RabbitMQ, profileClient pb.Profi
 	}
 }
 
-// Register handles user registration by creating a new user with a hashed password
-// in the database and calling the UserService to create a user profile.
+// Register handles user registration by creating a new user credentials
+// and calling the UserService to create a user profile.
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
 
 	if err := validateUser(in); err != nil {
@@ -42,14 +43,13 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, "validation failed : %v", err)
 	}
 
-	newUser := &NewUserCredentials{
+	userID, err := x.store.Create(ctx, &NewUserCredentials{
 		Username:    in.Username,
 		Email:       in.Email,
 		Password:    in.Password,
 		PhoneNumber: in.PhoneNumber,
-	}
-
-	userID, err := x.store.Create(ctx, newUser)
+		Role:        Roles_USER,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
 	}
@@ -71,12 +71,15 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 
+	// pb.Roles_name[user.Role])
+
 	return &pb.UserCredentials{
 		UserId:      user.UserID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
 		Role:        pb.Roles(user.Role),
+		CreateTime:  timestamppb.New(user.CreateTime),
 	}, nil
 }
 

@@ -55,7 +55,7 @@ func (s *authStorage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 			id,
 			username, 
 			email,
-			role
+			role,
 			phone_number,
 			create_time
 		FROM 
@@ -96,7 +96,7 @@ func (s *authStorage) User(ctx context.Context, userID string) (*dbUserCredentia
 			id,
 			username, 
 			email,
-			role
+			role,
 			phone_number,
 			create_time
 		FROM 
@@ -130,7 +130,7 @@ func (s *authStorage) UserByUsername(ctx context.Context, username string) (*dbU
 			id,
 			username, 
 			email,
-			role
+			role,
 			phone_number,
 			create_time
 		FROM 

@@ -2,7 +2,7 @@
 
 # stage 1: build
 FROM golang:1.22 AS builder
-WORKDIR /src
+WORKDIR /src/auth
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY . .
