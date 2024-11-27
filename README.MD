@@ -164,26 +164,20 @@ For the database access layer, add the prefix "db" to distinguish them.
 
 
 # Time
+My application is based in Thailand, and the local timezone is 'Asia/Bangkok'. For reading logs within 
+the application, focusing on time differences is crucial, and Unix time is not ideal for monitoring 
+due to its lack of readability. To establish a consistent time standard throughout the application, 
+I have implemented the following time-handling strategy:
 
-My application is based in Thailand, and the local timezone is 'Asia/Bangkok'. However, 
-converting times to this format can be cumbersome. When reading logs within the application, 
-I primarily need to focus on time differences, and Unix time (since it's difficult to read) 
-isn't ideal for monitoring. Therefore, to define a consistent time standard for the application, 
-I have designed the time handling as follows:
+Application and Data Layer:
+- Use the "time.Time" type in Go for handling timestamps.
+- For generating timestamps, use "time.Now()", as it generates time in the local timezone (Asia/Bangkok).
+- When inserting into the database (e.g., PostgreSQL or MongoDB), pass the time.Time value directly. 
+These database drivers handle the time.Time type in Go seamlessly.
 
-- Transport Layer: Use Unix timestamps (int64) for communication, as they are compatible 
-with the int64 type and do not require any special formatting or types, such as timestamp in 
-Protobuf. This makes it easier to work with external systems.
-
-- Application and Data Layer: Use local time which generated from time.Now() as the standard time format. 
-Since logs and data in the database need to be easily readable. for Data Layer not need to worry because 
-those driver work fine with time.Time in Go. 
-
-
-NOTE: MongoDB will store UTC internally while PostgresDB timestamp type will store local time.
-NOTE: handle int64 from protobuf with time.Unix() in Go.
-
-time.Now() returns local time which does not has conflict with UTC when validate.
+Transport Layer:
+- Use the "timestamppb.Timestamp" type, which is generated from "google.protobuf.Timestamp", for gRPC responses.
+- When using gRPC-Gateway, the timestamp will be automatically converted to UTC date-time format for the client.
 
 
 # Error TODO improve doc
@@ -198,47 +192,6 @@ an error must be something like "username not found", but if i don't know what e
 return then i will use internal error which message contains what i do. such as 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-       
-        
 
 
 
