@@ -164,7 +164,7 @@ For the database access layer, add the prefix "db" to distinguish them.
 
 
 # Time
-My application is based in Thailand, and the local timezone is 'Asia/Bangkok'. For reading logs within 
+My application is based in Thailand, and the local timezone is Asia/Bangkok. For reading logs within 
 the application, focusing on time differences is crucial, and Unix time is not ideal for monitoring 
 due to its lack of readability. To establish a consistent time standard throughout the application, 
 I have implemented the following time-handling strategy:
@@ -176,7 +176,7 @@ Application and Data Layer:
 These database drivers handle the time.Time type in Go seamlessly.
 
 Transport Layer:
-- Use the "timestamppb.Timestamp" type, which is generated from "google.protobuf.Timestamp", for gRPC responses.
+- Use the "timestamppb.Timestamp" type, which is generated from "google.protobuf.Timestamp" for gRPC responses.
 - When using gRPC-Gateway, the timestamp will be automatically converted to UTC date-time format for the client.
 
 
