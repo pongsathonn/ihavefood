@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/profileservice/genproto"
 )
@@ -170,6 +171,6 @@ func dbToProto(profile *dbProfile) *pb.Profile {
 			Province:    profile.Address.Province.String,
 			PostalCode:  profile.Address.PostalCode.String,
 		},
-		CreateTime: profile.CreateTime.Unix(),
+		CreateTime: timestamppb.New(profile.CreateTime),
 	}
 }

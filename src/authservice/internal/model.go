@@ -31,6 +31,7 @@ type dbUserCredentials struct {
 	Role         dbRoles
 	PhoneNumber  string
 	CreateTime   time.Time
+	UpdateTime   time.Time
 }
 
 type dbRoles int32

@@ -16,6 +16,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -85,7 +86,8 @@ func (x *DeliveryService) GetOrderTracking(in *pb.GetOrderTrackingRequest, strea
 					Latitude:  delivery.RiderLocation.Latitude,
 					Longitude: delivery.RiderLocation.Longitude,
 				},
-				UpdateTime: timestamp.Unix(),
+
+				UpdateTime: timestamppb.New(timestamp),
 			})
 			if err != nil {
 				return status.Errorf(codes.Internal, "failed to response stream: %v", err)

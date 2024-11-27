@@ -25,7 +25,8 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$AUTH_DB" <<-EOSQL
         password VARCHAR(255) NOT NULL,
         role SMALLINT NOT NULL,
         phone_number VARCHAR(255) UNIQUE,
-        create_time TIMESTAMP NOT NULL DEFAULT NOW()
+        create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+        update_time TIMESTAMP NOT NULL DEFAULT NOW()
     );
 
     GRANT SELECT, INSERT, UPDATE, DELETE ON user_credentials TO "$AUTH_USER";

@@ -57,7 +57,8 @@ func (s *authStorage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 			email,
 			role,
 			phone_number,
-			create_time
+			create_time,
+			update_time
 		FROM 
 			user_credentials 
 	`)
@@ -75,6 +76,7 @@ func (s *authStorage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 			&user.Role,
 			&user.PhoneNumber,
 			&user.CreateTime,
+			&user.UpdateTime,
 		)
 		if err != nil {
 			return nil, err
@@ -98,7 +100,8 @@ func (s *authStorage) User(ctx context.Context, userID string) (*dbUserCredentia
 			email,
 			role,
 			phone_number,
-			create_time
+			create_time,
+			update_time
 		FROM 
 			user_credentials
 		WHERE
@@ -114,6 +117,7 @@ func (s *authStorage) User(ctx context.Context, userID string) (*dbUserCredentia
 		&user.Role,
 		&user.PhoneNumber,
 		&user.CreateTime,
+		&user.UpdateTime,
 	)
 	if err != nil {
 		return nil, err
@@ -132,7 +136,8 @@ func (s *authStorage) UserByUsername(ctx context.Context, username string) (*dbU
 			email,
 			role,
 			phone_number,
-			create_time
+			create_time,
+			update_time
 		FROM 
 			user_credentials
 		WHERE
@@ -148,6 +153,7 @@ func (s *authStorage) UserByUsername(ctx context.Context, username string) (*dbU
 		&user.Role,
 		&user.PhoneNumber,
 		&user.CreateTime,
+		&user.UpdateTime,
 	)
 	if err != nil {
 		return nil, err

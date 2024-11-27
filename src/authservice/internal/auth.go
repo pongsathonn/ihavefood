@@ -121,7 +121,10 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, errGenerateToken
 	}
 
-	return &pb.LoginResponse{AccessToken: token, AccessTokenExp: exp}, nil
+	return &pb.LoginResponse{
+		AccessToken: token,
+		ExpiresIn:   exp,
+	}, nil
 }
 
 func (x *AuthService) ValidateUserToken(ctx context.Context, in *pb.ValidateUserTokenRequest) (*pb.ValidateUserTokenResponse, error) {
@@ -177,11 +180,11 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		return nil, status.Error(codes.InvalidArgument, "userID must be provided")
 	}
 
-	if _, ok := pb.Roles_value[in.Role.String()]; !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.Role.String())
+	if _, ok := pb.Roles_value[in.NewRole.String()]; !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.NewRole.String())
 	}
 
-	updatedID, err := x.store.UpdateRole(ctx, in.UserId, dbRoles(in.Role))
+	updatedID, err := x.store.UpdateRole(ctx, in.UserId, dbRoles(in.NewRole))
 	if err != nil {
 		slog.Error("failed to update user role", "err", err)
 		return nil, status.Error(codes.Internal, "failed to update role")
@@ -201,6 +204,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
 		Role:        pb.Roles(user.Role),
+		CreateTime:  timestamppb.New(user.CreateTime),
 	}, nil
 }
 
@@ -280,7 +284,8 @@ func extractBasicAuth(authorization []string) (username, password string, err er
 func createNewToken(id string, role pb.Roles) (signedToken string, expiration int64, err error) {
 
 	day := 24 * time.Hour
-	exp := time.Now().Add(7 * day).Unix()
+	now := time.Now()
+	exp := now.Add(30 * day)
 
 	claims := &AuthClaims{
 		ID:   id,
@@ -288,8 +293,8 @@ func createNewToken(id string, role pb.Roles) (signedToken string, expiration in
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "authentication",
 			Issuer:    "auth service",
-			IssuedAt:  jwt.NewNumericDate(time.Unix(time.Now().Unix(), 0)),
-			ExpiresAt: jwt.NewNumericDate(time.Unix(exp, 0)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(exp),
 		},
 	}
 
@@ -300,5 +305,5 @@ func createNewToken(id string, role pb.Roles) (signedToken string, expiration in
 		return "", 0, err
 	}
 
-	return ss, exp, nil
+	return ss, exp.Unix(), nil
 }

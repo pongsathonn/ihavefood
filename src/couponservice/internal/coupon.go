@@ -62,7 +62,7 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		Types:      int32(in.CouponTypes),
 		Code:       code,
 		Discount:   discount,
-		Expiration: expiration.UTC(),
+		Expiration: expiration,
 		Quantity:   in.Quantity,
 	})
 	if err != nil {
@@ -74,7 +74,7 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		Types:         pb.CouponTypes(coupon.Types),
 		Code:          coupon.Code,
 		Discount:      coupon.Discount,
-		ExpireTime:    coupon.Expiration.Unix(),
+		ExpiresIn:     coupon.Expiration.Unix(),
 		QuantityCount: coupon.Quantity,
 	}, nil
 }
@@ -107,7 +107,7 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 		Types:         pb.CouponTypes(coupon.Types),
 		Code:          coupon.Code,
 		Discount:      coupon.Discount,
-		ExpireTime:    coupon.Expiration.Unix(),
+		ExpiresIn:     coupon.Expiration.Unix(),
 		QuantityCount: coupon.Quantity,
 	}, nil
 }
@@ -126,7 +126,7 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *emptypb.Empty) (*
 			Types:         pb.CouponTypes(c.Types),
 			Code:          c.Code,
 			Discount:      c.Discount,
-			ExpireTime:    c.Expiration.Unix(),
+			ExpiresIn:     c.Expiration.Unix(),
 			QuantityCount: c.Quantity,
 		}
 		coupons = append(coupons, coupon)

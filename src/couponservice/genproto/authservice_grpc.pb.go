@@ -21,8 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	AuthService_Register_FullMethodName            = "/ihavefood.AuthService/Register"
 	AuthService_Login_FullMethodName               = "/ihavefood.AuthService/Login"
-	AuthService_CheckUserToken_FullMethodName      = "/ihavefood.AuthService/CheckUserToken"
-	AuthService_CheckAdminToken_FullMethodName     = "/ihavefood.AuthService/CheckAdminToken"
+	AuthService_ValidateUserToken_FullMethodName   = "/ihavefood.AuthService/ValidateUserToken"
+	AuthService_ValidateAdminToken_FullMethodName  = "/ihavefood.AuthService/ValidateAdminToken"
 	AuthService_CheckUsernameExists_FullMethodName = "/ihavefood.AuthService/CheckUsernameExists"
 	AuthService_UpdateUserRole_FullMethodName      = "/ihavefood.AuthService/UpdateUserRole"
 )
@@ -33,14 +33,14 @@ const (
 type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*UserCredentials, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
-	// Check jwt token for role "USER"
-	CheckUserToken(ctx context.Context, in *CheckUserTokenRequest, opts ...grpc.CallOption) (*CheckUserTokenResponse, error)
-	// Check jwt token for role "ADMIN"
-	CheckAdminToken(ctx context.Context, in *CheckAdminTokenRequest, opts ...grpc.CallOption) (*CheckAdminTokenResponse, error)
-	// Check whether username already exists
+	// Validate token for role "USER" returns true if token valid, otherwise false.
+	ValidateUserToken(ctx context.Context, in *ValidateUserTokenRequest, opts ...grpc.CallOption) (*ValidateUserTokenResponse, error)
+	// Validate token for role "ADMIN" returns true if token valid, otherwise false.
+	ValidateAdminToken(ctx context.Context, in *ValidateAdminTokenRequest, opts ...grpc.CallOption) (*ValidateAdminTokenResponse, error)
+	// Check whether username already exists returns true if username already exists, otherwise false.
 	CheckUsernameExists(ctx context.Context, in *CheckUsernameExistsRequest, opts ...grpc.CallOption) (*CheckUsernameExistsResponse, error)
 	// Promotes a user's role from "USER" to "ADMIN".
-	// This function can only be performed by users with the "ADMIN" role.
+	// This function intends to performe by users with the "ADMIN" role.
 	UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UserCredentials, error)
 }
 
@@ -70,18 +70,18 @@ func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ..
 	return out, nil
 }
 
-func (c *authServiceClient) CheckUserToken(ctx context.Context, in *CheckUserTokenRequest, opts ...grpc.CallOption) (*CheckUserTokenResponse, error) {
-	out := new(CheckUserTokenResponse)
-	err := c.cc.Invoke(ctx, AuthService_CheckUserToken_FullMethodName, in, out, opts...)
+func (c *authServiceClient) ValidateUserToken(ctx context.Context, in *ValidateUserTokenRequest, opts ...grpc.CallOption) (*ValidateUserTokenResponse, error) {
+	out := new(ValidateUserTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_ValidateUserToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) CheckAdminToken(ctx context.Context, in *CheckAdminTokenRequest, opts ...grpc.CallOption) (*CheckAdminTokenResponse, error) {
-	out := new(CheckAdminTokenResponse)
-	err := c.cc.Invoke(ctx, AuthService_CheckAdminToken_FullMethodName, in, out, opts...)
+func (c *authServiceClient) ValidateAdminToken(ctx context.Context, in *ValidateAdminTokenRequest, opts ...grpc.CallOption) (*ValidateAdminTokenResponse, error) {
+	out := new(ValidateAdminTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_ValidateAdminToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,14 +112,14 @@ func (c *authServiceClient) UpdateUserRole(ctx context.Context, in *UpdateUserRo
 type AuthServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*UserCredentials, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	// Check jwt token for role "USER"
-	CheckUserToken(context.Context, *CheckUserTokenRequest) (*CheckUserTokenResponse, error)
-	// Check jwt token for role "ADMIN"
-	CheckAdminToken(context.Context, *CheckAdminTokenRequest) (*CheckAdminTokenResponse, error)
-	// Check whether username already exists
+	// Validate token for role "USER" returns true if token valid, otherwise false.
+	ValidateUserToken(context.Context, *ValidateUserTokenRequest) (*ValidateUserTokenResponse, error)
+	// Validate token for role "ADMIN" returns true if token valid, otherwise false.
+	ValidateAdminToken(context.Context, *ValidateAdminTokenRequest) (*ValidateAdminTokenResponse, error)
+	// Check whether username already exists returns true if username already exists, otherwise false.
 	CheckUsernameExists(context.Context, *CheckUsernameExistsRequest) (*CheckUsernameExistsResponse, error)
 	// Promotes a user's role from "USER" to "ADMIN".
-	// This function can only be performed by users with the "ADMIN" role.
+	// This function intends to performe by users with the "ADMIN" role.
 	UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UserCredentials, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -134,11 +134,11 @@ func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest
 func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthServiceServer) CheckUserToken(context.Context, *CheckUserTokenRequest) (*CheckUserTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckUserToken not implemented")
+func (UnimplementedAuthServiceServer) ValidateUserToken(context.Context, *ValidateUserTokenRequest) (*ValidateUserTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateUserToken not implemented")
 }
-func (UnimplementedAuthServiceServer) CheckAdminToken(context.Context, *CheckAdminTokenRequest) (*CheckAdminTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckAdminToken not implemented")
+func (UnimplementedAuthServiceServer) ValidateAdminToken(context.Context, *ValidateAdminTokenRequest) (*ValidateAdminTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateAdminToken not implemented")
 }
 func (UnimplementedAuthServiceServer) CheckUsernameExists(context.Context, *CheckUsernameExistsRequest) (*CheckUsernameExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckUsernameExists not implemented")
@@ -195,38 +195,38 @@ func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_CheckUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckUserTokenRequest)
+func _AuthService_ValidateUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateUserTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).CheckUserToken(ctx, in)
+		return srv.(AuthServiceServer).ValidateUserToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_CheckUserToken_FullMethodName,
+		FullMethod: AuthService_ValidateUserToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).CheckUserToken(ctx, req.(*CheckUserTokenRequest))
+		return srv.(AuthServiceServer).ValidateUserToken(ctx, req.(*ValidateUserTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_CheckAdminToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckAdminTokenRequest)
+func _AuthService_ValidateAdminToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateAdminTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).CheckAdminToken(ctx, in)
+		return srv.(AuthServiceServer).ValidateAdminToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_CheckAdminToken_FullMethodName,
+		FullMethod: AuthService_ValidateAdminToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).CheckAdminToken(ctx, req.(*CheckAdminTokenRequest))
+		return srv.(AuthServiceServer).ValidateAdminToken(ctx, req.(*ValidateAdminTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -283,12 +283,12 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_Login_Handler,
 		},
 		{
-			MethodName: "CheckUserToken",
-			Handler:    _AuthService_CheckUserToken_Handler,
+			MethodName: "ValidateUserToken",
+			Handler:    _AuthService_ValidateUserToken_Handler,
 		},
 		{
-			MethodName: "CheckAdminToken",
-			Handler:    _AuthService_CheckAdminToken_Handler,
+			MethodName: "ValidateAdminToken",
+			Handler:    _AuthService_ValidateAdminToken_Handler,
 		},
 		{
 			MethodName: "CheckUsernameExists",

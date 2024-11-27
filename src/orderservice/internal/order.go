@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -301,9 +302,9 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 		PaymentStatus:  pb.PaymentStatus(order.PaymentStatus),
 		OrderStatus:    pb.OrderStatus(order.OrderStatus),
 		OrderTimestamps: &pb.OrderTimestamps{
-			CreateTime:   order.Timestamps.CreateTime.Unix(),
-			UpdateTime:   order.Timestamps.UpdateTime.Unix(),
-			CompleteTime: order.Timestamps.CompleteTime.Unix(),
+			CreateTime:   timestamppb.New(order.Timestamps.CreateTime),
+			UpdateTime:   timestamppb.New(order.Timestamps.UpdateTime),
+			CompleteTime: timestamppb.New(order.Timestamps.CompleteTime),
 		},
 	}
 
