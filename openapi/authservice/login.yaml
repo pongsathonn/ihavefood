@@ -1,11 +1,41 @@
-    get:
-      tags:
-        - auth
-      summary: Logs user into the system
-      description: "XXXXXXXXXXX"
-      responses:
-        '200':
-          description: Successful login with access token and token expiration time (Unix)
-      security:
-          - BasicAuth: []
+post:
+  tags:
+    - auth
+  summary: Logs user into the system
+  description: "XXXXXXXXXXX"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+        examples:
+          example1:
+            value:
+              username: "yuki002"
+              password: "pPassword."
+  responses:
+    '200':
+      description: Successful login with access token and token expiration time (Date-time UTC)
+      content:
+        application/json:
+          schema:
+             properties:
+               accessToken:
+                 type: string
+                 example: "eyJhbG6IkpXVCJ9.NzMyNjc4MjI2fQ.hRPUaRZPE09Bo"
+               accessToken_exp:
+                 type: string
+                 format: date-time
+                 example: "2024-12-04T03:45:12.556154975Z"
+    "400":
+      description: Bad request
+#  security:
+#  - BasicAuth: []
+
 

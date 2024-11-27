@@ -45,7 +45,7 @@ post:
                  example: "yuki_sleep@mail.com"
                phoneNumber:
                  type: string
-                 example: "0619286355"
+                 example: "0876543210"
                role:
                  type: string
                  example: "USER"

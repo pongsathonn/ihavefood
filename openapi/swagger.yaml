@@ -6,19 +6,6 @@ info:
 servers:
     - url: "http://localhost:180"
       description: "TODO TODO TODO TODO TODO"
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-    basicAuth:
-      type: http
-      scheme: basic
-
-# Apply bearer authentication every apis(global)
-security:
-  - bearerAuth: []
       
 paths:
 
@@ -65,8 +52,6 @@ paths:
     $ref: 'restaurantservice/menus.yaml'
 
 
-
-
 #---------------Coupon Service-----------------
   /api/coupons:
     $ref: 'couponservice/coupons.yaml'
@@ -74,9 +59,17 @@ paths:
     $ref: 'couponservice/coupons.code.yaml'
 
 
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+        #    BasicAuth:
+        #      type: http
+        #      scheme: basic
 
-
-
-
+# Apply Bearer Authentication every apis(global)
+security:
+  - BearerAuth: []
 #---------------END-----------------
-
