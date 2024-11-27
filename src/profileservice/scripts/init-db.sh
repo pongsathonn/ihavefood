@@ -30,8 +30,8 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$PROFILE_DB" <<-EOSQL
         district VARCHAR(255),                     
         province VARCHAR(255),                     
         postal_code VARCHAR(20),                   
-
-        create_time TIMESTAMP NOT NULL DEFAULT NOW()
+        create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+        update_time TIMESTAMP NOT NULL DEFAULT NOW()
     );
 
     GRANT SELECT, INSERT, UPDATE, DELETE ON profile TO "$PROFILE_USER";

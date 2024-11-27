@@ -7,8 +7,6 @@
       responses:
         '200':
           description: List of all restaurants
-      security:
-        - bearerAuth: []
     post:
       tags:
         - restaurant

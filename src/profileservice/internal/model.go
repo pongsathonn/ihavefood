@@ -25,6 +25,7 @@ type dbProfile struct {
 	Social     *dbSocial
 	Address    *dbAddress
 	CreateTime time.Time
+	UpdateTime time.Time
 }
 
 type dbSocial struct {

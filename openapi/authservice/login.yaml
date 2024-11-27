@@ -21,21 +21,19 @@ post:
               password: "pPassword."
   responses:
     '200':
-      description: Successful login with access token and token expiration time (Date-time UTC)
+      description: Successful login with access token and token expiration time (Unix)
       content:
         application/json:
           schema:
              properties:
                accessToken:
                  type: string
-                 example: "eyJhbG6IkpXVCJ9.NzMyNjc4MjI2fQ.hRPUaRZPE09Bo"
-               accessToken_exp:
+                 example: "eyJhbG6IkpXVCJ9.NzMyNaosdhoqwqjc4MjI2fQ.hRPUaRZPE09Bo"
+               expiresIn:
                  type: string
-                 format: date-time
-                 example: "2024-12-04T03:45:12.556154975Z"
+                 example: "1735290508"
     "400":
       description: Bad request
-#  security:
-#  - BasicAuth: []
+  security: []
 
 

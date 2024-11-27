@@ -48,6 +48,7 @@ func (s *profileStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
 			province,
 			postal_code,
 			create_time,
+			update_time
 		FROM
 			profile
 	`)
@@ -75,6 +76,7 @@ func (s *profileStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
 			&profile.Address.Province,
 			&profile.Address.PostalCode,
 			&profile.CreateTime,
+			&profile.UpdateTime,
 		)
 		if err != nil {
 			return nil, err
@@ -104,7 +106,8 @@ func (s *profileStorage) Profile(ctx context.Context, userID string) (*dbProfile
 			district,
 			province,
 			postal_code,
-			create_time
+			create_time,
+			update_time
 		FROM
 			profile
 		WHERE
@@ -132,6 +135,7 @@ func (s *profileStorage) Profile(ctx context.Context, userID string) (*dbProfile
 		&profile.Address.Province,
 		&profile.Address.PostalCode,
 		&profile.CreateTime,
+		&profile.UpdateTime,
 	)
 	if err != nil {
 		return nil, err
@@ -145,10 +149,9 @@ func (s *profileStorage) Create(ctx context.Context, newProfile *newProfile) (st
 	res := s.db.QueryRowContext(ctx, `
 		INSERT INTO profile(
 			id,
-			username,
-			create_time
+			username
 		)
-		VALUES($1,$2,NOW())
+		VALUES($1,$2)
 		RETURNING id
 	`,
 		newProfile.UserID,
@@ -196,7 +199,8 @@ func (s *profileStorage) Update(ctx context.Context, userID string, update *dbPr
 		    sub_district = COALESCE(NULLIF($9,''), sub_district),
 		    district = COALESCE(NULLIF($10,''), district),
 		    province = COALESCE(NULLIF($11,''), province),
-		    postal_code = COALESCE(NULLIF($12,''), postal_code)
+		    postal_code = COALESCE(NULLIF($12,''), postal_code),
+			update_time = NOW()
 
 		WHERE id = $1
 		RETURNING id;
