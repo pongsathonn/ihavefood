@@ -59,13 +59,10 @@ message UserCredentials {
     string email = 3;
     string password = 4;
     string phone_number = 5;
+    // Output only.
     Roles role = 6;
-
-    // Output only. Creation time of the user credentials.
     google.protobuf.Timestamp create_time = 7;
-
-    // string access_token = 7;
-    // int64 access_token_exp = 8;
+    google.protobuf.Timestamp update_time = 8;
 }
 
 enum Roles {
@@ -81,9 +78,9 @@ message RegisterRequest {
    string phone_number = 4;
 }
 
-// Return RegisterResponse message instead UserCredentials
-// if gateway want to use this message to config code response
-// such as change success code RegisterResponse from 200 to 201.
+// uncomment RegisterResponse when gateway want to use this message
+// to config code response such as change success code RegisterResponse 
+// from 200 to 201.
 //
 // message RegisterResponse {
 //    UserCredentials user = 1;
@@ -94,9 +91,12 @@ message LoginRequest {
     string password = 2;
 }
 
+
 message LoginResponse {
+    // Access token. Valid for 30 days.
     string access_token = 1;
-    int64 access_token_exp =2;
+    // Number of seconds until the access token expires.
+    int64 expires_in = 2;
 }
 
 message ValidateUserTokenRequest {
@@ -125,6 +125,6 @@ message CheckUsernameExistsResponse{
 
 message UpdateUserRoleRequest {
     string user_id = 1;
-    Roles role = 2;
+    Roles new_role = 2;
 }
 

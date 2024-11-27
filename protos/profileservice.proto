@@ -45,11 +45,11 @@ service ProfileService {
 message Profile {
     string user_id = 1; 
     string username = 2;
-    bytes picture = 3;
+    // bytes picture = 3;
     string bio = 4;
     Social social = 5;
     Address address = 6;
-    int64 create_time = 7;
+    google.protobuf.Timestamp create_time = 7;
 }
 
 message ListProfilesRequest {
@@ -74,7 +74,7 @@ message UpdateProfileRequest {
     // username must has constraint for update
     // such as update every XX months.
     string new_username = 2;
-    bytes new_picture = 3;
+    //bytes new_picture = 3;
     string new_bio = 4;
     Social new_social = 5;
     Address new_address = 6;

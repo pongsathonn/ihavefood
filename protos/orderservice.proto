@@ -79,9 +79,9 @@ enum OrderStatus {
 }
 
 message OrderTimestamps {
-    int64 create_time = 1;
-    int64 update_time = 2;
-    int64 complete_time = 3;
+    google.protobuf.Timestamp create_time = 1;
+    google.protobuf.Timestamp update_time = 2;
+    google.protobuf.Timestamp complete_time = 3;
 }
 
 message ListUserPlaceOrderRequest {

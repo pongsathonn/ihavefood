@@ -81,7 +81,7 @@ message GetOrderTrackingResponse {
     string rider_id = 2;
     Point rider_location = 3;
     // The timestamp of the most recent update to the rider's location.
-    int64 update_time = 4;
+    google.protobuf.Timestamp update_time = 4;
 }
 
 message CalculateDeliveryFeeRequest {
