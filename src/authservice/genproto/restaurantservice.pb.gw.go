@@ -61,14 +61,14 @@ func request_RestaurantService_GetRestaurant_0(ctx context.Context, marshaler ru
 		_   = err
 	)
 
-	val, ok = pathParams["restaurant_no"]
+	val, ok = pathParams["restaurant_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "restaurant_no")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "restaurant_id")
 	}
 
-	protoReq.RestaurantNo, err = runtime.String(val)
+	protoReq.RestaurantId, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "restaurant_no", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "restaurant_id", err)
 	}
 
 	msg, err := client.GetRestaurant(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -87,14 +87,14 @@ func local_request_RestaurantService_GetRestaurant_0(ctx context.Context, marsha
 		_   = err
 	)
 
-	val, ok = pathParams["restaurant_no"]
+	val, ok = pathParams["restaurant_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "restaurant_no")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "restaurant_id")
 	}
 
-	protoReq.RestaurantNo, err = runtime.String(val)
+	protoReq.RestaurantId, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "restaurant_no", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "restaurant_id", err)
 	}
 
 	msg, err := server.GetRestaurant(ctx, &protoReq)
@@ -136,6 +136,23 @@ func request_RestaurantService_AddMenu_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["restaurant_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "restaurant_id")
+	}
+
+	protoReq.RestaurantId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "restaurant_id", err)
+	}
+
 	msg, err := client.AddMenu(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -147,6 +164,23 @@ func local_request_RestaurantService_AddMenu_0(ctx context.Context, marshaler ru
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["restaurant_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "restaurant_id")
+	}
+
+	protoReq.RestaurantId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "restaurant_id", err)
 	}
 
 	msg, err := server.AddMenu(ctx, &protoReq)
@@ -193,7 +227,7 @@ func RegisterRestaurantServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.RestaurantService/GetRestaurant", runtime.WithHTTPPathPattern("/api/restaurants/{restaurant_no}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.RestaurantService/GetRestaurant", runtime.WithHTTPPathPattern("/api/restaurants/{restaurant_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -243,7 +277,7 @@ func RegisterRestaurantServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.RestaurantService/AddMenu", runtime.WithHTTPPathPattern("/api/restaurants/menus"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.RestaurantService/AddMenu", runtime.WithHTTPPathPattern("/api/restaurants/{restaurant_id}/menus"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -329,7 +363,7 @@ func RegisterRestaurantServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.RestaurantService/GetRestaurant", runtime.WithHTTPPathPattern("/api/restaurants/{restaurant_no}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.RestaurantService/GetRestaurant", runtime.WithHTTPPathPattern("/api/restaurants/{restaurant_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -373,7 +407,7 @@ func RegisterRestaurantServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.RestaurantService/AddMenu", runtime.WithHTTPPathPattern("/api/restaurants/menus"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.RestaurantService/AddMenu", runtime.WithHTTPPathPattern("/api/restaurants/{restaurant_id}/menus"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -395,11 +429,11 @@ func RegisterRestaurantServiceHandlerClient(ctx context.Context, mux *runtime.Se
 var (
 	pattern_RestaurantService_ListRestaurant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "restaurants"}, ""))
 
-	pattern_RestaurantService_GetRestaurant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "restaurants", "restaurant_no"}, ""))
+	pattern_RestaurantService_GetRestaurant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "restaurants", "restaurant_id"}, ""))
 
 	pattern_RestaurantService_RegisterRestaurant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "restaurants"}, ""))
 
-	pattern_RestaurantService_AddMenu_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "restaurants", "menus"}, ""))
+	pattern_RestaurantService_AddMenu_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "restaurants", "restaurant_id", "menus"}, ""))
 )
 
 var (

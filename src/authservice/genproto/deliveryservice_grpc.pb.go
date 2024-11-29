@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,10 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	DeliveryService_GetOrderTracking_FullMethodName     = "/ihavefood.DeliveryService/GetOrderTracking"
-	DeliveryService_CalculateDeliveryFee_FullMethodName = "/ihavefood.DeliveryService/CalculateDeliveryFee"
-	DeliveryService_ConfirmRiderAccept_FullMethodName   = "/ihavefood.DeliveryService/ConfirmRiderAccept"
-	DeliveryService_ConfirmOrderDeliver_FullMethodName  = "/ihavefood.DeliveryService/ConfirmOrderDeliver"
+	DeliveryService_GetOrderTracking_FullMethodName    = "/ihavefood.DeliveryService/GetOrderTracking"
+	DeliveryService_GetDeliveryFee_FullMethodName      = "/ihavefood.DeliveryService/GetDeliveryFee"
+	DeliveryService_ConfirmRiderAccept_FullMethodName  = "/ihavefood.DeliveryService/ConfirmRiderAccept"
+	DeliveryService_ConfirmOrderDeliver_FullMethodName = "/ihavefood.DeliveryService/ConfirmOrderDeliver"
 )
 
 // DeliveryServiceClient is the client API for DeliveryService service.
@@ -32,14 +33,17 @@ type DeliveryServiceClient interface {
 	// GetOrderTracking provides real-time updates on the current status and location of
 	// an order. It tracks the progress of the order from preparation to delivery,
 	// giving the user real-time status updates.
+	//
+	// This function should be called from OrderService to track
 	GetOrderTracking(ctx context.Context, in *GetOrderTrackingRequest, opts ...grpc.CallOption) (DeliveryService_GetOrderTrackingClient, error)
-	// CalculateDeliveryFee calculates and returns the delivery fee based on the distance
+	// GetDeliveryFee calculates and returns the delivery fee based on the distance
 	// between the user's location and the restaurant's location.
-	CalculateDeliveryFee(ctx context.Context, in *CalculateDeliveryFeeRequest, opts ...grpc.CallOption) (*CalculateDeliveryFeeResponse, error)
-	// ConfirmRiderAccept updates the rider who accepted the order.
-	ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*ConfirmRiderAcceptResponse, error)
+	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
+	// ConfirmRiderAccept updates the order with the rider who accepted it and returns
+	// the pickup information.
+	ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*PickupInfo, error)
 	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
-	ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*ConfirmOrderDeliverResponse, error)
+	ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type deliveryServiceClient struct {
@@ -82,17 +86,17 @@ func (x *deliveryServiceGetOrderTrackingClient) Recv() (*GetOrderTrackingRespons
 	return m, nil
 }
 
-func (c *deliveryServiceClient) CalculateDeliveryFee(ctx context.Context, in *CalculateDeliveryFeeRequest, opts ...grpc.CallOption) (*CalculateDeliveryFeeResponse, error) {
-	out := new(CalculateDeliveryFeeResponse)
-	err := c.cc.Invoke(ctx, DeliveryService_CalculateDeliveryFee_FullMethodName, in, out, opts...)
+func (c *deliveryServiceClient) GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error) {
+	out := new(GetDeliveryFeeResponse)
+	err := c.cc.Invoke(ctx, DeliveryService_GetDeliveryFee_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *deliveryServiceClient) ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*ConfirmRiderAcceptResponse, error) {
-	out := new(ConfirmRiderAcceptResponse)
+func (c *deliveryServiceClient) ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*PickupInfo, error) {
+	out := new(PickupInfo)
 	err := c.cc.Invoke(ctx, DeliveryService_ConfirmRiderAccept_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -100,8 +104,8 @@ func (c *deliveryServiceClient) ConfirmRiderAccept(ctx context.Context, in *Conf
 	return out, nil
 }
 
-func (c *deliveryServiceClient) ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*ConfirmOrderDeliverResponse, error) {
-	out := new(ConfirmOrderDeliverResponse)
+func (c *deliveryServiceClient) ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, DeliveryService_ConfirmOrderDeliver_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -116,14 +120,17 @@ type DeliveryServiceServer interface {
 	// GetOrderTracking provides real-time updates on the current status and location of
 	// an order. It tracks the progress of the order from preparation to delivery,
 	// giving the user real-time status updates.
+	//
+	// This function should be called from OrderService to track
 	GetOrderTracking(*GetOrderTrackingRequest, DeliveryService_GetOrderTrackingServer) error
-	// CalculateDeliveryFee calculates and returns the delivery fee based on the distance
+	// GetDeliveryFee calculates and returns the delivery fee based on the distance
 	// between the user's location and the restaurant's location.
-	CalculateDeliveryFee(context.Context, *CalculateDeliveryFeeRequest) (*CalculateDeliveryFeeResponse, error)
-	// ConfirmRiderAccept updates the rider who accepted the order.
-	ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*ConfirmRiderAcceptResponse, error)
+	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
+	// ConfirmRiderAccept updates the order with the rider who accepted it and returns
+	// the pickup information.
+	ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*PickupInfo, error)
 	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
-	ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*ConfirmOrderDeliverResponse, error)
+	ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
 
@@ -134,13 +141,13 @@ type UnimplementedDeliveryServiceServer struct {
 func (UnimplementedDeliveryServiceServer) GetOrderTracking(*GetOrderTrackingRequest, DeliveryService_GetOrderTrackingServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderTracking not implemented")
 }
-func (UnimplementedDeliveryServiceServer) CalculateDeliveryFee(context.Context, *CalculateDeliveryFeeRequest) (*CalculateDeliveryFeeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CalculateDeliveryFee not implemented")
+func (UnimplementedDeliveryServiceServer) GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeliveryFee not implemented")
 }
-func (UnimplementedDeliveryServiceServer) ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*ConfirmRiderAcceptResponse, error) {
+func (UnimplementedDeliveryServiceServer) ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*PickupInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmRiderAccept not implemented")
 }
-func (UnimplementedDeliveryServiceServer) ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*ConfirmOrderDeliverResponse, error) {
+func (UnimplementedDeliveryServiceServer) ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmOrderDeliver not implemented")
 }
 func (UnimplementedDeliveryServiceServer) mustEmbedUnimplementedDeliveryServiceServer() {}
@@ -177,20 +184,20 @@ func (x *deliveryServiceGetOrderTrackingServer) Send(m *GetOrderTrackingResponse
 	return x.ServerStream.SendMsg(m)
 }
 
-func _DeliveryService_CalculateDeliveryFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CalculateDeliveryFeeRequest)
+func _DeliveryService_GetDeliveryFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeliveryFeeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeliveryServiceServer).CalculateDeliveryFee(ctx, in)
+		return srv.(DeliveryServiceServer).GetDeliveryFee(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeliveryService_CalculateDeliveryFee_FullMethodName,
+		FullMethod: DeliveryService_GetDeliveryFee_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).CalculateDeliveryFee(ctx, req.(*CalculateDeliveryFeeRequest))
+		return srv.(DeliveryServiceServer).GetDeliveryFee(ctx, req.(*GetDeliveryFeeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -239,8 +246,8 @@ var DeliveryService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DeliveryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CalculateDeliveryFee",
-			Handler:    _DeliveryService_CalculateDeliveryFee_Handler,
+			MethodName: "GetDeliveryFee",
+			Handler:    _DeliveryService_GetDeliveryFee_Handler,
 		},
 		{
 			MethodName: "ConfirmRiderAccept",
