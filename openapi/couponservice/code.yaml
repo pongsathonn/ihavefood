@@ -15,19 +15,3 @@ get:
       description: Coupon details
     '404':
       description: Coupon not found
-put:
-  tags:
-    - coupon
-  summary: Apply coupon
-  description: TODO
-  parameters:
-    - name: code
-      in: path
-      required: true
-      description: The coupon being used
-      schema:
-        type: string
-  responses:
-    '200':
-      description: success
-

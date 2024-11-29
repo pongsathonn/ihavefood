@@ -22,41 +22,46 @@ paths:
 
 
 #---------------Profile Service-----------------
-  /api/profiles/{username}:
-    $ref: 'profileservice/profiles.username.yaml'
+  /api/profiles/{user_id}:
+    $ref: 'profileservice/profiles.userid.yaml'
   /api/profiles:
     $ref: 'profileservice/profiles.yaml'
 
 
-
 #---------------Order Service-----------------
-  /api/orders/place-order:
+  /api/orders/place_order:
     $ref: 'orderservice/placeorder.yaml'
-  /api/orders/{username}:
-    $ref: 'orderservice/orders.username.yaml'
-
+  /api/orders/{user_id}:
+    $ref: 'orderservice/orders.userid.yaml'
 
 
 
 #---------------Delivery Service-----------------
-  /api/deliveries/riders/accept:
-    $ref: 'deliveryservice/riders.accept.yaml'
+  /api/deliveries/fee:
+    $ref: 'deliveryservice/fee.yaml'
+
+  /api/deliveries/{order_id}/accept:
+    $ref: 'deliveryservice/accept.yaml'
+
+  /api/deliveries/{order_id}/deliver:
+    $ref: 'deliveryservice/deliver.yaml'
 
 
 #---------------Restaurant Service-----------------
-  /api/restaurants/{restaurantId}:
-    $ref: 'restaurantservice/restaurants.id.yaml'
   /api/restaurants:
     $ref: 'restaurantservice/restaurants.yaml'
-  /api/restaurants/menus:
+  /api/restaurants/{restaurant_id}: 
+    $ref: 'restaurantservice/restaurants.id.yaml'
+  /api/restaurants/{restaurant_id}/menus:
     $ref: 'restaurantservice/menus.yaml'
 
 
 #---------------Coupon Service-----------------
+#TODO
   /api/coupons:
     $ref: 'couponservice/coupons.yaml'
   /api/coupons/{code}:
-    $ref: 'couponservice/coupons.code.yaml'
+    $ref: 'couponservice/code.yaml'
 
 
 components:
@@ -72,4 +77,5 @@ components:
 # Apply Bearer Authentication every apis(global)
 security:
   - BearerAuth: []
+
 #---------------END-----------------

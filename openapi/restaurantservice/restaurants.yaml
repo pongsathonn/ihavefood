@@ -1,64 +1,67 @@
 
-    get:
-      tags:
-        - restaurant
-      summary: List all restaurants
-      description: Returns a list of all registered restaurants.
-      responses:
-        '200':
-          description: List of all restaurants
-    post:
-      tags:
-        - restaurant
-      summary: Register a new restaurant
-      description: Register a new restaurant in the system.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+get:
+  tags:
+    - restaurant
+  summary: List all restaurants
+  description: Returns a list of all registered restaurants.
+  responses:
+    '200':
+      description: List of all restaurants
+
+post:
+  tags:
+    - restaurant
+  summary: Register a new restaurant
+  description: Register a new restaurant in the system.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            restaurantName:
+              type: string
+            menus:
+              type: array
+              items:
+                type: object
+                properties:
+                  foodName:
+                    type: string
+                  price:
+                    type: number
+            address:
               type: object
               properties:
-                restaurantName:
+                addressName:
                   type: string
-                menus:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      foodName:
-                        type: string
-                      price:
-                        type: number
-                address:
-                  type: object
-                  properties:
-                    addressName:
-                      type: string
-                    subDistrict:
-                      type: string
-                    district:
-                      type: string
-                    province:
-                      type: string
-                    postalCode:
-                      type: string
-            examples:
-              ex1:
-                 value:
-                  restaurantName: "HaiDee"
-                  menus:
-                  - foodName: "Pad Thai"
-                    price: 50
-                  address:
-                    addressName: "my restaurant"
-                    subDistrict: "Mueang"
-                    district: "asdasd"
-                    province: "Chiang Mai"
-                    postalCode: "50200"
-      responses:
-        '201':
-          description: Restaurant registered successfully
-        '400':
-          description: Invalid request
+                subDistrict:
+                  type: string
+                district:
+                  type: string
+                province:
+                  type: string
+                postalCode:
+                  type: string
+        examples:
+          ex1:
+             value:
+              restaurantName: "HaiDee"
+              menus:
+              - foodName: "Pad Thai"
+                price: 50
+              - foodName: "Krapao"
+                price: 40
+              address:
+                addressName: "my restaurant"
+                subDistrict: "Mueang"
+                district: "asdasd"
+                province: "Chiang Mai"
+                postalCode: "50200"
+  responses:
+    '201':
+      description: Restaurant registered successfully
+    '400':
+      description: Invalid request
 

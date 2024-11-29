@@ -1,37 +1,43 @@
 
-    post:
-      tags:
-        - restaurant
-      summary: Add menu to restaurant
-      description: Add a new menu item to a restaurant's menu.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                restaurantId:
-                  type: string
-                menus:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      foodName:
-                        type: string
-                      price:
-                        type: number
-              restaurantId: "dj12d91h922"
-              menus:
-                - foodName: "Pad Thai"
-                  price: 50
-              required:
-                - restaurantName
-                - menus
-      responses:
-        '201':
-          description: Menu added successfully
-        '400':
-          description: Invalid request
+post:
+  tags:
+    - restaurant
+  summary: Add menu to restaurant
+  description: Add a new menu item to a restaurant's menu.
+  parameters:
+    - name: restaurantId
+      in: path
+      required: true
+      description: TODO
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            restaurantId:
+              type: string
+            menus:
+              type: array
+              items:
+                type: object
+                properties:
+                  foodName:
+                    type: string
+                  price:
+                    type: number
+          restaurantId: "dj12d91h922"
+          menus:
+            - foodName: "Khao pad"
+              price: 45
+          required:
+            - menus
+  responses:
+    '201':
+      description: Menu added successfully
+    '400':
+      description: Invalid request
 
