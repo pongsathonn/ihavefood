@@ -36,6 +36,7 @@ service AuthService {
     // Check whether username already exists returns true if username already exists, otherwise false.
     rpc CheckUsernameExists(CheckUsernameExistsRequest) returns (CheckUsernameExistsResponse) {}
 
+
     // Promotes a user's role from "USER" to "ADMIN".
     // This function intends to performe by users with the "ADMIN" role.
     rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserCredentials){

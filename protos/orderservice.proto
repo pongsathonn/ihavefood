@@ -5,6 +5,7 @@ package ihavefood;
 option go_package =  "/genproto";
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 import "restaurantservice.proto";
 import "common.proto";
 
@@ -14,17 +15,17 @@ import "common.proto";
 // Manages place order process.
 service OrderService {
 
-    // ListUserPlaceOrder retrives User's place order history by username
-    rpc ListUserPlaceOrder(ListUserPlaceOrderRequest) returns (ListUserPlaceOrderResponse){
-        option (google.api.http) = {
-            get: "/api/orders/{username}" 
-        };
+    //  ListOrderHistory retrives User's place order history by userID
+    rpc ListOrderHistory(ListOrderHistoryRequest) returns (ListOrderHistoryResponse){
+        option (google.api.http) = { get: "/api/orders/{user_id}" };
     }
+
+    // rpc GetPlaceOrder(id) returns(order){}
 
     // HandlePlaceOrder handle incoming order from client
     rpc HandlePlaceOrder(HandlePlaceOrderRequest) returns(PlaceOrder){
         option (google.api.http) = {
-            post: "/api/orders/place-order" 
+            post: "/api/orders/place_order" 
             body: "*"
         };
     }
@@ -34,9 +35,9 @@ service OrderService {
 message PlaceOrder {
     // A unique request ID for server to detect duplicated requests.
     string request_id = 1;
-    string order_no = 2 ;
-    string username = 3;
-    string restaurant_no = 4;
+    string order_id = 2 ;
+    string user_id = 3;
+    string restaurant_id = 4;
     repeated Menu menus = 5;
     string coupon_code = 6;
     int32 coupon_discount =7;
@@ -84,19 +85,18 @@ message OrderTimestamps {
     google.protobuf.Timestamp complete_time = 3;
 }
 
-message ListUserPlaceOrderRequest {
-    string username = 1;
+message ListOrderHistoryRequest {
+    string user_id = 1;
 }
 
-message ListUserPlaceOrderResponse {
+message ListOrderHistoryResponse {
     repeated PlaceOrder place_orders = 1;
 }
 
-
 message HandlePlaceOrderRequest {
     string request_id = 12;
-    string username = 1;
-    string restaurant_no = 2;
+    string user_id = 1;
+    string restaurant_id = 2;
     repeated Menu menus = 3;
     string coupon_code = 4;
     int32 coupon_discount =5;

@@ -12,23 +12,6 @@ import "google/protobuf/empty.proto";
 // Manages coupons.
 service CouponService {
 
-    // AddCoupon creates a new coupon with the specified details. There are two types of coupons:
-    // Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
-    // If the coupon type is Free, the discount field is ignored and automatically set to zero.
-    rpc AddCoupon(AddCouponRequest) returns(Coupon){
-        option (google.api.http) = {
-            post: "/api/coupons"
-            body: "*"
-        };
-    }
-    // GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and 
-    // has sufficient quantity.
-    rpc GetCoupon(GetCouponRequest) returns(Coupon) {
-        option (google.api.http) = {
-            get: "/api/coupons/{code}" 
-        };
-    }
-
     // ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
     // This method is intended to be used by the frontend to display a list of all coupons to users, 
     // regardless of their validity or availability.
@@ -38,6 +21,25 @@ service CouponService {
     rpc ListCoupon(google.protobuf.Empty) returns(ListCouponResponse){
         option (google.api.http) = {
             get: "/api/coupons" 
+        };
+    }
+
+    // GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and 
+    // has sufficient quantity.
+    rpc GetCoupon(GetCouponRequest) returns(Coupon) {
+        option (google.api.http) = {
+            get: "/api/coupons/{code}" 
+        };
+    }
+
+
+    // AddCoupon creates a new coupon with the specified details. There are two types of coupons:
+    // Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
+    // If the coupon type is Free, the discount field is ignored and automatically set to zero.
+    rpc AddCoupon(AddCouponRequest) returns(Coupon){
+        option (google.api.http) = {
+            post: "/api/coupons"
+            body: "*"
         };
     }
 

@@ -24,10 +24,9 @@ service RestaurantService {
     // using the restaurant ID.
     rpc GetRestaurant(GetRestaurantRequest) returns(Restaurant){
         option (google.api.http) = {
-            get: "/api/restaurants/{restaurant_no}" 
+            get: "/api/restaurants/{restaurant_id}" 
         };
     }
-
 
     // RegisterRestaurant registers a new restaurant.
     rpc RegisterRestaurant(RegisterRestaurantRequest) returns(Restaurant){
@@ -37,10 +36,10 @@ service RestaurantService {
         };
     }
 
-    // AddMenu adds menus to restaurant.
+    // AddMenu adds new menus to restaurant.
     rpc AddMenu(AddMenuRequest) returns(Restaurant){
         option (google.api.http) = {
-            post: "/api/restaurants/menus"
+            post: "/api/restaurants/{restaurant_id}/menus"
             body: "*"
         };
     }
@@ -57,7 +56,7 @@ enum RestaurantStatus{
 }
 
 message Restaurant {
-    string restaurant_no = 1;
+    string restaurant_id = 1;
     string name = 2;
     repeated Menu menus = 3;
     Address address = 4;
@@ -70,7 +69,7 @@ message Menu {
 }
 
 message GetRestaurantRequest{
-    string restaurant_no = 1;
+    string restaurant_id = 1;
 }
 
 message ListRestaurantResponse{
@@ -84,12 +83,12 @@ message RegisterRestaurantRequest {
 }
 
 message AddMenuRequest {
-    string restaurant_no = 1;
+    string restaurant_id = 1;
     repeated Menu menus = 2;
 }
 
 message OrderReadyRequest {
-    string order_no = 1;
-    string restaurant_no = 2;
+    string order_id = 1;
+    string restaurant_id = 2;
 }
 
