@@ -12,20 +12,20 @@ import (
 
 // TODO doc
 type DeliveryStorage interface {
-	Delivery(ctx context.Context, orderNO string) (*dbDelivery, error)
+	Delivery(ctx context.Context, orderID string) (*dbDelivery, error)
 
 	// Create inserts new delivery when order is placed and return order number.
 	Create(ctx context.Context, delivery *newDelivery) (string, error)
 
-	UpdateRiderAccept(ctx context.Context, orderNO, riderID string) (string, error)
+	UpdateRiderAccept(ctx context.Context, orderID, riderID string) (string, error)
 
-	UpdateRiderLocation(ctx context.Context, orderNO, riderID string, lo *dbPoint) (string, error)
+	UpdateRiderLocation(ctx context.Context, orderID, riderID string, lo *dbPoint) (string, error)
 
-	UpdateStatus(ctx context.Context, orderNO string, newStatus dbDeliveryStatus) (string, error)
+	UpdateStatus(ctx context.Context, orderID string, newStatus dbDeliveryStatus) (string, error)
 
-	CheckRiderAccept(ctx context.Context, orderNO string) (bool, error)
+	CheckRiderAccept(ctx context.Context, orderID string) (bool, error)
 
-	CheckDeliver(ctx context.Context, orderNO string) (bool, error)
+	CheckDeliver(ctx context.Context, orderID string) (bool, error)
 }
 
 type deliveryStorage struct {
@@ -36,10 +36,10 @@ func NewDeliveryStorage(db *mongo.Client) DeliveryStorage {
 	return &deliveryStorage{db: db}
 }
 
-func (s *deliveryStorage) Delivery(ctx context.Context, orderNO string) (*dbDelivery, error) {
+func (s *deliveryStorage) Delivery(ctx context.Context, orderID string) (*dbDelivery, error) {
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	filter := bson.M{"orderNo": orderNO}
+	filter := bson.M{"orderId": orderID}
 
 	var delivery dbDelivery
 
@@ -62,15 +62,15 @@ func (s *deliveryStorage) Create(ctx context.Context, delivery *newDelivery) (st
 	if err != nil {
 		return "", err
 	}
-	orderNO := res.InsertedID.(string)
+	orderID := res.InsertedID.(string)
 
-	return orderNO, nil
+	return orderID, nil
 }
 
-func (s *deliveryStorage) UpdateRiderAccept(ctx context.Context, orderNO, riderID string) (string, error) {
+func (s *deliveryStorage) UpdateRiderAccept(ctx context.Context, orderID, riderID string) (string, error) {
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	ID, err := primitive.ObjectIDFromHex(orderNO)
+	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
 		return "", err
 	}
@@ -98,11 +98,11 @@ func (s *deliveryStorage) UpdateRiderAccept(ctx context.Context, orderNO, riderI
 	return updatedID.Hex(), nil
 }
 
-func (s *deliveryStorage) UpdateRiderLocation(ctx context.Context, orderNO, riderID string, lo *dbPoint) (string, error) {
+func (s *deliveryStorage) UpdateRiderLocation(ctx context.Context, orderID, riderID string, lo *dbPoint) (string, error) {
 
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	ID, err := primitive.ObjectIDFromHex(orderNO)
+	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
 		return "", err
 	}
@@ -123,7 +123,7 @@ func (s *deliveryStorage) UpdateRiderLocation(ctx context.Context, orderNO, ride
 	}
 
 	if res.MatchedCount == 0 {
-		return "", errors.New("orderNO or riderID not match")
+		return "", errors.New("orderID or riderID not match")
 	}
 
 	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
@@ -135,10 +135,10 @@ func (s *deliveryStorage) UpdateRiderLocation(ctx context.Context, orderNO, ride
 
 }
 
-func (s *deliveryStorage) UpdateStatus(ctx context.Context, orderNO string, newStatus dbDeliveryStatus) (string, error) {
+func (s *deliveryStorage) UpdateStatus(ctx context.Context, orderID string, newStatus dbDeliveryStatus) (string, error) {
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	ID, err := primitive.ObjectIDFromHex(orderNO)
+	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
 		return "", err
 	}
@@ -162,10 +162,15 @@ func (s *deliveryStorage) UpdateStatus(ctx context.Context, orderNO string, newS
 	return updatedID.Hex(), nil
 }
 
-func (s *deliveryStorage) CheckRiderAccept(ctx context.Context, orderNO string) (bool, error) {
+func (s *deliveryStorage) CheckRiderAccept(ctx context.Context, orderID string) (bool, error) {
 	coll := s.db.Database("delivery_database", nil).Collection("deliveryCollection")
 
-	filter := bson.D{{"orderNo", orderNO}}
+	ID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		return false, err
+	}
+
+	filter := bson.D{{"_id", ID}}
 
 	var res dbDelivery
 	if err := coll.FindOne(ctx, filter).Decode(&res); err != nil {
@@ -179,7 +184,7 @@ func (s *deliveryStorage) CheckRiderAccept(ctx context.Context, orderNO string) 
 	return true, nil
 }
 
-func (s *deliveryStorage) CheckDeliver(ctx context.Context, orderNO string) (bool, error) {
+func (s *deliveryStorage) CheckDeliver(ctx context.Context, orderID string) (bool, error) {
 	//TODO implement
 	return false, nil
 }

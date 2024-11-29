@@ -38,7 +38,7 @@ type RestaurantServiceClient interface {
 	GetRestaurant(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*Restaurant, error)
 	// RegisterRestaurant registers a new restaurant.
 	RegisterRestaurant(ctx context.Context, in *RegisterRestaurantRequest, opts ...grpc.CallOption) (*Restaurant, error)
-	// AddMenu adds menus to restaurant.
+	// AddMenu adds new menus to restaurant.
 	AddMenu(ctx context.Context, in *AddMenuRequest, opts ...grpc.CallOption) (*Restaurant, error)
 	// OrderReady is called by the restaurant to notify the server(RestaurantService)
 	// that the ordered have been cooked and are ready for delivery.
@@ -109,7 +109,7 @@ type RestaurantServiceServer interface {
 	GetRestaurant(context.Context, *GetRestaurantRequest) (*Restaurant, error)
 	// RegisterRestaurant registers a new restaurant.
 	RegisterRestaurant(context.Context, *RegisterRestaurantRequest) (*Restaurant, error)
-	// AddMenu adds menus to restaurant.
+	// AddMenu adds new menus to restaurant.
 	AddMenu(context.Context, *AddMenuRequest) (*Restaurant, error)
 	// OrderReady is called by the restaurant to notify the server(RestaurantService)
 	// that the ordered have been cooked and are ready for delivery.

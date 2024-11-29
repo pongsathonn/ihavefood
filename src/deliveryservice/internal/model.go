@@ -8,8 +8,8 @@ import (
 
 type newDelivery struct {
 
-	// OrderNO must be insert as _id
-	OrderNO        string           `bson:"_id"`
+	// OrderID must be insert as _id
+	OrderID        string           `bson:"_id"`
 	PickupCode     string           `bson:"pickupCode"`
 	PickupLocation *dbPoint         `bson:"pickupLocation"`
 	Destination    *dbPoint         `bson:"destination"`
@@ -20,8 +20,8 @@ type newDelivery struct {
 // dbDelivery represent delivery information for an order
 type dbDelivery struct {
 
-	// OrderNO must be insert as _id
-	OrderNO string `bson:"_id"`
+	// OrderID must be insert as _id
+	OrderID string `bson:"_id"`
 
 	// PickupCode is code 3 digit for rider pickup
 	PickupCode string `bson:"pickupCode"`
@@ -72,15 +72,6 @@ type dbTimeStamp struct {
 }
 
 //------------- EXAMPLE DATA ---------------------------------
-
-// [ Chaing Mai district ]
-var example = map[string]*pb.Point{
-	"Mueang":    &pb.Point{Latitude: 18.7883, Longitude: 98.9853},
-	"Hang Dong": &pb.Point{Latitude: 18.6870, Longitude: 98.8897},
-	"San Sai":   &pb.Point{Latitude: 18.8578, Longitude: 99.0631},
-	"Mae Rim":   &pb.Point{Latitude: 18.8998, Longitude: 98.9311},
-	"Doi Saket": &pb.Point{Latitude: 18.8482, Longitude: 99.1403},
-}
 
 var riders = []*pb.Rider{
 	{Id: "001", Name: "Messi", PhoneNumber: "0846851976"},

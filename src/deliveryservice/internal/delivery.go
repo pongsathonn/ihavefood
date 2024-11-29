@@ -16,6 +16,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/deliveryservice/genproto"
@@ -67,7 +68,7 @@ func (x *DeliveryService) GetOrderTracking(in *pb.GetOrderTrackingRequest, strea
 	for {
 		select {
 		case <-ticker.C:
-			delivery, err := x.storage.Delivery(context.TODO(), in.OrderNo)
+			delivery, err := x.storage.Delivery(context.TODO(), in.OrderId)
 			if err != nil {
 				slog.Error("failed to retrives delivery", "err", err)
 				return status.Errorf(codes.Internal, "failed to retrives delivery: %v", err)
@@ -80,7 +81,7 @@ func (x *DeliveryService) GetOrderTracking(in *pb.GetOrderTrackingRequest, strea
 			}
 
 			err = stream.Send(&pb.GetOrderTrackingResponse{
-				OrderNo: delivery.OrderNO,
+				OrderId: delivery.OrderID,
 				RiderId: delivery.RiderID,
 				RiderLocation: &pb.Point{
 					Latitude:  delivery.RiderLocation.Latitude,
@@ -104,34 +105,33 @@ func (x *DeliveryService) GetOrderTracking(in *pb.GetOrderTrackingRequest, strea
 
 }
 
-func (x *DeliveryService) CalculateDeliveryFee(ctx context.Context, in *pb.CalculateDeliveryFeeRequest) (*pb.CalculateDeliveryFeeResponse, error) {
+func (x *DeliveryService) GetDeliveryFee(ctx context.Context, in *pb.GetDeliveryFeeRequest) (*pb.GetDeliveryFeeResponse, error) {
 
-	if in.UserAddress == nil {
-		return nil, status.Error(codes.InvalidArgument, "user address must be provided")
-	}
+	//TODO validate input
 
-	if in.RestaurantAddress == nil {
-		return nil, status.Error(codes.InvalidArgument, "restaurant address must be provided")
-	}
+	//TODO get restaurant address , user address
 
-	deliveryFee, err := calculateDeliveryFee(in.RestaurantAddress, in.UserAddress)
+	restaurantPoint := &pb.Point{Latitude: in.RestaurantLat, Longitude: in.RestaurantLong}
+	userPoint := &pb.Point{Latitude: in.UserLat, Longitude: in.UserLong}
+
+	deliveryFee, err := calculateDeliveryFee(restaurantPoint, userPoint)
 	if err != nil {
 		slog.Error("calculate delivery fee", "err", err)
 		return nil, status.Error(codes.Internal, "failed to calculate delivery fee")
 	}
 
-	return &pb.CalculateDeliveryFeeResponse{DeliveryFee: deliveryFee}, nil
+	return &pb.GetDeliveryFeeResponse{DeliveryFee: deliveryFee}, nil
 }
 
 // ConfirmRiderAccept handles requests indicating that a rider has accepted an order.
 // It saves the delivery order to the database. Each order should only be accepted once.
-func (x *DeliveryService) ConfirmRiderAccept(ctx context.Context, in *pb.ConfirmRiderAcceptRequest) (*pb.ConfirmRiderAcceptResponse, error) {
+func (x *DeliveryService) ConfirmRiderAccept(ctx context.Context, in *pb.ConfirmRiderAcceptRequest) (*pb.PickupInfo, error) {
 
-	if in.OrderNo == "" || in.RiderId == "" {
+	if in.OrderId == "" || in.RiderId == "" {
 		return nil, status.Error(codes.InvalidArgument, "order number and rider id must be provided")
 	}
 
-	delivery, err := x.storage.Delivery(ctx, in.OrderNo)
+	delivery, err := x.storage.Delivery(ctx, in.OrderId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrive order delivery %v", err)
 	}
@@ -145,41 +145,39 @@ func (x *DeliveryService) ConfirmRiderAccept(ctx context.Context, in *pb.Confirm
 
 	select {
 	// Notify that the rider has accepted the order
-	case x.acceptc[in.OrderNo] <- &pb.ConfirmRiderAcceptRequest{
+	case x.acceptc[in.OrderId] <- &pb.ConfirmRiderAcceptRequest{
 		RiderId: in.RiderId,
-		OrderNo: in.OrderNo,
+		OrderId: in.OrderId,
 	}:
 	case <-timeOut.Done():
 		return nil, status.Error(codes.Internal, "failed to notify server that order accepted")
 	}
-	return &pb.ConfirmRiderAcceptResponse{
-		PickupInfo: &pb.PickupInfo{
-			OrderNo:    delivery.OrderNO,
-			PickupCode: delivery.PickupCode,
-			PickupLocation: &pb.Point{
-				Latitude:  delivery.PickupLocation.Latitude,
-				Longitude: delivery.PickupLocation.Longitude,
-			},
-			Destination: &pb.Point{
-				Latitude:  delivery.Destination.Latitude,
-				Longitude: delivery.Destination.Longitude,
-			},
+
+	return &pb.PickupInfo{
+		PickupCode: delivery.PickupCode,
+		PickupLocation: &pb.Point{
+			Latitude:  delivery.PickupLocation.Latitude,
+			Longitude: delivery.PickupLocation.Longitude,
+		},
+		Destination: &pb.Point{
+			Latitude:  delivery.Destination.Latitude,
+			Longitude: delivery.Destination.Longitude,
 		},
 	}, nil
 
 }
 
-func (x *DeliveryService) ConfirmOrderDeliver(ctx context.Context, in *pb.ConfirmOrderDeliverRequest) (*pb.ConfirmOrderDeliverResponse, error) {
+func (x *DeliveryService) ConfirmOrderDeliver(ctx context.Context, in *pb.ConfirmOrderDeliverRequest) (*emptypb.Empty, error) {
 
-	if in.OrderNo == "" {
+	if in.OrderId == "" {
 		return nil, status.Error(codes.InvalidArgument, "order number must be provided")
 	}
 
-	if _, err := x.storage.UpdateStatus(ctx, in.OrderNo, DELIVERED); err != nil {
+	if _, err := x.storage.UpdateStatus(ctx, in.OrderId, DELIVERED); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update delivery status %v", err)
 	}
 
-	return &pb.ConfirmOrderDeliverResponse{Success: true}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -243,7 +241,7 @@ func (x *DeliveryService) deliveryAssignment() chan<- amqp.Delivery {
 				return
 			}
 
-			if err := x.waitForRiderAccept(order.OrderNo, riders, pickup); err != nil {
+			if err := x.waitForRiderAccept(order.OrderId, riders, pickup); err != nil {
 				slog.Error("waiting rider accept", "err", err)
 				return
 			}
@@ -252,7 +250,7 @@ func (x *DeliveryService) deliveryAssignment() chan<- amqp.Delivery {
 				"rider.assigned.event",
 				amqp.Publishing{
 					Type: "string",
-					Body: []byte(order.OrderNo),
+					Body: []byte(order.OrderId),
 				},
 			)
 			if err != nil {
@@ -287,7 +285,7 @@ func (x *DeliveryService) prepareOrderDelivery(order *pb.PlaceOrder) ([]*pb.Ride
 	now := time.Now()
 
 	orderNO, err := x.storage.Create(ctx, &newDelivery{
-		OrderNO:    order.OrderNo,
+		OrderID:    order.OrderId,
 		PickupCode: pickup.PickupCode,
 		PickupLocation: &dbPoint{
 			Latitude:  pickup.PickupLocation.Latitude,
@@ -324,11 +322,9 @@ func notifyToRider(riders []*pb.Rider, pickup *pb.PickupInfo) error {
 	}
 
 	notifyInfo := struct {
-		orderNo    string
 		riderIDs   []string
 		pickupCode string
 	}{
-		orderNo:    pickup.OrderNo,
 		riderIDs:   riderIDs,
 		pickupCode: pickup.PickupCode,
 	}
@@ -363,7 +359,7 @@ func (x *DeliveryService) waitForRiderAccept(orderNO string, riders []*pb.Rider,
 	for {
 		select {
 		case v := <-x.acceptc[orderNO]:
-			if v.OrderNo == "" || v.RiderId == "" {
+			if v.OrderId == "" || v.RiderId == "" {
 				x.accepte[orderNO] <- errors.New("riderID or orderNO is empty")
 				continue
 			}
@@ -374,13 +370,13 @@ func (x *DeliveryService) waitForRiderAccept(orderNO string, riders []*pb.Rider,
 			}
 
 			// Save order delivery after rider accepted
-			if _, err := x.storage.UpdateRiderAccept(ctx, v.OrderNo, v.RiderId); err != nil {
+			if _, err := x.storage.UpdateRiderAccept(ctx, v.OrderId, v.RiderId); err != nil {
 				slog.Error("update delivery", "err", err)
 				continue
 			}
 
 			slog.Info("Rider has accepted the order",
-				"orderNO", v.OrderNo,
+				"orderID", v.OrderId,
 				"riderID", v.RiderId,
 			)
 
@@ -414,7 +410,6 @@ func (x *DeliveryService) generateOrderPickUp(order *pb.PlaceOrder) (*pb.PickupI
 	}
 
 	return &pb.PickupInfo{
-		OrderNo:        order.OrderNo,
 		PickupCode:     code,
 		PickupLocation: startPoint,
 		Destination:    destinationPoint,
@@ -427,6 +422,15 @@ func (x *DeliveryService) generateOrderPickUp(order *pb.PlaceOrder) (*pb.PickupI
 //
 // TODO implememnt Geocoding ( Google APIs )
 func (x *DeliveryService) addressToPoint(addr *pb.Address) (*pb.Point, error) {
+
+	// [ Chaing Mai district ]
+	var example = map[string]*pb.Point{
+		"Mueang":    &pb.Point{Latitude: 18.7883, Longitude: 98.9853},
+		"Hang Dong": &pb.Point{Latitude: 18.6870, Longitude: 98.8897},
+		"San Sai":   &pb.Point{Latitude: 18.8578, Longitude: 99.0631},
+		"Mae Rim":   &pb.Point{Latitude: 18.8998, Longitude: 98.9311},
+		"Doi Saket": &pb.Point{Latitude: 18.8482, Longitude: 99.1403},
+	}
 
 	point, ok := example[addr.District]
 	if !ok {
@@ -470,27 +474,12 @@ func randomThreeDigits() string {
 	return strconv.Itoa(n)
 }
 
-// NOTE: Address point is example data use district field only
-// others address fields will be ignored
-//
-// # TODO use actual data
-//
 // calculateDeliveryFee calculate distance from user's address to restaurant's address
-func calculateDeliveryFee(userAddr *pb.Address, restaurantAddr *pb.Address) (int32, error) {
-
-	userPoint, ok1 := example[userAddr.District]
-	restaurantPoint, ok2 := example[restaurantAddr.District]
-
-	if !ok1 || !ok2 {
-		validDistricts := []string{
-			"Mueang",
-			"Hang Dong",
-			"San Sai",
-			"Mae Rim",
-			"Doi Saket",
-		}
-		return 0, fmt.Errorf("invalid distrct. valid districts are: %v ", validDistricts)
-	}
+//
+// TODO
+// Calculates the delivery fee based on the distance between the restaurant and the user,
+// using the road network for routing instead of a straight-line (point A to B) distance.
+func calculateDeliveryFee(userPoint *pb.Point, restaurantPoint *pb.Point) (int32, error) {
 
 	// distance in kilometers
 	distance := haversineDistance(userPoint, restaurantPoint)
