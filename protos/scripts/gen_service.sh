@@ -73,7 +73,6 @@ protoc -I $protos \
     --go_out=$outdir \
     --go-grpc_out=$outdir \
     --grpc-gateway_out=$outdir \
-    $protos/common.proto \
     $protos/profileservice.proto \
     $protos/authservice.proto \
     $protos/restaurantservice.proto \
@@ -89,7 +88,6 @@ protoc -I $protos \
     --go_out=$outdir_gateway \
     --go-grpc_out=$outdir_gateway \
     --grpc-gateway_out=$outdir_gateway \
-    $protos/common.proto \
     $protos/profileservice.proto \
     $protos/authservice.proto \
     $protos/restaurantservice.proto \

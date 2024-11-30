@@ -57,7 +57,7 @@ enum RestaurantStatus{
 
 message Restaurant {
     string restaurant_id = 1;
-    string name = 2;
+    string restaurant_name = 2;
     repeated Menu menus = 3;
     Address address = 4;
     RestaurantStatus status = 5;
@@ -79,7 +79,7 @@ message ListRestaurantResponse{
 message RegisterRestaurantRequest {
     string restaurant_name = 1;
     repeated Menu menus = 2;
-    Address address =3;
+    Address address = 3;
 }
 
 message AddMenuRequest {

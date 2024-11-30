@@ -41,7 +41,7 @@ service AuthService {
     // This function intends to performe by users with the "ADMIN" role.
     rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserCredentials){
         option (google.api.http) = {
-            put: "/auth/users/roles"
+            patch: "/auth/users/roles"
             body: "*"
        };
     }
