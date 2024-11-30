@@ -8,8 +8,8 @@ import (
 
 type newPlaceOrder struct {
 	RequestID         string
-	Username          string
-	RestaurantNo      string
+	UserID            string
+	RestaurantID      string
 	Menus             []*dbMenu
 	CouponCode        string
 	CouponDiscount    int32
@@ -23,10 +23,10 @@ type newPlaceOrder struct {
 
 // if not omitempty at id Mongo will use zero as id ( when insert )
 type dbPlaceOrder struct {
-	OrderNo           primitive.ObjectID `bson:"_id,omitempty"`
+	OrderID           primitive.ObjectID `bson:"_id,omitempty"`
 	RequestID         string             `bson:"requestId"`
-	Username          string             `bson:"username"`
-	RestaurantNo      string             `bson:"restaurantNo"`
+	UserID            string             `bson:"userId"`
+	RestaurantID      string             `bson:"restaurantId"`
 	Menus             []*dbMenu          `bson:"menus"`
 	CouponCode        string             `bson:"couponCode"`
 	CouponDiscount    int32              `bson:"couponDiscount"`

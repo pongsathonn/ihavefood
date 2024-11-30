@@ -33,14 +33,14 @@ func NewOrderService(storage OrderStorage, rabbitmq RabbitMQ) *OrderService {
 	}
 }
 
-func (x *OrderService) ListUserPlaceOrder(ctx context.Context,
-	in *pb.ListUserPlaceOrderRequest) (*pb.ListUserPlaceOrderResponse, error) {
+func (x *OrderService) ListOrderHistory(ctx context.Context,
+	in *pb.ListOrderHistoryRequest) (*pb.ListOrderHistoryResponse, error) {
 
-	if in.Username == "" {
-		return nil, status.Error(codes.InvalidArgument, "username must be provided")
+	if in.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "ID must be provided")
 	}
 
-	dbOrders, err := x.storage.PlaceOrders(ctx, in.Username)
+	dbOrders, err := x.storage.PlaceOrders(ctx, in.UserId)
 	if err != nil {
 		slog.Error("retrive place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrieve user's place orders")
@@ -52,7 +52,7 @@ func (x *OrderService) ListUserPlaceOrder(ctx context.Context,
 		placeOrders = append(placeOrders, placeOrder)
 	}
 
-	return &pb.ListUserPlaceOrderResponse{PlaceOrders: placeOrders}, nil
+	return &pb.ListOrderHistoryResponse{PlaceOrders: placeOrders}, nil
 }
 
 // HandlePlaceOrder processes an incoming order placement request from the client.
@@ -66,13 +66,13 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
 	}
 
-	orderNO, err := x.storage.Create(ctx, prepareNewOrder(in))
+	orderID, err := x.storage.Create(ctx, prepareNewOrder(in))
 	if err != nil {
 		slog.Error("failed to insert place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to save place order")
 	}
 
-	dbOrder, err := x.storage.PlaceOrder(ctx, orderNO)
+	dbOrder, err := x.storage.PlaceOrder(ctx, orderID)
 	if err != nil {
 		slog.Error("failed to retrive place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrive place order")
@@ -93,7 +93,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to publish event: %v", err)
 	}
 
-	slog.Info("published event", "orderNo", order.OrderNo)
+	slog.Info("published event", "orderId", order.OrderId)
 
 	return order, nil
 }
@@ -156,15 +156,15 @@ func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 				continue
 			}
 
-			var orderNO string
-			if err := json.Unmarshal(msg.Body, &orderNO); err != nil {
+			var orderID string
+			if err := json.Unmarshal(msg.Body, &orderID); err != nil {
 				slog.Error("unmarshal failed", "err", err)
 				continue
 			}
 
 			if _, err := x.storage.UpdateOrderStatus(context.TODO(),
-				orderNO, dbOrderStatus(status)); err != nil {
-				slog.Error("updated status", "err", err, "orderNo", orderNO)
+				orderID, dbOrderStatus(status)); err != nil {
+				slog.Error("updated status", "err", err, "orderId", orderID)
 				continue
 			}
 		}
@@ -188,18 +188,18 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 				continue
 			}
 
-			var orderNO string
-			if err := json.Unmarshal(msg.Body, &orderNO); err != nil {
+			var orderID string
+			if err := json.Unmarshal(msg.Body, &orderID); err != nil {
 				slog.Error("unmarshal failed", "err", err)
 				continue
 			}
 
 			if _, err := x.storage.UpdatePaymentStatus(
 				context.TODO(),
-				orderNO,
+				orderID,
 				PaymentStatus_PAID,
 			); err != nil {
-				slog.Error("updated status", "err", err, "orderNo", orderNO)
+				slog.Error("updated status", "err", err, "orderId", orderID)
 				continue
 			}
 
@@ -222,10 +222,10 @@ func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
 	createTime := time.Now()
 
 	return &dbPlaceOrder{
-		//OrderNo:  - ,
+		//OrderID:  - ,
 		RequestID:      in.RequestId,
-		Username:       in.Username,
-		RestaurantNo:   in.RestaurantNo,
+		UserID:         in.UserId,
+		RestaurantID:   in.RestaurantId,
 		Menus:          menus,
 		CouponCode:     in.CouponCode,
 		CouponDiscount: in.CouponDiscount,
@@ -271,10 +271,10 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 	}
 
 	return &pb.PlaceOrder{
-		OrderNo:        order.OrderNo.Hex(),
+		OrderId:        order.OrderID.Hex(),
 		RequestId:      order.RequestID,
-		Username:       order.Username,
-		RestaurantNo:   order.RestaurantNo,
+		UserId:         order.UserID,
+		RestaurantId:   order.RestaurantID,
 		Menus:          menus,
 		CouponCode:     order.CouponCode,
 		CouponDiscount: order.CouponDiscount,
@@ -314,10 +314,10 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 
 	switch {
-	case in.Username == "":
-		return errors.New("username must be provided")
-	case in.RestaurantNo == "":
-		return errors.New("restaurant number must be provided")
+	case in.UserId == "":
+		return errors.New("user ID must be provided")
+	case in.RestaurantId == "":
+		return errors.New("restaurant ID must be provided")
 	case len(in.Menus) == 0:
 		return errors.New("menu should be at least one")
 	case in.CouponCode == "":

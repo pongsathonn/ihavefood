@@ -14,18 +14,18 @@ import (
 type OrderStorage interface {
 
 	// Retrieves the order history for a specified user by username
-	PlaceOrders(ctx context.Context, username string) ([]*dbPlaceOrder, error)
+	PlaceOrders(ctx context.Context, userID string) ([]*dbPlaceOrder, error)
 
-	PlaceOrder(ctx context.Context, orderNO string) (*dbPlaceOrder, error)
+	PlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error)
 
 	// Create inserts new place order into database and returns the order number.
 	Create(ctx context.Context, in *dbPlaceOrder) (string, error)
 
-	UpdateOrderStatus(ctx context.Context, orderNO string, status dbOrderStatus) (string, error)
+	UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (string, error)
 
-	UpdatePaymentStatus(ctx context.Context, orderNO string, status dbPaymentStatus) (string, error)
+	UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (string, error)
 
-	//DeletePlaceOrder(ctx context.Context, orderNO string) error
+	//DeletePlaceOrder(ctx context.Context, orderID string) error
 }
 
 type orderStorage struct {
@@ -45,20 +45,20 @@ func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (string, er
 		return "", err
 	}
 
-	orderNO, ok := res.InsertedID.(primitive.ObjectID)
+	orderID, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
 		return "", errors.New("failed to convert insertedID to primitive.objectID")
 	}
 
-	return orderNO.Hex(), nil
+	return orderID.Hex(), nil
 
 }
 
-func (s *orderStorage) PlaceOrders(ctx context.Context, username string) ([]*dbPlaceOrder, error) {
+func (s *orderStorage) PlaceOrders(ctx context.Context, userID string) ([]*dbPlaceOrder, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
-	cur, err := coll.Find(ctx, bson.D{{"username", username}})
+	cur, err := coll.Find(ctx, bson.D{{"userID", userID}})
 	if err != nil {
 		return nil, err
 	}
@@ -79,10 +79,11 @@ func (s *orderStorage) PlaceOrders(ctx context.Context, username string) ([]*dbP
 	return orders, nil
 }
 
-func (s *orderStorage) PlaceOrder(ctx context.Context, orderNO string) (*dbPlaceOrder, error) {
+func (s *orderStorage) PlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error) {
+
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
-	ID, err := primitive.ObjectIDFromHex(orderNO)
+	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +96,11 @@ func (s *orderStorage) PlaceOrder(ctx context.Context, orderNO string) (*dbPlace
 	return &order, nil
 }
 
-func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderNO string,
-	status dbOrderStatus) (string, error) {
+func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (string, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
-	ID, err := primitive.ObjectIDFromHex(orderNO)
+	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
 		return "", err
 	}
@@ -132,24 +132,23 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderNO string,
 	}
 
 	if res.ModifiedCount == 0 {
-		slog.Info("order number %s not found", orderNO)
+		slog.Info("order number %s not found", orderID)
 		return "", errors.New("order not found")
 	}
 
-	updatedNO, ok := res.UpsertedID.(primitive.ObjectID)
+	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
 	if !ok {
 		return "", errors.New("failed to convert upsertedID to primitive.ObjectID")
 	}
 
-	return updatedNO.Hex(), nil
+	return updatedID.Hex(), nil
 }
 
-func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderNO string,
-	status dbPaymentStatus) (string, error) {
+func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (string, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
-	ID, err := primitive.ObjectIDFromHex(orderNO)
+	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
 		return "", err
 	}
@@ -168,14 +167,14 @@ func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderNO string,
 	}
 
 	if res.ModifiedCount == 0 {
-		slog.Info("order number %s not found", orderNO)
+		slog.Info("order number %s not found", orderID)
 		return "", errors.New("order not found")
 	}
 
-	updatedNO, ok := res.UpsertedID.(primitive.ObjectID)
+	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
 	if !ok {
 		return "", errors.New("failed to convert upsertedID to primitive.ObjectID")
 	}
 
-	return updatedNO.Hex(), nil
+	return updatedID.Hex(), nil
 }
