@@ -9,8 +9,6 @@ import "google/protobuf/timestamp.proto";
 import "restaurantservice.proto";
 import "common.proto";
 
-
-
 // ---------------------ORDER SERVICE------------------------------
 // Manages place order process.
 service OrderService {
