@@ -31,28 +31,38 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_DeliveryService_CalculateDeliveryFee_0(ctx context.Context, marshaler runtime.Marshaler, client DeliveryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CalculateDeliveryFeeRequest
+var (
+	filter_DeliveryService_GetDeliveryFee_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_DeliveryService_GetDeliveryFee_0(ctx context.Context, marshaler runtime.Marshaler, client DeliveryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetDeliveryFeeRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_DeliveryService_GetDeliveryFee_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.CalculateDeliveryFee(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetDeliveryFee(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_DeliveryService_CalculateDeliveryFee_0(ctx context.Context, marshaler runtime.Marshaler, server DeliveryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CalculateDeliveryFeeRequest
+func local_request_DeliveryService_GetDeliveryFee_0(ctx context.Context, marshaler runtime.Marshaler, server DeliveryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetDeliveryFeeRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_DeliveryService_GetDeliveryFee_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.CalculateDeliveryFee(ctx, &protoReq)
+	msg, err := server.GetDeliveryFee(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -61,8 +71,25 @@ func request_DeliveryService_ConfirmRiderAccept_0(ctx context.Context, marshaler
 	var protoReq ConfirmRiderAcceptRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq.RiderId); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["order_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "order_id")
+	}
+
+	protoReq.OrderId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "order_id", err)
 	}
 
 	msg, err := client.ConfirmRiderAccept(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -74,8 +101,25 @@ func local_request_DeliveryService_ConfirmRiderAccept_0(ctx context.Context, mar
 	var protoReq ConfirmRiderAcceptRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq.RiderId); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["order_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "order_id")
+	}
+
+	protoReq.OrderId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "order_id", err)
 	}
 
 	msg, err := server.ConfirmRiderAccept(ctx, &protoReq)
@@ -87,8 +131,21 @@ func request_DeliveryService_ConfirmOrderDeliver_0(ctx context.Context, marshale
 	var protoReq ConfirmOrderDeliverRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["order_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "order_id")
+	}
+
+	protoReq.OrderId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "order_id", err)
 	}
 
 	msg, err := client.ConfirmOrderDeliver(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -100,8 +157,21 @@ func local_request_DeliveryService_ConfirmOrderDeliver_0(ctx context.Context, ma
 	var protoReq ConfirmOrderDeliverRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["order_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "order_id")
+	}
+
+	protoReq.OrderId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "order_id", err)
 	}
 
 	msg, err := server.ConfirmOrderDeliver(ctx, &protoReq)
@@ -115,7 +185,7 @@ func local_request_DeliveryService_ConfirmOrderDeliver_0(ctx context.Context, ma
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterDeliveryServiceHandlerFromEndpoint instead.
 func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server DeliveryServiceServer) error {
 
-	mux.Handle("POST", pattern_DeliveryService_CalculateDeliveryFee_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_DeliveryService_GetDeliveryFee_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -123,12 +193,12 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.DeliveryService/CalculateDeliveryFee", runtime.WithHTTPPathPattern("/api/deliveries/fee"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.DeliveryService/GetDeliveryFee", runtime.WithHTTPPathPattern("/api/deliveries/fee"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_DeliveryService_CalculateDeliveryFee_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_DeliveryService_GetDeliveryFee_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -136,11 +206,11 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_DeliveryService_CalculateDeliveryFee_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_DeliveryService_GetDeliveryFee_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_DeliveryService_ConfirmRiderAccept_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_DeliveryService_ConfirmRiderAccept_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -148,7 +218,7 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmRiderAccept", runtime.WithHTTPPathPattern("/api/deliveries/riders/accepted"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmRiderAccept", runtime.WithHTTPPathPattern("/api/deliveries/{order_id}/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -165,7 +235,7 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 
 	})
 
-	mux.Handle("POST", pattern_DeliveryService_ConfirmOrderDeliver_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_DeliveryService_ConfirmOrderDeliver_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -173,7 +243,7 @@ func RegisterDeliveryServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmOrderDeliver", runtime.WithHTTPPathPattern("/api/deliveries/orders/delivered"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmOrderDeliver", runtime.WithHTTPPathPattern("/api/deliveries/{order_id}/deliver"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -231,35 +301,35 @@ func RegisterDeliveryServiceHandler(ctx context.Context, mux *runtime.ServeMux, 
 // "DeliveryServiceClient" to call the correct interceptors.
 func RegisterDeliveryServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client DeliveryServiceClient) error {
 
-	mux.Handle("POST", pattern_DeliveryService_CalculateDeliveryFee_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_DeliveryService_GetDeliveryFee_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.DeliveryService/CalculateDeliveryFee", runtime.WithHTTPPathPattern("/api/deliveries/fee"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.DeliveryService/GetDeliveryFee", runtime.WithHTTPPathPattern("/api/deliveries/fee"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_DeliveryService_CalculateDeliveryFee_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_DeliveryService_GetDeliveryFee_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_DeliveryService_CalculateDeliveryFee_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_DeliveryService_GetDeliveryFee_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_DeliveryService_ConfirmRiderAccept_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_DeliveryService_ConfirmRiderAccept_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmRiderAccept", runtime.WithHTTPPathPattern("/api/deliveries/riders/accepted"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmRiderAccept", runtime.WithHTTPPathPattern("/api/deliveries/{order_id}/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -275,13 +345,13 @@ func RegisterDeliveryServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 
 	})
 
-	mux.Handle("POST", pattern_DeliveryService_ConfirmOrderDeliver_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PATCH", pattern_DeliveryService_ConfirmOrderDeliver_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmOrderDeliver", runtime.WithHTTPPathPattern("/api/deliveries/orders/delivered"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/ihavefood.DeliveryService/ConfirmOrderDeliver", runtime.WithHTTPPathPattern("/api/deliveries/{order_id}/deliver"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -301,15 +371,15 @@ func RegisterDeliveryServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_DeliveryService_CalculateDeliveryFee_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "deliveries", "fee"}, ""))
+	pattern_DeliveryService_GetDeliveryFee_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "deliveries", "fee"}, ""))
 
-	pattern_DeliveryService_ConfirmRiderAccept_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "deliveries", "riders", "accepted"}, ""))
+	pattern_DeliveryService_ConfirmRiderAccept_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "deliveries", "order_id", "accept"}, ""))
 
-	pattern_DeliveryService_ConfirmOrderDeliver_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "deliveries", "orders", "delivered"}, ""))
+	pattern_DeliveryService_ConfirmOrderDeliver_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "deliveries", "order_id", "deliver"}, ""))
 )
 
 var (
-	forward_DeliveryService_CalculateDeliveryFee_0 = runtime.ForwardResponseMessage
+	forward_DeliveryService_GetDeliveryFee_0 = runtime.ForwardResponseMessage
 
 	forward_DeliveryService_ConfirmRiderAccept_0 = runtime.ForwardResponseMessage
 

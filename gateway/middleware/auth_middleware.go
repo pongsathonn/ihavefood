@@ -15,9 +15,24 @@ var (
 )
 
 type AuthMiddleware interface {
+	// ApplyAuthentication registers routes that require authentication.
+	// It applies the `authn` middleware to each of the provided routes.
+	//
+	// Parameters:
+	// - mux: The HTTP multiplexer (ServeMux) to register the routes with.
+	// - handler: The HTTP handler that will handle the requests once authentication is successful.
+	// - routes: A variadic list of string paths that require authentication.
+	//
+	// Usage Example:
+	//
+	//		m.ApplyAuthentication(mux, handler,
+	//	        "POST /api/foo",
+	//	        "GET /api/bar",
+	//		    "/api/profiles",
+	//		)
 	ApplyAuthentication(mux *http.ServeMux, handler http.Handler, routes ...string)
+
 	ApplyAuthorization(mux *http.ServeMux, handler http.Handler, routes ...string)
-	ApplyFullAuth(mux *http.ServeMux, handler http.Handler, routes ...string)
 }
 
 type authMiddleware struct {
@@ -28,86 +43,48 @@ func NewAuthMiddleware(a pb.AuthServiceClient) AuthMiddleware {
 	return &authMiddleware{authClient: a}
 }
 
-// ApplyAuthentication registers routes that require authentication.
-// It applies the `authn` middleware to each of the provided routes.
-//
-// Parameters:
-// - mux: The HTTP multiplexer (ServeMux) to register the routes with.
-// - handler: The HTTP handler that will handle the requests once authentication is successful.
-// - routes: A variadic list of string paths that require authentication.
-//
-// Usage Example:
-//
-//		m.ApplyAuthentication(mux, handler,
-//	        "POST /api/foo",
-//	        "GET /api/bar",
-//		    "/api/profiles",
-//		)
 func (m *authMiddleware) ApplyAuthentication(mux *http.ServeMux, handler http.Handler, routes ...string) {
 	for _, route := range routes {
-		mux.Handle(route, m.authn(handler))
+		mux.Handle(route, m.authn(m.validateRequest(handler)))
 	}
 }
 
-// ApplyAuthorization registers routes that require authorization.
-// It applies the `authz` middleware to each of the provided routes.
-//
-// See example with ApplyAuthentication
 func (m *authMiddleware) ApplyAuthorization(mux *http.ServeMux, handler http.Handler, routes ...string) {
 	for _, route := range routes {
-		mux.Handle(route, m.authz(handler))
+		mux.Handle(route, m.authz(m.validateRequest(handler)))
 	}
 }
 
-// ApplyFullAuth registers routes that require both authentication and authorization.
-// It applies the `authn` middleware first and then the `authz` middleware to each route.
-//
-// See example with ApplyAuthentication
-func (m *authMiddleware) ApplyFullAuth(mux *http.ServeMux, handler http.Handler, routes ...string) {
-	for _, route := range routes {
-		mux.Handle(route, m.authn(m.authz(handler)))
-	}
-}
-
-// authn is the authentication middleware that verifies the user's token
-// and ensures that requests with methods like POST and PUT have the correct Content-Type header.
-// It returns an error response if the authentication or validation fails.
 func (m *authMiddleware) authn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		token, err := extractAuth(r)
+		token, err := extractToken(r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Printf("extract token failed : %v\n", err)
+			http.Error(w, "failed to extract token", http.StatusBadRequest)
 			return
 		}
 
-		// Validate the extracted token
 		if valid, err := m.validateUserToken(token); !valid {
-			log.Printf("Token validation failed: %v\n", err)
+			log.Printf("validate token failed: %v\n", err)
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		if r.Method == http.MethodPost || r.Method == http.MethodPut {
-			if r.Header.Get("Content-Type") != "application/json" {
-				http.Error(w, "invalid Content-Type, expected application/json", http.StatusBadRequest)
-				return
-			}
-		}
 		next.ServeHTTP(w, r)
 	})
 }
 
-// authz is the authorization middleware that restricts access to resources based on user roles.
-// This middleware specifically checks if the user has an admin role by validating the token.
-// If the token is invalid or the user is not an admin, it returns an unauthorized error.
-// Otherwise, it forwards the request to the next handler.
+// authz checks user permission to access resource
+//
+// TODO might implement Role based access control instead checkking only admin token
 func (m *authMiddleware) authz(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		token, err := extractAuth(r)
+		token, err := extractToken(r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Printf("extract token failed : %v\n", err)
+			http.Error(w, "failed to extract token", http.StatusBadRequest)
 			return
 		}
 
@@ -122,6 +99,23 @@ func (m *authMiddleware) authz(next http.Handler) http.Handler {
 			http.Error(w, "Access denied: You do not have the required permissions", http.StatusForbidden)
 			return
 		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m *authMiddleware) validateRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method == http.MethodPost || r.Method == http.MethodPatch {
+			if r.Header.Get("Content-Type") != "application/json" {
+				http.Error(w, "invalid Content-Type, expected application/json", http.StatusBadRequest)
+				return
+			}
+		}
+
+		// TODO
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -169,8 +163,8 @@ func (m *authMiddleware) validateAdminToken(token string) (bool, error) {
 	return res.Valid, nil
 }
 
-// extractAuth retrieves and splits the Authorization header, returning the token part.
-func extractAuth(r *http.Request) (string, error) {
+// extractToken retrieves and splits the Authorization header, returning the token part.
+func extractToken(r *http.Request) (string, error) {
 	h := r.Header.Get("Authorization")
 	if h == "" {
 		return "", errors.New("no authorization in header")

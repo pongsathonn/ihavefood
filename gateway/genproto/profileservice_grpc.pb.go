@@ -23,6 +23,7 @@ const (
 	ProfileService_ListProfiles_FullMethodName  = "/ihavefood.ProfileService/ListProfiles"
 	ProfileService_GetProfile_FullMethodName    = "/ihavefood.ProfileService/GetProfile"
 	ProfileService_CreateProfile_FullMethodName = "/ihavefood.ProfileService/CreateProfile"
+	ProfileService_CreateAddress_FullMethodName = "/ihavefood.ProfileService/CreateAddress"
 	ProfileService_UpdateProfile_FullMethodName = "/ihavefood.ProfileService/UpdateProfile"
 	ProfileService_DeleteProfile_FullMethodName = "/ihavefood.ProfileService/DeleteProfile"
 )
@@ -33,9 +34,14 @@ const (
 type ProfileServiceClient interface {
 	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*Profile, error)
-	// Profile should be create from AuthService that why CreateProfileRequest
-	// only has 2 fields UserID and Username which is generated in AuthService
+	// CreateProfile creates new user profile
+	//
+	// The profile must be created after the AuthService successfully
+	// creates the new user credentials to ensure that the UserID and
+	// Username are synchronized.
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
+	// CreateAddress adds new address to exists profile.
+	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Profile, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -75,6 +81,15 @@ func (c *profileServiceClient) CreateProfile(ctx context.Context, in *CreateProf
 	return out, nil
 }
 
+func (c *profileServiceClient) CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Profile, error) {
+	out := new(Profile)
+	err := c.cc.Invoke(ctx, ProfileService_CreateAddress_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *profileServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*Profile, error) {
 	out := new(Profile)
 	err := c.cc.Invoke(ctx, ProfileService_UpdateProfile_FullMethodName, in, out, opts...)
@@ -99,9 +114,14 @@ func (c *profileServiceClient) DeleteProfile(ctx context.Context, in *DeleteProf
 type ProfileServiceServer interface {
 	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
 	GetProfile(context.Context, *GetProfileRequest) (*Profile, error)
-	// Profile should be create from AuthService that why CreateProfileRequest
-	// only has 2 fields UserID and Username which is generated in AuthService
+	// CreateProfile creates new user profile
+	//
+	// The profile must be created after the AuthService successfully
+	// creates the new user credentials to ensure that the UserID and
+	// Username are synchronized.
 	CreateProfile(context.Context, *CreateProfileRequest) (*Profile, error)
+	// CreateAddress adds new address to exists profile.
+	CreateAddress(context.Context, *CreateAddressRequest) (*Profile, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedProfileServiceServer()
@@ -119,6 +139,9 @@ func (UnimplementedProfileServiceServer) GetProfile(context.Context, *GetProfile
 }
 func (UnimplementedProfileServiceServer) CreateProfile(context.Context, *CreateProfileRequest) (*Profile, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProfile not implemented")
+}
+func (UnimplementedProfileServiceServer) CreateAddress(context.Context, *CreateAddressRequest) (*Profile, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAddress not implemented")
 }
 func (UnimplementedProfileServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
@@ -193,6 +216,24 @@ func _ProfileService_CreateProfile_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_CreateAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).CreateAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_CreateAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).CreateAddress(ctx, req.(*CreateAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProfileService_UpdateProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateProfileRequest)
 	if err := dec(in); err != nil {
@@ -247,6 +288,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateProfile",
 			Handler:    _ProfileService_CreateProfile_Handler,
+		},
+		{
+			MethodName: "CreateAddress",
+			Handler:    _ProfileService_CreateAddress_Handler,
 		},
 		{
 			MethodName: "UpdateProfile",

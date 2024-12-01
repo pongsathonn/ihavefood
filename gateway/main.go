@@ -140,17 +140,17 @@ func initAuthMiddleware() (middleware.AuthMiddleware, error) {
 
 func setupHTTPMuxAndAuth(m middleware.AuthMiddleware, gwmux *runtime.ServeMux) http.Handler {
 	mux := http.NewServeMux()
-	m.ApplyFullAuth(mux, gwmux,
-		"DELETE /api/*",
-	)
+
+	// update role and delete need "admin" role.
 	m.ApplyAuthorization(mux, gwmux,
 		"/auth/users/roles",
+		"DELETE /api/*",
 	)
+
 	m.ApplyAuthentication(mux, gwmux,
-		"/api/orders/place-order",
-		"/api/profiles",
 		"/api/*",
 	)
+
 	mux.Handle("/", gwmux)
 	return mux
 }
@@ -164,7 +164,7 @@ func cors(h http.Handler) http.Handler {
 
 		w.Header().Add("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
-		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		if r.Method == "OPTIONS" {
