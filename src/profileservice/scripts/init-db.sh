@@ -18,20 +18,30 @@ EOSQL
 psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$PROFILE_DB" <<-EOSQL
     GRANT ALL PRIVILEGES ON SCHEMA public TO "$PROFILE_USER";
 
-    CREATE TABLE profile (
-        id VARCHAR(255) PRIMARY KEY,
+    CREATE TABLE profiles (
+        profile_id VARCHAR(255),
         username VARCHAR(255) UNIQUE NOT NULL,     
         bio TEXT,                                  
         facebook VARCHAR(255),                     
         instagram VARCHAR(255),                    
         line VARCHAR(255),                         
+        create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+        update_time TIMESTAMP NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (profile_id)
+    );
+
+    CREATE TABLE addresses (
+        address_id INT GENERATED ALWAYS AS IDENTITY,
         address_name VARCHAR(255),                 
         sub_district VARCHAR(255),                 
-        district VARCHAR(255),                     
-        province VARCHAR(255),                     
-        postal_code VARCHAR(20),                   
-        create_time TIMESTAMP NOT NULL DEFAULT NOW(),
-        update_time TIMESTAMP NOT NULL DEFAULT NOW()
+        district VARCHAR(255),
+        province VARCHAR(255),
+        postal_code VARCHAR(20),
+        PRIMARY KEY(address_id),
+        CONSTRAINT fk_profile
+            FOREIGN KEY(profile_id)
+            REFERENCS profiles(profile_id)
+            ON DELETE CASCADE
     );
 
     GRANT SELECT, INSERT, UPDATE, DELETE ON profile TO "$PROFILE_USER";

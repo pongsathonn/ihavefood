@@ -6,20 +6,15 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type RabbitMQ interface {
-	Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error
-	Subscribe(ctx context.Context, queue, routingkey string) (<-chan amqp.Delivery, error)
-}
-
 type rabbitMQ struct {
 	conn *amqp.Connection
 }
 
-func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
+func NewRabbitMQ(conn *amqp.Connection) *rabbitMQ {
 	return &rabbitMQ{conn: conn}
 }
 
-func (r *rabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
+func (r *rabbitMQ) publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return err
@@ -54,7 +49,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publ
 	return nil
 }
 
-func (r *rabbitMQ) Subscribe(ctx context.Context, queue, routingKey string) (<-chan amqp.Delivery, error) {
+func (r *rabbitMQ) subscribe(ctx context.Context, queue, routingKey string) (<-chan amqp.Delivery, error) {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return nil, err

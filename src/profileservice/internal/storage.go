@@ -5,52 +5,35 @@ import (
 	"database/sql"
 )
 
-type ProfileStorage interface {
-
-	// Profiles returns a list of user profiles.
-	Profiles(ctx context.Context) ([]*dbProfile, error)
-
-	// Profile returns the user profile.
-	Profile(ctx context.Context, userID string) (*dbProfile, error)
-
-	// Create creates new user profile with empty fields. it intends to create
-	// column before update fields.
-	Create(ctx context.Context, newProfile *newProfile) (string, error)
-
-	// Update user profile.
-	Update(ctx context.Context, userID string, update *dbProfile) (string, error)
-
-	// Delete deletes the user profile.
-	Delete(ctx context.Context, userID string) error
+func NewProfileStorage(db *sql.DB) *profileStorage {
+	return &profileStorage{db: db}
 }
 
 type profileStorage struct {
 	db *sql.DB
 }
 
-func NewProfileStorage(db *sql.DB) ProfileStorage {
-	return &profileStorage{db: db}
-}
-
-func (s *profileStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
+// Profiles returns a list of user profiles.
+func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT
-			id,
-			username,
-			bio,
-			facebook,
-			instagram,
-			line,
-			address_name,
-			sub_district,
-			district,
-			province,
-			postal_code,
-			create_time,
-			update_time
+			profiles.profile_id,
+			profiles.username,
+			profiles.bio,
+			profiles.facebook,
+			profiles.instagram,
+			profiles.line,
+			profiles.create_time,
+			profiles.update_time
+			addresses.address_name,
+			addresses.sub_district,
+			addresses.district,
+			addresses.province,
+			addresses.postal_code,
 		FROM
-			profile
+			profiles
+		LEFT JOIN addresses USING (profile_id)
 	`)
 	if err != nil {
 		return nil, err
@@ -58,30 +41,57 @@ func (s *profileStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
 	defer rows.Close()
 
 	var profiles []*dbProfile
+	exists := make(map[string]bool)
+
 	for rows.Next() {
-		profile := dbProfile{
-			Social:  &dbSocial{},
-			Address: &dbAddress{},
-		}
+		var (
+			profile dbProfile
+			social  dbSocial
+			address dbAddress
+		)
+
 		err := rows.Scan(
 			&profile.UserID,
 			&profile.Username,
 			&profile.Bio,
-			&profile.Social.Facebook,
-			&profile.Social.Instragram,
-			&profile.Social.Line,
-			&profile.Address.AddressName,
-			&profile.Address.SubDistrict,
-			&profile.Address.District,
-			&profile.Address.Province,
-			&profile.Address.PostalCode,
+			&social.Facebook,
+			&social.Instagram,
+			&social.Line,
 			&profile.CreateTime,
 			&profile.UpdateTime,
+			&address.AddressName,
+			&address.SubDistrict,
+			&address.District,
+			&address.Province,
+			&address.PostalCode,
 		)
 		if err != nil {
 			return nil, err
 		}
-		profiles = append(profiles, &profile)
+
+		if !exists[profile.UserID] {
+			profile := &dbProfile{
+				UserID:   profile.UserID,
+				Username: profile.Username,
+				Bio:      profile.Bio,
+				Social: &dbSocial{
+					Facebook:  social.Facebook,
+					Instagram: social.Instagram,
+					Line:      social.Line,
+				},
+				CreateTime: profile.CreateTime,
+				UpdateTime: profile.UpdateTime,
+			}
+			exists[profile.UserID] = true
+		}
+		profile.Addresses = append(profile.Addresses{
+			AddressName: address.AddressName,
+			SubDistrict: address.SubDistrict,
+			District:    address.District,
+			Province:    address.Province,
+			PostalCode:  address.PostalCode,
+		})
+		profiles = append(profiles, profile)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -91,27 +101,29 @@ func (s *profileStorage) Profiles(ctx context.Context) ([]*dbProfile, error) {
 	return profiles, nil
 }
 
-func (s *profileStorage) Profile(ctx context.Context, userID string) (*dbProfile, error) {
+// Profile returns the user profile.
+func (s *profileStorage) profile(ctx context.Context, userID string) (*dbProfile, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT
-			id,
-			username,
-			bio,
-			facebook,
-			instagram,
-			line,
-			address_name,
-			sub_district,
-			district,
-			province,
-			postal_code,
-			create_time,
-			update_time
+			p.profile_id,
+			p.username,
+			p.bio,
+			p.facebook,
+			p.instagram,
+			p.line,
+			a.address_name,
+			a.sub_district,
+			a.district,
+			a.province,
+			a.postal_code,
+			p.create_time,
+			p.update_time
 		FROM
-			profile
+			profiles p
+			LEFT JOIN addresses a USING (profile_id)
 		WHERE
-			id = $1;
+			p.profile_id = $1;
 	`, userID)
 
 	// Dereferencing uninitilized embedded struct in GO will cause
@@ -144,7 +156,9 @@ func (s *profileStorage) Profile(ctx context.Context, userID string) (*dbProfile
 	return &profile, nil
 }
 
-func (s *profileStorage) Create(ctx context.Context, newProfile *newProfile) (string, error) {
+// Create creates new user profile with empty fields. it intends to create
+// column before update fields.
+func (s *profileStorage) create(ctx context.Context, newProfile *newProfile) (string, error) {
 
 	res := s.db.QueryRowContext(ctx, `
 		INSERT INTO profile(
@@ -182,7 +196,7 @@ func (s *profileStorage) Create(ctx context.Context, newProfile *newProfile) (st
 // if the value matches the empty or default case.
 //
 // NULLIF(expr1, expr2) returns NULL if `expr1` and `expr2` are equal.
-func (s *profileStorage) Update(ctx context.Context, userID string, update *dbProfile) (string, error) {
+func (s *profileStorage) update(ctx context.Context, userID string, update *dbProfile) (string, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		UPDATE 
@@ -229,7 +243,8 @@ func (s *profileStorage) Update(ctx context.Context, userID string, update *dbPr
 
 }
 
-func (s *profileStorage) Delete(ctx context.Context, userID string) error {
+// remove deletes the user profile.
+func (s *profileStorage) remove(ctx context.Context, userID string) error {
 
 	if _, err := s.db.ExecContext(ctx, `DELETE FROM profile WHERE id=$1`, userID); err != nil {
 		return err

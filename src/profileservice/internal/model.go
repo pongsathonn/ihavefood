@@ -23,15 +23,15 @@ type dbProfile struct {
 	//Picture    []byte
 	Bio        sql.NullString
 	Social     *dbSocial
-	Address    *dbAddress
+	Addresses  []*dbAddress
 	CreateTime time.Time
 	UpdateTime time.Time
 }
 
 type dbSocial struct {
-	Facebook   sql.NullString
-	Instragram sql.NullString
-	Line       sql.NullString
+	Facebook  sql.NullString
+	Instagram sql.NullString
+	Line      sql.NullString
 }
 
 type dbAddress struct {
