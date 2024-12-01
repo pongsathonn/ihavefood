@@ -79,6 +79,31 @@ func (x *ProfileService) CreateProfile(ctx context.Context, in *pb.CreateProfile
 	return dbToProto(profile), nil
 }
 
+func (x *ProfileService) UpdateAddress(ctx context.Context, in *pb.UpdateAddressRequest) (*pb.Profile, error) {
+
+	// TODO validate input
+
+	userID, err := x.store.updateAddress(ctx, in.UserId, &dbAddress{
+		AddressName: sql.NullString{String: in.NewAddress.AddressName},
+		SubDistrict: sql.NullString{String: in.NewAddress.SubDistrict},
+		District:    sql.NullString{String: in.NewAddress.District},
+		Province:    sql.NullString{String: in.NewAddress.Province},
+		PostalCode:  sql.NullString{String: in.NewAddress.PostalCode},
+	})
+	if err != nil {
+		slog.Error("failed to update profile address", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to update adress")
+	}
+
+	profile, err := x.store.profile(ctx, userID)
+	if err != nil {
+		slog.Error("failed to retrive profile", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrive profile")
+	}
+
+	return dbToProto(profile), nil
+}
+
 func (x *ProfileService) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.Profile, error) {
 
 	// TODO validate input
