@@ -29,10 +29,9 @@ service ProfileService {
     // Username are synchronized.
     rpc CreateProfile(CreateProfileRequest) returns(Profile){}
 
-    // CreateAddress adds new address to exists profile.
-    rpc CreateAddress(CreateAddressRequest) returns(Profile){
+    rpc UpdateAddress(UpdateAddressRequest) returns(Profile){
         option (google.api.http) = {
-            post: "/api/profiles/{user_id}/address"
+            patch: "/api/profiles/{user_id}/address"
             body: "*"
         };
     }
@@ -62,7 +61,7 @@ message Profile {
     string bio = 4;
     Social social = 5;
     // User can have many address
-    repeated Address address = 6;
+    repeated Address addresses = 6;
     google.protobuf.Timestamp create_time = 7;
     google.protobuf.Timestamp update_time = 8;
 }
@@ -84,9 +83,9 @@ message CreateProfileRequest {
     string username = 2;
 }
 
-message CreateAddressRequest {
+message UpdateAddressRequest {
     string user_id = 1;
-    Address address = 2;
+    Address new_address = 2;
 }
 
 message UpdateProfileRequest {
@@ -97,7 +96,6 @@ message UpdateProfileRequest {
     //bytes new_picture = 3;
     string new_bio = 4;
     Social new_social = 5;
-    Address new_address = 6;
 }
 
 message DeleteProfileRequest {
