@@ -36,11 +36,11 @@ type AuthMiddleware interface {
 }
 
 type authMiddleware struct {
-	authClient pb.AuthServiceClient
+	clientAuth pb.AuthServiceClient
 }
 
 func NewAuthMiddleware(a pb.AuthServiceClient) AuthMiddleware {
-	return &authMiddleware{authClient: a}
+	return &authMiddleware{clientAuth: a}
 }
 
 func (m *authMiddleware) ApplyAuthentication(mux *http.ServeMux, handler http.Handler, routes ...string) {
@@ -125,7 +125,7 @@ func (m *authMiddleware) validateRequest(next http.Handler) http.Handler {
 // false
 func (m *authMiddleware) checkUsernameExists(username string) (bool, error) {
 
-	res, err := m.authClient.CheckUsernameExists(
+	res, err := m.clientAuth.CheckUsernameExists(
 		context.TODO(),
 		&pb.CheckUsernameExistsRequest{Username: username},
 	)
@@ -139,7 +139,7 @@ func (m *authMiddleware) checkUsernameExists(username string) (bool, error) {
 // validateToken checks if the provided token is valid by calling the AuthService.
 func (m *authMiddleware) validateUserToken(token string) (bool, error) {
 
-	res, err := m.authClient.ValidateUserToken(context.TODO(), &pb.ValidateUserTokenRequest{
+	res, err := m.clientAuth.ValidateUserToken(context.TODO(), &pb.ValidateUserTokenRequest{
 		AccessToken: token,
 	})
 	if err != nil {
@@ -152,7 +152,7 @@ func (m *authMiddleware) validateUserToken(token string) (bool, error) {
 // validateAdminToken check if a Token is valid for admin role permission
 func (m *authMiddleware) validateAdminToken(token string) (bool, error) {
 
-	res, err := m.authClient.ValidateAdminToken(
+	res, err := m.clientAuth.ValidateAdminToken(
 		context.TODO(),
 		&pb.ValidateAdminTokenRequest{AccessToken: token},
 	)
