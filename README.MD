@@ -2,10 +2,7 @@
 
 ihavefood is a microservice food-delivery project written in Go .
 
-# TODO change userservice to profileservice in picture
-
-
-![xd](architecture.png)
+![xd](design.png)
 
 
 Tech Stack and Tools
@@ -15,8 +12,8 @@ Tech Stack and Tools
 - Message Brokers: RabbitMQ
 - Caching : TODO 
 - Containerization: Docker
-- Authentication: JWT(JSON Web Tokens)
-- Development Environments : Vim, Linux(Ubuntu)
+- Authentication: JWT, mTLS(TODO)
+- Development Environments : Linux(Ubuntu)
 - API Documentation : Swagger/OpenAPI
 
 
