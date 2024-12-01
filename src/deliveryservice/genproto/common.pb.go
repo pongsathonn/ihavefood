@@ -25,7 +25,6 @@ type Address struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// address_name must be unique
 	AddressName string `protobuf:"bytes,1,opt,name=address_name,json=addressName,proto3" json:"address_name,omitempty"`
 	SubDistrict string `protobuf:"bytes,2,opt,name=sub_district,json=subDistrict,proto3" json:"sub_district,omitempty"`
 	District    string `protobuf:"bytes,3,opt,name=district,proto3" json:"district,omitempty"`

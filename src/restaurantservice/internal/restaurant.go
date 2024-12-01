@@ -33,7 +33,7 @@ func (x *RestaurantService) GetRestaurant(ctx context.Context, in *pb.GetRestaur
 
 	// TODO validate input
 
-	restaurant, err := x.storage.Restaurant(ctx, in.RestaurantNo)
+	restaurant, err := x.storage.Restaurant(ctx, in.RestaurantId)
 	if err != nil {
 		slog.Error("failed to retrive restaurant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve restaurant")
@@ -109,7 +109,7 @@ func (x *RestaurantService) AddMenu(ctx context.Context, in *pb.AddMenuRequest) 
 		})
 	}
 
-	restaurantNO, err := x.storage.UpdateMenu(ctx, in.RestaurantNo, menus)
+	restaurantNO, err := x.storage.UpdateMenu(ctx, in.RestaurantId, menus)
 	if err != nil {
 		slog.Error("failed to update menu", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update menu in database")
@@ -128,14 +128,14 @@ func (x *RestaurantService) OrderReady(ctx context.Context, in *pb.OrderReadyReq
 
 	// TODO validate input
 
-	msg := amqp.Publishing{Body: []byte(in.OrderNo)}
+	msg := amqp.Publishing{Body: []byte(in.OrderId)}
 	if err := x.rabbitmq.Publish(ctx, "food.ready.event", msg); err != nil {
 		slog.Error("failed to publish ", "err", err)
 	}
 
 	slog.Info("published event",
-		"orderNo", in.OrderNo,
-		"restaurantNo", in.RestaurantNo,
+		"orderId", in.OrderId,
+		"restaurantNo", in.RestaurantId,
 		"routingKey", "food.ready.event",
 	)
 
@@ -179,7 +179,7 @@ func (x *RestaurantService) handlePlaceOrder() chan<- amqp.Delivery {
 			}
 
 			// assume this logs is push notification to restaurant
-			log.Printf("HI RESTAURANT! you have new order %s\n", order.OrderNo)
+			log.Printf("HI RESTAURANT! you have new order %s\n", order.OrderId)
 
 			// TODO wait for restaurant accept here
 			// <- AcceptOrder()
@@ -192,7 +192,7 @@ func (x *RestaurantService) handlePlaceOrder() chan<- amqp.Delivery {
 				context.TODO(),
 				rk,
 				amqp.Publishing{
-					Body: []byte(order.OrderNo),
+					Body: []byte(order.OrderId),
 				},
 			)
 			if err != nil {
@@ -202,7 +202,7 @@ func (x *RestaurantService) handlePlaceOrder() chan<- amqp.Delivery {
 
 			slog.Info("published event",
 				"routingKey", rk,
-				"orderNo", order.OrderNo,
+				"orderId", order.OrderId,
 			)
 		}
 	}()
@@ -221,9 +221,9 @@ func dbToProto(restaurant *dbRestaurant) *pb.Restaurant {
 	}
 
 	return &pb.Restaurant{
-		RestaurantNo: restaurant.No.Hex(),
-		Name:         restaurant.Name,
-		Menus:        menus,
+		RestaurantId:   restaurant.No.Hex(),
+		RestaurantName: restaurant.Name,
+		Menus:          menus,
 		Address: &pb.Address{
 			AddressName: restaurant.Address.AddressName,
 			SubDistrict: restaurant.Address.SubDistrict,

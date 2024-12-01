@@ -5,7 +5,6 @@ PROFILE_USER="${PROFILE_POSTGRES_USER}"
 PROFILE_PASSWORD="${PROFILE_POSTGRES_PASS}"
 PROFILE_DB="${PROFILE_POSTGRES_DATABASE}"
 
-
 psql -v ON_ERROR_STOP=1 --username "postgres"  <<-EOSQL
     CREATE USER "$PROFILE_USER" WITH PASSWORD '$PROFILE_PASSWORD';
 EOSQL
@@ -32,6 +31,7 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$PROFILE_DB" <<-EOSQL
 
     CREATE TABLE addresses (
         address_id INT GENERATED ALWAYS AS IDENTITY,
+        profile_id VARCHAR(255),
         address_name VARCHAR(255),                 
         sub_district VARCHAR(255),                 
         district VARCHAR(255),
@@ -40,11 +40,11 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$PROFILE_DB" <<-EOSQL
         PRIMARY KEY(address_id),
         CONSTRAINT fk_profile
             FOREIGN KEY(profile_id)
-            REFERENCS profiles(profile_id)
+            REFERENCES profiles(profile_id)
             ON DELETE CASCADE
     );
 
-    GRANT SELECT, INSERT, UPDATE, DELETE ON profile TO "$PROFILE_USER";
+    GRANT SELECT, INSERT, UPDATE, DELETE ON profiles TO "$PROFILE_USER";
 EOSQL
 
 
