@@ -40,7 +40,7 @@ type ProfileServiceClient interface {
 	// creates the new user credentials to ensure that the UserID and
 	// Username are synchronized.
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
-	// CreateAddress adds new address to exists profile.
+	// CreateAddress creates new address to exists uer profile.
 	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Profile, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -120,7 +120,7 @@ type ProfileServiceServer interface {
 	// creates the new user credentials to ensure that the UserID and
 	// Username are synchronized.
 	CreateProfile(context.Context, *CreateProfileRequest) (*Profile, error)
-	// CreateAddress adds new address to exists profile.
+	// CreateAddress creates new address to exists uer profile.
 	CreateAddress(context.Context, *CreateAddressRequest) (*Profile, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*emptypb.Empty, error)

@@ -14,48 +14,15 @@ var (
 	ErrTokenInvalid = errors.New("token is invalid")
 )
 
-type AuthMiddleware interface {
-	// ApplyAuthentication registers routes that require authentication.
-	// It applies the `authn` middleware to each of the provided routes.
-	//
-	// Parameters:
-	// - mux: The HTTP multiplexer (ServeMux) to register the routes with.
-	// - handler: The HTTP handler that will handle the requests once authentication is successful.
-	// - routes: A variadic list of string paths that require authentication.
-	//
-	// Usage Example:
-	//
-	//		m.ApplyAuthentication(mux, handler,
-	//	        "POST /api/foo",
-	//	        "GET /api/bar",
-	//		    "/api/profiles",
-	//		)
-	ApplyAuthentication(mux *http.ServeMux, handler http.Handler, routes ...string)
-
-	ApplyAuthorization(mux *http.ServeMux, handler http.Handler, routes ...string)
-}
-
-type authMiddleware struct {
+type AuthMiddleware struct {
 	clientAuth pb.AuthServiceClient
 }
 
-func NewAuthMiddleware(a pb.AuthServiceClient) AuthMiddleware {
-	return &authMiddleware{clientAuth: a}
+func NewAuthMiddleware(a pb.AuthServiceClient) *AuthMiddleware {
+	return &AuthMiddleware{clientAuth: a}
 }
 
-func (m *authMiddleware) ApplyAuthentication(mux *http.ServeMux, handler http.Handler, routes ...string) {
-	for _, route := range routes {
-		mux.Handle(route, m.authn(m.validateRequest(handler)))
-	}
-}
-
-func (m *authMiddleware) ApplyAuthorization(mux *http.ServeMux, handler http.Handler, routes ...string) {
-	for _, route := range routes {
-		mux.Handle(route, m.authz(m.validateRequest(handler)))
-	}
-}
-
-func (m *authMiddleware) authn(next http.Handler) http.Handler {
+func (m *AuthMiddleware) Authn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		token, err := extractToken(r)
@@ -78,7 +45,7 @@ func (m *authMiddleware) authn(next http.Handler) http.Handler {
 // authz checks user permission to access resource
 //
 // TODO might implement Role based access control instead checkking only admin token
-func (m *authMiddleware) authz(next http.Handler) http.Handler {
+func (m *AuthMiddleware) Authz(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		token, err := extractToken(r)
@@ -104,7 +71,7 @@ func (m *authMiddleware) authz(next http.Handler) http.Handler {
 	})
 }
 
-func (m *authMiddleware) validateRequest(next http.Handler) http.Handler {
+func (m *AuthMiddleware) validateRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method == http.MethodPost || r.Method == http.MethodPatch {
@@ -123,7 +90,7 @@ func (m *authMiddleware) validateRequest(next http.Handler) http.Handler {
 // checkUserExists checks whether a user with the given username exists by
 // calling the AuthService. returns true if username already exists, otherwise
 // false
-func (m *authMiddleware) checkUsernameExists(username string) (bool, error) {
+func (m *AuthMiddleware) checkUsernameExists(username string) (bool, error) {
 
 	res, err := m.clientAuth.CheckUsernameExists(
 		context.TODO(),
@@ -137,7 +104,7 @@ func (m *authMiddleware) checkUsernameExists(username string) (bool, error) {
 }
 
 // validateToken checks if the provided token is valid by calling the AuthService.
-func (m *authMiddleware) validateUserToken(token string) (bool, error) {
+func (m *AuthMiddleware) validateUserToken(token string) (bool, error) {
 
 	res, err := m.clientAuth.ValidateUserToken(context.TODO(), &pb.ValidateUserTokenRequest{
 		AccessToken: token,
@@ -150,7 +117,7 @@ func (m *authMiddleware) validateUserToken(token string) (bool, error) {
 }
 
 // validateAdminToken check if a Token is valid for admin role permission
-func (m *authMiddleware) validateAdminToken(token string) (bool, error) {
+func (m *AuthMiddleware) validateAdminToken(token string) (bool, error) {
 
 	res, err := m.clientAuth.ValidateAdminToken(
 		context.TODO(),
