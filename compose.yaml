@@ -53,6 +53,9 @@ services:
       - mynetwork
     ports:
       - "4042:4042" 
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4042","--accept-multiclient", "/order" ]
+    security_opt:
+      - seccomp:unconfined
   orderdb:
     container_name: orderdb
     image: mongo:latest
@@ -73,6 +76,9 @@ services:
       - mynetwork
     ports:
       - "4043:4043" 
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/restaurant" ]
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -100,6 +106,9 @@ services:
       - mynetwork
     ports:
       - "4044:4044"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/profile" ]
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       profiledb:
         condition: service_healthy
@@ -151,12 +160,12 @@ services:
       - "5442:5432"
     volumes:
       - ./src/authservice/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./src/authservice/scripts/create_table.sql:/sql/create_table.sql
     env_file:
       - path: ./src/authservice/.env
     environment:
       - POSTGRES_PASSWORD=donkpassword
     healthcheck:
-      # test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DATABASE}"] 
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s 
       timeout: 10s
@@ -172,6 +181,9 @@ services:
       - mynetwork
     ports:
       - "4046:4046"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4046","--accept-multiclient", "/delivery" ]
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -196,6 +208,9 @@ services:
       - mynetwork
     ports:
       - "4047:4047"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       coupondb:
         condition: service_started
