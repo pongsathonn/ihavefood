@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
@@ -24,13 +25,13 @@ var (
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
-func validateUser(in any) []error {
+func validateUser(in any) error {
 
 	registerRule := map[string]string{
-		"Username":    "required,min=6,max=16",
+		"Username":    "required,min=6,max=16,lowercase",
 		"Email":       "required,email",
-		"Password":    "required,vpass,min=8,max=16",
-		"PhoneNumber": "required,vphone",
+		"Password":    "required,vfpass,min=8,max=16",
+		"PhoneNumber": "required,vfphone",
 	}
 
 	// rule2 := map[string]string{}
@@ -38,11 +39,13 @@ func validateUser(in any) []error {
 	validate.RegisterStructValidationMapRules(registerRule, pb.RegisterRequest{})
 	// validate.RegisterStructValidationMapRules(rule2, nil)
 
-	validate.RegisterValidation("vpass", validatePassword)
-	validate.RegisterValidation("vphone", validatePhone)
+	// prefix vf = validate format
+	// Ex. vfpass is validate password format
+	validate.RegisterValidation("vfpass", validatePassword)
+	validate.RegisterValidation("vfphone", validatePhone)
 
 	if err := validate.Struct(in); err != nil {
-		var errs []error
+		var errs []string
 		for _, v := range err.(validator.ValidationErrors) {
 			var e error
 			switch v.Tag() {
@@ -50,18 +53,20 @@ func validateUser(in any) []error {
 				e = fmt.Errorf("%s must be provided", v.Field())
 			case "email":
 				e = errors.New("invalid email")
-			case "vpass":
+			case "vfpass":
 				e = errors.New("password must contain lowercase,uppercase and special character")
-			case "vphone":
+			case "vfphone":
 				e = errors.New("invalid phone number format")
 			case "min":
 				e = fmt.Errorf("%s must be at least %s", v.Field(), v.Param())
 			case "max":
 				e = fmt.Errorf("%s must be at most %s", v.Field(), v.Param())
+			case "lowercase":
+				e = fmt.Errorf("%s must be lowercase only", v.Field())
 			}
-			errs = append(errs, e)
+			errs = append(errs, e.Error())
 		}
-		return errs
+		return errors.New(strings.Join(errs, ", "))
 	}
 	return nil
 }
