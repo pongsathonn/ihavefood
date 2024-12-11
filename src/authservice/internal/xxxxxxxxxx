@@ -1,0 +1,48 @@
+package internal
+
+import (
+	"context"
+	"database/sql"
+	"log"
+	"os"
+	"testing"
+)
+
+// runMain sets up the test dependencies and eventually executes the tests.
+// It is defined as a separate function to enable the setup stages to clearly
+// defer their teardown steps.
+func runMain(ctx context.Context, m *testing.M) (code int, err error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	setupDatabase := func(context.Context) (*sql.DB, error) {
+		return nil, nil
+	}
+
+	d, err := setupDatabase(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer d.Close() // Expressly clean up database.
+	db = d          // db is defined as a package-level variable.
+
+	// m.Run() executes the regular, user-defined test functions.
+	// Any defer statements that have been made will be run after m.Run()
+	// completes.
+
+	return m.Run(), nil
+}
+
+func TestMain(m *testing.M) {
+	code, err := runMain(context.Background(), m)
+	if err != nil {
+		// Failure messages should be written to STDERR, which log.Fatal uses.
+		log.Fatal(err)
+	}
+
+	// NOTE: defer statements do not run past here due to os.Exit
+	//       terminating the process.
+
+	os.Exit(code)
+
+}
