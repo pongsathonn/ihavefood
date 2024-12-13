@@ -1,0 +1,17 @@
+
+# run ./mockery without any flags
+
+with-expecter: True
+dir: "mocks"
+packages:
+  github.com/pongsathonn/ihavefood/src/authservice/internal:
+    config:
+      #filename: "{{.InterfaceName | camelcase | firstLower}}.go"
+      outpkg: "mocks"
+    interfaces:
+      AuthStorer:
+  github.com/pongsathonn/ihavefood/src/authservice/genproto:
+    config:
+      outpkg: "mocks"
+    interfaces:
+      ProfileServiceClient:
