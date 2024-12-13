@@ -26,8 +26,7 @@ RabbitMQ conventions for every services
 ### Event Routing Table (Order processing)
 
 <pre>
-
- | Publisher            |     Routing Key           |           Queue              | Subscriber |  ORDER STATUS  |
+ | Publisher            |     Routing Key           |           Queue              | Subscriber |  ORDER STATUS  |   
  |----------------------|---------------------------|------------------------------|------------|----------------|
  |                      |                           |                              |            | PENDING        |
  | Order                | order.placed.event        | restaurant_assign_queue      | Restaurant |    "           | 
@@ -45,17 +44,17 @@ RabbitMQ conventions for every services
  | Payment or Delivery  | order.paid.event          | coupon_update_queue          | Coupon     |    "           |
  |                      |                           |                              |            |                |
  | Delivery             | rider.delivered.event     | order_status_update_queue    | Order      | DELIVERED      |
-
 </pre>
 
 
 ### Canceling Order 
-
+<pre>
  | Publisher  |       Routing Key                | Subscriber |  STATUS   |
  |------------|----------------------------------|------------|-----------|
  | Payment    | error.payment.failed.event       |     *      | CANCELLED | 
  | Delivery   | error.rider.unaccepted.event     |     *      | CANCELLED | 
  | Restaurant | error.restaurant.cancelled.event |     *      | CANCELLED | 
+</pre>
 
 
 
@@ -166,6 +165,8 @@ the application, focusing on time differences is crucial, and Unix time is not i
 due to its lack of readability. To establish a consistent time standard throughout the application, 
 I have implemented the following time-handling strategy:
 
+time zone use ict"Asia/Bangkok"
+
 Application and Data Layer:
 - Use the "time.Time" type in Go for handling timestamps.
 - For generating timestamps, use "time.Now()", as it generates time in the local timezone (Asia/Bangkok).
@@ -187,6 +188,14 @@ to prevent this case happen, always return error messsage that i know what messa
 such as if i check user information in database and i know error from this is "notfound then
 an error must be something like "username not found", but if i don't know what error will be
 return then i will use internal error which message contains what i do. such as 
+
+
+# Testing
+
+for testing storage methods i run container for testing theses methods, so this way i violate the unit testing 
+principle that unit testing should not connect to database. so this is not unit testing hihi
+
+for testing grpc server methods.
 
 
 
