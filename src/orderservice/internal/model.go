@@ -2,8 +2,6 @@ package internal
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type newPlaceOrder struct {
@@ -23,22 +21,23 @@ type newPlaceOrder struct {
 
 // if not omitempty at id Mongo will use zero as id ( when insert )
 type dbPlaceOrder struct {
-	OrderID           primitive.ObjectID `bson:"_id,omitempty"`
-	RequestID         string             `bson:"requestId"`
-	UserID            string             `bson:"userId"`
-	RestaurantID      string             `bson:"restaurantId"`
-	Menus             []*dbMenu          `bson:"menus"`
-	CouponCode        string             `bson:"couponCode"`
-	CouponDiscount    int32              `bson:"couponDiscount"`
-	DeliveryFee       int32              `bson:"deliveryFee"`
-	Total             int32              `bson:"total"`
-	UserAddress       *dbAddress         `bson:"userAddress"`
-	RestaurantAddress *dbAddress         `bson:"restaurantAddress"`
-	UserContact       *dbContactInfo     `bson:"userContact"`
-	PaymentMethods    dbPaymentMethods   `bson:"paymentMethods"`
-	PaymentStatus     dbPaymentStatus    `bson:"paymentStatus"`
-	OrderStatus       dbOrderStatus      `bson:"orderStatus"`
-	Timestamps        *dbTimestamps      `bson:"timestamps"`
+	//OrderID           primitive.ObjectID `bson:"_id,omitempty"`
+	OrderID           string           `bson:"_id,omitempty"`
+	RequestID         string           `bson:"requestId"`
+	UserID            string           `bson:"userId"`
+	RestaurantID      string           `bson:"restaurantId"`
+	Menus             []*dbMenu        `bson:"menus"`
+	CouponCode        string           `bson:"couponCode"`
+	CouponDiscount    int32            `bson:"couponDiscount"`
+	DeliveryFee       int32            `bson:"deliveryFee"`
+	Total             int32            `bson:"total"`
+	UserAddress       *dbAddress       `bson:"userAddress"`
+	RestaurantAddress *dbAddress       `bson:"restaurantAddress"`
+	UserContact       *dbContactInfo   `bson:"userContact"`
+	PaymentMethods    dbPaymentMethods `bson:"paymentMethods"`
+	PaymentStatus     dbPaymentStatus  `bson:"paymentStatus"`
+	OrderStatus       dbOrderStatus    `bson:"orderStatus"`
+	Timestamps        *dbTimestamps    `bson:"timestamps"`
 }
 
 type dbMenu struct {

@@ -9,7 +9,7 @@ COPY . .
 
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /delivery
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags=all="-N -l" -o /delivery
 
 FROM alpine:latest
 

@@ -37,8 +37,7 @@ type NewUserCredentials struct {
 
 // dbUserCredentials contains ... TODO .
 //
-// NOTE: PasswordHash must not be contained
-// in response
+// NOTE: Do not response PasswordHash field.
 type dbUserCredentials struct {
 	UserID       string
 	Username     string

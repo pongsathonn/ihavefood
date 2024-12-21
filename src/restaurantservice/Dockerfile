@@ -8,7 +8,7 @@ COPY . .
 
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /restaurant
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags=all="-N -l" -o /restaurant
 
 FROM alpine:latest
 

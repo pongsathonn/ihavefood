@@ -8,7 +8,7 @@ COPY . .
 RUN go mod tidy
 
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
-RUN CGO_ENABLED=0 GOOS=linux go build -o /coupon
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags=all="-N -l" -o /coupon
 
 # Stage 2: Runtime
 FROM alpine:latest

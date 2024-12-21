@@ -17,28 +17,26 @@ import (
 
 	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
 
+	if err := initTimeZone(); err != nil {
+		slog.Error("failed to init time zone", "err", err)
+	}
+
 	if err := internal.InitSigningKey(); err != nil {
-		slog.Error("initilize jwt signing key", "err", err)
+		slog.Error("failed to init jwt signing key", "err", err)
 	}
 
 	db, err := initPostgres()
 	if err != nil {
 		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
 	}
-	storage := internal.NewAuthStorage(db)
+	storage := internal.NewStorage(db)
 
-	if err := internal.InitAdminUser(storage); err != nil {
-		log.Printf("Failed to initialize create admin user: %v", err)
-	}
-
-	amqpConn, err := initRabbitMQ()
-	if err != nil {
-		log.Fatalf("Failed to initialize RabbitMQ connection: %v", err)
+	if err := internal.CreateAdmin(storage); err != nil {
+		log.Printf("Failed to create admin user: %v", err)
 	}
 
 	userClient, err := newProfileServiceClient()
@@ -46,12 +44,8 @@ func main() {
 		log.Fatalf("Failed to initialize ProfileService connection: %v", err)
 	}
 
-	authService := internal.NewAuthService(
-		storage,
-		internal.NewRabbitMQ(amqpConn),
-		userClient,
-	)
-	startGRPCServer(authService)
+	service := internal.NewAuthService(storage, userClient)
+	startGRPCServer(service)
 
 }
 
@@ -73,11 +67,10 @@ func initPostgres() (*sql.DB, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	dbName := "postgres"
 	host := os.Getenv("AUTH_POSTGRES_HOST")
 	port := os.Getenv("AUTH_POSTGRES_PORT")
 
-	db, err := sql.Open(dbName, fmt.Sprintf("postgres://%s:%s@%s:%s/auth_database?sslmode=disable",
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/auth_database?sslmode=disable",
 		os.Getenv("AUTH_POSTGRES_USER"),
 		os.Getenv("AUTH_POSTGRES_PASS"),
 		host,
@@ -92,7 +85,6 @@ func initPostgres() (*sql.DB, error) {
 	}
 
 	slog.Info("Database initialized successfully",
-		"db", dbName,
 		"host", host,
 		"port", port,
 	)
@@ -100,35 +92,9 @@ func initPostgres() (*sql.DB, error) {
 	return db, nil
 }
 
-func initRabbitMQ() (*amqp.Connection, error) {
-	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
-		os.Getenv("AUTH_AMQP_USER"),
-		os.Getenv("AUTH_AMQP_PASS"),
-		os.Getenv("AUTH_AMQP_HOST"),
-		os.Getenv("AUTH_AMQP_PORT"),
-	)
-
-	maxRetries := 5
-
-	for i := 0; i < maxRetries; i++ {
-		conn, err := amqp.Dial(uri)
-		if err == nil {
-			slog.Info("RabbitMQ initialization successful",
-				"host", os.Getenv("AUTH_AMQP_HOST"),
-				"port", os.Getenv("AUTH_AMQP_PORT"),
-			)
-			return conn, nil
-		}
-
-		slog.Warn(fmt.Sprintf("Failed to connect to RabbitMQ, retrying... (%d/5)", i+1))
-	}
-
-	return nil, fmt.Errorf("failed to connect to RabbitMQ after %d attempts", maxRetries)
-}
-
 // startGRPCServer sets up and starts the gRPC server
 // func startGRPCServer(s *internal.AuthService) {
-func startGRPCServer(auths *internal.AuthService) {
+func startGRPCServer(s *internal.AuthService) {
 
 	uri := fmt.Sprintf(":%s", os.Getenv("AUTH_SERVER_PORT"))
 	lis, err := net.Listen("tcp", uri)
@@ -136,15 +102,25 @@ func startGRPCServer(auths *internal.AuthService) {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterAuthServiceServer(s, auths)
+	grpcServer := grpc.NewServer()
+	pb.RegisterAuthServiceServer(grpcServer, s)
 
 	slog.Info("AuthService initialized successfully",
 		"port", os.Getenv("AUTH_SERVER_PORT"),
 	)
 
-	if err := s.Serve(lis); err != nil {
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
+}
+
+func initTimeZone() error {
+	l, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		return err
+	}
+
+	time.Local = l
+	return nil
 }

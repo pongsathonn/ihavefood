@@ -66,6 +66,8 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
 	}
 
+	// TODO validate place order fields valid such as userID , restuarntName already exists
+
 	orderID, err := x.storage.Create(ctx, prepareNewOrder(in))
 	if err != nil {
 		slog.Error("failed to insert place order", "err", err)
@@ -271,7 +273,7 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 	}
 
 	return &pb.PlaceOrder{
-		OrderId:        order.OrderID.Hex(),
+		OrderId:        order.OrderID,
 		RequestId:      order.RequestID,
 		UserId:         order.UserID,
 		RestaurantId:   order.RestaurantID,
@@ -314,6 +316,8 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 
 	switch {
+	case in.RequestId == "":
+		return errors.New("request ID must be provided")
 	case in.UserId == "":
 		return errors.New("user ID must be provided")
 	case in.RestaurantId == "":

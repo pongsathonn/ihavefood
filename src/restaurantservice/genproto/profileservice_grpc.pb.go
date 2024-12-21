@@ -23,7 +23,7 @@ const (
 	ProfileService_ListProfiles_FullMethodName  = "/ihavefood.ProfileService/ListProfiles"
 	ProfileService_GetProfile_FullMethodName    = "/ihavefood.ProfileService/GetProfile"
 	ProfileService_CreateProfile_FullMethodName = "/ihavefood.ProfileService/CreateProfile"
-	ProfileService_UpdateAddress_FullMethodName = "/ihavefood.ProfileService/UpdateAddress"
+	ProfileService_CreateAddress_FullMethodName = "/ihavefood.ProfileService/CreateAddress"
 	ProfileService_UpdateProfile_FullMethodName = "/ihavefood.ProfileService/UpdateProfile"
 	ProfileService_DeleteProfile_FullMethodName = "/ihavefood.ProfileService/DeleteProfile"
 )
@@ -40,7 +40,8 @@ type ProfileServiceClient interface {
 	// creates the new user credentials to ensure that the UserID and
 	// Username are synchronized.
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
-	UpdateAddress(ctx context.Context, in *UpdateAddressRequest, opts ...grpc.CallOption) (*Profile, error)
+	// CreateAddress creates new address to exists uer profile.
+	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Profile, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -80,9 +81,9 @@ func (c *profileServiceClient) CreateProfile(ctx context.Context, in *CreateProf
 	return out, nil
 }
 
-func (c *profileServiceClient) UpdateAddress(ctx context.Context, in *UpdateAddressRequest, opts ...grpc.CallOption) (*Profile, error) {
+func (c *profileServiceClient) CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Profile, error) {
 	out := new(Profile)
-	err := c.cc.Invoke(ctx, ProfileService_UpdateAddress_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProfileService_CreateAddress_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,8 @@ type ProfileServiceServer interface {
 	// creates the new user credentials to ensure that the UserID and
 	// Username are synchronized.
 	CreateProfile(context.Context, *CreateProfileRequest) (*Profile, error)
-	UpdateAddress(context.Context, *UpdateAddressRequest) (*Profile, error)
+	// CreateAddress creates new address to exists uer profile.
+	CreateAddress(context.Context, *CreateAddressRequest) (*Profile, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedProfileServiceServer()
@@ -138,8 +140,8 @@ func (UnimplementedProfileServiceServer) GetProfile(context.Context, *GetProfile
 func (UnimplementedProfileServiceServer) CreateProfile(context.Context, *CreateProfileRequest) (*Profile, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProfile not implemented")
 }
-func (UnimplementedProfileServiceServer) UpdateAddress(context.Context, *UpdateAddressRequest) (*Profile, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAddress not implemented")
+func (UnimplementedProfileServiceServer) CreateAddress(context.Context, *CreateAddressRequest) (*Profile, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAddress not implemented")
 }
 func (UnimplementedProfileServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
@@ -214,20 +216,20 @@ func _ProfileService_CreateProfile_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProfileService_UpdateAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateAddressRequest)
+func _ProfileService_CreateAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAddressRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServiceServer).UpdateAddress(ctx, in)
+		return srv.(ProfileServiceServer).CreateAddress(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ProfileService_UpdateAddress_FullMethodName,
+		FullMethod: ProfileService_CreateAddress_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).UpdateAddress(ctx, req.(*UpdateAddressRequest))
+		return srv.(ProfileServiceServer).CreateAddress(ctx, req.(*CreateAddressRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -288,8 +290,8 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProfileService_CreateProfile_Handler,
 		},
 		{
-			MethodName: "UpdateAddress",
-			Handler:    _ProfileService_UpdateAddress_Handler,
+			MethodName: "CreateAddress",
+			Handler:    _ProfileService_CreateAddress_Handler,
 		},
 		{
 			MethodName: "UpdateProfile",

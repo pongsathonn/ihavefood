@@ -72,10 +72,11 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		UserId:   user.UserID,
 		Username: user.Username,
 	})
+
 	if err != nil {
-		slog.Error("UserService fails to create user profile: %v", err)
+		slog.Error("UserService fails to create user profile: ", err)
 		if err := x.store.Delete(context.TODO(), user.UserID); err != nil {
-			slog.Error("failed to delete user credential: %v", err)
+			slog.Error("failed to delete user credential: ", err)
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}

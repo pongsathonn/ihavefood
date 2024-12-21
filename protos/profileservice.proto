@@ -29,9 +29,10 @@ service ProfileService {
     // Username are synchronized.
     rpc CreateProfile(CreateProfileRequest) returns(Profile){}
 
-    rpc UpdateAddress(UpdateAddressRequest) returns(Profile){
+    // CreateAddress creates new address to exists uer profile.
+    rpc CreateAddress(CreateAddressRequest) returns(Profile){
         option (google.api.http) = {
-            patch: "/api/profiles/{user_id}/address"
+            post: "/api/profiles/{user_id}/address"
             body: "*"
         };
     }
@@ -83,9 +84,9 @@ message CreateProfileRequest {
     string username = 2;
 }
 
-message UpdateAddressRequest {
+message CreateAddressRequest {
     string user_id = 1;
-    Address new_address = 2;
+    Address address = 2;
 }
 
 message UpdateProfileRequest {
@@ -101,4 +102,6 @@ message UpdateProfileRequest {
 message DeleteProfileRequest {
     string user_id = 1;
 }
+
+
 

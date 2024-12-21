@@ -13,7 +13,7 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 # default is 1 it will rely on some C lib
 
 # GOOS=linux is target os which is linux is this case
-RUN CGO_ENABLED=0 GOOS=linux go build -o /auth
+RUN CGO_ENABLED=0 GOOS=linux go build -gcflags=all="-N -l" -o /auth
 
 FROM alpine:latest
 

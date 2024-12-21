@@ -18,7 +18,7 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT
-			profiles.profile_id,
+			profiles.user_id,
 			profiles.username,
 			profiles.bio,
 			profiles.facebook,
@@ -33,7 +33,7 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 			addresses.postal_code
 		FROM
 			profiles
-		LEFT JOIN addresses USING (profile_id)
+		LEFT JOIN addresses USING (user_id)
 	`)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (s *profileStorage) profile(ctx context.Context, userID string) (*dbProfile
 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT
-			profiles.profile_id,
+			profiles.user_id,
 			profiles.username,
 			profiles.bio,
 			profiles.facebook,
@@ -113,8 +113,8 @@ func (s *profileStorage) profile(ctx context.Context, userID string) (*dbProfile
 			addresses.postal_code
 		FROM
 			profiles
-		LEFT JOIN addresses USING (profile_id)
-		WHERE profiles.profile_id = $1;
+		LEFT JOIN addresses USING (user_id)
+		WHERE profiles.user_id = $1;
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -170,17 +170,17 @@ func (s *profileStorage) profile(ctx context.Context, userID string) (*dbProfile
 	return profile[userID], nil
 }
 
-// Create creates new user profile with empty fields. it intends to create
+// Create inserts new user profile with empty fields. it intends to create
 // column before update fields.
 func (s *profileStorage) create(ctx context.Context, newProfile *newProfile) (string, error) {
 
 	res := s.db.QueryRowContext(ctx, `
-		INSERT INTO profile(
-			id,
+		INSERT INTO profiles(
+			user_id,
 			username
 		)
 		VALUES($1,$2)
-		RETURNING id
+		RETURNING user_id
 	`,
 		newProfile.UserID,
 		newProfile.Username,
@@ -194,35 +194,35 @@ func (s *profileStorage) create(ctx context.Context, newProfile *newProfile) (st
 	return userID, nil
 }
 
-func (s *profileStorage) updateAddress(ctx context.Context, userID string, newAddr *dbAddress) (string, error) {
+// CreateAddress inserts new address to user profile and return userID
+func (s *profileStorage) createAddress(ctx context.Context, userID string, newAddress *dbAddress) (string, error) {
 
 	row := s.db.QueryRowContext(ctx, `
-		UPDATE 
-			profile
-		SET
-		    address_name = COALESCE(NULLIF($2,''), address_name),
-		    sub_district = COALESCE(NULLIF($3,''), sub_district),
-		    district = COALESCE(NULLIF($4,''), district),
-		    province = COALESCE(NULLIF($5,''), province),
-		    postal_code = COALESCE(NULLIF($6,''), postal_code),
-			update_time = NOW()
-		WHERE id = $1
-		RETURNING id;
+		INSERT INTO addresses(
+			user_id,
+			address_name,
+			sub_district,
+			district,
+			province,
+			postal_code
+		)
+		VALUES($1,$2,$3,$4,$5,$6)
+		RETURNING user_id
 	`,
 		userID,
-		newAddr.AddressName.String,
-		newAddr.SubDistrict.String,
-		newAddr.District.String,
-		newAddr.Province.String,
-		newAddr.PostalCode.String,
+		newAddress.AddressName.String,
+		newAddress.SubDistrict.String,
+		newAddress.District.String,
+		newAddress.Province.String,
+		newAddress.PostalCode.String,
 	)
 
-	var updatedID string
-	if err := row.Scan(&updatedID); err != nil {
+	var ID string
+	if err := row.Scan(&ID); err != nil {
 		return "", err
 	}
 
-	return updatedID, nil
+	return ID, nil
 
 }
 
@@ -246,7 +246,7 @@ func (s *profileStorage) update(ctx context.Context, userID string, update *dbPr
 
 	row := s.db.QueryRowContext(ctx, `
 		UPDATE 
-			profile
+			profiles
 		SET
 		    username = COALESCE(NULLIF($2, ''), username),
 		    bio = COALESCE(NULLIF($3,''), bio),
@@ -254,8 +254,9 @@ func (s *profileStorage) update(ctx context.Context, userID string, update *dbPr
 		    instagram = COALESCE(NULLIF($5,''), instagram),
 		    line = COALESCE(NULLIF($6,''), line),
 			update_time = NOW()
-		WHERE id = $1
-		RETURNING id;
+		WHERE 
+			user_id = $1
+		RETURNING user_id;
 	`,
 		userID,
 		update.Username,
@@ -277,9 +278,21 @@ func (s *profileStorage) update(ctx context.Context, userID string, update *dbPr
 // remove deletes the user profile.
 func (s *profileStorage) remove(ctx context.Context, userID string) error {
 
-	if _, err := s.db.ExecContext(ctx, `DELETE FROM profile WHERE id=$1`, userID); err != nil {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM profiles WHERE user_id=$1`, userID); err != nil {
 		return err
 	}
 	return nil
 
+}
+
+func (s *profileStorage) countAddress(ctx context.Context, userID string) (int, error) {
+
+	row := s.db.QueryRowContext(ctx, `SELECT COUNT(user_id) FROM addresses WHERE user_id=$1`, userID)
+
+	var n int
+	if err := row.Scan(&n); err != nil {
+		return 0, err
+	}
+
+	return n, nil
 }

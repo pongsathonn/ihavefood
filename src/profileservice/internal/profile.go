@@ -28,7 +28,7 @@ func NewProfileService(rabbitmq *rabbitMQ, store *profileStorage) *ProfileServic
 	}
 }
 
-func (x *ProfileService) ListProfile(ctx context.Context, in *pb.ListProfilesRequest) (*pb.ListProfilesResponse, error) {
+func (x *ProfileService) ListProfiles(ctx context.Context, in *pb.ListProfilesRequest) (*pb.ListProfilesResponse, error) {
 
 	// TODO validate input
 
@@ -61,7 +61,7 @@ func (x *ProfileService) CreateProfile(ctx context.Context, in *pb.CreateProfile
 
 	// TODO validate input
 
-	userID, err := x.store.create(ctx, &newProfile{
+	profileID, err := x.store.create(ctx, &newProfile{
 		UserID:   in.UserId,
 		Username: in.Username,
 	})
@@ -70,7 +70,7 @@ func (x *ProfileService) CreateProfile(ctx context.Context, in *pb.CreateProfile
 		return nil, status.Errorf(codes.Internal, "failed to create user profile")
 	}
 
-	profile, err := x.store.profile(ctx, userID)
+	profile, err := x.store.profile(ctx, profileID)
 	if err != nil {
 		slog.Error("failed to retrive user profile", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive user profile")
@@ -79,23 +79,33 @@ func (x *ProfileService) CreateProfile(ctx context.Context, in *pb.CreateProfile
 	return dbToProto(profile), nil
 }
 
-func (x *ProfileService) UpdateAddress(ctx context.Context, in *pb.UpdateAddressRequest) (*pb.Profile, error) {
+func (x *ProfileService) CreateAddress(ctx context.Context, in *pb.CreateAddressRequest) (*pb.Profile, error) {
 
 	// TODO validate input
 
-	userID, err := x.store.updateAddress(ctx, in.UserId, &dbAddress{
-		AddressName: sql.NullString{String: in.NewAddress.AddressName},
-		SubDistrict: sql.NullString{String: in.NewAddress.SubDistrict},
-		District:    sql.NullString{String: in.NewAddress.District},
-		Province:    sql.NullString{String: in.NewAddress.Province},
-		PostalCode:  sql.NullString{String: in.NewAddress.PostalCode},
+	numAddr, err := x.store.countAddress(ctx, in.UserId)
+	if err != nil {
+		slog.Error("failed to count user profile address", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to count adress")
+	}
+
+	if numAddr >= 5 {
+		return nil, status.Errorf(codes.ResourceExhausted, "user has reached the limit of five addresses")
+	}
+
+	profileID, err := x.store.createAddress(ctx, in.UserId, &dbAddress{
+		AddressName: sql.NullString{String: in.Address.AddressName},
+		SubDistrict: sql.NullString{String: in.Address.SubDistrict},
+		District:    sql.NullString{String: in.Address.District},
+		Province:    sql.NullString{String: in.Address.Province},
+		PostalCode:  sql.NullString{String: in.Address.PostalCode},
 	})
 	if err != nil {
 		slog.Error("failed to update profile address", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update adress")
 	}
 
-	profile, err := x.store.profile(ctx, userID)
+	profile, err := x.store.profile(ctx, profileID)
 	if err != nil {
 		slog.Error("failed to retrive profile", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive profile")
@@ -118,13 +128,13 @@ func (x *ProfileService) UpdateProfile(ctx context.Context, in *pb.UpdateProfile
 		},
 	}
 
-	userID, err := x.store.update(ctx, in.UserId, update)
+	profileID, err := x.store.update(ctx, in.UserId, update)
 	if err != nil {
 		slog.Error("failed to update profile", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update profile")
 	}
 
-	profile, err := x.store.profile(ctx, userID)
+	profile, err := x.store.profile(ctx, profileID)
 	if err != nil {
 		slog.Error("failed to retrive profile", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive profile")

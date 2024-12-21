@@ -56,16 +56,19 @@ func main() {
 	err = pb.RegisterRestaurantServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("RESTAURANT_URI"), opts)
 	err = pb.RegisterDeliveryServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("DELIVERY_URI"), opts)
 	err = pb.RegisterAuthServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("AUTH_URI"), opts)
-
 	conn, err := grpc.Dial(os.Getenv("AUTH_URI"), opt)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	auth := middleware.NewAuthMiddleware(pb.NewAuthServiceClient(conn))
 
 	// Update role and DELETE methods need "admin" role.
+
 	http.Handle("PATCH /auth/users/roles", auth.Authz(gwmux))
 	http.Handle("DELETE /api/*", auth.Authz(gwmux))
+	http.Handle("/api/users/*", auth.Authn(gwmux))
+
 	http.Handle("/api/*", auth.Authn(gwmux))
 	http.Handle("/", gwmux)
 

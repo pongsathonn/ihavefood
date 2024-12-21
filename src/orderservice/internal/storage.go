@@ -89,7 +89,7 @@ func (s *orderStorage) PlaceOrder(ctx context.Context, orderID string) (*dbPlace
 	}
 
 	var order dbPlaceOrder
-	if err := coll.FindOne(ctx, bson.D{{"_id", ID}}).Decode(order); err != nil {
+	if err := coll.FindOne(ctx, bson.D{{"_id", ID}}).Decode(&order); err != nil {
 		return nil, err
 	}
 
