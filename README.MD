@@ -4,9 +4,9 @@ ihavefood is a microservice food-delivery project written in Go .
 
 ![xd](design.png)
 
-Note: I realized the importance of unit testing when I was almost finished with the project..
-Since adding tests would have taken a lot of time, I added tests only for the DeliveryService, 
-as it is the most complex part of my project, involving concurrency in Go.
+> Note: I realized the importance of unit testing when I was almost finished with the project..
+> Since adding tests would have taken a lot of time, I added tests only for the DeliveryService, 
+> as it is the most complex part of my project, involving concurrency in Go.
 
 Tech Stack and Tools
 - Languages: Go, SQL, Shell Script
