@@ -2,8 +2,8 @@ use chrono::{DateTime, Utc};
 use sqlx::error::BoxDynError;
 use sqlx::sqlite::SqliteValueRef;
 use sqlx::Type;
-use sqlx::{Decode, Sqlite};
-use std::fmt::{Display, Formatter, Result};
+use sqlx::{Decode, Encode, Sqlite};
+use std::result::Result;
 
 // dbDelivery represent delivery information for an order
 pub struct DbDelivery {
@@ -28,6 +28,7 @@ pub struct DbPoint {
     pub longitude: f64,
 }
 
+#[derive(PartialEq)]
 pub enum DbDeliveryStatus {
     // UNACCEPTED indicates the rider has not yet accepted the order.
     UNACCEPT,
@@ -37,13 +38,15 @@ pub enum DbDeliveryStatus {
     DELIVERED,
 }
 
-// for converting DbDeliveryStatus to String by .to_string()
-impl Display for DbDeliveryStatus {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+impl<'q> Encode<'q, Sqlite> for DbDeliveryStatus {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Sqlite as sqlx::Database>::ArgumentBuffer<'q>,
+    ) -> Result<sqlx::encode::IsNull, BoxDynError> {
         match self {
-            DbDeliveryStatus::UNACCEPT => write!(f, "UNACCEPT"),
-            DbDeliveryStatus::ACCEPTED => write!(f, "ACCEPTED"),
-            DbDeliveryStatus::DELIVERED => write!(f, "DELIVERED"),
+            DbDeliveryStatus::UNACCEPT => <&str as Encode<'q, Sqlite>>::encode("UNACCEPT", buf),
+            DbDeliveryStatus::ACCEPTED => <&str as Encode<'q, Sqlite>>::encode("ACCEPTED", buf),
+            DbDeliveryStatus::DELIVERED => <&str as Encode<'q, Sqlite>>::encode("DELIVERED", buf),
         }
     }
 }
@@ -58,7 +61,7 @@ impl<'r> Decode<'r, Sqlite> for DbDeliveryStatus
 where
     &'r str: Decode<'r, Sqlite>,
 {
-    fn decode(value: SqliteValueRef<'r>) -> std::result::Result<Self, BoxDynError> {
+    fn decode(value: SqliteValueRef<'r>) -> Result<Self, BoxDynError> {
         let value = <&str as Decode<Sqlite>>::decode(value)?;
 
         match value {
