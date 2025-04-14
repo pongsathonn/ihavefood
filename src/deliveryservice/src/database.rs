@@ -40,59 +40,21 @@ impl Db {
         Ok(())
     }
 
-    pub async fn get_delivery(&self, order_id: String) -> Result<DbDelivery> {
-        let foo = sqlx::query!(
-            r#"
-        SELECT
-            deliveries.order_id AS "order_id:String",
-            deliveries.rider_id AS "rider_id:i32",
-            deliveries.pickup_code AS "pickup_code:String",
-            deliveries.pickup_lat AS "pickup_lat:f64",
-            deliveries.pickup_lng AS "pickup_lng:f64",
-            deliveries.drop_off_lat AS "drop_off_lat:f64",
-            deliveries.drop_off_lng AS "drop_off_lng:f64",
-            deliveries.status AS "status:DbDeliveryStatus",
-            deliveries.create_time AS "create_time:DateTime<Utc>",
-            deliveries.accept_time AS "accept_time:DateTime<Utc>",
-            deliveries.deliver_time AS "deliver_time:DateTime<Utc>",
-            riders.name AS "rider_name:String",
-            riders.phone_number AS "rider_phone_number:String"
-        FROM deliveries
-        LEFT JOIN riders
-        ON deliveries.rider_id = riders.id
-        WHERE deliveries.order_id = ?
-        "#,
-            order_id
-        )
-        .fetch_one(&self.pool)
-        .await?;
+    pub async fn get_delivery(&self, order_id: &str) -> Result<DbDelivery> {
+        // The query_as! macro doesn't use FromRow, and DbDelivery has a nested struct
+        // with conflicting field names, requiring a manual FromRow impl and making fn
+        // query_as() necessary.Since sqlx lacks fn query_file_as(), the SQL is loaded
+        // using std::fs from the /query directory.
+        let sql = std::fs::read_to_string("queries/delivery-by-id.sql")?;
+        let delivery = sqlx::query_as(sql.as_str())
+            .bind(order_id)
+            .fetch_one(&self.pool)
+            .await?;
 
-        Ok(DbDelivery {
-            order_id: foo.order_id,
-            rider: Some(DbRider {
-                id: foo.rider_id,
-                name: foo.rider_name,
-                phone_number: foo.rider_phone_number,
-            }),
-            pickup_code: foo.pickup_code,
-            pickup_location: DbPoint {
-                latitude: foo.pickup_lat,
-                longitude: foo.pickup_lng,
-            },
-            drop_off_location: DbPoint {
-                latitude: foo.drop_off_lat,
-                longitude: foo.drop_off_lng,
-            },
-            status: foo.status,
-            timestamp: DbTimestamp {
-                create_time: foo.create_time,
-                accept_time: foo.accept_time,
-                deliver_time: foo.deliver_time,
-            },
-        })
+        Ok(delivery)
     }
 
-    pub async fn get_delivery_status(&self, order_id: String) -> Result<DbDeliveryStatus> {
+    pub async fn get_delivery_status(&self, order_id: &str) -> Result<DbDeliveryStatus> {
         let status = sqlx::query_scalar!(
             r#" SELECT status AS "status!:DbDeliveryStatus"  FROM deliveries WHERE order_id=? "#,
             order_id,
