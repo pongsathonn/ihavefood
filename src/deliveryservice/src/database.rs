@@ -1,7 +1,5 @@
 use crate::models::*;
 use anyhow::Result;
-use chrono::offset::Utc;
-use chrono::DateTime;
 use sqlx::sqlite::SqlitePool;
 
 #[derive(Debug)]
@@ -15,18 +13,8 @@ impl Db {
     }
 
     pub async fn create_delivery(&self, new_order: &NewDelivery) -> Result<()> {
-        sqlx::query!(
-            r#"
-        INSERT INTO deliveries (
-            order_id, 
-            pickup_code,
-            pickup_lat,
-            pickup_lng,
-            drop_off_lat,
-            drop_off_lng
-        )
-        VALUES(?,?,?,?,?,?);
-            "#,
+        sqlx::query_file!(
+            "queries/create-delivery.sql",
             new_order.order_id,
             new_order.pickup_code,
             new_order.pickup_location.latitude,
@@ -50,39 +38,32 @@ impl Db {
             .bind(order_id)
             .fetch_one(&self.pool)
             .await?;
-
         Ok(delivery)
     }
 
     pub async fn get_delivery_status(&self, order_id: &str) -> Result<DbDeliveryStatus> {
-        let status = sqlx::query_scalar!(
-            r#" SELECT status AS "status!:DbDeliveryStatus"  FROM deliveries WHERE order_id=? "#,
-            order_id,
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let status = sqlx::query_file_scalar!("queries/delivery-status-by-id.sql", order_id,)
+            .fetch_one(&self.pool)
+            .await?;
         Ok(status)
     }
 
     // update the rider whos accepted the order.
-    pub async fn update_delivery_rider(&self, update: &DbUpdateDeliveryRider) -> Result<()> {
-        sqlx::query!(
-            r#"
-            UPDATE deliveries
-            SET 
-                rider_id=?2,
-                status=?3,
-                accept_time=?4
-            WHERE order_id=?1;
-            "#,
-            update.order_id,
-            update.rider_id,
-            update.status,
-            update.accept_time,
-        )
-        .execute(&self.pool)
-        .await?;
+    pub async fn update_delivery_rider(&self, order_id: &str, rider_id: &str) -> Result<()> {
+        sqlx::query_file!("queries/update-delivery-rider.sql", order_id, rider_id,)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
 
+    pub async fn update_delivery_status(
+        &self,
+        order_id: &str,
+        status: DbDeliveryStatus,
+    ) -> Result<()> {
+        sqlx::query_file!("queries/update-delivery-status.sql", order_id, status,)
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 }
