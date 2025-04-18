@@ -4,21 +4,14 @@ ihavefood is a microservice food-delivery project written in Go .
 
 ![xd](design.png)
 
-> Note: I realized the importance of unit testing when I was almost finished with the project..
-> Since adding tests would have taken a lot of time, I added tests only for the DeliveryService, 
-> as it is the most complex part of my project, involving concurrency in Go.
-
 Tech Stack and Tools
-- Languages: Go, SQL, Shell Script
 - Communication Protocols: REST, gRPC, gRPC-Gateway
 - Databases: PostgreSQL, MongoDB
 - Message Brokers: RabbitMQ
-- Caching : TODO 
 - Containerization: Docker
 - Authentication: JWT, mTLS(TODO)
 - Development Environments : Linux(Ubuntu)
 - API Documentation : Swagger/OpenAPI
-
 
 
 RabbitMQ design for every services
@@ -31,26 +24,37 @@ RabbitMQ design for every services
 <pre>
  | Publisher            |     Routing Key           |           Queue              | Subscriber |  ORDER STATUS  |   
  |----------------------|---------------------------|------------------------------|------------|----------------|
- |                      |                           |                              |            | PENDING        |
- | Order                | order.placed.event        | restaurant_assign_queue      | Restaurant |    "           | 
- | Order                | order.placed.event        | rider_assign_queue           | Delivery   |    "           | 
+ |                      |                           |                              |            |  PENDING       |
+ | Order                | order.placed.event        | restaurant_assign_queue      | Restaurant |                | 
+ | Order                | order.placed.event        | rider_assign_queue           | Delivery   |                | 
+ |                      |                           |                              |            |  PREPARING     |
+ | Restaurant           | restaurant.accepted.event | restaurant_accept_queue      | Delivery   |                | 
+ | Delivery             | rider.finding.event       | order_status_update_queue    | Order      |                | 
+ |                      |                           |                              |            |  FINDING_RIDER |
  |                      |                           |                              |            |                |
- | Delivery             | rider.finding.event       | order_status_update_queue    | Order      | FINDING_RIDER  | 
+ | Restaurant           | food.ready.event          | food_finish_queue            | Delivery   |                | 
+ | Restaurant           | food.ready.event          | food_finish_queue            | Order      |                | 
+ |                      |                           |                              |            | WAIT_PICKUP    |
+ | Delivery             | rider.assigned.event      | order_status_update_queue    | Order      |                | 
+ |                      |                           |                              |            |  ONGOING       |
  |                      |                           |                              |            |                |
- | Restaurant           | restaurant.accepted.event | order_status_update_queue    | Order      | PREPARING      | 
- |                      |                           |                              |            |                |
- | Restaurant           | food.ready.event          | order_status_update_queue    | Order      | WAIT_PICKUP    | 
- |                      |                           |                              |            |                |
- | Delivery             | rider.assigned.event      | order_status_update_queue    | Order      | ONGOING        | 
- |                      |                           |                              |            |                |
- | Payment or Delivery  | order.paid.event          | payment_status_update_queue  | Order      |    "           | 
- | Payment or Delivery  | order.paid.event          | coupon_update_queue          | Coupon     |    "           |
- |                      |                           |                              |            |                |
- | Delivery             | rider.delivered.event     | order_status_update_queue    | Order      | DELIVERED      |
+ | Delivery             | rider.delivered.event     | order_status_update_queue    | Order      |                |
+ |                      |                           |                              |            | DELIVERED      |
 </pre>
+
+# payment
+
+ | Publisher            |     Routing Key           |           Queue              | Subscriber |  PAYMENT STATUS  |   
+ |----------------------|---------------------------|------------------------------|------------|------------------|
+ |                      |                           |                              |            |  WAIT_PAY        |
+ | Delivery             | order.paid.event          | order_paid__queue            | Order      |                  | 
+ | Payment    TODO      | order.paid.event          | order_paid_queue             | Delivery   |                  | 
+ |                      |                           |                              |            |  PAID            |
+ | Delivery             | order.paid.event          | coupon_update_queue          | Coupon     |                  |
 
 
 ### Canceling Order 
+# proceed to refund
 <pre>
  | Publisher  |       Routing Key                | Subscriber |  STATUS   |
  |------------|----------------------------------|------------|-----------|
@@ -191,16 +195,5 @@ to prevent this case happen, always return error messsage that i know what messa
 such as if i check user information in database and i know error from this is "notfound then
 an error must be something like "username not found", but if i don't know what error will be
 return then i will use internal error which message contains what i do. such as 
-
-
-# Testing
-
-for testing storage methods i run container for testing theses methods, so this way i violate the unit testing 
-principle that unit testing should not connect to database. so this is not unit testing hihi
-
-for testing grpc server methods.
-
-
-
 
 
