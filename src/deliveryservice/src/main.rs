@@ -1,28 +1,22 @@
 mod database;
 mod models;
+mod rabbitmq;
 
 use anyhow::{ensure, Result};
+use database::Db;
+use futures::StreamExt;
 use ihavefood::delivery_service_server::{DeliveryService, DeliveryServiceServer};
-use ihavefood::{
-    ConfirmOrderDeliverRequest, ConfirmRiderAcceptRequest, GetDeliveryFeeRequest,
-    GetDeliveryFeeResponse, GetOrderTrackingRequest, GetOrderTrackingResponse, PickupInfo, Point,
-};
+use ihavefood::*;
+use lapin::{options::BasicAckOptions, Connection, ConnectionProperties};
 use log::error;
-
+use models::*;
+use prost::Message;
+use rabbitmq::RabbitMQ;
+use sqlx::sqlite::SqlitePoolOptions;
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Code, Request, Response, Status};
-
-use database::Db;
-use models::*;
-use sqlx::sqlite::SqlitePoolOptions;
-
-// _____ ___  ____   ___       __     __    _ _     _       _
-//|_   _/ _ \|  _ \ / _ \   _  \ \   / /_ _| (_) __| | __ _| |_ ___
-//  | || | | | | | | | | | (_)  \ \ / / _` | | |/ _` |/ _` | __/ _ \
-//  | || |_| | |_| | |_| |  _    \ V / (_| | | | (_| | (_| | ||  __/
-//  |_| \___/|____/ \___/  (_)    \_/ \__,_|_|_|\__,_|\__,_|\__\___|
 
 pub mod ihavefood {
     tonic::include_proto!("ihavefood");
@@ -31,6 +25,32 @@ pub mod ihavefood {
 #[derive(Debug)]
 pub struct MyDelivery {
     db: Db,
+    rabbitmq: RabbitMQ,
+}
+
+impl MyDelivery {
+    async fn event_listening(&self) {
+        let mut consumer = self
+            .rabbitmq
+            .subscribe("rider.assign.queue", "order.placed.event")
+            .await;
+
+        // Read as:
+        // while consumer.next`Option<T>` has Some(delivery) then does {}
+        // if delivery`Result<T,E>` is Ok(v) then does {}
+        while let Some(delivery) = consumer.next().await {
+            if let Ok(delivery) = delivery {
+                if let Some(content_type) = delivery.properties.content_type() {
+                    if content_type.as_str() != "application/json" {
+                        // TODO: error
+                    }
+
+                    let _ = PlaceOrder::decode(delivery.data.as_ref()).unwrap();
+
+                delivery.ack(BasicAckOptions::default()).await.unwrap();
+            }
+        }
+    }
 }
 
 #[tonic::async_trait]
@@ -48,6 +68,8 @@ impl DeliveryService for MyDelivery {
         tokio::spawn(async move {
             for _ in 1..6 {
                 sleep(Duration::from_secs(5)).await;
+
+                // TODO: tracking rider location from GoogleAPI or database
                 tx.send(Ok(GetOrderTrackingResponse {
                     ..Default::default()
                 }))
@@ -90,22 +112,31 @@ impl DeliveryService for MyDelivery {
             .await
             .unwrap();
 
-        if delivery.status != DbDeliveryStatus::UNACCEPT {
-            return Err(Status::new(Code::InvalidArgument, "invalid status"));
-        } else if delivery.status == DbDeliveryStatus::DELIVERED {
-            return Err(Status::new(
-                Code::InvalidArgument,
-                "order already delivered",
-            ));
-        };
+        match delivery.status {
+            DbDeliveryStatus::Unaccept => (),
+            DbDeliveryStatus::Delivered => {
+                return Err(Status::invalid_argument("rider already accepted"))
+            }
+            DbDeliveryStatus::Accepted => {
+                return Err(Status::invalid_argument("order already delivered"))
+            }
+        }
+
+        // TODO: push notify rider has accepted the order
 
         self.db
-            .update_delivery_rider(&DbUpdateDeliveryRider {
-                order_id: request.get_ref().order_id.clone(),
-                rider_id: request.get_ref().rider_id.clone(),
-                accept_time: chrono::Utc::now(),
-                status: DbDeliveryStatus::ACCEPTED,
-            })
+            .update_delivery_rider(
+                request.get_ref().order_id.as_str(),
+                request.get_ref().rider_id.as_str(),
+            )
+            .await
+            .unwrap();
+
+        self.db
+            .update_delivery_status(
+                request.get_ref().order_id.as_str(),
+                DbDeliveryStatus::Accepted,
+            )
             .await
             .unwrap();
 
@@ -126,10 +157,14 @@ impl DeliveryService for MyDelivery {
         &self,
         request: Request<ConfirmOrderDeliverRequest>,
     ) -> Result<Response<()>, Status> {
-        // just update order status
-
-        _ = request;
-        todo!()
+        self.db
+            .update_delivery_status(
+                request.into_inner().order_id.as_str(),
+                DbDeliveryStatus::Delivered,
+            )
+            .await
+            .unwrap();
+        Ok(Response::new(()))
     }
 }
 
@@ -138,16 +173,16 @@ fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
     let distance = haversine_distance(user_p, restau_p);
 
     ensure!(
-        distance >= 0.0 && distance <= 25.0,
+        (0.0..=25.0).contains(&distance),
         "distance must be between 0km and 25km"
     );
 
-    let delivery_fee: i32;
-    match distance {
-        d if d <= 5.0 => delivery_fee = 0,
-        d if d <= 10.0 => delivery_fee = 50,
-        _ => delivery_fee = 100,
-    }
+    let delivery_fee: i32 = match distance {
+        d if d <= 5.0 => 0,
+        d if d <= 10.0 => 50,
+        _ => 100,
+    };
+
     Ok(delivery_fee)
 }
 
@@ -174,6 +209,13 @@ fn haversine_distance(p1: &Point, p2: &Point) -> f64 {
     EARTH_RADIUS * c
 }
 
+async fn init_amqp_conn() -> Connection {
+    let addr = "amqp://127.0.0.1:5672";
+    Connection::connect(addr, ConnectionProperties::default())
+        .await
+        .unwrap()
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:5555".parse()?;
@@ -185,7 +227,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     Server::builder()
-        .add_service(DeliveryServiceServer::new(MyDelivery { db: Db::new(pool) }))
+        .add_service(DeliveryServiceServer::new(MyDelivery {
+            db: Db::new(pool),
+            rabbitmq: RabbitMQ::new(init_amqp_conn().await),
+        }))
         .serve(addr)
         .await?;
     Ok(())
