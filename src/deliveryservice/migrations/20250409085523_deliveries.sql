@@ -31,5 +31,3 @@ CREATE TABLE IF NOT EXISTS deliveries(
         ON DELETE CASCADE
 );
 
-
-

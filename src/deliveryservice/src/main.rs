@@ -1,6 +1,6 @@
 mod database;
 mod models;
-mod rabbitmq;
+mod msg_broker;
 
 use anyhow::{ensure, Result};
 use database::Db;
@@ -10,46 +10,105 @@ use ihavefood::*;
 use lapin::{options::BasicAckOptions, Connection, ConnectionProperties};
 use log::error;
 use models::*;
+use msg_broker::RabbitMQ;
 use prost::Message;
-use rabbitmq::RabbitMQ;
+use rand::prelude::*;
 use sqlx::sqlite::SqlitePoolOptions;
+use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Code, Request, Response, Status};
 
 pub mod ihavefood {
-    tonic::include_proto!("ihavefood");
+    // tonic::include_proto!("ihavefood");
+    include!("../genproto/ihavefood.rs");
 }
 
 #[derive(Debug)]
 pub struct MyDelivery {
-    db: Db,
-    rabbitmq: RabbitMQ,
+    db: Arc<Db>,
+    broker: Arc<RabbitMQ>,
 }
 
+// REFACTOR: refactor code to handle more event
 impl MyDelivery {
-    async fn event_listening(&self) {
+    async fn delivery_assignment(&self) {
         let mut consumer = self
-            .rabbitmq
+            .broker
             .subscribe("rider.assign.queue", "order.placed.event")
             .await;
 
-        // Read as:
-        // while consumer.next`Option<T>` has Some(delivery) then does {}
-        // if delivery`Result<T,E>` is Ok(v) then does {}
         while let Some(delivery) = consumer.next().await {
-            if let Ok(delivery) = delivery {
-                if let Some(content_type) = delivery.properties.content_type() {
-                    if content_type.as_str() != "application/json" {
-                        // TODO: error
+            let db = Arc::clone(&self.db);
+
+            // TODO: implement limit tasks technique
+            tokio::spawn(async move {
+                if let Ok(delivery) = delivery {
+                    delivery.ack(BasicAckOptions::default()).await.unwrap();
+
+                    // TODO: check delivery id duplicated
+                    if let Some(content_type) = delivery.properties.content_type() {
+                        if content_type.as_str() != "application/json" {
+                            // TODO: log content invalid
+                            return;
+                        }
+                    } else {
+                        // TODO: log no content
+                        return;
                     }
 
-                    let _ = PlaceOrder::decode(delivery.data.as_ref()).unwrap();
+                    let place_order = PlaceOrder::decode(delivery.data.as_ref()).unwrap();
+                    let (riders, pickup_info) = prepare_order_delivery(&place_order).unwrap();
 
-                delivery.ack(BasicAckOptions::default()).await.unwrap();
-            }
+                    // FIXME: impl From trait ( might be just point )
+                    db.create_delivery(&NewDelivery {
+                        order_id: place_order.order_id,
+                        pickup_code: pickup_info.pickup_code,
+                        pickup_location: DbPoint {
+                            latitude: pickup_info.pickup_location.unwrap().latitude,
+                            longitude: pickup_info.pickup_location.unwrap().longitude,
+                        },
+                        drop_off_location: DbPoint {
+                            latitude: pickup_info.drop_off_location.unwrap().latitude,
+                            longitude: pickup_info.drop_off_location.unwrap().longitude,
+                        },
+                        create_time: chrono::Utc::now(),
+                    })
+                    .await
+                    .unwrap();
+
+                    notify_riders(riders);
+                }
+            });
         }
+    }
+
+    async fn handle_rider_ack(&self, order_id: String, rider_id: String) -> Result<PickupInfo> {
+        self.db
+            .update_delivery_rider(&order_id, &rider_id)
+            .await
+            .unwrap();
+
+        let delivery = self.db.get_delivery(&order_id).await.unwrap();
+
+        self.broker
+            .publish("rider.assigned.event", order_id.as_bytes())
+            .await
+            .unwrap();
+
+        Ok(PickupInfo {
+            pickup_code: delivery.pickup_code,
+            pickup_location: Some(Point {
+                latitude: delivery.pickup_location.latitude,
+                longitude: delivery.pickup_location.longitude,
+            }),
+            drop_off_location: Some(Point {
+                latitude: delivery.drop_off_location.latitude,
+                longitude: delivery.drop_off_location.longitude,
+            }),
+        })
     }
 }
 
@@ -168,6 +227,15 @@ impl DeliveryService for MyDelivery {
     }
 }
 
+fn prepare_order_delivery(order: &PlaceOrder) -> Result<(Vec<Rider>, PickupInfo)> {
+    let riders = calc_nearest_riders();
+    let pickup_info = generate_order_pickup(order).unwrap();
+    Ok((riders, pickup_info))
+}
+fn notify_riders(_riders: Vec<Rider>) {
+    unimplemented!();
+}
+
 fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
     //distance(kilometers)
     let distance = haversine_distance(user_p, restau_p);
@@ -184,6 +252,74 @@ fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
     };
 
     Ok(delivery_fee)
+}
+
+// TODO: implement calculate logic
+fn calc_nearest_riders() -> Vec<Rider> {
+    let mut riders: Vec<Rider> = Vec::new();
+    (0..5).for_each(|_| riders.push(Rider::default()));
+    riders
+}
+
+fn generate_order_pickup(order: &PlaceOrder) -> Result<PickupInfo> {
+    let pickup_code = (100..1000)
+        .collect::<Vec<i32>>()
+        .choose(&mut rand::rng())
+        .unwrap()
+        .to_string();
+    let pickup_location = address_to_point(order.restaurant_address.as_ref().unwrap());
+    let drop_off_location = address_to_point(order.user_address.as_ref().unwrap());
+    Ok(PickupInfo {
+        pickup_code,
+        pickup_location,
+        drop_off_location,
+    })
+}
+
+// convert Address to Point.
+//
+// TODO implememnt Geocoding ( Google APIs )
+fn address_to_point(address: &Address) -> Option<Point> {
+    // [ Chaing Mai district ]
+    let example: HashMap<&str, Point> = HashMap::from([
+        (
+            "Mueang",
+            Point {
+                latitude: 18.7883,
+                longitude: 98.9853,
+            },
+        ),
+        (
+            "Hang Dong",
+            Point {
+                latitude: 18.6870,
+                longitude: 98.8897,
+            },
+        ),
+        (
+            "San Sai",
+            Point {
+                latitude: 18.8578,
+                longitude: 99.0631,
+            },
+        ),
+        (
+            "Mae Rim",
+            Point {
+                latitude: 18.8998,
+                longitude: 98.9311,
+            },
+        ),
+        (
+            "Doi Saket",
+            Point {
+                latitude: 18.8482,
+                longitude: 99.1403,
+            },
+        ),
+    ]);
+
+    example.get(address.province.as_str()).cloned()
 }
 
 // haversineDistance calculates the distance between two geographic points in kilometers.
@@ -210,17 +346,26 @@ fn haversine_distance(p1: &Point, p2: &Point) -> f64 {
 }
 
 async fn init_amqp_conn() -> Connection {
-    let addr = "amqp://127.0.0.1:5672";
-    Connection::connect(addr, ConnectionProperties::default())
-        .await
-        .unwrap()
+    Connection::connect(
+        format!(
+            "amqp://{}:{}@{}:{}",
+            dotenv::var("DELIVERY_AMQP_USER").unwrap(),
+            dotenv::var("DELIVERY_AMQP_PASS").unwrap(),
+            dotenv::var("DELIVERY_AMQP_HOST").unwrap(),
+            dotenv::var("DELIVERY_AMQP_PORT").unwrap(),
+        )
+        .as_str(),
+        ConnectionProperties::default(),
+    )
+    .await
+    .unwrap()
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:5555".parse()?;
 
-    // TODO : connect to sqlite engine
+    // TODO: connect to sqlite engine
     let pool = SqlitePoolOptions::new()
         .max_connections(15)
         .connect("sqlite::memory:")
@@ -228,8 +373,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Server::builder()
         .add_service(DeliveryServiceServer::new(MyDelivery {
-            db: Db::new(pool),
-            rabbitmq: RabbitMQ::new(init_amqp_conn().await),
+            db: Arc::new(Db::new(pool)),
+            broker: Arc::new(RabbitMQ::new(init_amqp_conn().await)),
         }))
         .serve(addr)
         .await?;

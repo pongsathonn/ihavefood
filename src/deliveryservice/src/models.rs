@@ -1,8 +1,5 @@
 use chrono::{DateTime, Utc};
-use sqlx::{
-    sqlite::{SqliteRow, SqliteValueRef},
-    Decode, Encode, FromRow, Row, Sqlite, Type,
-};
+use sqlx::{sqlite::SqliteRow, FromRow, Row};
 
 // dbDelivery represent delivery record information for an order
 pub struct DbDelivery {
@@ -30,11 +27,11 @@ pub struct DbRider {
 #[repr(i32)]
 pub enum DbDeliveryStatus {
     // UNACCEPTED indicates the rider has not yet accepted the order.
-    UNACCEPT,
+    Unaccept,
     // ACCEPTED indicates the rider has accepted the order.
-    ACCEPTED,
+    Accepted,
     // DELIVERED indicates the order has been delivered by the rider.
-    DELIVERED,
+    Delivered,
 }
 
 pub struct DbTimestamp {
@@ -60,13 +57,6 @@ pub struct NewDelivery {
     pub pickup_location: DbPoint,
     pub drop_off_location: DbPoint,
     pub create_time: DateTime<Utc>,
-}
-
-pub struct DbUpdateDeliveryRider {
-    pub order_id: String,
-    pub rider_id: String,
-    pub accept_time: DateTime<Utc>,
-    pub status: DbDeliveryStatus,
 }
 
 //==============================
