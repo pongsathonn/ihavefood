@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE deliveries\nSET \n    status = ?2,\n    accept_time = CASE WHEN ?2 = 1 THEN datetime('now') END,\n    deliver_time = CASE WHEN ?2 = 2 THEN datetime('now') END\nWHERE order_id=?1;\n\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "3b5ca605ced096210012fc129f1d46a17e99154ef2cc048be11af75a1fbe1532"
+}
