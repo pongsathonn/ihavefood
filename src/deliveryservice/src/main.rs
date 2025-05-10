@@ -16,7 +16,7 @@ use rand::prelude::*;
 use sqlx::sqlite::SqlitePoolOptions;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Semaphore};
 use tokio::time::{sleep, Duration};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Code, Request, Response, Status};
@@ -30,11 +30,23 @@ pub mod ihavefood {
 pub struct MyDelivery {
     db: Arc<Db>,
     broker: Arc<RabbitMQ>,
+    task_limiter: Arc<Semaphore>,
 }
 
-// REFACTOR: refactor code to handle more event
 impl MyDelivery {
-    async fn delivery_assignment(&self) {
+    pub async fn start_services(&self) -> Result<()> {
+        let other_task = self.other_event_handler();
+        let delivery_task = self.delivery_assignment();
+        tokio::try_join!(other_task, delivery_task,)?;
+        Ok(())
+    }
+
+    async fn other_event_handler(&self) -> Result<()> {
+        // unimplement
+        Ok(())
+    }
+
+    async fn delivery_assignment(&self) -> Result<()> {
         let mut consumer = self
             .broker
             .subscribe("rider.assign.queue", "order.placed.event")
@@ -42,47 +54,77 @@ impl MyDelivery {
 
         while let Some(delivery) = consumer.next().await {
             let db = Arc::clone(&self.db);
+            let task_limiter = Arc::clone(&self.task_limiter);
 
-            // TODO: implement limit tasks technique
             tokio::spawn(async move {
+                let _permit = match task_limiter.acquire().await {
+                    Ok(permit) => permit,
+                    Err(e) => {
+                        error!("Failed to acquire task permit: {}", e);
+                        return;
+                    }
+                };
+                /////////////////////////////////////
+
                 if let Ok(delivery) = delivery {
-                    delivery.ack(BasicAckOptions::default()).await.unwrap();
+                    if let Err(err) = delivery.ack(BasicAckOptions::default()).await {
+                        error!("Failed to ack:{}", err);
+                        return;
+                    }
 
                     // TODO: check delivery id duplicated
+
                     if let Some(content_type) = delivery.properties.content_type() {
                         if content_type.as_str() != "application/json" {
-                            // TODO: log content invalid
+                            error!("Invalid content type{}:", content_type);
                             return;
                         }
                     } else {
-                        // TODO: log no content
+                        error!("No content type");
                         return;
                     }
 
                     let place_order = PlaceOrder::decode(delivery.data.as_ref()).unwrap();
-                    let (riders, pickup_info) = prepare_order_delivery(&place_order).unwrap();
+                    let (riders, pickup_info) = Self::prepare_order_delivery(&place_order).unwrap();
 
-                    // FIXME: impl From trait ( might be just point )
+                    let pickup_location = match pickup_info.pickup_location {
+                        Some(location) => location,
+                        None => {
+                            error!("Empty pickup information");
+                            return;
+                        }
+                    };
+
+                    let drop_off_location = match pickup_info.drop_off_location {
+                        Some(location) => location,
+                        None => {
+                            error!("Empty pickup information");
+                            return;
+                        }
+                    };
+
                     db.create_delivery(&NewDelivery {
                         order_id: place_order.order_id,
                         pickup_code: pickup_info.pickup_code,
                         pickup_location: DbPoint {
-                            latitude: pickup_info.pickup_location.unwrap().latitude,
-                            longitude: pickup_info.pickup_location.unwrap().longitude,
+                            latitude: pickup_location.latitude,
+                            longitude: pickup_location.longitude,
                         },
                         drop_off_location: DbPoint {
-                            latitude: pickup_info.drop_off_location.unwrap().latitude,
-                            longitude: pickup_info.drop_off_location.unwrap().longitude,
+                            latitude: drop_off_location.latitude,
+                            longitude: drop_off_location.longitude,
                         },
                         create_time: chrono::Utc::now(),
                     })
                     .await
                     .unwrap();
 
-                    notify_riders(riders);
+                    Self::notify_riders(riders);
                 }
             });
         }
+
+        Ok(())
     }
 
     async fn handle_rider_ack(&self, order_id: String, rider_id: String) -> Result<PickupInfo> {
@@ -109,6 +151,102 @@ impl MyDelivery {
                 longitude: delivery.drop_off_location.longitude,
             }),
         })
+    }
+
+    fn prepare_order_delivery(order: &PlaceOrder) -> Result<(Vec<Rider>, PickupInfo)> {
+        let riders = Self::calc_nearest_riders();
+        let pickup_info = Self::generate_order_pickup(order).unwrap();
+        Ok((riders, pickup_info))
+    }
+
+    fn notify_riders(_riders: Vec<Rider>) {
+        unimplemented!();
+    }
+
+    fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
+        //distance(kilometers)
+        let distance = haversine_distance(user_p, restau_p);
+
+        ensure!(
+            (0.0..=25.0).contains(&distance),
+            "distance must be between 0km and 25km"
+        );
+
+        let delivery_fee: i32 = match distance {
+            d if d <= 5.0 => 0,
+            d if d <= 10.0 => 50,
+            _ => 100,
+        };
+
+        Ok(delivery_fee)
+    }
+
+    // TODO: use actual calculation format
+    fn calc_nearest_riders() -> Vec<Rider> {
+        let mut riders: Vec<Rider> = Vec::new();
+        (0..5).for_each(|_| riders.push(Rider::default()));
+        riders
+    }
+
+    fn generate_order_pickup(order: &PlaceOrder) -> Result<PickupInfo> {
+        let pickup_code = (100..1000)
+            .collect::<Vec<i32>>()
+            .choose(&mut rand::rng())
+            .unwrap()
+            .to_string();
+        let pickup_location = Self::address_to_point(order.restaurant_address.as_ref().unwrap());
+        let drop_off_location = Self::address_to_point(order.user_address.as_ref().unwrap());
+        Ok(PickupInfo {
+            pickup_code,
+            pickup_location,
+            drop_off_location,
+        })
+    }
+
+    // convert Address to Point.
+    //
+    // TODO: implememnt Geocoding ( Google APIs )
+    fn address_to_point(address: &Address) -> Option<Point> {
+        // [ Chaing Mai district ]
+        let example: HashMap<&str, Point> = HashMap::from([
+            (
+                "Mueang",
+                Point {
+                    latitude: 18.7883,
+                    longitude: 98.9853,
+                },
+            ),
+            (
+                "Hang Dong",
+                Point {
+                    latitude: 18.6870,
+                    longitude: 98.8897,
+                },
+            ),
+            (
+                "San Sai",
+                Point {
+                    latitude: 18.8578,
+                    longitude: 99.0631,
+                },
+            ),
+            (
+                "Mae Rim",
+                Point {
+                    latitude: 18.8998,
+                    longitude: 98.9311,
+                },
+            ),
+            (
+                "Doi Saket",
+                Point {
+                    latitude: 18.8482,
+                    longitude: 99.1403,
+                },
+            ),
+        ]);
+
+        example.get(address.province.as_str()).cloned()
     }
 }
 
@@ -153,10 +291,11 @@ impl DeliveryService for MyDelivery {
             longitude: request.get_ref().user_long,
         };
 
-        let delivery_fee = calc_delivery_fee(&user_point, &restaurant_point).map_err(|err| {
-            error!("Error: {err}");
-            Status::new(Code::Internal, "failed to calculate delivery fee")
-        })?;
+        let delivery_fee =
+            Self::calc_delivery_fee(&user_point, &restaurant_point).map_err(|err| {
+                error!("Error: {err}");
+                Status::new(Code::Internal, "failed to calculate delivery fee")
+            })?;
 
         Ok(Response::new(GetDeliveryFeeResponse { delivery_fee }))
     }
@@ -227,101 +366,6 @@ impl DeliveryService for MyDelivery {
     }
 }
 
-fn prepare_order_delivery(order: &PlaceOrder) -> Result<(Vec<Rider>, PickupInfo)> {
-    let riders = calc_nearest_riders();
-    let pickup_info = generate_order_pickup(order).unwrap();
-    Ok((riders, pickup_info))
-}
-fn notify_riders(_riders: Vec<Rider>) {
-    unimplemented!();
-}
-
-fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
-    //distance(kilometers)
-    let distance = haversine_distance(user_p, restau_p);
-
-    ensure!(
-        (0.0..=25.0).contains(&distance),
-        "distance must be between 0km and 25km"
-    );
-
-    let delivery_fee: i32 = match distance {
-        d if d <= 5.0 => 0,
-        d if d <= 10.0 => 50,
-        _ => 100,
-    };
-
-    Ok(delivery_fee)
-}
-
-// TODO: implement calculate logic
-fn calc_nearest_riders() -> Vec<Rider> {
-    let mut riders: Vec<Rider> = Vec::new();
-    (0..5).for_each(|_| riders.push(Rider::default()));
-    riders
-}
-
-fn generate_order_pickup(order: &PlaceOrder) -> Result<PickupInfo> {
-    let pickup_code = (100..1000)
-        .collect::<Vec<i32>>()
-        .choose(&mut rand::rng())
-        .unwrap()
-        .to_string();
-    let pickup_location = address_to_point(order.restaurant_address.as_ref().unwrap());
-    let drop_off_location = address_to_point(order.user_address.as_ref().unwrap());
-    Ok(PickupInfo {
-        pickup_code,
-        pickup_location,
-        drop_off_location,
-    })
-}
-
-// convert Address to Point.
-//
-// TODO implememnt Geocoding ( Google APIs )
-fn address_to_point(address: &Address) -> Option<Point> {
-    // [ Chaing Mai district ]
-    let example: HashMap<&str, Point> = HashMap::from([
-        (
-            "Mueang",
-            Point {
-                latitude: 18.7883,
-                longitude: 98.9853,
-            },
-        ),
-        (
-            "Hang Dong",
-            Point {
-                latitude: 18.6870,
-                longitude: 98.8897,
-            },
-        ),
-        (
-            "San Sai",
-            Point {
-                latitude: 18.8578,
-                longitude: 99.0631,
-            },
-        ),
-        (
-            "Mae Rim",
-            Point {
-                latitude: 18.8998,
-                longitude: 98.9311,
-            },
-        ),
-        (
-            "Doi Saket",
-            Point {
-                latitude: 18.8482,
-                longitude: 99.1403,
-            },
-        ),
-    ]);
-
-    example.get(address.province.as_str()).cloned()
-}
-
 // haversineDistance calculates the distance between two geographic points in kilometers.
 fn haversine_distance(p1: &Point, p2: &Point) -> f64 {
     // Earth's radius in kilometers.
@@ -375,6 +419,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(DeliveryServiceServer::new(MyDelivery {
             db: Arc::new(Db::new(pool)),
             broker: Arc::new(RabbitMQ::new(init_amqp_conn().await)),
+            task_limiter: Arc::new(Semaphore::new(100)),
         }))
         .serve(addr)
         .await?;
