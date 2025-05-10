@@ -15,9 +15,9 @@ use tokio::sync::Semaphore;
 
 #[derive(Debug)]
 pub struct MyDelivery {
-    db: Arc<Db>,
-    broker: Arc<RabbitMQ>,
-    task_limiter: Arc<Semaphore>,
+    pub db: Arc<Db>,
+    pub broker: Arc<RabbitMQ>,
+    pub task_limiter: Arc<Semaphore>,
 }
 
 impl MyDelivery {
@@ -157,7 +157,7 @@ impl MyDelivery {
         })
     }
 
-    fn prepare_order_delivery(order: &PlaceOrder) -> Result<(Vec<Rider>, PickupInfo)> {
+    pub fn prepare_order_delivery(order: &PlaceOrder) -> Result<(Vec<Rider>, PickupInfo)> {
         let riders = Self::calc_nearest_riders();
         let pickup_info = Self::generate_order_pickup(order)?;
         Ok((riders, pickup_info))
@@ -167,7 +167,7 @@ impl MyDelivery {
         unimplemented!();
     }
 
-    fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
+    pub fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
         //distance(kilometers)
         let distance = haversine_distance(user_p, restau_p);
 
