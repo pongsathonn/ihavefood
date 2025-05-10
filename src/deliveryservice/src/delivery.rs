@@ -200,14 +200,14 @@ impl MyDelivery {
             }
         };
 
-        let pickup_location = Self::address_to_point(
+        let pickup_location = address_to_point(
             order
                 .restaurant_address
                 .as_ref()
                 .ok_or_else(|| anyhow!("Restaurant address is empty"))?,
         );
 
-        let drop_off_location = Self::address_to_point(
+        let drop_off_location = address_to_point(
             order
                 .user_address
                 .as_ref()
@@ -220,52 +220,52 @@ impl MyDelivery {
             drop_off_location,
         })
     }
+}
 
-    // convert Address to Point.
-    //
-    // TODO: implememnt Geocoding ( Google APIs )
-    fn address_to_point(address: &Address) -> Option<Point> {
-        // [ Chaing Mai district ]
-        let example: HashMap<&str, Point> = HashMap::from([
-            (
-                "Mueang",
-                Point {
-                    latitude: 18.7883,
-                    longitude: 98.9853,
-                },
-            ),
-            (
-                "Hang Dong",
-                Point {
-                    latitude: 18.6870,
-                    longitude: 98.8897,
-                },
-            ),
-            (
-                "San Sai",
-                Point {
-                    latitude: 18.8578,
-                    longitude: 99.0631,
-                },
-            ),
-            (
-                "Mae Rim",
-                Point {
-                    latitude: 18.8998,
-                    longitude: 98.9311,
-                },
-            ),
-            (
-                "Doi Saket",
-                Point {
-                    latitude: 18.8482,
-                    longitude: 99.1403,
-                },
-            ),
-        ]);
+// convert Address to Point.
+//
+// TODO: implememnt Geocoding ( Google APIs )
+fn address_to_point(address: &Address) -> Option<Point> {
+    // [ Chaing Mai district ]
+    let example: HashMap<&str, Point> = HashMap::from([
+        (
+            "Mueang",
+            Point {
+                latitude: 18.7883,
+                longitude: 98.9853,
+            },
+        ),
+        (
+            "Hang Dong",
+            Point {
+                latitude: 18.6870,
+                longitude: 98.8897,
+            },
+        ),
+        (
+            "San Sai",
+            Point {
+                latitude: 18.8578,
+                longitude: 99.0631,
+            },
+        ),
+        (
+            "Mae Rim",
+            Point {
+                latitude: 18.8998,
+                longitude: 98.9311,
+            },
+        ),
+        (
+            "Doi Saket",
+            Point {
+                latitude: 18.8482,
+                longitude: 99.1403,
+            },
+        ),
+    ]);
 
-        example.get(address.province.as_str()).cloned()
-    }
+    example.get(address.province.as_str()).cloned()
 }
 
 // haversineDistance calculates the distance between two geographic points in kilometers.
