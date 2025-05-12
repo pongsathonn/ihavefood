@@ -1,6 +1,10 @@
 syntax = "proto3";
 
 package ihavefood;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
 option go_package =  "/genproto";
 
 import "google/api/annotations.proto";
@@ -12,6 +16,10 @@ import "google/protobuf/empty.proto";
 // Manages riders and delivery process.
 service DeliveryService {
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
     // GetOrderTracking provides real-time updates on the current status and location of 
     // an order. It tracks the progress of the order from preparation to delivery, 
     // giving the user real-time status updates.
@@ -67,7 +75,11 @@ message PickupInfo {
     // Restaurant address
     Point pickup_location = 2; 
     // User address
+<<<<<<< HEAD
     Point drop_off_location = 3;
+=======
+    Point destination = 3;
+>>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
 }
 
 message Rider {

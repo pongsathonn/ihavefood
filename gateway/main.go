@@ -42,19 +42,44 @@ func main() {
 			DiscardUnknown: true,
 		},
 	}
+<<<<<<< HEAD
 
 	gwmux := runtime.NewServeMux(
 		runtime.WithMarshalerOption("application/json+pretty", marshaler),
 	)
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	registerService(context.TODO(), gwmux, []grpc.DialOption{opt})
+=======
+	gwmux := runtime.NewServeMux(
+		runtime.WithMarshalerOption("application/json+pretty", marshaler),
+	)
+
+	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	opts := []grpc.DialOption{opt}
+
+	ctx := context.TODO()
+	err := pb.RegisterProfileServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("PROFILE_URI"), opts)
+	err = pb.RegisterCouponServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("COUPON_URI"), opts)
+	err = pb.RegisterOrderServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("ORDER_URI"), opts)
+	err = pb.RegisterRestaurantServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("RESTAURANT_URI"), opts)
+	err = pb.RegisterDeliveryServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("DELIVERY_URI"), opts)
+	err = pb.RegisterAuthServiceHandlerFromEndpoint(ctx, gwmux, os.Getenv("AUTH_URI"), opts)
+>>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
 	conn, err := grpc.Dial(os.Getenv("AUTH_URI"), opt)
 	if err != nil {
 		log.Fatal(err)
 	}
+<<<<<<< HEAD
 	auth := middleware.NewAuthMiddleware(pb.NewAuthServiceClient(conn))
 
 	// Update role and DELETE methods requires "admin" role.
+=======
+
+	auth := middleware.NewAuthMiddleware(pb.NewAuthServiceClient(conn))
+
+	// Update role and DELETE methods need "admin" role.
+
+>>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
 	http.Handle("PATCH /auth/users/roles", auth.Authz(gwmux))
 	http.Handle("DELETE /api/*", auth.Authz(gwmux))
 	http.Handle("/api/users/*", auth.Authn(gwmux))
@@ -62,6 +87,7 @@ func main() {
 	http.Handle("/api/*", auth.Authn(gwmux))
 	http.Handle("/", gwmux)
 
+<<<<<<< HEAD
 	gwport := os.Getenv("GATEWAY_PORT")
 	slog.Info(fmt.Sprintf("Gateway listening on port :%s", gwport))
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", gwport), prettierJSON(cors(gwmux))); err != nil {
@@ -91,6 +117,18 @@ func registerService(ctx context.Context, gwmux *runtime.ServeMux, opts []grpc.D
 	}
 }
 
+=======
+	handler := prettierJSON(cors(gwmux))
+
+	gwport := os.Getenv("GATEWAY_PORT")
+	addr := fmt.Sprintf(":%s", gwport)
+
+	slog.Info(fmt.Sprintf("Gateway listening on port :%s", gwport))
+	log.Fatal(http.ListenAndServe(addr, handler))
+
+}
+
+>>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
 func cors(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
