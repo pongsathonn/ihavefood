@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package ihavefood;
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+
+// ---------------------DELIVERY SERVICE---------------------------
+// Manages riders and delivery process.
+service DeliveryService {
+
+    // GetOrderTracking provides real-time updates on the current status and location of 
+    // an order. It tracks the progress of the order from preparation to delivery, 
+    // giving the user real-time status updates.
+    //
+    // This function should be called from OrderService to track
+    rpc GetOrderTracking(GetOrderTrackingRequest) returns(stream GetOrderTrackingResponse){}
+
+    // GetDeliveryFee calculates and returns the delivery fee based on the distance
+    // between the user's location and the restaurant's location.
+    rpc GetDeliveryFee(GetDeliveryFeeRequest) returns(GetDeliveryFeeResponse) {
+        option (google.api.http) = { 
+            // Example query:
+            //  ?restaurant_lat=111&restaurant_long222&user_lat=333&user_long444
+            get: "/api/deliveries/fee"
+        };
+    }
+
+    // ConfirmRiderAccept updates the order with the rider who accepted it and returns 
+    // the pickup information.
+    rpc ConfirmRiderAccept(ConfirmRiderAcceptRequest) returns(PickupInfo){
+        option (google.api.http) = {
+            patch: "/api/deliveries/{order_id}/accept" 
+            body: "rider_id"
+        };
+    }
+
+    // ConfirmOrderDeliver updates the delivery status after rider has delivered.
+    rpc ConfirmOrderDeliver(ConfirmOrderDeliverRequest) returns(google.protobuf.Empty){
+        option (google.api.http) = {
+            patch: "/api/deliveries/{order_id}/deliver" 
+        };
+    }
+
+    // TODO might seperate Rider to RiderService but now stick with DeliveryService
+    // Rider management draft 
+    // rpc GetRiderInformation
+    // rpc RegisterRider
+
+}
+
+
+message Point {
+    // The latitude in degrees. It must be in the range [-90.0, +90.0].
+    double latitude = 1;
+    // The longitude in degrees. It must be in the range [-180.0, +180.0].
+    double longitude = 2;
+}
+
+message PickupInfo {
+    // pickup_code is a simplified code used for identifying an order 
+    // for the rider. use three digit i.e 712 , 415
+    string pickup_code = 1;
+    // Restaurant address
+    Point pickup_location = 2; 
+    // User address
+    Point drop_off_location = 3;
+}
+
+message Rider {
+    string id = 1;
+    string name = 2;
+    string phone_number = 3;
+}
+
+message GetOrderTrackingRequest {
+    string order_id = 1;
+}
+
+message GetOrderTrackingResponse {
+    string order_id = 1;
+    string rider_id = 2;
+    Point rider_location = 3;
+    // The timestamp of the most recent update to the rider's location.
+    google.protobuf.Timestamp update_time = 4;
+}
+
+message GetDeliveryFeeRequest {
+    double restaurant_lat = 1;
+    double restaurant_long = 2;
+    double user_lat = 3;
+    double user_long = 4;
+}
+
+message GetDeliveryFeeResponse {
+    int32 delivery_fee =1;
+}
+
+message ConfirmRiderAcceptRequest {
+    string order_id = 1;
+    string rider_id = 2;
+}
+
+message ConfirmOrderDeliverRequest {
+    string order_id = 1;
+}
+

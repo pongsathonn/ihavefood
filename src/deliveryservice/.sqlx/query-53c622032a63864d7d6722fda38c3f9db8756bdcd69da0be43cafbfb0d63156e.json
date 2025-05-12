@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE deliveries SET rider_id=?2 WHERE order_id=?1\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "53c622032a63864d7d6722fda38c3f9db8756bdcd69da0be43cafbfb0d63156e"
+}

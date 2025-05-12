@@ -1,0 +1,115 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"log/slog"
+	"net"
+	"os"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc"
+
+	"github.com/pongsathonn/ihavefood/src/orderservice/internal"
+
+	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
+	amqp "github.com/rabbitmq/amqp091-go"
+)
+
+func main() {
+
+	s := internal.NewOrderService(
+		internal.NewOrderStorage(initMongoClient()),
+		internal.NewRabbitMQ(initRabbitMQ()),
+	)
+
+	go s.StartConsume()
+
+	startGRPCServer(s)
+}
+
+func initRabbitMQ() *amqp.Connection {
+
+	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+		os.Getenv("ORDER_AMQP_USER"),
+		os.Getenv("ORDER_AMQP_PASS"),
+		os.Getenv("ORDER_AMQP_HOST"),
+		os.Getenv("ORDER_AMQP_PORT"),
+	)
+
+	conn, err := amqp.Dial(uri)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return conn
+}
+
+func initMongoClient() *mongo.Client {
+
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/order_database?authSource=admin",
+		os.Getenv("ORDER_MONGO_USER"),
+		os.Getenv("ORDER_MONGO_PASS"),
+		os.Getenv("ORDER_MONGO_HOST"),
+		os.Getenv("ORDER_MONGO_PORT"),
+	)
+
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db := client.Database("order_database")
+	if err := db.CreateCollection(context.TODO(), "orderCollection"); err != nil {
+		var alreayExistsColl mongo.CommandError
+		if !errors.As(err, &alreayExistsColl) {
+			log.Fatal(err)
+		}
+	}
+
+	coll := db.Collection("orderCollection")
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{"requestId", 1}}, //prevent duplicate order
+		Options: options.Index().SetUnique(true),
+	}
+	newIndex, err := coll.Indexes().CreateOne(context.TODO(), indexModel)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Info("created new mongo index", "name", newIndex)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if err := client.Ping(ctx, nil); err != nil {
+		log.Fatal(err)
+	}
+
+	return client
+
+}
+
+// startGRPCServer sets up and starts the gRPC server
+func startGRPCServer(s *internal.OrderService) {
+
+	// Set up the server port from environment variable
+	uri := fmt.Sprintf(":%s", os.Getenv("ORDER_SERVER_PORT"))
+	lis, err := net.Listen("tcp", uri)
+	if err != nil {
+		log.Fatal("Failed to listen:", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterOrderServiceServer(grpcServer, s)
+
+	log.Printf("order service is running on port %s\n", os.Getenv("ORDER_SERVER_PORT"))
+
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatal("Failed to serve:", err)
+	}
+}

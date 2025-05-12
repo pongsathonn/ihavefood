@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+
+// ---------------------COUPON SERVICE-----------------------------
+// Manages coupons.
+service CouponService {
+
+    // ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
+    // This method is intended to be used by the frontend to display a list of all coupons to users, 
+    // regardless of their validity or availability.
+    //
+    // TODO: In the future, this method might be updated to list coupons by other condition,
+    // but currently, it responds with all coupons.
+    rpc ListCoupon(google.protobuf.Empty) returns(ListCouponResponse){
+        option (google.api.http) = {
+            get: "/api/coupons" 
+        };
+    }
+
+    // GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and 
+    // has sufficient quantity.
+    rpc GetCoupon(GetCouponRequest) returns(Coupon) {
+        option (google.api.http) = {
+            get: "/api/coupons/{code}" 
+        };
+    }
+
+
+    // AddCoupon creates a new coupon with the specified details. There are two types of coupons:
+    // Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
+    // If the coupon type is Free, the discount field is ignored and automatically set to zero.
+    rpc AddCoupon(AddCouponRequest) returns(Coupon){
+        option (google.api.http) = {
+            post: "/api/coupons"
+            body: "*"
+        };
+    }
+
+    // RedeemCoupon is called when an order payment is success. This method 
+    // updates the quantity of the coupon.
+    rpc RedeemCoupon(RedeemCouponRequest) returns (RedeemCouponResponse){}
+}
+
+
+message Coupon {
+    CouponTypes types = 1;
+    string code = 2;
+    // The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.
+    // The server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY.
+    int32 discount = 3;
+    // Number of seconds until the coupon expires.
+    int64 expires_in = 4;
+
+    int32 quantity_count = 5; 
+}
+
+enum CouponTypes{
+
+    COUPON_TYPE_UNSPECIFICED = 0;
+
+    // Discount is a fixed amount, not a percentage.
+    COUPON_TYPE_DISCOUNT = 1; 
+
+    COUPON_TYPE_FREE_DELIVERY = 2; 
+}
+
+
+message AddCouponRequest {
+    CouponTypes coupon_types = 1;
+    int32 discount = 2;
+
+    // The coupon expiration time in hours from now.
+    // For example expire_in_hour is 72 means the coupon will be expired
+    // in 3 days (72 hours) from now.
+    int32 expire_in_hour = 3;
+
+    int32 quantity = 4;
+}
+
+
+message GetCouponRequest {
+    string code = 1;
+}
+
+message ListCouponResponse {
+    repeated Coupon coupons = 1;
+}
+
+message RedeemCouponRequest {
+    string code = 1;
+}
+
+message RedeemCouponResponse { 
+    bool success = 1;
+}
+
+
+
+

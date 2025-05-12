@@ -1,0 +1,47 @@
+get:
+  tags:
+    - coupon
+  summary: Get list of coupon details
+  description: TODO
+  responses:
+    '200':
+      description: Coupon details
+
+post:
+  tags:
+    - coupon
+  summary: Add Coupon ( for admin )
+  description: TODO
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            couponTypes:
+              type: integer
+              description: 0=UNSPECIFIED, 1=DISCOUNT, 2=FREE_DELIVERY
+            discount:
+              type: integer
+            expireInHour:
+              type: integer
+            quantity:
+              type: integer
+        examples:
+          discount_request:
+            value:
+              couponTypes: 1
+              discount: 20
+              expireInHour: 72
+              quantity: 5
+          freeDeliveryRequest:
+            value:
+              couponTypes: 2
+              discount: 0
+              expireInHour: 48
+              quantity: 3
+  responses:
+    '200':
+      description: Coupon details
+

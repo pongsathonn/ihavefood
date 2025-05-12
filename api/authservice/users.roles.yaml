@@ -1,0 +1,49 @@
+patch:
+  tags:
+    - auth
+  summary: Assign role admin
+  description: This is function for assign new admin role. might delete later when i have better approach to update admin role
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+              default: newdev002
+            newRole:
+              type: string
+              default: 2
+  responses:
+    '200':
+      description: update role successfully
+      content:
+        application/json:
+          schema:
+             properties:
+               userId:
+                 type: string
+                 example: "15"
+               username:
+                 type: string
+                 example: "newdev002"
+               email:
+                 type: string
+                 example: "newdev002@mail.com"
+               phoneNumber:
+                 type: string
+                 example: "0812345679"
+               role:
+                 type: string
+                 example: "ADMIN"
+               createTime:
+                 type: string
+                 format: date-time
+                 example: "2024-11-26T19:46:20.103175Z"
+    "400":
+      description: Bad request
+    "404":
+      description: Not found
+  

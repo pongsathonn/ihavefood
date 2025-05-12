@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+
+// ---------------------REVIEW SERVICE-----------------------------
+// Manages ( TODO docuement )
+service ReviewService {
+    rpc AddOrderReview(AddOrderReviewRequest) returns(AddOrderReviewResponse){}
+    rpc UpdateOrderReview(UpdateOrderReviewRequest) returns(UpdateOrderReviewResponse){}
+    rpc DeleteOrderReview(DeleteOrderReviewRequest) returns(google.protobuf.Empty){}
+}
+
+message Review {
+    string username = 1;
+    string order_no =2;
+
+    string rating = 3;
+    string review_topic = 4;
+    string body = 5;
+    bytes image = 6;
+}
+
+message AddOrderReviewRequest {
+    Review review  = 1;
+}
+
+message AddOrderReviewResponse {
+    string review_id= 1;
+}
+
+message UpdateOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+
+    oneof new_order_review_field{
+        string new_rating = 3;
+        string new_topic = 4;
+        string new_body = 5;
+        Image new_image = 6;
+    }
+}
+
+message UpdateOrderReviewResponse {
+    string resp = 1;
+}
+
+message DeleteOrderReviewRequest {
+    string username = 1;
+    string review_id = 2;
+}
+

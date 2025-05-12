@@ -1,0 +1,248 @@
+name: ihavefood
+
+# port 40XX for debugging
+# port 8080 for grpc-gateway
+# port 9090 for server
+
+services:
+  swaggerx:
+    container_name: swagger_ui
+    image: swaggerapi/swagger-ui:latest
+    ports:
+      - "80:8080"
+    environment:
+      SWAGGER_JSON: /swagger/swagger.yaml
+    volumes:
+      - ./openapi:/swagger
+    networks:
+      - mynetwork
+    depends_on:
+      - gateway
+
+  gateway:
+    container_name: gateway
+    build: gateway
+    ports:
+      - "1800:1800" 
+      - "4041:4041" 
+    env_file:
+      - path: ./gateway/.env
+    networks:
+      - mynetwork
+    depends_on:
+      - profile
+      - coupon
+      - order
+      - restaurant
+      - delivery
+      - auth
+
+  order:
+    container_name: order
+    build: ./src/orderservice
+    env_file:
+      - path: ./src/orderservice/.env
+    depends_on:
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+      orderdb:
+        condition: service_started
+        restart: true
+    networks:
+      - mynetwork
+    ports:
+      - "4042:4042" 
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4042","--accept-multiclient", "/order" ]
+    security_opt:
+      - seccomp:unconfined
+  orderdb:
+    container_name: orderdb
+    image: mongo:latest
+    ports:
+      - "27052:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=donkadmin
+      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+    networks:
+      - mynetwork
+
+  restaurant:
+    container_name: restaurant
+    build: ./src/restaurantservice
+    env_file:
+      - path: ./src/restaurantservice/.env
+    networks:
+      - mynetwork
+    ports:
+      - "4043:4043" 
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/restaurant" ]
+    security_opt:
+      - seccomp:unconfined
+    depends_on:
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+      restaurantdb:
+        condition: service_started
+        restart: true
+  restaurantdb:
+    container_name: restaurantdb
+    image: mongo:latest
+    ports:
+      - "27051:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=donkadmin
+      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+    networks:
+      - mynetwork
+
+  profile:
+    container_name: profile
+    build: ./src/profileservice
+    env_file:
+      - path: ./src/profileservice/.env
+    networks:
+      - mynetwork
+    ports:
+      - "4044:4044"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/profile" ]
+    security_opt:
+      - seccomp:unconfined
+    depends_on:
+      profiledb:
+        condition: service_healthy
+        restart: true
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+  profiledb:
+    container_name: profiledb
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./src/profileservice/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    env_file:
+      - path: ./src/profileservice/.env
+    environment:
+      - POSTGRES_PASSWORD=donkpassword
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 5s 
+      timeout: 5s
+    networks:
+      - mynetwork
+
+  auth:
+    container_name: auth
+    build: ./src/authservice
+    env_file:
+      - path: ./src/authservice/.env
+    networks:
+      - mynetwork
+    ports:
+      - "4045:4045"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4045","--accept-multiclient", "/auth" ]
+    security_opt:
+      - seccomp:unconfined
+    depends_on:
+      authdb:
+        condition: service_healthy
+        restart: true
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+  authdb:
+    container_name: authdb
+    image: postgres
+    ports:
+      - "5442:5432"
+    volumes:
+      - ./src/authservice/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./src/authservice/scripts/create_table.sql:/sql/create_table.sql
+    env_file:
+      - path: ./src/authservice/.env
+    environment:
+      - POSTGRES_PASSWORD=donkpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s 
+      timeout: 10s
+    networks:
+      - mynetwork
+
+  delivery:
+    container_name: delivery
+    build: ./src/deliveryservice
+    env_file:
+      - path: ./src/deliveryservice/.env
+    networks:
+      - mynetwork
+    ports:
+      - "4046:4046"
+    security_opt:
+      - seccomp:unconfined
+    depends_on:
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+  # deliverydb:
+  #   container_name: deliverydb
+  #   image: mongo:latest
+  #   ports:
+  #     - "27053:27017"
+  #   environment:
+  #     - MONGO_INITDB_ROOT_USERNAME=donkadmin
+  #     - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+  # networks:
+  #   - mynetwork
+        
+  coupon:
+    container_name: coupon
+    build: ./src/couponservice
+    env_file:
+      - path: ./src/couponservice/.env
+    networks:
+      - mynetwork
+    ports:
+      - "4047:4047"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
+    security_opt:
+      - seccomp:unconfined
+    depends_on:
+      coupondb:
+        condition: service_started
+        restart: true
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
+  coupondb:
+    container_name: coupondb
+    image: mongo:latest
+    ports:
+      - "27054:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=donkadmin
+      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+    networks:
+      - mynetwork
+
+  rabbitmqx:
+    container_name: rabbitmqx
+    image: rabbitmq:3
+    environment:
+      - RABBITMQ_DEFAULT_USER=donkadmin
+      - RABBITMQ_DEFAULT_PASS=donkpassword
+    healthcheck:
+      test: ["CMD-SHELL","rabbitmq-diagnostics -q ping"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+

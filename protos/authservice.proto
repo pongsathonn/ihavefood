@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+// import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+
+// ---------------------AUTH SERVICE------------------------------
+// Manages user credentials
+service AuthService {
+
+    rpc Register(RegisterRequest) returns(UserCredentials) {
+        option (google.api.http) = {
+            post: "/auth/register" 
+            body: "*"
+        };
+    }
+
+    rpc Login(LoginRequest) returns(LoginResponse){
+        option (google.api.http) = {
+            post: "/auth/login" 
+            body: "*"
+        };
+    }
+
+    // Validate token for role "USER" returns true if token valid, otherwise false.
+    rpc ValidateUserToken(ValidateUserTokenRequest) returns(ValidateUserTokenResponse) {}
+
+    // Validate token for role "ADMIN" returns true if token valid, otherwise false.
+    rpc ValidateAdminToken(ValidateAdminTokenRequest) returns (ValidateAdminTokenResponse){}
+
+    // Check whether username already exists returns true if username already exists, otherwise false.
+    rpc CheckUsernameExists(CheckUsernameExistsRequest) returns (CheckUsernameExistsResponse) {}
+
+
+    // Promotes a user's role from "USER" to "ADMIN".
+    // This function intends to performe by users with the "ADMIN" role.
+    rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserCredentials){
+        option (google.api.http) = {
+            patch: "/auth/users/roles"
+            body: "*"
+       };
+    }
+
+    /*
+        rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
+
+        // Retrieves user credentials by username, responding only "USER" role.
+        rpc GetUserCredentials() returns(){}   endpoint /auth/users
+    */
+}
+
+message UserCredentials {
+    string user_id = 1;
+    string username = 2;
+    string email = 3;
+    string password = 4;
+    string phone_number = 5;
+    // Output only.
+    Roles role = 6;
+    google.protobuf.Timestamp create_time = 7;
+    google.protobuf.Timestamp update_time = 8;
+}
+
+enum Roles {
+    VISITOR = 0;
+    USER = 1;
+    ADMIN = 2;
+}
+
+message RegisterRequest {
+   string username = 1;
+   string email = 2;
+   string password = 3;
+   string phone_number = 4;
+}
+
+// uncomment RegisterResponse when gateway want to use this message
+// to config code response such as change success code RegisterResponse 
+// from 200 to 201.
+//
+// message RegisterResponse {
+//    UserCredentials user = 1;
+// }
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+
+message LoginResponse {
+    // Access token. Valid for 30 days.
+    string access_token = 1;
+    // Number of seconds until the access token expires.
+    int64 expires_in = 2;
+}
+
+message ValidateUserTokenRequest {
+    string access_token = 1;
+}
+
+message ValidateUserTokenResponse {
+    bool valid = 1;
+}
+
+message ValidateAdminTokenRequest {
+    string access_token = 1;
+}
+
+message ValidateAdminTokenResponse {
+    bool valid = 1;
+}
+
+message CheckUsernameExistsRequest{
+    string username = 1;
+}
+
+message CheckUsernameExistsResponse{
+    bool exists = 1;
+}
+
+message UpdateUserRoleRequest {
+    string user_id = 1;
+    Roles new_role = 2;
+}
+
