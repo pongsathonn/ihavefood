@@ -23,11 +23,8 @@ services:
     container_name: gateway
     build: gateway
     ports:
-<<<<<<< HEAD
       - "1800:1800" 
-=======
       - "180:180" 
->>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
       - "4041:4041" 
     env_file:
       - path: ./gateway/.env
@@ -185,17 +182,13 @@ services:
       - mynetwork
     ports:
       - "4046:4046"
-<<<<<<< HEAD
-=======
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4046","--accept-multiclient", "/delivery" ]
->>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
+    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4046","--accept-multiclient", "/delivery" ]
     security_opt:
       - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
         restart: true
-<<<<<<< HEAD
   # deliverydb:
   #   container_name: deliverydb
   #   image: mongo:latest
@@ -206,18 +199,6 @@ services:
   #     - MONGO_INITDB_ROOT_PASSWORD=donkpassword
   # networks:
   #   - mynetwork
-=======
-  deliverydb:
-    container_name: deliverydb
-    image: mongo:latest
-    ports:
-      - "27053:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=donkadmin
-      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
-    networks:
-      - mynetwork
->>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
         
   coupon:
     container_name: coupon

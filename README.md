@@ -196,6 +196,3 @@ such as if i check user information in database and i know error from this is "n
 an error must be something like "username not found", but if i don't know what error will be
 return then i will use internal error which message contains what i do. such as 
 
-
-
-TEST
