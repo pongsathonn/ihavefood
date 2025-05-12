@@ -2,9 +2,3 @@
 Cargo.lock
 *.db
 *.env
-<<<<<<< HEAD
-=======
-*.sqlx
-
-
->>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
