@@ -19,36 +19,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-func main() {
-
-	if err := initTimeZone(); err != nil {
-		slog.Error("failed to init time zone", "err", err)
-	}
-
-	if err := internal.InitSigningKey(); err != nil {
-		slog.Error("failed to init jwt signing key", "err", err)
-	}
-
-	db, err := initPostgres()
-	if err != nil {
-		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
-	}
-	storage := internal.NewStorage(db)
-
-	if err := internal.CreateAdmin(storage); err != nil {
-		log.Printf("Failed to create admin user: %v", err)
-	}
-
-	userClient, err := newProfileServiceClient()
-	if err != nil {
-		log.Fatalf("Failed to initialize ProfileService connection: %v", err)
-	}
-
-	service := internal.NewAuthService(storage, userClient)
-	startGRPCServer(service)
-
-}
-
 func newProfileServiceClient() (pb.ProfileServiceClient, error) {
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
@@ -123,4 +93,34 @@ func initTimeZone() error {
 
 	time.Local = l
 	return nil
+}
+
+func main() {
+
+	if err := initTimeZone(); err != nil {
+		slog.Error("failed to init time zone", "err", err)
+	}
+
+	if err := internal.InitSigningKey(); err != nil {
+		slog.Error("failed to init jwt signing key", "err", err)
+	}
+
+	db, err := initPostgres()
+	if err != nil {
+		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
+	}
+	storage := internal.NewStorage(db)
+
+	if err := internal.CreateAdmin(storage); err != nil {
+		log.Printf("Failed to create admin user: %v", err)
+	}
+
+	userClient, err := newProfileServiceClient()
+	if err != nil {
+		log.Fatalf("Failed to initialize ProfileService connection: %v", err)
+	}
+
+	service := internal.NewAuthService(storage, userClient)
+	startGRPCServer(service)
+
 }

@@ -37,9 +37,9 @@ impl RabbitMQ {
             .unwrap();
 
         if confirm.is_ack() {
-            return Ok(());
+            Ok(())
         } else {
-            return Err(anyhow::Error::msg("TODO: error"));
+            Err(anyhow::Error::msg("TODO: error"))
         }
     }
 

@@ -1,30 +1,14 @@
 name: ihavefood
 
 # port 40XX for debugging
-# port 8080 for grpc-gateway
-# port 9090 for server
 
 services:
-  swaggerx:
-    container_name: swagger_ui
-    image: swaggerapi/swagger-ui:latest
-    ports:
-      - "80:8080"
-    environment:
-      SWAGGER_JSON: /swagger/swagger.yaml
-    volumes:
-      - ./openapi:/swagger
-    networks:
-      - mynetwork
-    depends_on:
-      - gateway
 
   gateway:
     container_name: gateway
     build: gateway
     ports:
       - "1800:1800" 
-      - "180:180" 
       - "4041:4041" 
     env_file:
       - path: ./gateway/.env
@@ -182,13 +166,13 @@ services:
       - mynetwork
     ports:
       - "4046:4046"
-    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4046","--accept-multiclient", "/delivery" ]
     security_opt:
       - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
         restart: true
+
   # deliverydb:
   #   container_name: deliverydb
   #   image: mongo:latest

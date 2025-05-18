@@ -25,15 +25,16 @@ impl DeliveryService for MyDelivery {
                 sleep(Duration::from_secs(5)).await;
 
                 // TODO: tracking rider location from GoogleAPI or database
-                if let Err(_) = tx
+                if tx
                     .send(Ok(GetOrderTrackingResponse {
                         ..Default::default()
                     }))
                     .await
+                    .is_err()
                 {
                     error!("receiver dropped");
                     return;
-                };
+                }
             }
         });
 

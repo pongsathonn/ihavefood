@@ -2,6 +2,7 @@
 *.swp
 .env
 .todo.md
+.thought.md
 
 EventDesign.md
 UML.md
