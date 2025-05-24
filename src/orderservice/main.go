@@ -34,19 +34,30 @@ func main() {
 }
 
 func initRabbitMQ() *amqp.Connection {
-
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("ORDER_AMQP_USER"),
 		os.Getenv("ORDER_AMQP_PASS"),
 		os.Getenv("ORDER_AMQP_HOST"),
 		os.Getenv("ORDER_AMQP_PORT"),
 	)
+	maxRetries := 5
+	var conn *amqp.Connection
+	var err error
 
-	conn, err := amqp.Dial(uri)
-	if err != nil {
-		log.Fatal(err)
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(uri)
+		if err == nil {
+			log.Println("Successfully connected to RabbitMQ")
+			return conn
+		}
+		if i == maxRetries {
+			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+		}
+		time.Sleep(5 * time.Second)
 	}
-	return conn
+
+	log.Fatalf("Unexpected")
+	return nil
 }
 
 func initMongoClient() *mongo.Client {
@@ -64,10 +75,11 @@ func initMongoClient() *mongo.Client {
 	}
 
 	db := client.Database("order_database")
+
 	if err := db.CreateCollection(context.TODO(), "orderCollection"); err != nil {
 		var alreayExistsColl mongo.CommandError
 		if !errors.As(err, &alreayExistsColl) {
-			log.Fatal(err)
+			log.Fatal("Failed to create collection:", err)
 		}
 	}
 
@@ -76,9 +88,10 @@ func initMongoClient() *mongo.Client {
 		Keys:    bson.D{{"requestId", 1}}, //prevent duplicate order
 		Options: options.Index().SetUnique(true),
 	}
+
 	newIndex, err := coll.Indexes().CreateOne(context.TODO(), indexModel)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to create index:", err)
 	}
 
 	slog.Info("created new mongo index", "name", newIndex)
@@ -87,7 +100,7 @@ func initMongoClient() *mongo.Client {
 	defer cancel()
 
 	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to ping:", err)
 	}
 
 	return client

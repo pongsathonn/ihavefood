@@ -26,14 +26,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rabbitmq, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	s := internal.NewRestaurantService(
 		internal.NewRestaurantStorage(mongo),
-		internal.NewRabbitMQ(rabbitmq),
+		internal.NewRabbitMQ(initRabbitMQ()),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -78,19 +73,31 @@ func initMongoClient() (*mongo.Client, error) {
 	return client, nil
 }
 
-func initRabbitMQ() (*amqp.Connection, error) {
-
-	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s",
+func initRabbitMQ() *amqp.Connection {
+	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("RESTAURANT_AMQP_USER"),
 		os.Getenv("RESTAURANT_AMQP_PASS"),
 		os.Getenv("RESTAURANT_AMQP_HOST"),
 		os.Getenv("RESTAURANT_AMQP_PORT"),
-	))
-	if err != nil {
-		return nil, err
+	)
+	maxRetries := 5
+	var conn *amqp.Connection
+	var err error
+
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(uri)
+		if err == nil {
+			log.Println("Successfully connected to RabbitMQ")
+			return conn
+		}
+		if i == maxRetries {
+			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+		}
+		time.Sleep(5 * time.Second)
 	}
 
-	return conn, nil
+	log.Fatalf("Unexpected")
+	return nil
 }
 
 func startGRPCServer(s *internal.RestaurantService) {

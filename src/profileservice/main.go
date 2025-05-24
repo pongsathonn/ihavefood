@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -21,13 +22,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	amqpConn, err := initRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	profileService := internal.NewProfileService(
-		internal.NewRabbitMQ(amqpConn),
+		internal.NewRabbitMQ(initRabbitMQ()),
 		internal.NewProfileStorage(db),
 	)
 
@@ -35,22 +31,31 @@ func main() {
 
 }
 
-// initPubSub initializes the RabbitMQ connection and returns the rabbitmq instance
-func initRabbitMQ() (*amqp.Connection, error) {
-
+func initRabbitMQ() *amqp.Connection {
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("PROFILE_AMQP_USER"),
 		os.Getenv("PROFILE_AMQP_PASS"),
 		os.Getenv("PROFILE_AMQP_HOST"),
 		os.Getenv("PROFILE_AMQP_PORT"),
 	)
+	maxRetries := 5
+	var conn *amqp.Connection
+	var err error
 
-	conn, err := amqp.Dial(uri)
-	if err != nil {
-		return nil, err
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(uri)
+		if err == nil {
+			log.Println("Successfully connected to RabbitMQ")
+			return conn
+		}
+		if i == maxRetries {
+			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+		}
+		time.Sleep(5 * time.Second)
 	}
 
-	return conn, nil
+	log.Fatalf("Unexpected")
+	return nil
 }
 
 func initPostgres() (*sql.DB, error) {

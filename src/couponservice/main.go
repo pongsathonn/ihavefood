@@ -22,34 +22,42 @@ func main() {
 
 	mongo := initMongoClient()
 
-	couponService := internal.NewCouponService(
-		initRabbitMQ(),
-		internal.NewCouponStorage(mongo),
-	)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	go cleanUpCoupons(ctx, mongo)
 
-	startGRPCServer(couponService)
+	startGRPCServer(internal.NewCouponService(
+		initRabbitMQ(),
+		internal.NewCouponStorage(mongo),
+	))
 }
 
 func initRabbitMQ() *amqp.Connection {
-
 	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		os.Getenv("COUPON_AMQP_USER"),
 		os.Getenv("COUPON_AMQP_PASS"),
 		os.Getenv("COUPON_AMQP_HOST"),
 		os.Getenv("COUPON_AMQP_PORT"),
 	)
+	maxRetries := 5
+	var conn *amqp.Connection
+	var err error
 
-	conn, err := amqp.Dial(uri)
-	if err != nil {
-		log.Fatal(err)
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(uri)
+		if err == nil {
+			log.Println("Successfully connected to RabbitMQ")
+			return conn
+		}
+		if i == maxRetries {
+			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+		}
+		time.Sleep(5 * time.Second)
 	}
 
-	return conn
+	log.Fatalf("Unexpected")
+	return nil
 }
 
 func initMongoClient() *mongo.Client {
