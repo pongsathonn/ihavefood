@@ -1,6 +1,6 @@
 
 *.swp
-.env
+*.env
 .todo.md
 .thought.md
 
@@ -8,6 +8,7 @@ EventDesign.md
 UML.md
 curl.md
 
+.rabbitmq.sh
 dngproto.sh
 lazycurl.sh
 temp

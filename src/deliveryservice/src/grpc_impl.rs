@@ -124,7 +124,7 @@ impl DeliveryService for MyDelivery {
     async fn confirm_order_deliver(
         &self,
         request: Request<ConfirmOrderDeliverRequest>,
-    ) -> Result<Response<()>, Status> {
+    ) -> Result<Response<::prost_wkt_types::Empty>, Status> {
         self.db
             .update_delivery_status(
                 request.into_inner().order_id.as_str(),
@@ -132,6 +132,6 @@ impl DeliveryService for MyDelivery {
             )
             .await
             .unwrap();
-        Ok(Response::new(()))
+        Ok(Response::new(::prost_wkt_types::Empty {}))
     }
 }

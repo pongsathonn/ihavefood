@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MyDelivery {
     pub db: Arc<Db>,
     pub broker: Arc<RabbitMQ>,
@@ -22,22 +22,26 @@ pub struct MyDelivery {
 
 impl MyDelivery {
     pub async fn start_services(&self) -> Result<()> {
-        let other_task = self.other_event_handler();
-        let delivery_task = self.delivery_assignment();
-        tokio::try_join!(other_task, delivery_task,)?;
+        tokio::try_join!(self.delivery_assignment(), self.other_event_handler())?;
         Ok(())
     }
 
     async fn other_event_handler(&self) -> Result<()> {
-        // unimplement
         Ok(())
     }
 
     async fn delivery_assignment(&self) -> Result<()> {
-        let mut consumer = self
+        let mut consumer = match self
             .broker
             .subscribe("rider.assign.queue", "order.placed.event")
-            .await;
+            .await
+        {
+            Ok(consumer) => consumer,
+            Err(e) => {
+                error!("Failed to subscribe to delivery queue: {}", e);
+                return Ok(());
+            }
+        };
 
         while let Some(delivery) = consumer.next().await {
             let db = Arc::clone(&self.db);
@@ -51,7 +55,6 @@ impl MyDelivery {
                         return;
                     }
                 };
-                /////////////////////////////////////
 
                 if let Ok(delivery) = delivery {
                     if let Err(err) = delivery.ack(BasicAckOptions::default()).await {
@@ -61,20 +64,10 @@ impl MyDelivery {
 
                     // TODO: check delivery id duplicated
 
-                    if let Some(content_type) = delivery.properties.content_type() {
-                        if content_type.as_str() != "application/json" {
-                            error!("Invalid content type{}:", content_type);
-                            return;
-                        }
-                    } else {
-                        error!("No content type");
-                        return;
-                    }
-
                     let place_order = match PlaceOrder::decode(delivery.data.as_ref()) {
                         Ok(p) => p,
                         Err(e) => {
-                            error!("Failed to decode:{}", e);
+                            error!("Failed to decode place order:{}", e);
                             return;
                         }
                     };
@@ -163,8 +156,9 @@ impl MyDelivery {
         Ok((riders, pickup_info))
     }
 
+    // TODO: implement some notification
     fn notify_riders(_riders: Vec<Rider>) {
-        unimplemented!();
+        log::info!("notify to riders");
     }
 
     pub fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
@@ -265,7 +259,7 @@ fn address_to_point(address: &Address) -> Option<Point> {
         ),
     ]);
 
-    example.get(address.province.as_str()).cloned()
+    example.get(address.district.as_str()).cloned()
 }
 
 // haversineDistance calculates the distance between two geographic points in kilometers.
@@ -286,4 +280,197 @@ fn haversine_distance(p1: &Point, p2: &Point) -> f64 {
     let c = 2.0 * a.sqrt().asin();
 
     EARTH_RADIUS * c
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    // use crate::models::*;
+    use serde_json;
+    use std::{fs::File, io::BufReader};
+
+    #[test]
+    fn test_calc_delivery_fee_success() {
+        let user_point = Point {
+            latitude: 18.7883,
+            longitude: 98.9853,
+        };
+        let restaurant_point = Point {
+            latitude: 18.6870,
+            longitude: 98.8897,
+        };
+
+        let delivery_fee = MyDelivery::calc_delivery_fee(&user_point, &restaurant_point).unwrap();
+        println!("{}", delivery_fee);
+        assert_eq!(delivery_fee, 50);
+    }
+
+    #[test]
+    fn test_calc_delivery_fee_failure() {
+        let user_point = Point {
+            latitude: 18.7883,
+            longitude: 98.9853,
+        };
+        let restaurant_point = Point {
+            latitude: 50.0000,
+            longitude: 50.0000,
+        };
+
+        let result = MyDelivery::calc_delivery_fee(&user_point, &restaurant_point);
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("distance must be between 0km and 25km"));
+    }
+
+    #[test]
+    fn test_prepare_order_delivery_success() {
+        // PlaceOrder needs serde deserialize (derive)
+        let place_orders: Vec<PlaceOrder> = serde_json::from_reader(BufReader::new(
+            File::open("/testdata/place_order_success.json").unwrap(),
+        ))
+        .unwrap();
+
+        println!("placeorder ja = {:?}", place_orders);
+
+        for place_order in place_orders {
+            let result = MyDelivery::prepare_order_delivery(&place_order);
+
+            assert!(result.is_ok());
+            let (riders, pickup_info) = result.unwrap();
+            assert_eq!(riders.len(), 5);
+            assert!(pickup_info.pickup_location.is_some());
+            assert!(pickup_info.drop_off_location.is_some());
+        }
+    }
+
+    // #[test]
+    // fn test_prepare_order_delivery_failure() {
+    //     let order = PlaceOrder {
+    //         order_id: "test_order_456".to_string(),
+    //         restaurant_address: None, // Missing address
+    //         user_address: Some(Address {
+    //             district: "Hang Dong".to_string(),
+    //             street: "User Street".to_string(),
+    //             building: "User Building".to_string(),
+    //         }),
+    //     };
+    //
+    //     let result = MyDelivery::prepare_order_delivery(&order);
+    //
+    //     assert!(result.is_err());
+    //     assert!(result
+    //         .unwrap_err()
+    //         .to_string()
+    //         .contains("Restaurant address is empty"));
+    // }
+    //
+    // #[test]
+    // fn test_address_to_point_success() {
+    //     let address = Address {
+    //         district: "Mueang".to_string(),
+    //         street: "Test Street".to_string(),
+    //         building: "Test Building".to_string(),
+    //     };
+    //
+    //     let result = address_to_point(&address);
+    //
+    //     assert!(result.is_some());
+    //     let point = result.unwrap();
+    //     assert_eq!(point.latitude, 18.7883);
+    //     assert_eq!(point.longitude, 98.9853);
+    // }
+    //
+    // #[test]
+    // fn test_address_to_point_failure() {
+    //     let address = Address {
+    //         district: "Unknown District".to_string(), // Not in the HashMap
+    //         street: "Test Street".to_string(),
+    //         building: "Test Building".to_string(),
+    //     };
+    //
+    //     let result = address_to_point(&address);
+    //
+    //     assert!(result.is_none());
+    // }
+    //
+    // #[test]
+    // fn test_haversine_distance_success() {
+    //     let p1 = Point {
+    //         latitude: 18.7883,
+    //         longitude: 98.9853,
+    //     };
+    //     let p2 = Point {
+    //         latitude: 18.6870,
+    //         longitude: 98.8897,
+    //     };
+    //
+    //     let distance = haversine_distance(&p1, &p2);
+    //
+    //     assert!(distance > 0.0);
+    //     assert!(distance < 25.0); // Should be reasonable distance
+    //     assert!((distance - 12.0).abs() < 5.0); // Roughly 12km +/- 5km tolerance
+    // }
+    //
+    // #[test]
+    // fn test_haversine_distance_failure() {
+    //     let p1 = Point {
+    //         latitude: 0.0,
+    //         longitude: 0.0,
+    //     };
+    //     let p2 = Point {
+    //         latitude: 0.0,
+    //         longitude: 0.0,
+    //     };
+    //
+    //     let distance = haversine_distance(&p1, &p2);
+    //
+    //     // Same point should return 0 distance
+    //     assert_eq!(distance, 0.0);
+    // }
+    //
+    // #[test]
+    // fn test_calc_nearest_riders_success() {
+    //     let riders = MyDelivery::calc_nearest_riders();
+    //
+    //     assert_eq!(riders.len(), 5);
+    //     // All riders should be default instances
+    //     for rider in riders {
+    //         assert_eq!(rider, Rider::default());
+    //     }
+    // }
+    //
+    // #[test]
+    // fn test_calc_nearest_riders_failure() {
+    //     // This function always returns 5 riders, so we test the constraint
+    //     let riders = MyDelivery::calc_nearest_riders();
+    //
+    //     // Failure case: should not return empty or wrong count
+    //     assert_ne!(riders.len(), 0);
+    //     assert_ne!(riders.len(), 10); // Not the expected 5
+    // }
+    //
+    // #[test]
+    // fn test_notify_riders_success() {
+    //     let riders = vec![Rider::default(), Rider::default()];
+    //
+    //     // This function just logs, so we test it doesn't panic
+    //     MyDelivery::notify_riders(riders);
+    //
+    //     // If we reach here, it succeeded
+    //     assert!(true);
+    // }
+    //
+    // #[test]
+    // fn test_notify_riders_failure() {
+    //     let riders = vec![]; // Empty riders list
+    //
+    //     // Should still not panic with empty list
+    //     MyDelivery::notify_riders(riders);
+    //
+    //     // Test passes if no panic occurs
+    //     assert!(true);
+    // }
 }

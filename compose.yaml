@@ -1,5 +1,7 @@
 name: ihavefood
 
+# NOTE: DONT USE THIS FILE IN PROD
+#
 # port 40XX for debugging
 
 services:
@@ -47,8 +49,8 @@ services:
     ports:
       - "27052:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=donkadmin
-      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS}
     networks:
       - mynetwork
 
@@ -77,8 +79,8 @@ services:
     ports:
       - "27051:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=donkadmin
-      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS}
     networks:
       - mynetwork
 
@@ -111,7 +113,7 @@ services:
     env_file:
       - path: ./src/profileservice/.env
     environment:
-      - POSTGRES_PASSWORD=donkpassword
+      - POSTGRES_PASSWORD=${PG_ROOT_PASS}
     healthcheck:
       test: ["CMD-SHELL","pg_isready -U postgres"]
       interval: 5s 
@@ -135,9 +137,6 @@ services:
       authdb:
         condition: service_healthy
         restart: true
-      rabbitmqx: 
-        condition: service_healthy
-        restart: true
   authdb:
     container_name: authdb
     image: postgres
@@ -149,7 +148,7 @@ services:
     env_file:
       - path: ./src/authservice/.env
     environment:
-      - POSTGRES_PASSWORD=donkpassword
+      - POSTGRES_PASSWORD=${PG_ROOT_PASS}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s 
@@ -159,13 +158,15 @@ services:
 
   delivery:
     container_name: delivery
-    build: ./src/deliveryservice
+    build:
+      context: ./src/deliveryservice
+      dockerfile: Dockerfile
     env_file:
       - path: ./src/deliveryservice/.env
     networks:
       - mynetwork
     ports:
-      - "4046:4046"
+      - "4046:4046" # for gdbserver
     security_opt:
       - seccomp:unconfined
     depends_on:
@@ -209,17 +210,25 @@ services:
     ports:
       - "27054:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=donkadmin
-      - MONGO_INITDB_ROOT_PASSWORD=donkpassword
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS}
     networks:
       - mynetwork
 
   rabbitmqx:
     container_name: rabbitmqx
-    image: rabbitmq:3
+    image: rabbitmq:management
+    ports:
+      - "15672:15672" # UI
+      - "5672:5672" # Debugging purpose (let delivery connect from local)
+    env_file:
+      - path: ./.env
     environment:
-      - RABBITMQ_DEFAULT_USER=donkadmin
-      - RABBITMQ_DEFAULT_PASS=donkpassword
+      - RABBITMQ_DEFAULT_USER=${RBMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RBMQ_PASS}
+    volumes:
+      - ./.rbmq_users.sh:/rbmq_users.sh
+    entrypoint: ["/bin/bash", "/rbmq_users.sh"]
     healthcheck:
       test: ["CMD-SHELL","rabbitmq-diagnostics -q ping"]
       interval: 30s

@@ -154,7 +154,7 @@ func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 			case "rider.delivered.event":
 				status = pb.OrderStatus_DELIVERED
 			default:
-				slog.Error("unknown routing key %s", msg.RoutingKey)
+				slog.Error("unknown routing key %s", "key", msg.RoutingKey)
 				continue
 			}
 
@@ -186,7 +186,7 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 		for msg := range messages {
 
 			if msg.RoutingKey != "user.paid.event" {
-				slog.Error("unknown routing key %s", msg.RoutingKey)
+				slog.Error("unknown routing key ", "key", msg.RoutingKey)
 				continue
 			}
 

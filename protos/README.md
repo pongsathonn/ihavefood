@@ -1,5 +1,3 @@
-
-
 Protoc Flags
 
     -I is where protoc search for imports
@@ -18,7 +16,6 @@ and run go mod tidy to resolve
     google/api/httpbody.proto
 
 more https://github.com/grpc-ecosystem/grpc-gateway#usage
-
 
 dir /google
 

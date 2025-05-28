@@ -27,4 +27,5 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 COPY --from=build /bin/deliveryservice /bin/
+
 CMD ["/bin/deliveryservice"]

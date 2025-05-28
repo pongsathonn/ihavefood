@@ -12,7 +12,7 @@ impl RabbitMQ {
     }
 
     pub async fn publish(&self, key: &str, payload: &[u8]) -> Result<()> {
-        let ch = self.conn.create_channel().await.unwrap();
+        let ch = self.conn.create_channel().await?;
 
         ch.exchange_declare(
             "my_exchange",
@@ -20,8 +20,7 @@ impl RabbitMQ {
             ExchangeDeclareOptions::default(),
             FieldTable::default(),
         )
-        .await
-        .unwrap();
+        .await?;
 
         let confirm = ch
             .basic_publish(
@@ -31,10 +30,8 @@ impl RabbitMQ {
                 payload,
                 BasicProperties::default(),
             )
-            .await
-            .unwrap()
-            .await
-            .unwrap();
+            .await?
+            .await?;
 
         if confirm.is_ack() {
             Ok(())
@@ -44,17 +41,25 @@ impl RabbitMQ {
     }
 
     // TODO: handle error properly
-    pub async fn subscribe(&self, queue: &str, key: &str) -> Consumer {
-        let ch = self.conn.create_channel().await.unwrap();
+    pub async fn subscribe(&self, queue: &str, key: &str) -> Result<Consumer> {
+        let ch = self.conn.create_channel().await?;
 
         ch.exchange_declare(
             "my_exchange",
             ExchangeKind::Direct,
-            ExchangeDeclareOptions::default(),
+            ExchangeDeclareOptions {
+                passive: false,
+                durable: true,
+                auto_delete: false,
+                internal: false,
+                nowait: false,
+            },
             FieldTable::default(),
         )
-        .await
-        .unwrap();
+        .await?;
+
+        ch.queue_declare(queue, QueueDeclareOptions::default(), FieldTable::default())
+            .await?;
 
         ch.queue_bind(
             queue,
@@ -63,8 +68,7 @@ impl RabbitMQ {
             QueueBindOptions::default(),
             FieldTable::default(),
         )
-        .await
-        .unwrap();
+        .await?;
 
         ch.basic_consume(
             queue,
@@ -73,6 +77,6 @@ impl RabbitMQ {
             FieldTable::default(),
         )
         .await
-        .unwrap()
+        .map_err(|e| anyhow::anyhow!(e))
     }
 }

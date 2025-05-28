@@ -1,0 +1,71 @@
+{
+    {
+        "requestId": "123",
+        "userId": "1092123",
+        "restaurantId": "19201230123",
+        "menus": [
+            { "foodName": "Pad Thai", "price": 50 },
+            { "foodName": "Kra pao", "price": 60 }
+        ],
+        "couponCode": "SAVE40FORYOU",
+        "couponDiscount": 40,
+        "deliveryFee": 50,
+        "total": 120,
+        "userAddress": {
+            "addressName": "Home",
+            "subDistrict": "Nong Hoi",
+            "district": "Mueang",
+            "province": "Chiang Mai",
+            "postalCode": "50000",
+            "country": "Thailand"
+        },
+        "restaurantAddress": {
+            "addressName": "HaiDeeLhao",
+            "subDistrict": "Blabla",
+            "district": "Hang Dong",
+            "province": "Chiang Mai",
+            "postalCode": "50000",
+            "country": "Thailand"
+        },
+        "userContact": {
+            "phoneNumber": "0982736541",
+            "email": "test@mail.com"
+        },
+        "paymentMethods": 1
+    },
+    {
+        "requestId": "314",
+        "userId": "1092123",
+        "restaurantId": "19201230123",
+        "menus": [
+            { "foodName": "Pad Thai", "price": 50 },
+            { "foodName": "Kra pao", "price": 60 }
+        ],
+        "couponCode": "SAVE40FORYOU",
+        "couponDiscount": 40,
+        "deliveryFee": 50,
+        "total": 120,
+        "userAddress": {
+            "addressName": "Home",
+            "subDistrict": "Nong Hoi",
+            "district": "Mueang",
+            "province": "Chiang Mai",
+            "postalCode": "50000",
+            "country": "Thailand"
+        },
+        "restaurantAddress": {
+            "addressName": "HaiDeeLhao",
+            "subDistrict": "Blabla",
+            "district": "Hang Dong",
+            "province": "Chiang Mai",
+            "postalCode": "50000",
+            "country": "Thailand"
+        },
+        "userContact": {
+            "phoneNumber": "0982736541",
+            "email": "test@mail.com"
+        },
+        "paymentMethods": 1
+    }
+}
+
