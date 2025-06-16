@@ -4,6 +4,7 @@ set -e
 # postgres image required $POSTGRES_PASSWORD for superuser password.
 # $POSTGRES_USER is optional (default is postgres)
 echo "$POSTGRES_USER"
+# x
 
 # fetch env variable from .env file
 AUTH_USER="${AUTH_POSTGRES_USER}"
