@@ -1,14 +1,14 @@
-FROM rust:1.81-slim AS build
+FROM rust:1.87-slim AS build
 WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     protobuf-compiler \
+    libprotobuf-dev \
     libssl-dev \
     pkg-config && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-# Regular build without cross-compilation
 RUN --mount=type=bind,source=src,target=src \
     --mount=type=bind,source=Cargo.toml,target=Cargo.toml \
     --mount=type=bind,source=Cargo.lock,target=Cargo.lock \
