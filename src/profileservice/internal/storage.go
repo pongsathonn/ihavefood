@@ -3,7 +3,13 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
+	"log/slog"
+	"strings"
 )
+
+var ErrProfileNotFound = errors.New("profile not found")
 
 func NewProfileStorage(db *sql.DB) *profileStorage {
 	return &profileStorage{db: db}
@@ -15,79 +21,91 @@ type profileStorage struct {
 
 // Profiles returns a list of user profiles.
 func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
-
-	rows, err := s.db.QueryContext(ctx, `
+	profileRows, err := s.db.QueryContext(ctx, `
 		SELECT
-			profiles.user_id,
-			profiles.username,
-			profiles.bio,
-			profiles.facebook,
-			profiles.instagram,
-			profiles.line,
-			profiles.create_time,
-			profiles.update_time,
-			addresses.address_name,
-			addresses.sub_district,
-			addresses.district,
-			addresses.province,
-			addresses.postal_code
-		FROM
-			profiles
-		LEFT JOIN addresses USING (user_id)
+			user_id, username, bio, facebook, instagram, line, create_time, update_time
+		FROM profiles
 	`)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer profileRows.Close()
 
-	var m = make(map[string]*dbProfile)
-	for rows.Next() {
-		var (
-			p       dbProfile
-			social  dbSocial
-			address dbAddress
-		)
+	profilesMap := make(map[string]*dbProfile)
+	var userIDs []string
 
-		err := rows.Scan(
-			&p.UserID,
-			&p.Username,
-			&p.Bio,
-			&social.Facebook,
-			&social.Instagram,
-			&social.Line,
-			&p.CreateTime,
-			&p.UpdateTime,
-			&address.AddressName,
-			&address.SubDistrict,
-			&address.District,
-			&address.Province,
-			&address.PostalCode,
+	for profileRows.Next() {
+		var p dbProfile
+		err := profileRows.Scan(
+			&p.UserID, &p.Username, &p.Bio, &p.Social.Facebook,
+			&p.Social.Instagram, &p.Social.Line, &p.CreateTime, &p.UpdateTime,
 		)
 		if err != nil {
 			return nil, err
 		}
-
-		if _, exists := m[p.UserID]; !exists {
-			// initilize the key first
-			m[p.UserID] = &dbProfile{
-				UserID:     p.UserID,
-				Username:   p.Username,
-				Bio:        p.Bio,
-				Social:     &social,
-				Addresses:  []*dbAddress{},
-				CreateTime: p.CreateTime,
-				UpdateTime: p.UpdateTime,
-			}
-		}
-		m[p.UserID].Addresses = append(m[p.UserID].Addresses, &address)
+		p.Addresses = []*dbAddress{}
+		profilesMap[p.UserID] = &p
+		userIDs = append(userIDs, p.UserID)
 	}
-	if err := rows.Err(); err != nil {
+
+	if err = profileRows.Err(); err != nil {
 		return nil, err
 	}
 
-	profiles := make([]*dbProfile, 0, len(m))
-	for _, profile := range m {
-		profiles = append(profiles, profile)
+	if len(userIDs) == 0 {
+		return []*dbProfile{}, nil
+	}
+
+	placeholders := make([]string, len(userIDs))
+	for i := range placeholders {
+		placeholders[i] = "?"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			user_id,
+			address_name,
+			sub_district,
+			district,
+			province,
+			postal_code
+		FROM addresses
+		WHERE user_id IN (%s)
+	`, strings.Join(placeholders, ","))
+
+	addressRows, err := s.db.QueryContext(ctx, query, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer addressRows.Close()
+
+	for addressRows.Next() {
+
+		var (
+			userID string
+			addr   dbAddress
+		)
+
+		if err := addressRows.Scan(
+			&addr.AddressName, &addr.SubDistrict, &addr.District,
+			&addr.Province, &addr.PostalCode,
+		); err != nil {
+			return nil, err
+		}
+
+		if profile, ok := profilesMap[userID]; ok {
+			profile.Addresses = append(profile.Addresses, &addr)
+		} else {
+			slog.Warn("Address found for unknown user", "userID", userID)
+		}
+	}
+	if err = addressRows.Err(); err != nil {
+		return nil, err
+	}
+
+	profiles := make([]*dbProfile, 0, len(profilesMap))
+	for _, p := range profilesMap {
+		profiles = append(profiles, p)
 	}
 
 	return profiles, nil
@@ -95,79 +113,65 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 
 // Profile returns the user profile.
 func (s *profileStorage) profile(ctx context.Context, userID string) (*dbProfile, error) {
+	var profile dbProfile
+	if err := s.db.QueryRowContext(ctx, `
+		SELECT 
+			user_id,username,bio,facebook,instagram,line,create_time,update_time
+		FROM profiles 
+		WHERE user_id = $1`,
+		userID,
+	).Scan(
+		&profile.UserID,
+		&profile.Username,
+		&profile.Bio,
+		&profile.Social.Facebook,
+		&profile.Social.Instagram,
+		&profile.Social.Line,
+		&profile.CreateTime,
+		&profile.UpdateTime,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrProfileNotFound
+		}
+		return nil, err
+	}
 
-	rows, err := s.db.QueryContext(ctx, `
+	addressRows, err := s.db.QueryContext(ctx, `
 		SELECT
-			profiles.user_id,
-			profiles.username,
-			profiles.bio,
-			profiles.facebook,
-			profiles.instagram,
-			profiles.line,
-			profiles.create_time,
-			profiles.update_time,
-			addresses.address_name,
-			addresses.sub_district,
-			addresses.district,
-			addresses.province,
-			addresses.postal_code
+			address_name,
+			sub_district,
+			district,
+			province,
+			postal_code
 		FROM
-			profiles
-		LEFT JOIN addresses USING (user_id)
-		WHERE profiles.user_id = $1;
-	`, userID)
+			addresses
+		WHERE user_id = $1`,
+		userID,
+	)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer addressRows.Close()
 
-	profile := make(map[string]*dbProfile)
-	for rows.Next() {
-		var (
-			p       dbProfile
-			social  dbSocial
-			address dbAddress
-		)
-
-		err := rows.Scan(
-			&p.UserID,
-			&p.Username,
-			&p.Bio,
-			&social.Facebook,
-			&social.Instagram,
-			&social.Line,
-			&p.CreateTime,
-			&p.UpdateTime,
-			&address.AddressName,
-			&address.SubDistrict,
-			&address.District,
-			&address.Province,
-			&address.PostalCode,
-		)
-		if err != nil {
+	for addressRows.Next() {
+		var addr dbAddress
+		if err := addressRows.Scan(
+			&addr.AddressName,
+			&addr.SubDistrict,
+			&addr.District,
+			&addr.Province,
+			&addr.PostalCode,
+		); err != nil {
 			return nil, err
 		}
-
-		if _, exists := profile[p.UserID]; !exists {
-			// initilize the key first
-			profile[p.UserID] = &dbProfile{
-				UserID:     p.UserID,
-				Username:   p.Username,
-				Bio:        p.Bio,
-				Social:     &social,
-				Addresses:  []*dbAddress{},
-				CreateTime: p.CreateTime,
-				UpdateTime: p.UpdateTime,
-			}
-		}
-		profile[p.UserID].Addresses = append(profile[p.UserID].Addresses, &address)
+		profile.Addresses = append(profile.Addresses, &addr)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = addressRows.Err(); err != nil {
 		return nil, err
 	}
 
-	return profile[userID], nil
+	return &profile, nil
 }
 
 // Create inserts new user profile with empty fields. it intends to create

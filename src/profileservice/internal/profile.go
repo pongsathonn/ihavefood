@@ -105,6 +105,7 @@ func (x *ProfileService) CreateAddress(ctx context.Context, in *pb.CreateAddress
 		return nil, status.Errorf(codes.Internal, "failed to update adress")
 	}
 
+	// edge case: if profileID not exists it will return nil profile as nil
 	profile, err := x.store.profile(ctx, profileID)
 	if err != nil {
 		slog.Error("failed to retrive profile", "err", err)
@@ -121,7 +122,7 @@ func (x *ProfileService) UpdateProfile(ctx context.Context, in *pb.UpdateProfile
 	update := &dbProfile{
 		Username: in.NewUsername,
 		Bio:      sql.NullString{String: in.NewBio},
-		Social: &dbSocial{
+		Social: dbSocial{
 			Facebook:  sql.NullString{String: in.NewSocial.Facebook},
 			Instagram: sql.NullString{String: in.NewSocial.Instagram},
 			Line:      sql.NullString{String: in.NewSocial.Line},
@@ -175,7 +176,7 @@ func protoToDb(profile *pb.Profile) *dbProfile {
 		//UserID: "",
 		Username: profile.Username,
 		Bio:      sql.NullString{String: profile.Bio},
-		Social: &dbSocial{
+		Social: dbSocial{
 			Facebook:  sql.NullString{String: profile.Social.Facebook},
 			Instagram: sql.NullString{String: profile.Social.Instagram},
 			Line:      sql.NullString{String: profile.Social.Line},
