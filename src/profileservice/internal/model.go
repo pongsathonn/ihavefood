@@ -14,15 +14,12 @@ type newProfile struct {
 
 // UserID and Username is generated from AuthService to ensure
 // both user credentials and profile are sync.
-//
-// TODO: Add 'Picture' field to store the user's profile image once
-// a storage solution is decided (e.g., local file system, cloud storage).
 type dbProfile struct {
 	UserID   string
 	Username string
 	//Picture    []byte
 	Bio        sql.NullString
-	Social     *dbSocial
+	Social     dbSocial
 	Addresses  []*dbAddress
 	CreateTime time.Time
 	UpdateTime time.Time

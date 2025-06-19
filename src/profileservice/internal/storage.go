@@ -25,6 +25,7 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 		SELECT
 			user_id, username, bio, facebook, instagram, line, create_time, update_time
 		FROM profiles
+		ORDER BY CAST(user_id AS INTEGER)
 	`)
 	if err != nil {
 		return nil, err
@@ -58,7 +59,7 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 
 	placeholders := make([]string, len(userIDs))
 	for i := range placeholders {
-		placeholders[i] = "?"
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
 	}
 
 	query := fmt.Sprintf(`
@@ -73,7 +74,12 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 		WHERE user_id IN (%s)
 	`, strings.Join(placeholders, ","))
 
-	addressRows, err := s.db.QueryContext(ctx, query, userIDs)
+	args := make([]any, len(userIDs))
+	for i, id := range userIDs {
+		args[i] = id
+	}
+
+	addressRows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +93,8 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 		)
 
 		if err := addressRows.Scan(
-			&addr.AddressName, &addr.SubDistrict, &addr.District,
-			&addr.Province, &addr.PostalCode,
+			userID, &addr.AddressName, &addr.SubDistrict,
+			&addr.District, &addr.Province, &addr.PostalCode,
 		); err != nil {
 			return nil, err
 		}
@@ -104,8 +110,8 @@ func (s *profileStorage) profiles(ctx context.Context) ([]*dbProfile, error) {
 	}
 
 	profiles := make([]*dbProfile, 0, len(profilesMap))
-	for _, p := range profilesMap {
-		profiles = append(profiles, p)
+	for _, id := range userIDs {
+		profiles = append(profiles, profilesMap[id])
 	}
 
 	return profiles, nil
