@@ -18,7 +18,6 @@ prost-types = "0.13"
 prost-wkt-types = "0.6.1"
 protoc-gen-tonic = { version = "0.4" }
 
-
 anyhow = "1.0.97"
 log = "0.4"
 

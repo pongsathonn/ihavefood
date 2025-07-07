@@ -73,6 +73,7 @@ func initMongoClient() *mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Successfully connected to MongoDB")
 
 	db := client.Database("order_database")
 
@@ -85,7 +86,7 @@ func initMongoClient() *mongo.Client {
 
 	coll := db.Collection("orderCollection")
 	indexModel := mongo.IndexModel{
-		Keys:    bson.D{{"requestId", 1}}, //prevent duplicate order
+		Keys:    bson.D{{"requestId", 1}}, //preventing duplicate order
 		Options: options.Index().SetUnique(true),
 	}
 

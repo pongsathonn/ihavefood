@@ -6,16 +6,16 @@ import (
 
 type newPlaceOrder struct {
 	RequestID         string
-	UserID            string
+	CustomerID        string
 	RestaurantID      string
 	Menus             []*dbMenu
 	CouponCode        string
 	CouponDiscount    int32
 	DeliveryFee       int32
 	Total             int32
-	UserAddress       *dbAddress
+	CustomerAddress   *dbAddress
 	RestaurantAddress *dbAddress
-	UserContact       *dbContactInfo
+	CustomerContact   *dbContactInfo
 	PaymentMethods    dbPaymentMethods
 }
 
@@ -24,16 +24,16 @@ type dbPlaceOrder struct {
 	//OrderID           primitive.ObjectID `bson:"_id,omitempty"`
 	OrderID           string           `bson:"_id,omitempty"`
 	RequestID         string           `bson:"requestId"`
-	UserID            string           `bson:"userId"`
+	CustomerID        string           `bson:"customerId"`
 	RestaurantID      string           `bson:"restaurantId"`
 	Menus             []*dbMenu        `bson:"menus"`
 	CouponCode        string           `bson:"couponCode"`
 	CouponDiscount    int32            `bson:"couponDiscount"`
 	DeliveryFee       int32            `bson:"deliveryFee"`
 	Total             int32            `bson:"total"`
-	UserAddress       *dbAddress       `bson:"userAddress"`
+	CustomerAddress   *dbAddress       `bson:"customerAddress"`
 	RestaurantAddress *dbAddress       `bson:"restaurantAddress"`
-	UserContact       *dbContactInfo   `bson:"userContact"`
+	CustomerContact   *dbContactInfo   `bson:"customerContact"`
 	PaymentMethods    dbPaymentMethods `bson:"paymentMethods"`
 	PaymentStatus     dbPaymentStatus  `bson:"paymentStatus"`
 	OrderStatus       dbOrderStatus    `bson:"orderStatus"`

@@ -1,9 +1,6 @@
 use std::{env, error::Error, fs};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // Use /genproto as the output dir for consistency across services.
-    let _ = fs::create_dir("genproto");
-
     // The protobuf files are located locally using relative paths.
     // When building in Docker, this can cause issues.
     // To avoid this, ensure this build runs only on the local.
@@ -13,6 +10,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // WKT = standard protobuf types from `google.protobuf` like Timestamp.
     // see generate wkt issues on: https://github.com/tokio-rs/prost/issues/672
     if env!("PLATFORM") == "host" {
+        // Use /genproto as the output dir for consistency across services.
+        let _ = fs::create_dir("genproto");
+
         tonic_build::configure()
             .out_dir("genproto")
             .type_attribute(".", "#[derive(serde::Deserialize, serde::Serialize)]")
@@ -27,5 +27,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 &["../../protos"],
             )?;
     }
+
     Ok(())
 }

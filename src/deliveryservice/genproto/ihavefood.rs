@@ -730,7 +730,7 @@ pub struct PlaceOrder {
     #[prost(string, tag = "2")]
     pub order_id: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub user_id: ::prost::alloc::string::String,
+    pub customer_id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub restaurant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "5")]
@@ -744,11 +744,11 @@ pub struct PlaceOrder {
     #[prost(int32, tag = "9")]
     pub total: i32,
     #[prost(message, optional, tag = "10")]
-    pub user_address: ::core::option::Option<Address>,
+    pub customer_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "11")]
     pub restaurant_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "12")]
-    pub user_contact: ::core::option::Option<ContactInfo>,
+    pub customer_contact: ::core::option::Option<ContactInfo>,
     #[prost(enumeration = "PaymentMethods", tag = "13")]
     pub payment_methods: i32,
     #[prost(enumeration = "PaymentStatus", tag = "14")]
@@ -780,7 +780,7 @@ pub struct OrderTimestamps {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListOrderHistoryRequest {
     #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    pub customer_id: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -794,7 +794,7 @@ pub struct HandlePlaceOrderRequest {
     #[prost(string, tag = "12")]
     pub request_id: ::prost::alloc::string::String,
     #[prost(string, tag = "1")]
-    pub user_id: ::prost::alloc::string::String,
+    pub customer_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub restaurant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "3")]
@@ -808,11 +808,11 @@ pub struct HandlePlaceOrderRequest {
     #[prost(int32, tag = "7")]
     pub total: i32,
     #[prost(message, optional, tag = "8")]
-    pub user_address: ::core::option::Option<Address>,
+    pub customer_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "9")]
     pub restaurant_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "10")]
-    pub user_contact: ::core::option::Option<ContactInfo>,
+    pub customer_contact: ::core::option::Option<ContactInfo>,
     #[prost(enumeration = "PaymentMethods", tag = "11")]
     pub payment_methods: i32,
 }
@@ -1011,7 +1011,7 @@ pub mod order_service_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
-        ///  ListOrderHistory retrives User's place order history by userID
+        ///  ListOrderHistory retrives Customer's place order history by CustomerID
         pub async fn list_order_history(
             &mut self,
             request: impl tonic::IntoRequest<super::ListOrderHistoryRequest>,
@@ -1073,7 +1073,7 @@ pub mod order_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with OrderServiceServer.
     #[async_trait]
     pub trait OrderService: std::marker::Send + std::marker::Sync + 'static {
-        ///  ListOrderHistory retrives User's place order history by userID
+        ///  ListOrderHistory retrives Customer's place order history by CustomerID
         async fn list_order_history(
             &self,
             request: tonic::Request<super::ListOrderHistoryRequest>,
@@ -1315,7 +1315,7 @@ pub struct PickupInfo {
     /// Restaurant address
     #[prost(message, optional, tag = "2")]
     pub pickup_location: ::core::option::Option<Point>,
-    /// User address
+    /// Customer address
     #[prost(message, optional, tag = "3")]
     pub drop_off_location: ::core::option::Option<Point>,
 }
@@ -1356,9 +1356,9 @@ pub struct GetDeliveryFeeRequest {
     #[prost(double, tag = "2")]
     pub restaurant_long: f64,
     #[prost(double, tag = "3")]
-    pub user_lat: f64,
+    pub customer_lat: f64,
     #[prost(double, tag = "4")]
-    pub user_long: f64,
+    pub customer_long: f64,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
@@ -1475,7 +1475,7 @@ pub mod delivery_service_client {
         }
         /// GetOrderTracking provides real-time updates on the current status and location of
         /// an order. It tracks the progress of the order from preparation to delivery,
-        /// giving the user real-time status updates.
+        /// giving the customer real-time status updates.
         ///
         /// This function should be called from OrderService to track
         pub async fn get_order_tracking(
@@ -1505,7 +1505,7 @@ pub mod delivery_service_client {
             self.inner.server_streaming(req, path, codec).await
         }
         /// GetDeliveryFee calculates and returns the delivery fee based on the distance
-        /// between the user's location and the restaurant's location.
+        /// between the customer's location and the restaurant's location.
         pub async fn get_delivery_fee(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDeliveryFeeRequest>,
@@ -1608,7 +1608,7 @@ pub mod delivery_service_server {
             + 'static;
         /// GetOrderTracking provides real-time updates on the current status and location of
         /// an order. It tracks the progress of the order from preparation to delivery,
-        /// giving the user real-time status updates.
+        /// giving the customer real-time status updates.
         ///
         /// This function should be called from OrderService to track
         async fn get_order_tracking(
@@ -1619,7 +1619,7 @@ pub mod delivery_service_server {
             tonic::Status,
         >;
         /// GetDeliveryFee calculates and returns the delivery fee based on the distance
-        /// between the user's location and the restaurant's location.
+        /// between the customer's location and the restaurant's location.
         async fn get_delivery_fee(
             &self,
             request: tonic::Request<super::GetDeliveryFeeRequest>,

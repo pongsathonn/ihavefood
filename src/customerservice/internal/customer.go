@@ -62,8 +62,8 @@ func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCusto
 	// TODO validate input
 
 	customerID, err := x.store.create(ctx, &newCustomer{
-		UserID:   in.CustomerId,
-		Username: in.Username,
+		CustomerID: in.CustomerId,
+		Username:   in.Username,
 	})
 	if err != nil {
 		slog.Error("failed to create user customer", "err", err)
@@ -201,7 +201,7 @@ func dbToProto(customer *dbCustomer) *pb.Customer {
 	}
 
 	return &pb.Customer{
-		CustomerId: customer.UserID,
+		CustomerId: customer.CustomerID,
 		Username:   customer.Username,
 		Bio:        customer.Bio.String,
 		Social: &pb.Social{

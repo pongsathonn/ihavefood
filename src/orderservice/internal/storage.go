@@ -13,8 +13,8 @@ import (
 
 type OrderStorage interface {
 
-	// Retrieves the order history for a specified user by username
-	PlaceOrders(ctx context.Context, userID string) ([]*dbPlaceOrder, error)
+	// Retrieves the order history for a specified customer by username
+	PlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error)
 
 	PlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error)
 
@@ -54,11 +54,11 @@ func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (string, er
 
 }
 
-func (s *orderStorage) PlaceOrders(ctx context.Context, userID string) ([]*dbPlaceOrder, error) {
+func (s *orderStorage) PlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error) {
 
 	coll := s.client.Database("order_database", nil).Collection("orderCollection")
 
-	cur, err := coll.Find(ctx, bson.D{{"userID", userID}})
+	cur, err := coll.Find(ctx, bson.D{{"customerID", customerID}})
 	if err != nil {
 		return nil, err
 	}

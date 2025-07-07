@@ -58,8 +58,6 @@ func main() {
 	// Update role and DELETE methods requires "admin" role.
 	http.Handle("PATCH /auth/users/roles", auth.Authz(gwmux))
 	http.Handle("DELETE /api/*", auth.Authz(gwmux))
-	http.Handle("/api/users/*", auth.Authn(gwmux))
-
 	http.Handle("/api/*", auth.Authn(gwmux))
 	http.Handle("/", gwmux)
 
@@ -73,7 +71,7 @@ func main() {
 
 func registerService(ctx context.Context, gwmux *runtime.ServeMux, opts []grpc.DialOption) {
 	services := map[string]func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error{
-		"PROFILE_URI":    pb.RegisterProfileServiceHandlerFromEndpoint,
+		"CUSTOMER_URI":   pb.RegisterCustomerServiceHandlerFromEndpoint,
 		"COUPON_URI":     pb.RegisterCouponServiceHandlerFromEndpoint,
 		"ORDER_URI":      pb.RegisterOrderServiceHandlerFromEndpoint,
 		"RESTAURANT_URI": pb.RegisterRestaurantServiceHandlerFromEndpoint,

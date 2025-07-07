@@ -19,7 +19,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-func newProfileServiceClient() (pb.ProfileServiceClient, error) {
+func newCustomerServiceClient() (pb.CustomerServiceClient, error) {
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 
@@ -28,8 +28,8 @@ func newProfileServiceClient() (pb.ProfileServiceClient, error) {
 		return nil, err
 	}
 
-	slog.Info("Channel for ProfileServiceClient created successfully")
-	return pb.NewProfileServiceClient(conn), nil
+	slog.Info("Channel for CustomerServiceClient created successfully")
+	return pb.NewCustomerServiceClient(conn), nil
 }
 
 func initPostgres() (*sql.DB, error) {
@@ -37,14 +37,18 @@ func initPostgres() (*sql.DB, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	user := os.Getenv("AUTH_POSTGRES_USER")
+	pass := os.Getenv("AUTH_POSTGRES_PASS")
 	host := os.Getenv("AUTH_POSTGRES_HOST")
 	port := os.Getenv("AUTH_POSTGRES_PORT")
+	dbName := os.Getenv("AUTH_POSTGRES_DATABASE")
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/auth_database?sslmode=disable",
-		os.Getenv("AUTH_POSTGRES_USER"),
-		os.Getenv("AUTH_POSTGRES_PASS"),
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		user,
+		pass,
 		host,
 		port,
+		dbName,
 	))
 	if err != nil {
 		return nil, err
@@ -115,12 +119,12 @@ func main() {
 		log.Printf("Failed to create admin user: %v", err)
 	}
 
-	userClient, err := newProfileServiceClient()
+	client, err := newCustomerServiceClient()
 	if err != nil {
-		log.Fatalf("Failed to initialize ProfileService connection: %v", err)
+		log.Fatalf("Failed to initialize CustomerService connection: %v", err)
 	}
 
-	service := internal.NewAuthService(storage, userClient)
+	service := internal.NewAuthService(storage, client)
 	startGRPCServer(service)
 
 }

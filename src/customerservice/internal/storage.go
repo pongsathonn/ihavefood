@@ -38,15 +38,15 @@ func (s *customerStorage) customers(ctx context.Context) ([]*dbCustomer, error) 
 	for customerRows.Next() {
 		var p dbCustomer
 		err := customerRows.Scan(
-			&p.UserID, &p.Username, &p.Bio, &p.Social.Facebook,
+			&p.CustomerID, &p.Username, &p.Bio, &p.Social.Facebook,
 			&p.Social.Instagram, &p.Social.Line, &p.CreateTime, &p.UpdateTime,
 		)
 		if err != nil {
 			return nil, err
 		}
 		p.Addresses = []*dbAddress{}
-		customersMap[p.UserID] = &p
-		customerIDs = append(customerIDs, p.UserID)
+		customersMap[p.CustomerID] = &p
+		customerIDs = append(customerIDs, p.CustomerID)
 	}
 
 	if err = customerRows.Err(); err != nil {
@@ -127,7 +127,7 @@ func (s *customerStorage) customer(ctx context.Context, customerID string) (*dbC
 		WHERE customer_id = $1`,
 		customerID,
 	).Scan(
-		&customer.UserID,
+		&customer.CustomerID,
 		&customer.Username,
 		&customer.Bio,
 		&customer.Social.Facebook,
@@ -192,7 +192,7 @@ func (s *customerStorage) create(ctx context.Context, newCustomer *newCustomer) 
 		VALUES($1,$2)
 		RETURNING customer_id
 	`,
-		newCustomer.UserID,
+		newCustomer.CustomerID,
 		newCustomer.Username,
 	)
 

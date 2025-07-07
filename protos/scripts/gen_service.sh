@@ -13,28 +13,27 @@ followed by the service number:
 comment
 
 # Ensure that you've set the path for protoc
-PATH=$PATH:$GOPATH/bin
+# PATH=$PATH:$GOPATH/bin
 
-# Declare an associative array mapping service numbers to service names
-declare -A services
-services=( 
-    [1]="customerservice" 
-    [2]="authservice" 
-    [3]="restaurantservice" 
-    [4]="deliveryservice" 
-    [5]="orderservice" 
-    [6]="couponservice"
+# Declare separate arrays for service numbers and names
+# Ensure they are in the same order and correspond by index
+service_numbers_keys=(1 2 3 4 5 6)
+service_names_values=(
+    "customerservice"
+    "authservice"
+    "restaurantservice"
+    "deliveryservice"
+    "orderservice"
+    "couponservice"
 )
-
-# Declare an array for ordered service numbers
-service_numbers=(1 2 3 4 5 6)
 
 # Print usage if no flag or invalid flag is provided
 usage() {
     echo "Usage: $0 -s <service_number>"
     echo "Available services:"
-    for num in "${service_numbers[@]}"; do
-        echo "$num: ${services[$num]}"
+    # Iterate through the service_numbers_keys to display options
+    for i in "${!service_numbers_keys[@]}"; do
+        echo "${service_numbers_keys[$i]}: ${service_names_values[$i]}"
     done
     exit 1
 }
@@ -51,51 +50,69 @@ while getopts "s:" opt; do
     esac
 done
 
+# Find the service name based on the number
+service_name=""
+found=false
+for i in "${!service_numbers_keys[@]}"; do
+    if [[ "${service_numbers_keys[$i]}" -eq "$service_number" ]]; then
+        service_name="${service_names_values[$i]}"
+        found=true
+        break
+    fi
+done
+
 # Check if service number is valid
-if [[ -z "${service_number+x}" || -z "${services[$service_number]:-}" ]]; then
+if ! $found; then
     echo "Invalid or missing service number."
     usage
 fi
 
-
 # Path to .proto files
 protos=..
 
-service_name=${services[$service_number]}
-
 # delete /genproto if exists
-rm -rf ../../src/$service_name/genproto
+# Using a temporary variable for the full path before removal for clarity
+proto_gen_dir="../../src/$service_name/genproto"
+if [ -d "$proto_gen_dir" ]; then
+    echo "Removing existing directory: $proto_gen_dir"
+    rm -rf "$proto_gen_dir"
+fi
+
 
 # Output directory for the selected service
 outdir=../../src/$service_name
 
-protoc -I $protos \
-    --go_out=$outdir \
-    --go-grpc_out=$outdir \
-    --grpc-gateway_out=$outdir \
-    $protos/common.proto \
-    $protos/customerservice.proto \
-    $protos/authservice.proto \
-    $protos/restaurantservice.proto \
-    $protos/deliveryservice.proto \
-    $protos/orderservice.proto \
-    $protos/couponservice.proto
+protoc -I "$protos" \
+    --go_out="$outdir" \
+    --go-grpc_out="$outdir" \
+    --grpc-gateway_out="$outdir" \
+    "$protos/common.proto" \
+    "$protos/customerservice.proto" \
+    "$protos/authservice.proto" \
+    "$protos/restaurantservice.proto" \
+    "$protos/deliveryservice.proto" \
+    "$protos/orderservice.proto" \
+    "$protos/couponservice.proto"
 
 # gateway
-rm -rf ../../gateway/genproto
+gateway_gen_dir="../../gateway/genproto"
+if [ -d "$gateway_gen_dir" ]; then
+    echo "Removing existing directory: $gateway_gen_dir"
+    rm -rf "$gateway_gen_dir"
+fi
+
 outdir_gateway=../../gateway
 
-protoc -I $protos \
-    --go_out=$outdir_gateway \
-    --go-grpc_out=$outdir_gateway \
-    --grpc-gateway_out=$outdir_gateway \
-    $protos/common.proto \
-    $protos/customerservice.proto \
-    $protos/authservice.proto \
-    $protos/restaurantservice.proto \
-    $protos/deliveryservice.proto \
-    $protos/orderservice.proto \
-    $protos/couponservice.proto
+protoc -I "$protos" \
+    --go_out="$outdir_gateway" \
+    --go-grpc_out="$outdir_gateway" \
+    --grpc-gateway_out="$outdir_gateway" \
+    "$protos/common.proto" \
+    "$protos/customerservice.proto" \
+    "$protos/authservice.proto" \
+    "$protos/restaurantservice.proto" \
+    "$protos/deliveryservice.proto" \
+    "$protos/orderservice.proto" \
+    "$protos/couponservice.proto"
 
 echo "Code generation completed for $service_name and gateway"
-

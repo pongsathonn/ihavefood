@@ -8,15 +8,13 @@ import (
 )
 
 type newCustomer struct {
-	UserID   string
-	Username string
+	CustomerID string
+	Username   string
 }
 
-// UserID and Username is generated from AuthService to ensure
-// both user credentials and profile are sync.
 type dbCustomer struct {
-	UserID   string
-	Username string
+	CustomerID string
+	Username   string
 	//Picture    []byte
 	Bio        sql.NullString
 	Social     dbSocial
