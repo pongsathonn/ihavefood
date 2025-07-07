@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+CUSTOMER_USER="${CUSTOMER_POSTGRES_USER}"
+CUSTOMER_PASSWORD="${CUSTOMER_POSTGRES_PASS}"
+CUSTOMER_DB="${CUSTOMER_POSTGRES_DATABASE}"
+
+psql -v ON_ERROR_STOP=1 --username "postgres"  <<-EOSQL
+    CREATE USER "$CUSTOMER_USER" WITH PASSWORD '$CUSTOMER_PASSWORD';
+EOSQL
+
+psql -v ON_ERROR_STOP=1 --username "postgres"  <<-EOSQL
+    CREATE DATABASE "$CUSTOMER_DB";
+    GRANT ALL PRIVILEGES ON DATABASE "$CUSTOMER_DB" TO "$CUSTOMER_USER";
+EOSQL
+
+psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$CUSTOMER_DB" <<-EOSQL
+    GRANT ALL PRIVILEGES ON SCHEMA public TO "$CUSTOMER_USER";
+
+    CREATE TABLE customers (
+        customer_id VARCHAR(255),
+        username VARCHAR(255) UNIQUE NOT NULL,     
+        bio TEXT,                                  
+        facebook VARCHAR(255),                     
+        instagram VARCHAR(255),                    
+        line VARCHAR(255),                         
+        create_time TIMESTAMP NOT NULL DEFAULT NOW(),
+        update_time TIMESTAMP NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (customer_id)
+    );
+
+    CREATE TABLE addresses (
+        address_id INT GENERATED ALWAYS AS IDENTITY,
+        customer_id VARCHAR(255),
+        address_name VARCHAR(255),                 
+        sub_district VARCHAR(255),                 
+        district VARCHAR(255),
+        province VARCHAR(255),
+        postal_code VARCHAR(20),
+        PRIMARY KEY(address_id),
+        CONSTRAINT fk_profile
+            FOREIGN KEY(customer_id)
+            REFERENCES customers(customer_id)
+            ON DELETE CASCADE
+    );
+
+    GRANT SELECT, INSERT, UPDATE, DELETE ON customers TO "$CUSTOMER_USER";
+    GRANT SELECT, INSERT, UPDATE, DELETE ON addresses TO "$CUSTOMER_USER";
+EOSQL
+
+
+
+
