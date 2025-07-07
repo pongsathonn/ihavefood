@@ -60,7 +60,6 @@ message UserCredentials {
     string email = 3;
     string password = 4;
     string phone_number = 5;
-    // Output only.
     Roles role = 6;
     google.protobuf.Timestamp create_time = 7;
     google.protobuf.Timestamp update_time = 8;
