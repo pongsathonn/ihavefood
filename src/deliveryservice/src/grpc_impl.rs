@@ -50,13 +50,13 @@ impl DeliveryService for MyDelivery {
             longitude: request.get_ref().restaurant_long,
         };
 
-        let user_point = Point {
-            latitude: request.get_ref().user_lat,
-            longitude: request.get_ref().user_long,
+        let customer_point = Point {
+            latitude: request.get_ref().customer_lat,
+            longitude: request.get_ref().customer_long,
         };
 
         let delivery_fee =
-            Self::calc_delivery_fee(&user_point, &restaurant_point).map_err(|err| {
+            Self::calc_delivery_fee(&customer_point, &restaurant_point).map_err(|err| {
                 error!("Error: {err}");
                 Status::new(Code::Internal, "failed to calculate delivery fee")
             })?;

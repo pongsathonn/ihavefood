@@ -161,9 +161,9 @@ impl MyDelivery {
         log::info!("notify to riders");
     }
 
-    pub fn calc_delivery_fee(user_p: &Point, restau_p: &Point) -> Result<i32> {
+    pub fn calc_delivery_fee(customer_p: &Point, restau_p: &Point) -> Result<i32> {
         //distance(kilometers)
-        let distance = haversine_distance(user_p, restau_p);
+        let distance = haversine_distance(customer_p, restau_p);
 
         ensure!(
             (0.0..=25.0).contains(&distance),
@@ -203,7 +203,7 @@ impl MyDelivery {
 
         let drop_off_location = address_to_point(
             order
-                .user_address
+                .customer_address
                 .as_ref()
                 .ok_or_else(|| anyhow!("User address is empty"))?,
         );
@@ -291,7 +291,7 @@ mod tests {
 
     #[test]
     fn test_calc_delivery_fee_success() {
-        let user_point = Point {
+        let customer_point = Point {
             latitude: 18.7883,
             longitude: 98.9853,
         };
@@ -300,14 +300,15 @@ mod tests {
             longitude: 98.8897,
         };
 
-        let delivery_fee = MyDelivery::calc_delivery_fee(&user_point, &restaurant_point).unwrap();
+        let delivery_fee =
+            MyDelivery::calc_delivery_fee(&customer_point, &restaurant_point).unwrap();
         println!("{}", delivery_fee);
         assert_eq!(delivery_fee, 50);
     }
 
     #[test]
     fn test_calc_delivery_fee_failure() {
-        let user_point = Point {
+        let customer_point = Point {
             latitude: 18.7883,
             longitude: 98.9853,
         };
@@ -316,7 +317,7 @@ mod tests {
             longitude: 50.0000,
         };
 
-        let result = MyDelivery::calc_delivery_fee(&user_point, &restaurant_point);
+        let result = MyDelivery::calc_delivery_fee(&customer_point, &restaurant_point);
 
         assert!(result.is_err());
         assert!(result
@@ -351,7 +352,7 @@ mod tests {
     //     let order = PlaceOrder {
     //         order_id: "test_order_456".to_string(),
     //         restaurant_address: None, // Missing address
-    //         user_address: Some(Address {
+    //         customer_address: Some(Address {
     //             district: "Hang Dong".to_string(),
     //             street: "User Street".to_string(),
     //             building: "User Building".to_string(),

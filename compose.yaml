@@ -10,14 +10,14 @@ services:
     container_name: gateway
     build: gateway
     ports:
-      - "1800:1800" 
+      - "9999:9999" 
       - "4041:4041" 
     env_file:
       - path: ./gateway/.env
     networks:
       - mynetwork
     depends_on:
-      - profile
+      - customer
       - coupon
       - order
       - restaurant
@@ -84,34 +84,34 @@ services:
     networks:
       - mynetwork
 
-  profile:
-    container_name: profile
-    build: ./src/profileservice
+  customer:
+    container_name: customer
+    build: ./src/customerservice
     env_file:
-      - path: ./src/profileservice/.env
+      - path: ./src/customerservice/.env
     networks:
       - mynetwork
     ports:
       - "4044:4044"
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/profile" ]
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/customer" ]
     security_opt:
       - seccomp:unconfined
     depends_on:
-      profiledb:
+      customerdb:
         condition: service_healthy
         restart: true
       rabbitmqx: 
         condition: service_healthy
         restart: true
-  profiledb:
-    container_name: profiledb
+  customerdb:
+    container_name: customerdb
     image: postgres
     ports:
       - "5432:5432"
     volumes:
-      - ./src/profileservice/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./src/customerservice/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     env_file:
-      - path: ./src/profileservice/.env
+      - path: ./src/customerservice/.env
     environment:
       - POSTGRES_PASSWORD=${PG_ROOT_PASS}
     healthcheck:

@@ -36,14 +36,14 @@ func NewOrderService(storage OrderStorage, rabbitmq RabbitMQ) *OrderService {
 func (x *OrderService) ListOrderHistory(ctx context.Context,
 	in *pb.ListOrderHistoryRequest) (*pb.ListOrderHistoryResponse, error) {
 
-	if in.UserId == "" {
+	if in.CustomerId == "" {
 		return nil, status.Error(codes.InvalidArgument, "ID must be provided")
 	}
 
-	dbOrders, err := x.storage.PlaceOrders(ctx, in.UserId)
+	dbOrders, err := x.storage.PlaceOrders(ctx, in.CustomerId)
 	if err != nil {
 		slog.Error("retrive place order", "err", err)
-		return nil, status.Error(codes.Internal, "failed to retrieve user's place orders")
+		return nil, status.Error(codes.Internal, "failed to retrieve customer's place orders")
 	}
 
 	var placeOrders []*pb.PlaceOrder
@@ -66,7 +66,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
 	}
 
-	// TODO validate place order fields valid such as userID , restuarntName already exists
+	// TODO validate place order fields valid such as customerID , restuarntName already exists
 
 	orderID, err := x.storage.Create(ctx, prepareNewOrder(in))
 	if err != nil {
@@ -176,7 +176,7 @@ func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 
 // handlePaymentStatus updates payment status of an order after
 // it has been successfully processed.
-//   - Cash method update when rider received cash from user after delivery.
+//   - Cash method update when rider received cash from customer after delivery.
 //   - PromptPay and Credit card upon succussful transaction.
 func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 
@@ -185,7 +185,7 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 	go func() {
 		for msg := range messages {
 
-			if msg.RoutingKey != "user.paid.event" {
+			if msg.RoutingKey != "customer.paid.event" {
 				slog.Error("unknown routing key ", "key", msg.RoutingKey)
 				continue
 			}
@@ -226,30 +226,30 @@ func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
 	return &dbPlaceOrder{
 		//OrderID:  - ,
 		RequestID:      in.RequestId,
-		UserID:         in.UserId,
+		CustomerID:     in.CustomerId,
 		RestaurantID:   in.RestaurantId,
 		Menus:          menus,
 		CouponCode:     in.CouponCode,
 		CouponDiscount: in.CouponDiscount,
 		DeliveryFee:    in.DeliveryFee,
 		Total:          in.Total,
-		UserAddress: &dbAddress{
-			AddressName: in.UserAddress.AddressName,
-			SubDistrict: in.UserAddress.SubDistrict,
-			District:    in.UserAddress.District,
-			Province:    in.UserAddress.Province,
-			PostalCode:  in.UserAddress.Province,
+		CustomerAddress: &dbAddress{
+			AddressName: in.CustomerAddress.AddressName,
+			SubDistrict: in.CustomerAddress.SubDistrict,
+			District:    in.CustomerAddress.District,
+			Province:    in.CustomerAddress.Province,
+			PostalCode:  in.CustomerAddress.Province,
 		},
 		RestaurantAddress: &dbAddress{
-			AddressName: in.UserAddress.AddressName,
-			SubDistrict: in.UserAddress.SubDistrict,
-			District:    in.UserAddress.District,
-			Province:    in.UserAddress.Province,
-			PostalCode:  in.UserAddress.Province,
+			AddressName: in.CustomerAddress.AddressName,
+			SubDistrict: in.CustomerAddress.SubDistrict,
+			District:    in.CustomerAddress.District,
+			Province:    in.CustomerAddress.Province,
+			PostalCode:  in.CustomerAddress.Province,
 		},
-		UserContact: &dbContactInfo{
-			PhoneNumber: in.UserContact.PhoneNumber,
-			Email:       in.UserContact.Email,
+		CustomerContact: &dbContactInfo{
+			PhoneNumber: in.CustomerContact.PhoneNumber,
+			Email:       in.CustomerContact.Email,
 		},
 		PaymentMethods: dbPaymentMethods(in.PaymentMethods),
 		PaymentStatus:  PaymentStatus_UNPAID, //DEFAULT
@@ -275,19 +275,19 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 	return &pb.PlaceOrder{
 		OrderId:        order.OrderID,
 		RequestId:      order.RequestID,
-		UserId:         order.UserID,
+		CustomerId:     order.CustomerID,
 		RestaurantId:   order.RestaurantID,
 		Menus:          menus,
 		CouponCode:     order.CouponCode,
 		CouponDiscount: order.CouponDiscount,
 		DeliveryFee:    order.DeliveryFee,
 		Total:          order.Total,
-		UserAddress: &pb.Address{
-			AddressName: order.UserAddress.AddressName,
-			SubDistrict: order.UserAddress.SubDistrict,
-			District:    order.UserAddress.District,
-			Province:    order.UserAddress.Province,
-			PostalCode:  order.UserAddress.PostalCode,
+		CustomerAddress: &pb.Address{
+			AddressName: order.CustomerAddress.AddressName,
+			SubDistrict: order.CustomerAddress.SubDistrict,
+			District:    order.CustomerAddress.District,
+			Province:    order.CustomerAddress.Province,
+			PostalCode:  order.CustomerAddress.PostalCode,
 		},
 		RestaurantAddress: &pb.Address{
 			AddressName: order.RestaurantAddress.AddressName,
@@ -296,9 +296,9 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 			Province:    order.RestaurantAddress.Province,
 			PostalCode:  order.RestaurantAddress.PostalCode,
 		},
-		UserContact: &pb.ContactInfo{
-			PhoneNumber: order.UserContact.PhoneNumber,
-			Email:       order.UserContact.Email,
+		CustomerContact: &pb.ContactInfo{
+			PhoneNumber: order.CustomerContact.PhoneNumber,
+			Email:       order.CustomerContact.Email,
 		},
 		PaymentMethods: pb.PaymentMethods(order.PaymentMethods),
 		PaymentStatus:  pb.PaymentStatus(order.PaymentStatus),
@@ -318,8 +318,8 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 	switch {
 	case in.RequestId == "":
 		return errors.New("request ID must be provided")
-	case in.UserId == "":
-		return errors.New("user ID must be provided")
+	case in.CustomerId == "":
+		return errors.New("customer ID must be provided")
 	case in.RestaurantId == "":
 		return errors.New("restaurant ID must be provided")
 	case len(in.Menus) == 0:
@@ -330,19 +330,19 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 		return errors.New("delivery fee should not be zero")
 	case in.Total == 0:
 		return errors.New("total should not be zero")
-	case in.UserAddress == nil:
-		return errors.New("user address must be provided")
+	case in.CustomerAddress == nil:
+		return errors.New("customer address must be provided")
 	case in.RestaurantAddress == nil:
 		return errors.New("restaurant address must be provided")
-	case in.UserContact == nil:
-		return errors.New("user contact infomation must be provided")
+	case in.CustomerContact == nil:
+		return errors.New("customer contact infomation must be provided")
 	}
 
-	if err := validateEmail(in.UserContact.Email); err != nil {
+	if err := validateEmail(in.CustomerContact.Email); err != nil {
 		return err
 	}
 
-	if err := validatePhoneNumber(in.UserContact.PhoneNumber); err != nil {
+	if err := validatePhoneNumber(in.CustomerContact.PhoneNumber); err != nil {
 		return err
 	}
 
@@ -366,7 +366,7 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 	return nil
 }
 
-// validatePhoneNumber validates a user's phone number according to the Thailand
+// validatePhoneNumber validates a customer's phone number according to the Thailand
 // phone number format (e.g., 06XXXXXXXX, 08XXXXXXXX, 09XXXXXXXX).
 // Any format outside of this is considered invalid, and the function returns an error.
 func validatePhoneNumber(phoneNumber string) error {
@@ -376,7 +376,7 @@ func validatePhoneNumber(phoneNumber string) error {
 	return nil
 }
 
-// validateEmail validates the user's email address to ensure it follows
+// validateEmail validates the customer's email address to ensure it follows
 // the standard email format. It uses mail.ParseAddress to parse the email.
 // If the email is invalid, it returns an error.
 func validateEmail(email string) error {

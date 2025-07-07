@@ -31,19 +31,19 @@ type AuthStorer interface {
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
-	store         AuthStorer
-	profileClient pb.ProfileServiceClient
+	store          AuthStorer
+	customerClient pb.CustomerServiceClient
 }
 
-func NewAuthService(store AuthStorer, profileClient pb.ProfileServiceClient) *AuthService {
+func NewAuthService(store AuthStorer, customerClient pb.CustomerServiceClient) *AuthService {
 	return &AuthService{
-		store:         store,
-		profileClient: profileClient,
+		store:          store,
+		customerClient: customerClient,
 	}
 }
 
 // Register handles user registration by creating a new user credentials
-// and calling the UserService to create a user profile.
+// and calling the UserService to create a user customer.
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
 
 	if err := validateUser(in); err != nil {
@@ -67,22 +67,23 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to retrive user %v", err)
 	}
 
-	// Creates new user profile in UserService
-	profile, err := x.profileClient.CreateProfile(ctx, &pb.CreateProfileRequest{
-		UserId:   user.UserID,
-		Username: user.Username,
+	// Creates new customer in UserService
+	// TODO: handle error happen from UserService properly.
+	// 		 this one is difficult to debug.
+	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
+		CustomerId: user.UserID,
+		Username:   user.Username,
 	})
-
 	if err != nil {
-		slog.Error("UserService fails to create user profile: ", err)
+		slog.Error("UserService fails to create user customer: ", "err", err)
 		if err := x.store.Delete(context.TODO(), user.UserID); err != nil {
-			slog.Error("failed to delete user credential: ", err)
+			slog.Error("failed to delete user credential: ", "err", err)
 		}
-		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
+		return nil, status.Errorf(codes.Internal, "UserService failed to create user: %v", err)
 	}
 
-	if user.UserID != profile.UserId || user.Username != profile.Username {
-		slog.Error("UserID or Username does not match with ProfileService")
+	if user.UserID != customer.CustomerId || user.Username != customer.Username {
+		slog.Error("UserID or Username does not match with CustomerService")
 		return nil, status.Error(codes.Internal, "failed to register user")
 	}
 
