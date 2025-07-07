@@ -13,7 +13,7 @@ import "google/protobuf/empty.proto";
 service CouponService {
 
     // ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
-    // This method is intended to be used by the frontend to display a list of all coupons to users, 
+    // This method is intended to be used by the frontend to display a list of all coupons to customers, 
     // regardless of their validity or availability.
     //
     // TODO: In the future, this method might be updated to list coupons by other condition,

@@ -18,7 +18,7 @@ PATH=$PATH:$GOPATH/bin
 # Declare an associative array mapping service numbers to service names
 declare -A services
 services=( 
-    [1]="profileservice" 
+    [1]="customerservice" 
     [2]="authservice" 
     [3]="restaurantservice" 
     [4]="deliveryservice" 
@@ -74,7 +74,7 @@ protoc -I $protos \
     --go-grpc_out=$outdir \
     --grpc-gateway_out=$outdir \
     $protos/common.proto \
-    $protos/profileservice.proto \
+    $protos/customerservice.proto \
     $protos/authservice.proto \
     $protos/restaurantservice.proto \
     $protos/deliveryservice.proto \
@@ -90,7 +90,7 @@ protoc -I $protos \
     --go-grpc_out=$outdir_gateway \
     --grpc-gateway_out=$outdir_gateway \
     $protos/common.proto \
-    $protos/profileservice.proto \
+    $protos/customerservice.proto \
     $protos/authservice.proto \
     $protos/restaurantservice.proto \
     $protos/deliveryservice.proto \

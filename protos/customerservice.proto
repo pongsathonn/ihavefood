@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package ihavefood;
+
+option go_package =  "/genproto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "common.proto";
+
+// ---------------------CUSTOMER SERVICE------------------------------
+service CustomerService {
+
+    rpc ListCustomers(ListCustomersRequest) returns(ListCustomersResponse){
+        option (google.api.http) = {get: "/api/customers"};
+    }
+
+    rpc GetCustomer(GetCustomerRequest) returns(Customer){
+        option (google.api.http) = {get: "/api/customers/{customer_id}"};
+    }
+
+    
+    // CreateCustomer creates new user customer 
+    //
+    // The user customer must be created after the AuthService successfully 
+    // creates the new user credentials to ensure that the CustomerID and 
+    // Username are synchronized.
+    rpc CreateCustomer(CreateCustomerRequest) returns(Customer){}
+
+    // CreateAddress creates new address to exists uer customer.
+    rpc CreateAddress(CreateAddressRequest) returns(Customer){
+        option (google.api.http) = {
+            post: "/api/customers/{customer_id}/address"
+            body: "*"
+        };
+    }
+
+    rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer){
+        option (google.api.http) = {
+            patch: "/api/customers/{customer_id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteCustomer(DeleteCustomerRequest) returns(google.protobuf.Empty){
+        option (google.api.http) = {delete: "/api/customers/{customer_id}"};
+    }
+
+
+    // Draft 
+    // rpc RenameCustomer(RenameCustomerRequest) returns (RenameCustomerResponse){}
+    // rpc ValidateCustomerSocial() returns(){}
+
+}
+
+message Customer {
+    string customer_id = 1; 
+    string username = 2;
+    // bytes picture = 3;
+    string bio = 4;
+    Social social = 5;
+    // User can have many address
+    repeated Address addresses = 6;
+    google.protobuf.Timestamp create_time = 7;
+    google.protobuf.Timestamp update_time = 8;
+}
+
+message ListCustomersRequest {
+    // TODO filter here
+}
+
+message ListCustomersResponse{
+    repeated Customer customers = 1;
+}
+
+message GetCustomerRequest{
+    string customer_id = 1;
+}
+
+message CreateCustomerRequest {
+    string customer_id = 1; 
+    string username = 2;
+}
+
+message CreateAddressRequest {
+    string customer_id = 1;
+    Address address = 2;
+}
+
+message UpdateCustomerRequest {
+    string customer_id = 1;
+    // username must has constraint for update
+    // such as update every XX months.
+    string new_username = 2;
+    //bytes new_picture = 3;
+    string new_bio = 4;
+    Social new_social = 5;
+}
+
+message DeleteCustomerRequest {
+    string customer_id = 1;
+}
+
+
+

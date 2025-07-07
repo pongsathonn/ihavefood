@@ -15,17 +15,17 @@ service DeliveryService {
 
     // GetOrderTracking provides real-time updates on the current status and location of 
     // an order. It tracks the progress of the order from preparation to delivery, 
-    // giving the user real-time status updates.
+    // giving the customer real-time status updates.
     //
     // This function should be called from OrderService to track
     rpc GetOrderTracking(GetOrderTrackingRequest) returns(stream GetOrderTrackingResponse){}
 
     // GetDeliveryFee calculates and returns the delivery fee based on the distance
-    // between the user's location and the restaurant's location.
+    // between the customer's location and the restaurant's location.
     rpc GetDeliveryFee(GetDeliveryFeeRequest) returns(GetDeliveryFeeResponse) {
         option (google.api.http) = { 
             // Example query:
-            //  ?restaurant_lat=111&restaurant_long222&user_lat=333&user_long444
+            //  ?restaurant_lat=111&restaurant_long222&customer_lat=333&customer_long444
             get: "/api/deliveries/fee"
         };
     }
@@ -67,7 +67,7 @@ message PickupInfo {
     string pickup_code = 1;
     // Restaurant address
     Point pickup_location = 2; 
-    // User address
+    // Customer address
     Point drop_off_location = 3;
 }
 
@@ -92,8 +92,8 @@ message GetOrderTrackingResponse {
 message GetDeliveryFeeRequest {
     double restaurant_lat = 1;
     double restaurant_long = 2;
-    double user_lat = 3;
-    double user_long = 4;
+    double customer_lat = 3;
+    double customer_long = 4;
 }
 
 message GetDeliveryFeeResponse {
