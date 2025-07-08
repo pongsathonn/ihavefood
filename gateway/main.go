@@ -49,7 +49,7 @@ func main() {
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	registerService(context.TODO(), gwmux, []grpc.DialOption{opt})
 
-	conn, err := grpc.Dial(os.Getenv("AUTH_URI"), opt)
+	conn, err := grpc.NewClient(os.Getenv("AUTH_URI"), opt)
 	if err != nil {
 		log.Fatal(err)
 	}

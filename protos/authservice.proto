@@ -54,6 +54,8 @@ service AuthService {
     */
 }
 
+// should be auth_id instead? becaseu role 'Restaurant' isn't user itself.
+// then authservice treats everything as authentication not manage users.
 message UserCredentials {
     string user_id = 1;
     string username = 2;
@@ -67,8 +69,9 @@ message UserCredentials {
 
 enum Roles {
     VISITOR = 0;
-    USER = 1;
+    CUSTOMER = 1;
     ADMIN = 2;
+    TODO = 3;
 }
 
 message RegisterRequest {
