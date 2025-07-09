@@ -20,7 +20,7 @@ services:
       - customer
       - coupon
       - order
-      - restaurant
+      - merchant
       - delivery
       - auth
 
@@ -54,27 +54,27 @@ services:
     networks:
       - mynetwork
 
-  restaurant:
-    container_name: restaurant
-    build: ./src/restaurantservice
+  merchant:
+    container_name: merchant
+    build: ./src/merchantservice
     env_file:
-      - path: ./src/restaurantservice/.env
+      - path: ./src/merchantservice/.env
     networks:
       - mynetwork
     ports:
       - "4043:4043" 
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/restaurant" ]
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/merchant" ]
     security_opt:
       - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
         restart: true
-      restaurantdb:
+      merchantdb:
         condition: service_started
         restart: true
-  restaurantdb:
-    container_name: restaurantdb
+  merchantdb:
+    container_name: merchantdb
     image: mongo:latest
     ports:
       - "27051:27017"

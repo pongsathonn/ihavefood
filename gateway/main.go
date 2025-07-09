@@ -71,12 +71,12 @@ func main() {
 
 func registerService(ctx context.Context, gwmux *runtime.ServeMux, opts []grpc.DialOption) {
 	services := map[string]func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error{
-		"CUSTOMER_URI":   pb.RegisterCustomerServiceHandlerFromEndpoint,
-		"COUPON_URI":     pb.RegisterCouponServiceHandlerFromEndpoint,
-		"ORDER_URI":      pb.RegisterOrderServiceHandlerFromEndpoint,
-		"RESTAURANT_URI": pb.RegisterRestaurantServiceHandlerFromEndpoint,
-		"DELIVERY_URI":   pb.RegisterDeliveryServiceHandlerFromEndpoint,
-		"AUTH_URI":       pb.RegisterAuthServiceHandlerFromEndpoint,
+		"CUSTOMER_URI": pb.RegisterCustomerServiceHandlerFromEndpoint,
+		"COUPON_URI":   pb.RegisterCouponServiceHandlerFromEndpoint,
+		"ORDER_URI":    pb.RegisterOrderServiceHandlerFromEndpoint,
+		"MERCHANT_URI": pb.RegisterMerchantServiceHandlerFromEndpoint,
+		"DELIVERY_URI": pb.RegisterDeliveryServiceHandlerFromEndpoint,
+		"AUTH_URI":     pb.RegisterAuthServiceHandlerFromEndpoint,
 	}
 
 	for envVar, registerFunc := range services {

@@ -17,15 +17,12 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
  | Restaurant   | restaurant.accepted.event | restaurant_accept_queue      | Delivery   |                | 
  | Delivery     | rider.finding.event       | order_status_update_queue    | Order      |                | 
  |              |                           |                              |            |  FINDING_RIDER |
- |              |                           |                              |            |                |
- | Restaurant   | food.ready.event          | food_finish_queue            | Delivery   |                | 
- | Restaurant   | food.ready.event          | food_finish_queue            | Order      |                | 
- |              |                           |                              |            | WAIT_PICKUP    |
- | Delivery     | rider.assigned.event      | order_status_update_queue    | Order      |                | 
+ | Delivery     | rider.assigned.event      | order_status_update_queue    | Order      |                |
+ |              |                           |                              |            |  WAIT_PICKUP   |
+ | Delivery     | rider.picked_up.event     | order_status_update_queue    | Order      |                | 
  |              |                           |                              |            |  ONGOING       |
- |              |                           |                              |            |                |
  | Delivery     | rider.delivered.event     | order_status_update_queue    | Order      |                |
- |              |                           |                              |            | DELIVERED      |
+ |              |                           |                              |            |  DELIVERED     |
 </pre>
 
 # payment

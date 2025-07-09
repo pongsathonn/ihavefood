@@ -8,7 +8,7 @@ type newPlaceOrder struct {
 	RequestID         string
 	CustomerID        string
 	RestaurantID      string
-	Menus             []*dbMenu
+	Menu              []*dbMenuItem
 	CouponCode        string
 	CouponDiscount    int32
 	DeliveryFee       int32
@@ -26,7 +26,7 @@ type dbPlaceOrder struct {
 	RequestID         string           `bson:"requestId"`
 	CustomerID        string           `bson:"customerId"`
 	RestaurantID      string           `bson:"restaurantId"`
-	Menus             []*dbMenu        `bson:"menus"`
+	Menu              []*dbMenuItem    `bson:"menus"`
 	CouponCode        string           `bson:"couponCode"`
 	CouponDiscount    int32            `bson:"couponDiscount"`
 	DeliveryFee       int32            `bson:"deliveryFee"`
@@ -40,7 +40,7 @@ type dbPlaceOrder struct {
 	Timestamps        *dbTimestamps    `bson:"timestamps"`
 }
 
-type dbMenu struct {
+type dbMenuItem struct {
 	FoodName string `bson:"foodName"`
 	Price    int32  `bson:"price"`
 }

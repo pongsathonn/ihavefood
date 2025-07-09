@@ -6,7 +6,7 @@ option go_package =  "/genproto";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
-import "restaurantservice.proto";
+import "merchantservice.proto";
 import "common.proto";
 
 // ---------------------ORDER SERVICE------------------------------
@@ -36,7 +36,7 @@ message PlaceOrder {
     string order_id = 2 ;
     string customer_id = 3;
     string restaurant_id = 4;
-    repeated Menu menus = 5;
+    repeated MenuItem menu = 5;
     string coupon_code = 6;
     int32 coupon_discount =7;
     int32 delivery_fee = 8;
@@ -95,7 +95,7 @@ message HandlePlaceOrderRequest {
     string request_id = 12;
     string customer_id = 1;
     string restaurant_id = 2;
-    repeated Menu menus = 3;
+    repeated MenuItem menu = 3;
     string coupon_code = 4;
     int32 coupon_discount =5;
     int32 delivery_fee = 6;

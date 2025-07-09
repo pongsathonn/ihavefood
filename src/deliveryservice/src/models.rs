@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{sqlite::SqliteRow, FromRow, Row};
 
-// dbDelivery represent delivery record information for an order
+// DbDelivery represent delivery record information for an order
 pub struct DbDelivery {
     pub order_id: String,
     // rider who accept the order

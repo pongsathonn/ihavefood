@@ -26,22 +26,25 @@ const (
 type Roles int32
 
 const (
-	Roles_VISITOR Roles = 0
-	Roles_USER    Roles = 1
-	Roles_ADMIN   Roles = 2
+	Roles_VISITOR  Roles = 0
+	Roles_CUSTOMER Roles = 1
+	Roles_ADMIN    Roles = 2
+	Roles_TODO     Roles = 3
 )
 
 // Enum value maps for Roles.
 var (
 	Roles_name = map[int32]string{
 		0: "VISITOR",
-		1: "USER",
+		1: "CUSTOMER",
 		2: "ADMIN",
+		3: "TODO",
 	}
 	Roles_value = map[string]int32{
-		"VISITOR": 0,
-		"USER":    1,
-		"ADMIN":   2,
+		"VISITOR":  0,
+		"CUSTOMER": 1,
+		"ADMIN":    2,
+		"TODO":     3,
 	}
 )
 
@@ -72,6 +75,8 @@ func (Roles) EnumDescriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{0}
 }
 
+// should be auth_id instead? becaseu role 'Restaurant' isn't user itself.
+// then authservice treats everything as authentication not manage users.
 type UserCredentials struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -704,11 +709,12 @@ const file_authservice_proto_rawDesc = "" +
 	"\x06exists\x18\x01 \x01(\bR\x06exists\"]\n" +
 	"\x15UpdateUserRoleRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12+\n" +
-	"\bnew_role\x18\x02 \x01(\x0e2\x10.ihavefood.RolesR\anewRole*)\n" +
+	"\bnew_role\x18\x02 \x01(\x0e2\x10.ihavefood.RolesR\anewRole*7\n" +
 	"\x05Roles\x12\v\n" +
-	"\aVISITOR\x10\x00\x12\b\n" +
-	"\x04USER\x10\x01\x12\t\n" +
-	"\x05ADMIN\x10\x022\xdd\x04\n" +
+	"\aVISITOR\x10\x00\x12\f\n" +
+	"\bCUSTOMER\x10\x01\x12\t\n" +
+	"\x05ADMIN\x10\x02\x12\b\n" +
+	"\x04TODO\x10\x032\xdd\x04\n" +
 	"\vAuthService\x12]\n" +
 	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12R\n" +
 	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12`\n" +

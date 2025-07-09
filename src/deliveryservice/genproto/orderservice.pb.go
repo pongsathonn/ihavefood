@@ -189,7 +189,7 @@ type PlaceOrder struct {
 	OrderId           string           `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	CustomerId        string           `protobuf:"bytes,3,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	RestaurantId      string           `protobuf:"bytes,4,opt,name=restaurant_id,json=restaurantId,proto3" json:"restaurant_id,omitempty"`
-	Menus             []*Menu          `protobuf:"bytes,5,rep,name=menus,proto3" json:"menus,omitempty"`
+	Menu              []*MenuItem      `protobuf:"bytes,5,rep,name=menu,proto3" json:"menu,omitempty"`
 	CouponCode        string           `protobuf:"bytes,6,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
 	CouponDiscount    int32            `protobuf:"varint,7,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
 	DeliveryFee       int32            `protobuf:"varint,8,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
@@ -263,9 +263,9 @@ func (x *PlaceOrder) GetRestaurantId() string {
 	return ""
 }
 
-func (x *PlaceOrder) GetMenus() []*Menu {
+func (x *PlaceOrder) GetMenu() []*MenuItem {
 	if x != nil {
-		return x.Menus
+		return x.Menu
 	}
 	return nil
 }
@@ -552,7 +552,7 @@ type HandlePlaceOrderRequest struct {
 	RequestId         string                 `protobuf:"bytes,12,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	CustomerId        string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	RestaurantId      string                 `protobuf:"bytes,2,opt,name=restaurant_id,json=restaurantId,proto3" json:"restaurant_id,omitempty"`
-	Menus             []*Menu                `protobuf:"bytes,3,rep,name=menus,proto3" json:"menus,omitempty"`
+	Menu              []*MenuItem            `protobuf:"bytes,3,rep,name=menu,proto3" json:"menu,omitempty"`
 	CouponCode        string                 `protobuf:"bytes,4,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
 	CouponDiscount    int32                  `protobuf:"varint,5,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
 	DeliveryFee       int32                  `protobuf:"varint,6,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
@@ -616,9 +616,9 @@ func (x *HandlePlaceOrderRequest) GetRestaurantId() string {
 	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetMenus() []*Menu {
+func (x *HandlePlaceOrderRequest) GetMenu() []*MenuItem {
 	if x != nil {
-		return x.Menus
+		return x.Menu
 	}
 	return nil
 }
@@ -683,7 +683,7 @@ var File_orderservice_proto protoreflect.FileDescriptor
 
 const file_orderservice_proto_rawDesc = "" +
 	"\n" +
-	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17restaurantservice.proto\x1a\fcommon.proto\"\x82\x06\n" +
+	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15merchantservice.proto\x1a\fcommon.proto\"\x84\x06\n" +
 	"\n" +
 	"PlaceOrder\x12\x1d\n" +
 	"\n" +
@@ -691,8 +691,8 @@ const file_orderservice_proto_rawDesc = "" +
 	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x1f\n" +
 	"\vcustomer_id\x18\x03 \x01(\tR\n" +
 	"customerId\x12#\n" +
-	"\rrestaurant_id\x18\x04 \x01(\tR\frestaurantId\x12%\n" +
-	"\x05menus\x18\x05 \x03(\v2\x0f.ihavefood.MenuR\x05menus\x12\x1f\n" +
+	"\rrestaurant_id\x18\x04 \x01(\tR\frestaurantId\x12'\n" +
+	"\x04menu\x18\x05 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
 	"\vcoupon_code\x18\x06 \x01(\tR\n" +
 	"couponCode\x12'\n" +
 	"\x0fcoupon_discount\x18\a \x01(\x05R\x0ecouponDiscount\x12!\n" +
@@ -719,14 +719,14 @@ const file_orderservice_proto_rawDesc = "" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\"T\n" +
 	"\x18ListOrderHistoryResponse\x128\n" +
-	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xb1\x04\n" +
+	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xb3\x04\n" +
 	"\x17HandlePlaceOrderRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\f \x01(\tR\trequestId\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12#\n" +
-	"\rrestaurant_id\x18\x02 \x01(\tR\frestaurantId\x12%\n" +
-	"\x05menus\x18\x03 \x03(\v2\x0f.ihavefood.MenuR\x05menus\x12\x1f\n" +
+	"\rrestaurant_id\x18\x02 \x01(\tR\frestaurantId\x12'\n" +
+	"\x04menu\x18\x03 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
 	"\vcoupon_code\x18\x04 \x01(\tR\n" +
 	"couponCode\x12'\n" +
 	"\x0fcoupon_discount\x18\x05 \x01(\x05R\x0ecouponDiscount\x12!\n" +
@@ -782,12 +782,12 @@ var file_orderservice_proto_goTypes = []any{
 	(*ListOrderHistoryRequest)(nil),  // 6: ihavefood.ListOrderHistoryRequest
 	(*ListOrderHistoryResponse)(nil), // 7: ihavefood.ListOrderHistoryResponse
 	(*HandlePlaceOrderRequest)(nil),  // 8: ihavefood.HandlePlaceOrderRequest
-	(*Menu)(nil),                     // 9: ihavefood.Menu
+	(*MenuItem)(nil),                 // 9: ihavefood.MenuItem
 	(*Address)(nil),                  // 10: ihavefood.Address
 	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
 }
 var file_orderservice_proto_depIdxs = []int32{
-	9,  // 0: ihavefood.PlaceOrder.menus:type_name -> ihavefood.Menu
+	9,  // 0: ihavefood.PlaceOrder.menu:type_name -> ihavefood.MenuItem
 	10, // 1: ihavefood.PlaceOrder.customer_address:type_name -> ihavefood.Address
 	10, // 2: ihavefood.PlaceOrder.restaurant_address:type_name -> ihavefood.Address
 	4,  // 3: ihavefood.PlaceOrder.customer_contact:type_name -> ihavefood.ContactInfo
@@ -799,7 +799,7 @@ var file_orderservice_proto_depIdxs = []int32{
 	11, // 9: ihavefood.OrderTimestamps.update_time:type_name -> google.protobuf.Timestamp
 	11, // 10: ihavefood.OrderTimestamps.complete_time:type_name -> google.protobuf.Timestamp
 	3,  // 11: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
-	9,  // 12: ihavefood.HandlePlaceOrderRequest.menus:type_name -> ihavefood.Menu
+	9,  // 12: ihavefood.HandlePlaceOrderRequest.menu:type_name -> ihavefood.MenuItem
 	10, // 13: ihavefood.HandlePlaceOrderRequest.customer_address:type_name -> ihavefood.Address
 	10, // 14: ihavefood.HandlePlaceOrderRequest.restaurant_address:type_name -> ihavefood.Address
 	4,  // 15: ihavefood.HandlePlaceOrderRequest.customer_contact:type_name -> ihavefood.ContactInfo
@@ -820,7 +820,7 @@ func file_orderservice_proto_init() {
 	if File_orderservice_proto != nil {
 		return
 	}
-	file_restaurantservice_proto_init()
+	file_merchantservice_proto_init()
 	file_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{

@@ -25,72 +25,94 @@ pub struct Social {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Restaurant {
+pub struct Merchant {
     #[prost(string, tag = "1")]
-    pub restaurant_id: ::prost::alloc::string::String,
+    pub merchant_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub restaurant_name: ::prost::alloc::string::String,
+    pub merchant_name: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "3")]
-    pub menus: ::prost::alloc::vec::Vec<Menu>,
+    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
     #[prost(message, optional, tag = "4")]
     pub address: ::core::option::Option<Address>,
-    #[prost(enumeration = "RestaurantStatus", tag = "5")]
+    #[prost(string, tag = "5")]
+    pub phone_number: ::prost::alloc::string::String,
+    #[prost(enumeration = "StoreStatus", tag = "6")]
     pub status: i32,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Menu {
+pub struct MenuItem {
     #[prost(string, tag = "1")]
+    pub item_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
     pub food_name: ::prost::alloc::string::String,
-    #[prost(int32, tag = "2")]
+    #[prost(int32, tag = "3")]
     pub price: i32,
+    #[prost(string, tag = "4")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(bool, tag = "5")]
+    pub is_available: bool,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetRestaurantRequest {
+pub struct GetMerchantRequest {
     #[prost(string, tag = "1")]
-    pub restaurant_id: ::prost::alloc::string::String,
+    pub merchant_id: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListRestaurantResponse {
+pub struct ListMerchantsResponse {
     #[prost(message, repeated, tag = "1")]
-    pub restaurants: ::prost::alloc::vec::Vec<Restaurant>,
+    pub merchants: ::prost::alloc::vec::Vec<Merchant>,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RegisterRestaurantRequest {
+pub struct RegisterMerchantRequest {
     #[prost(string, tag = "1")]
-    pub restaurant_name: ::prost::alloc::string::String,
+    pub merchant_name: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "2")]
-    pub menus: ::prost::alloc::vec::Vec<Menu>,
+    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
     #[prost(message, optional, tag = "3")]
     pub address: ::core::option::Option<Address>,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AddMenuRequest {
+pub struct CreateMenuItemRequest {
     #[prost(string, tag = "1")]
-    pub restaurant_id: ::prost::alloc::string::String,
+    pub merchant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "2")]
-    pub menus: ::prost::alloc::vec::Vec<Menu>,
+    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OrderReadyRequest {
+pub struct UpdateStoreStatusRequest {
     #[prost(string, tag = "1")]
-    pub order_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub restaurant_id: ::prost::alloc::string::String,
+    pub merchant_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "StoreStatus", tag = "2")]
+    pub status: i32,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StoreStatusResponse {
+    #[prost(string, tag = "1")]
+    pub merchant_id: ::prost::alloc::string::String,
+    #[prost(enumeration = "StoreStatus", tag = "2")]
+    pub status: i32,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetStoreStatusRequest {
+    #[prost(string, tag = "1")]
+    pub merchant_id: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
-pub enum RestaurantStatus {
+pub enum StoreStatus {
     Closed = 0,
     Open = 1,
 }
-impl RestaurantStatus {
+impl StoreStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
     ///
     /// The values are not transformed in any way and thus are considered stable
@@ -111,7 +133,7 @@ impl RestaurantStatus {
     }
 }
 /// Generated client implementations.
-pub mod restaurant_service_client {
+pub mod merchant_service_client {
     #![allow(
         unused_variables,
         dead_code,
@@ -121,13 +143,13 @@ pub mod restaurant_service_client {
     )]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
-    /// ---------------------RESTAURANT SERVICE------------------------
-    /// Manages restaurant
+    /// ---------------------MERCHANT SERVICE------------------------
+    /// merchant manages restaurant
     #[derive(Debug, Clone)]
-    pub struct RestaurantServiceClient<T> {
+    pub struct MerchantServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl RestaurantServiceClient<tonic::transport::Channel> {
+    impl MerchantServiceClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -138,7 +160,7 @@ pub mod restaurant_service_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> RestaurantServiceClient<T>
+    impl<T> MerchantServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -156,7 +178,7 @@ pub mod restaurant_service_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> RestaurantServiceClient<InterceptedService<T, F>>
+        ) -> MerchantServiceClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -170,7 +192,7 @@ pub mod restaurant_service_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
         {
-            RestaurantServiceClient::new(InterceptedService::new(inner, interceptor))
+            MerchantServiceClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -203,12 +225,11 @@ pub mod restaurant_service_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
-        /// ListRestaurant returns a list of all restaurants.
-        pub async fn list_restaurant(
+        pub async fn list_merchants(
             &mut self,
             request: impl tonic::IntoRequest<::prost_wkt_types::Empty>,
         ) -> std::result::Result<
-            tonic::Response<super::ListRestaurantResponse>,
+            tonic::Response<super::ListMerchantsResponse>,
             tonic::Status,
         > {
             self.inner
@@ -221,21 +242,63 @@ pub mod restaurant_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.RestaurantService/ListRestaurant",
+                "/ihavefood.MerchantService/ListMerchants",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.MerchantService", "ListMerchants"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn get_merchant(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetMerchantRequest>,
+        ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.MerchantService/GetMerchant",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.MerchantService", "GetMerchant"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// RegisterMerchant registers a new merchant.
+        pub async fn register_merchant(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterMerchantRequest>,
+        ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.MerchantService/RegisterMerchant",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("ihavefood.RestaurantService", "ListRestaurant"),
+                    GrpcMethod::new("ihavefood.MerchantService", "RegisterMerchant"),
                 );
             self.inner.unary(req, path, codec).await
         }
-        /// GetRestaurant retrieves the details of a specific restaurant
-        /// using the restaurant ID.
-        pub async fn get_restaurant(
+        /// Menu management
+        pub async fn create_menu_item(
             &mut self,
-            request: impl tonic::IntoRequest<super::GetRestaurantRequest>,
-        ) -> std::result::Result<tonic::Response<super::Restaurant>, tonic::Status> {
+            request: impl tonic::IntoRequest<super::CreateMenuItemRequest>,
+        ) -> std::result::Result<tonic::Response<super::MenuItem>, tonic::Status> {
             self.inner
                 .ready()
                 .await
@@ -246,66 +309,19 @@ pub mod restaurant_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.RestaurantService/GetRestaurant",
+                "/ihavefood.MerchantService/CreateMenuItem",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ihavefood.RestaurantService", "GetRestaurant"));
+                .insert(GrpcMethod::new("ihavefood.MerchantService", "CreateMenuItem"));
             self.inner.unary(req, path, codec).await
         }
-        /// RegisterRestaurant registers a new restaurant.
-        pub async fn register_restaurant(
+        /// Store Management
+        pub async fn update_store_status(
             &mut self,
-            request: impl tonic::IntoRequest<super::RegisterRestaurantRequest>,
-        ) -> std::result::Result<tonic::Response<super::Restaurant>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.RestaurantService/RegisterRestaurant",
-            );
-            let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("ihavefood.RestaurantService", "RegisterRestaurant"),
-                );
-            self.inner.unary(req, path, codec).await
-        }
-        /// AddMenu adds new menus to restaurant.
-        pub async fn add_menu(
-            &mut self,
-            request: impl tonic::IntoRequest<super::AddMenuRequest>,
-        ) -> std::result::Result<tonic::Response<super::Restaurant>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.RestaurantService/AddMenu",
-            );
-            let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("ihavefood.RestaurantService", "AddMenu"));
-            self.inner.unary(req, path, codec).await
-        }
-        /// OrderReady is called by the restaurant to notify the server(RestaurantService)
-        /// that the ordered have been cooked and are ready for delivery.
-        pub async fn order_ready(
-            &mut self,
-            request: impl tonic::IntoRequest<super::OrderReadyRequest>,
+            request: impl tonic::IntoRequest<super::UpdateStoreStatusRequest>,
         ) -> std::result::Result<
-            tonic::Response<::prost_wkt_types::Empty>,
+            tonic::Response<super::StoreStatusResponse>,
             tonic::Status,
         > {
             self.inner
@@ -318,17 +334,43 @@ pub mod restaurant_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.RestaurantService/OrderReady",
+                "/ihavefood.MerchantService/UpdateStoreStatus",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ihavefood.RestaurantService", "OrderReady"));
+                .insert(
+                    GrpcMethod::new("ihavefood.MerchantService", "UpdateStoreStatus"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn get_store_status(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetStoreStatusRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::StoreStatusResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.MerchantService/GetStoreStatus",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.MerchantService", "GetStoreStatus"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod restaurant_service_server {
+pub mod merchant_service_server {
     #![allow(
         unused_variables,
         dead_code,
@@ -337,54 +379,57 @@ pub mod restaurant_service_server {
         clippy::let_unit_value,
     )]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with RestaurantServiceServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with MerchantServiceServer.
     #[async_trait]
-    pub trait RestaurantService: std::marker::Send + std::marker::Sync + 'static {
-        /// ListRestaurant returns a list of all restaurants.
-        async fn list_restaurant(
+    pub trait MerchantService: std::marker::Send + std::marker::Sync + 'static {
+        async fn list_merchants(
             &self,
             request: tonic::Request<::prost_wkt_types::Empty>,
         ) -> std::result::Result<
-            tonic::Response<super::ListRestaurantResponse>,
+            tonic::Response<super::ListMerchantsResponse>,
             tonic::Status,
         >;
-        /// GetRestaurant retrieves the details of a specific restaurant
-        /// using the restaurant ID.
-        async fn get_restaurant(
+        async fn get_merchant(
             &self,
-            request: tonic::Request<super::GetRestaurantRequest>,
-        ) -> std::result::Result<tonic::Response<super::Restaurant>, tonic::Status>;
-        /// RegisterRestaurant registers a new restaurant.
-        async fn register_restaurant(
+            request: tonic::Request<super::GetMerchantRequest>,
+        ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status>;
+        /// RegisterMerchant registers a new merchant.
+        async fn register_merchant(
             &self,
-            request: tonic::Request<super::RegisterRestaurantRequest>,
-        ) -> std::result::Result<tonic::Response<super::Restaurant>, tonic::Status>;
-        /// AddMenu adds new menus to restaurant.
-        async fn add_menu(
+            request: tonic::Request<super::RegisterMerchantRequest>,
+        ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status>;
+        /// Menu management
+        async fn create_menu_item(
             &self,
-            request: tonic::Request<super::AddMenuRequest>,
-        ) -> std::result::Result<tonic::Response<super::Restaurant>, tonic::Status>;
-        /// OrderReady is called by the restaurant to notify the server(RestaurantService)
-        /// that the ordered have been cooked and are ready for delivery.
-        async fn order_ready(
+            request: tonic::Request<super::CreateMenuItemRequest>,
+        ) -> std::result::Result<tonic::Response<super::MenuItem>, tonic::Status>;
+        /// Store Management
+        async fn update_store_status(
             &self,
-            request: tonic::Request<super::OrderReadyRequest>,
+            request: tonic::Request<super::UpdateStoreStatusRequest>,
         ) -> std::result::Result<
-            tonic::Response<::prost_wkt_types::Empty>,
+            tonic::Response<super::StoreStatusResponse>,
+            tonic::Status,
+        >;
+        async fn get_store_status(
+            &self,
+            request: tonic::Request<super::GetStoreStatusRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::StoreStatusResponse>,
             tonic::Status,
         >;
     }
-    /// ---------------------RESTAURANT SERVICE------------------------
-    /// Manages restaurant
+    /// ---------------------MERCHANT SERVICE------------------------
+    /// merchant manages restaurant
     #[derive(Debug)]
-    pub struct RestaurantServiceServer<T> {
+    pub struct MerchantServiceServer<T> {
         inner: Arc<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
         max_decoding_message_size: Option<usize>,
         max_encoding_message_size: Option<usize>,
     }
-    impl<T> RestaurantServiceServer<T> {
+    impl<T> MerchantServiceServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -435,9 +480,9 @@ pub mod restaurant_service_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for RestaurantServiceServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for MerchantServiceServer<T>
     where
-        T: RestaurantService,
+        T: MerchantService,
         B: Body + std::marker::Send + 'static,
         B::Error: Into<StdError> + std::marker::Send + 'static,
     {
@@ -452,14 +497,14 @@ pub mod restaurant_service_server {
         }
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             match req.uri().path() {
-                "/ihavefood.RestaurantService/ListRestaurant" => {
+                "/ihavefood.MerchantService/ListMerchants" => {
                     #[allow(non_camel_case_types)]
-                    struct ListRestaurantSvc<T: RestaurantService>(pub Arc<T>);
+                    struct ListMerchantsSvc<T: MerchantService>(pub Arc<T>);
                     impl<
-                        T: RestaurantService,
+                        T: MerchantService,
                     > tonic::server::UnaryService<::prost_wkt_types::Empty>
-                    for ListRestaurantSvc<T> {
-                        type Response = super::ListRestaurantResponse;
+                    for ListMerchantsSvc<T> {
+                        type Response = super::ListMerchantsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
@@ -470,7 +515,7 @@ pub mod restaurant_service_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RestaurantService>::list_restaurant(&inner, request)
+                                <T as MerchantService>::list_merchants(&inner, request)
                                     .await
                             };
                             Box::pin(fut)
@@ -482,7 +527,7 @@ pub mod restaurant_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = ListRestaurantSvc(inner);
+                        let method = ListMerchantsSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -498,25 +543,70 @@ pub mod restaurant_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/ihavefood.RestaurantService/GetRestaurant" => {
+                "/ihavefood.MerchantService/GetMerchant" => {
                     #[allow(non_camel_case_types)]
-                    struct GetRestaurantSvc<T: RestaurantService>(pub Arc<T>);
+                    struct GetMerchantSvc<T: MerchantService>(pub Arc<T>);
                     impl<
-                        T: RestaurantService,
-                    > tonic::server::UnaryService<super::GetRestaurantRequest>
-                    for GetRestaurantSvc<T> {
-                        type Response = super::Restaurant;
+                        T: MerchantService,
+                    > tonic::server::UnaryService<super::GetMerchantRequest>
+                    for GetMerchantSvc<T> {
+                        type Response = super::Merchant;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::GetRestaurantRequest>,
+                            request: tonic::Request<super::GetMerchantRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RestaurantService>::get_restaurant(&inner, request)
+                                <T as MerchantService>::get_merchant(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = GetMerchantSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.MerchantService/RegisterMerchant" => {
+                    #[allow(non_camel_case_types)]
+                    struct RegisterMerchantSvc<T: MerchantService>(pub Arc<T>);
+                    impl<
+                        T: MerchantService,
+                    > tonic::server::UnaryService<super::RegisterMerchantRequest>
+                    for RegisterMerchantSvc<T> {
+                        type Response = super::Merchant;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterMerchantRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as MerchantService>::register_merchant(&inner, request)
                                     .await
                             };
                             Box::pin(fut)
@@ -528,7 +618,7 @@ pub mod restaurant_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = GetRestaurantSvc(inner);
+                        let method = RegisterMerchantSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -544,28 +634,25 @@ pub mod restaurant_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/ihavefood.RestaurantService/RegisterRestaurant" => {
+                "/ihavefood.MerchantService/CreateMenuItem" => {
                     #[allow(non_camel_case_types)]
-                    struct RegisterRestaurantSvc<T: RestaurantService>(pub Arc<T>);
+                    struct CreateMenuItemSvc<T: MerchantService>(pub Arc<T>);
                     impl<
-                        T: RestaurantService,
-                    > tonic::server::UnaryService<super::RegisterRestaurantRequest>
-                    for RegisterRestaurantSvc<T> {
-                        type Response = super::Restaurant;
+                        T: MerchantService,
+                    > tonic::server::UnaryService<super::CreateMenuItemRequest>
+                    for CreateMenuItemSvc<T> {
+                        type Response = super::MenuItem;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::RegisterRestaurantRequest>,
+                            request: tonic::Request<super::CreateMenuItemRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RestaurantService>::register_restaurant(
-                                        &inner,
-                                        request,
-                                    )
+                                <T as MerchantService>::create_menu_item(&inner, request)
                                     .await
                             };
                             Box::pin(fut)
@@ -577,7 +664,7 @@ pub mod restaurant_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = RegisterRestaurantSvc(inner);
+                        let method = CreateMenuItemSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -593,25 +680,26 @@ pub mod restaurant_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/ihavefood.RestaurantService/AddMenu" => {
+                "/ihavefood.MerchantService/UpdateStoreStatus" => {
                     #[allow(non_camel_case_types)]
-                    struct AddMenuSvc<T: RestaurantService>(pub Arc<T>);
+                    struct UpdateStoreStatusSvc<T: MerchantService>(pub Arc<T>);
                     impl<
-                        T: RestaurantService,
-                    > tonic::server::UnaryService<super::AddMenuRequest>
-                    for AddMenuSvc<T> {
-                        type Response = super::Restaurant;
+                        T: MerchantService,
+                    > tonic::server::UnaryService<super::UpdateStoreStatusRequest>
+                    for UpdateStoreStatusSvc<T> {
+                        type Response = super::StoreStatusResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::AddMenuRequest>,
+                            request: tonic::Request<super::UpdateStoreStatusRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RestaurantService>::add_menu(&inner, request).await
+                                <T as MerchantService>::update_store_status(&inner, request)
+                                    .await
                             };
                             Box::pin(fut)
                         }
@@ -622,7 +710,7 @@ pub mod restaurant_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = AddMenuSvc(inner);
+                        let method = UpdateStoreStatusSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -638,25 +726,26 @@ pub mod restaurant_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/ihavefood.RestaurantService/OrderReady" => {
+                "/ihavefood.MerchantService/GetStoreStatus" => {
                     #[allow(non_camel_case_types)]
-                    struct OrderReadySvc<T: RestaurantService>(pub Arc<T>);
+                    struct GetStoreStatusSvc<T: MerchantService>(pub Arc<T>);
                     impl<
-                        T: RestaurantService,
-                    > tonic::server::UnaryService<super::OrderReadyRequest>
-                    for OrderReadySvc<T> {
-                        type Response = ::prost_wkt_types::Empty;
+                        T: MerchantService,
+                    > tonic::server::UnaryService<super::GetStoreStatusRequest>
+                    for GetStoreStatusSvc<T> {
+                        type Response = super::StoreStatusResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::OrderReadyRequest>,
+                            request: tonic::Request<super::GetStoreStatusRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RestaurantService>::order_ready(&inner, request).await
+                                <T as MerchantService>::get_store_status(&inner, request)
+                                    .await
                             };
                             Box::pin(fut)
                         }
@@ -667,7 +756,7 @@ pub mod restaurant_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = OrderReadySvc(inner);
+                        let method = GetStoreStatusSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -703,7 +792,7 @@ pub mod restaurant_service_server {
             }
         }
     }
-    impl<T> Clone for RestaurantServiceServer<T> {
+    impl<T> Clone for MerchantServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -716,8 +805,8 @@ pub mod restaurant_service_server {
         }
     }
     /// Generated gRPC service name
-    pub const SERVICE_NAME: &str = "ihavefood.RestaurantService";
-    impl<T> tonic::server::NamedService for RestaurantServiceServer<T> {
+    pub const SERVICE_NAME: &str = "ihavefood.MerchantService";
+    impl<T> tonic::server::NamedService for MerchantServiceServer<T> {
         const NAME: &'static str = SERVICE_NAME;
     }
 }
@@ -734,7 +823,7 @@ pub struct PlaceOrder {
     #[prost(string, tag = "4")]
     pub restaurant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "5")]
-    pub menus: ::prost::alloc::vec::Vec<Menu>,
+    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
     #[prost(string, tag = "6")]
     pub coupon_code: ::prost::alloc::string::String,
     #[prost(int32, tag = "7")]
@@ -798,7 +887,7 @@ pub struct HandlePlaceOrderRequest {
     #[prost(string, tag = "2")]
     pub restaurant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "3")]
-    pub menus: ::prost::alloc::vec::Vec<Menu>,
+    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
     #[prost(string, tag = "4")]
     pub coupon_code: ::prost::alloc::string::String,
     #[prost(int32, tag = "5")]

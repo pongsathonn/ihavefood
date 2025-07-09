@@ -21,7 +21,7 @@ service_numbers_keys=(1 2 3 4 5 6)
 service_names_values=(
     "customerservice"
     "authservice"
-    "restaurantservice"
+    "merchantservice"
     "deliveryservice"
     "orderservice"
     "couponservice"
@@ -89,7 +89,7 @@ protoc -I "$protos" \
     "$protos/common.proto" \
     "$protos/customerservice.proto" \
     "$protos/authservice.proto" \
-    "$protos/restaurantservice.proto" \
+    "$protos/merchantservice.proto" \
     "$protos/deliveryservice.proto" \
     "$protos/orderservice.proto" \
     "$protos/couponservice.proto"
@@ -110,7 +110,7 @@ protoc -I "$protos" \
     "$protos/common.proto" \
     "$protos/customerservice.proto" \
     "$protos/authservice.proto" \
-    "$protos/restaurantservice.proto" \
+    "$protos/merchantservice.proto" \
     "$protos/deliveryservice.proto" \
     "$protos/orderservice.proto" \
     "$protos/couponservice.proto"

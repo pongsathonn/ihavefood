@@ -213,9 +213,9 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 
 func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
 
-	var menus []*dbMenu
-	for _, m := range in.Menus {
-		menus = append(menus, &dbMenu{
+	var menu []*dbMenuItem
+	for _, m := range in.Menu {
+		menu = append(menu, &dbMenuItem{
 			FoodName: m.FoodName,
 			Price:    m.Price,
 		})
@@ -228,7 +228,7 @@ func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
 		RequestID:      in.RequestId,
 		CustomerID:     in.CustomerId,
 		RestaurantID:   in.RestaurantId,
-		Menus:          menus,
+		Menu:           menu,
 		CouponCode:     in.CouponCode,
 		CouponDiscount: in.CouponDiscount,
 		DeliveryFee:    in.DeliveryFee,
@@ -263,9 +263,9 @@ func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
 
 func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 
-	var menus []*pb.Menu
-	for _, m := range order.Menus {
-		menus = append(menus, &pb.Menu{
+	var menu []*pb.MenuItem
+	for _, m := range order.Menu {
+		menu = append(menu, &pb.MenuItem{
 			FoodName: m.FoodName,
 			Price:    m.Price,
 		})
@@ -277,7 +277,7 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 		RequestId:      order.RequestID,
 		CustomerId:     order.CustomerID,
 		RestaurantId:   order.RestaurantID,
-		Menus:          menus,
+		Menu:           menu,
 		CouponCode:     order.CouponCode,
 		CouponDiscount: order.CouponDiscount,
 		DeliveryFee:    order.DeliveryFee,
@@ -322,7 +322,7 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 		return errors.New("customer ID must be provided")
 	case in.RestaurantId == "":
 		return errors.New("restaurant ID must be provided")
-	case len(in.Menus) == 0:
+	case len(in.Menu) == 0:
 		return errors.New("menu should be at least one")
 	case in.CouponCode == "":
 		return errors.New("coupon code must be provided")
@@ -347,7 +347,7 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 	}
 
 	var sumMenus int32
-	for _, menu := range in.Menus {
+	for _, menu := range in.Menu {
 		sumMenus += menu.Price
 	}
 	sum := ((sumMenus + in.DeliveryFee) - in.CouponDiscount)
