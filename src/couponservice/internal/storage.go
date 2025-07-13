@@ -50,7 +50,7 @@ func NewCouponStorage(db *mongo.Client) CouponStorage {
 
 func (r *couponStorage) Coupons(ctx context.Context) ([]*dbCoupon, error) {
 
-	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
+	coll := r.db.Database("db", nil).Collection("coupons")
 
 	// filter := bson.M{"quantity": bson.M{"$gt": 0}}
 	cur, err := coll.Find(ctx, bson.D{})
@@ -69,7 +69,7 @@ func (r *couponStorage) Coupons(ctx context.Context) ([]*dbCoupon, error) {
 
 func (r *couponStorage) Coupon(ctx context.Context, code string) (*dbCoupon, error) {
 
-	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
+	coll := r.db.Database("db", nil).Collection("coupons")
 
 	var coupon dbCoupon
 	if err := coll.FindOne(ctx, bson.M{"code": code}).Decode(&coupon); err != nil {
@@ -80,7 +80,7 @@ func (r *couponStorage) Coupon(ctx context.Context, code string) (*dbCoupon, err
 
 func (r *couponStorage) Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, error) {
 
-	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
+	coll := r.db.Database("db", nil).Collection("coupons")
 
 	// if coupon code exists increase quantity field
 	// and update with longest expiration time
@@ -104,7 +104,7 @@ func (r *couponStorage) Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, e
 }
 
 func (r *couponStorage) UpdateQuantity(ctx context.Context, code string) (string, error) {
-	coll := r.db.Database("coupon_database", nil).Collection("couponCollection")
+	coll := r.db.Database("db", nil).Collection("coupons")
 
 	filter := bson.M{
 		"_id":      code,

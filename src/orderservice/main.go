@@ -62,7 +62,7 @@ func initRabbitMQ() *amqp.Connection {
 
 func initMongoClient() *mongo.Client {
 
-	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/order_database?authSource=admin",
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/db?authSource=admin",
 		os.Getenv("ORDER_MONGO_USER"),
 		os.Getenv("ORDER_MONGO_PASS"),
 		os.Getenv("ORDER_MONGO_HOST"),
@@ -75,16 +75,16 @@ func initMongoClient() *mongo.Client {
 	}
 	log.Println("Successfully connected to MongoDB")
 
-	db := client.Database("order_database")
+	db := client.Database("db")
 
-	if err := db.CreateCollection(context.TODO(), "orderCollection"); err != nil {
+	if err := db.CreateCollection(context.TODO(), "orders"); err != nil {
 		var alreayExistsColl mongo.CommandError
 		if !errors.As(err, &alreayExistsColl) {
 			log.Fatal("Failed to create collection:", err)
 		}
 	}
 
-	coll := db.Collection("orderCollection")
+	coll := db.Collection("orders")
 	indexModel := mongo.IndexModel{
 		Keys:    bson.D{{"requestId", 1}}, //preventing duplicate order
 		Options: options.Index().SetUnique(true),

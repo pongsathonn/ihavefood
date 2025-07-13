@@ -38,7 +38,7 @@ func NewOrderStorage(client *mongo.Client) OrderStorage {
 
 func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (string, error) {
 
-	coll := s.client.Database("order_database", nil).Collection("orderCollection")
+	coll := s.client.Database("db", nil).Collection("orders")
 
 	res, err := coll.InsertOne(ctx, in)
 	if err != nil {
@@ -56,7 +56,7 @@ func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (string, er
 
 func (s *orderStorage) PlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error) {
 
-	coll := s.client.Database("order_database", nil).Collection("orderCollection")
+	coll := s.client.Database("db", nil).Collection("orders")
 
 	cur, err := coll.Find(ctx, bson.D{{"customerID", customerID}})
 	if err != nil {
@@ -81,7 +81,7 @@ func (s *orderStorage) PlaceOrders(ctx context.Context, customerID string) ([]*d
 
 func (s *orderStorage) PlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error) {
 
-	coll := s.client.Database("order_database", nil).Collection("orderCollection")
+	coll := s.client.Database("db", nil).Collection("orders")
 
 	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
@@ -98,7 +98,7 @@ func (s *orderStorage) PlaceOrder(ctx context.Context, orderID string) (*dbPlace
 
 func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (string, error) {
 
-	coll := s.client.Database("order_database", nil).Collection("orderCollection")
+	coll := s.client.Database("db", nil).Collection("orders")
 
 	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
@@ -146,7 +146,7 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, st
 
 func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (string, error) {
 
-	coll := s.client.Database("order_database", nil).Collection("orderCollection")
+	coll := s.client.Database("db", nil).Collection("orders")
 
 	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {

@@ -62,7 +62,7 @@ func initRabbitMQ() *amqp.Connection {
 
 func initMongoClient() *mongo.Client {
 
-	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/coupon_database?authSource=admin",
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/db?authSource=admin",
 		os.Getenv("COUPON_MONGO_USER"),
 		os.Getenv("COUPON_MONGO_PASS"),
 		os.Getenv("COUPON_MONGO_HOST"),
@@ -74,7 +74,7 @@ func initMongoClient() *mongo.Client {
 		log.Fatal(err)
 	}
 
-	err = client.Database("coupon_database").CreateCollection(context.TODO(), "couponCollection")
+	err = client.Database("db").CreateCollection(context.TODO(), "coupons")
 	if err != nil {
 		//TODO if exists pass
 		log.Fatal(err)
@@ -122,7 +122,7 @@ func startGRPCServer(s *internal.CouponService) {
 //   - Stops when the context is canceled, allowing for graceful termination.
 func cleanUpCoupons(ctx context.Context, client *mongo.Client) {
 
-	coll := client.Database("coupon_database", nil).Collection("couponCollection")
+	coll := client.Database("db", nil).Collection("coupons")
 
 	ticker := time.NewTicker(30 * time.Minute)
 	defer ticker.Stop()
