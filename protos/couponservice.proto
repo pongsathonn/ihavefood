@@ -18,7 +18,7 @@ service CouponService {
     //
     // TODO: In the future, this method might be updated to list coupons by other condition,
     // but currently, it responds with all coupons.
-    rpc ListCoupon(google.protobuf.Empty) returns(ListCouponResponse){
+    rpc ListCoupons(google.protobuf.Empty) returns(ListCouponsResponse){
         option (google.api.http) = {
             get: "/api/coupons" 
         };
@@ -89,7 +89,7 @@ message GetCouponRequest {
     string code = 1;
 }
 
-message ListCouponResponse {
+message ListCouponsResponse {
     repeated Coupon coupons = 1;
 }
 

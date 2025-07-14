@@ -40,7 +40,7 @@ func (x *OrderService) ListOrderHistory(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "ID must be provided")
 	}
 
-	dbOrders, err := x.storage.PlaceOrders(ctx, in.CustomerId)
+	dbOrders, err := x.storage.ListPlaceOrders(ctx, in.CustomerId)
 	if err != nil {
 		slog.Error("retrive place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrieve customer's place orders")
@@ -74,7 +74,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		return nil, status.Error(codes.Internal, "failed to save place order")
 	}
 
-	dbOrder, err := x.storage.PlaceOrder(ctx, orderID)
+	dbOrder, err := x.storage.GetPlaceOrder(ctx, orderID)
 	if err != nil {
 		slog.Error("failed to retrive place order", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrive place order")

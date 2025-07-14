@@ -7,14 +7,13 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
  
 ### Event Routing Table (Order processing)
 
-<pre>
  | Publisher    |     Routing Key           |           Queue              | Subscriber |  ORDER STATUS  |   
  |--------------|---------------------------|------------------------------|------------|----------------|
  |              |                           |                              |            |  PENDING       |
  | Order        | order.placed.event        | restaurant_assign_queue      | Restaurant |                | 
  | Order        | order.placed.event        | rider_assign_queue           | Delivery   |                | 
- |              |                           |                              |            |  PREPARING     |
  | Restaurant   | restaurant.accepted.event | restaurant_accept_queue      | Delivery   |                | 
+ |              |                           |                              |            |  PREPARING     |
  | Delivery     | rider.finding.event       | order_status_update_queue    | Order      |                | 
  |              |                           |                              |            |  FINDING_RIDER |
  | Delivery     | rider.assigned.event      | order_status_update_queue    | Order      |                |
@@ -23,7 +22,6 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
  |              |                           |                              |            |  ONGOING       |
  | Delivery     | rider.delivered.event     | order_status_update_queue    | Order      |                |
  |              |                           |                              |            |  DELIVERED     |
-</pre>
 
 # payment
 
@@ -38,11 +36,9 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
 
 ### Canceling Order 
 # proceed to refund
-<pre>
+
  | Publisher  |       Routing Key                | Subscriber |  STATUS   |
  |------------|----------------------------------|------------|-----------|
  | Payment    | error.payment.failed.event       |     *      | CANCELLED | 
  | Delivery   | error.rider.unaccepted.event     |     *      | CANCELLED | 
  | Restaurant | error.restaurant.cancelled.event |     *      | CANCELLED | 
-</pre>
-

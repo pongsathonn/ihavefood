@@ -14,9 +14,9 @@ import (
 type OrderStorage interface {
 
 	// Retrieves the order history for a specified customer by username
-	PlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error)
+	ListPlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error)
 
-	PlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error)
+	GetPlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error)
 
 	// Create inserts new place order into database and returns the order number.
 	Create(ctx context.Context, in *dbPlaceOrder) (string, error)
@@ -54,7 +54,7 @@ func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (string, er
 
 }
 
-func (s *orderStorage) PlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error) {
+func (s *orderStorage) ListPlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error) {
 
 	coll := s.client.Database("db", nil).Collection("orders")
 
@@ -79,7 +79,7 @@ func (s *orderStorage) PlaceOrders(ctx context.Context, customerID string) ([]*d
 	return orders, nil
 }
 
-func (s *orderStorage) PlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error) {
+func (s *orderStorage) GetPlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error) {
 
 	coll := s.client.Database("db", nil).Collection("orders")
 

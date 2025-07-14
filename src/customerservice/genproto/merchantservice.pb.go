@@ -377,7 +377,7 @@ func (x *RegisterMerchantRequest) GetAddress() *Address {
 	return nil
 }
 
-type CreateMenuItemRequest struct {
+type CreateMenuRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MerchantId    string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	Menu          []*MenuItem            `protobuf:"bytes,2,rep,name=menu,proto3" json:"menu,omitempty"`
@@ -385,20 +385,20 @@ type CreateMenuItemRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateMenuItemRequest) Reset() {
-	*x = CreateMenuItemRequest{}
+func (x *CreateMenuRequest) Reset() {
+	*x = CreateMenuRequest{}
 	mi := &file_merchantservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateMenuItemRequest) String() string {
+func (x *CreateMenuRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateMenuItemRequest) ProtoMessage() {}
+func (*CreateMenuRequest) ProtoMessage() {}
 
-func (x *CreateMenuItemRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateMenuRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_merchantservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -410,19 +410,115 @@ func (x *CreateMenuItemRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateMenuItemRequest.ProtoReflect.Descriptor instead.
-func (*CreateMenuItemRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateMenuRequest.ProtoReflect.Descriptor instead.
+func (*CreateMenuRequest) Descriptor() ([]byte, []int) {
 	return file_merchantservice_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *CreateMenuItemRequest) GetMerchantId() string {
+func (x *CreateMenuRequest) GetMerchantId() string {
 	if x != nil {
 		return x.MerchantId
 	}
 	return ""
 }
 
-func (x *CreateMenuItemRequest) GetMenu() []*MenuItem {
+func (x *CreateMenuRequest) GetMenu() []*MenuItem {
+	if x != nil {
+		return x.Menu
+	}
+	return nil
+}
+
+type CreateMenuResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Menu          []*MenuItem            `protobuf:"bytes,1,rep,name=menu,proto3" json:"menu,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateMenuResponse) Reset() {
+	*x = CreateMenuResponse{}
+	mi := &file_merchantservice_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateMenuResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateMenuResponse) ProtoMessage() {}
+
+func (x *CreateMenuResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_merchantservice_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateMenuResponse.ProtoReflect.Descriptor instead.
+func (*CreateMenuResponse) Descriptor() ([]byte, []int) {
+	return file_merchantservice_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CreateMenuResponse) GetMenu() []*MenuItem {
+	if x != nil {
+		return x.Menu
+	}
+	return nil
+}
+
+type UpdateMenuItemRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MerchantId    string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	Menu          *MenuItem              `protobuf:"bytes,2,opt,name=menu,proto3" json:"menu,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMenuItemRequest) Reset() {
+	*x = UpdateMenuItemRequest{}
+	mi := &file_merchantservice_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMenuItemRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMenuItemRequest) ProtoMessage() {}
+
+func (x *UpdateMenuItemRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_merchantservice_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMenuItemRequest.ProtoReflect.Descriptor instead.
+func (*UpdateMenuItemRequest) Descriptor() ([]byte, []int) {
+	return file_merchantservice_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UpdateMenuItemRequest) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
+	}
+	return ""
+}
+
+func (x *UpdateMenuItemRequest) GetMenu() *MenuItem {
 	if x != nil {
 		return x.Menu
 	}
@@ -439,7 +535,7 @@ type UpdateStoreStatusRequest struct {
 
 func (x *UpdateStoreStatusRequest) Reset() {
 	*x = UpdateStoreStatusRequest{}
-	mi := &file_merchantservice_proto_msgTypes[6]
+	mi := &file_merchantservice_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -451,7 +547,7 @@ func (x *UpdateStoreStatusRequest) String() string {
 func (*UpdateStoreStatusRequest) ProtoMessage() {}
 
 func (x *UpdateStoreStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_merchantservice_proto_msgTypes[6]
+	mi := &file_merchantservice_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -464,7 +560,7 @@ func (x *UpdateStoreStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateStoreStatusRequest.ProtoReflect.Descriptor instead.
 func (*UpdateStoreStatusRequest) Descriptor() ([]byte, []int) {
-	return file_merchantservice_proto_rawDescGZIP(), []int{6}
+	return file_merchantservice_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateStoreStatusRequest) GetMerchantId() string {
@@ -481,6 +577,50 @@ func (x *UpdateStoreStatusRequest) GetStatus() StoreStatus {
 	return StoreStatus_CLOSED
 }
 
+type GetStoreStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MerchantId    string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStoreStatusRequest) Reset() {
+	*x = GetStoreStatusRequest{}
+	mi := &file_merchantservice_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStoreStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStoreStatusRequest) ProtoMessage() {}
+
+func (x *GetStoreStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_merchantservice_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStoreStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetStoreStatusRequest) Descriptor() ([]byte, []int) {
+	return file_merchantservice_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetStoreStatusRequest) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
+	}
+	return ""
+}
+
 type StoreStatusResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MerchantId    string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
@@ -491,7 +631,7 @@ type StoreStatusResponse struct {
 
 func (x *StoreStatusResponse) Reset() {
 	*x = StoreStatusResponse{}
-	mi := &file_merchantservice_proto_msgTypes[7]
+	mi := &file_merchantservice_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -503,7 +643,7 @@ func (x *StoreStatusResponse) String() string {
 func (*StoreStatusResponse) ProtoMessage() {}
 
 func (x *StoreStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_merchantservice_proto_msgTypes[7]
+	mi := &file_merchantservice_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -516,7 +656,7 @@ func (x *StoreStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreStatusResponse.ProtoReflect.Descriptor instead.
 func (*StoreStatusResponse) Descriptor() ([]byte, []int) {
-	return file_merchantservice_proto_rawDescGZIP(), []int{7}
+	return file_merchantservice_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *StoreStatusResponse) GetMerchantId() string {
@@ -531,50 +671,6 @@ func (x *StoreStatusResponse) GetStatus() StoreStatus {
 		return x.Status
 	}
 	return StoreStatus_CLOSED
-}
-
-type GetStoreStatusRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MerchantId    string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetStoreStatusRequest) Reset() {
-	*x = GetStoreStatusRequest{}
-	mi := &file_merchantservice_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetStoreStatusRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetStoreStatusRequest) ProtoMessage() {}
-
-func (x *GetStoreStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_merchantservice_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetStoreStatusRequest.ProtoReflect.Descriptor instead.
-func (*GetStoreStatusRequest) Descriptor() ([]byte, []int) {
-	return file_merchantservice_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *GetStoreStatusRequest) GetMerchantId() string {
-	if x != nil {
-		return x.MerchantId
-	}
-	return ""
 }
 
 var File_merchantservice_proto protoreflect.FileDescriptor
@@ -604,31 +700,39 @@ const file_merchantservice_proto_rawDesc = "" +
 	"\x17RegisterMerchantRequest\x12#\n" +
 	"\rmerchant_name\x18\x01 \x01(\tR\fmerchantName\x12'\n" +
 	"\x04menu\x18\x02 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12,\n" +
-	"\aaddress\x18\x03 \x01(\v2\x12.ihavefood.AddressR\aaddress\"a\n" +
-	"\x15CreateMenuItemRequest\x12\x1f\n" +
+	"\aaddress\x18\x03 \x01(\v2\x12.ihavefood.AddressR\aaddress\"]\n" +
+	"\x11CreateMenuRequest\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
 	"merchantId\x12'\n" +
-	"\x04menu\x18\x02 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\"k\n" +
-	"\x18UpdateStoreStatusRequest\x12\x1f\n" +
+	"\x04menu\x18\x02 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\"=\n" +
+	"\x12CreateMenuResponse\x12'\n" +
+	"\x04menu\x18\x01 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\"a\n" +
+	"\x15UpdateMenuItemRequest\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
-	"merchantId\x12.\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status\"f\n" +
-	"\x13StoreStatusResponse\x12\x1f\n" +
+	"merchantId\x12'\n" +
+	"\x04menu\x18\x02 \x01(\v2\x13.ihavefood.MenuItemR\x04menu\"k\n" +
+	"\x18UpdateStoreStatusRequest\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
 	"merchantId\x12.\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status\"8\n" +
 	"\x15GetStoreStatusRequest\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
-	"merchantId*#\n" +
+	"merchantId\"f\n" +
+	"\x13StoreStatusResponse\x12\x1f\n" +
+	"\vmerchant_id\x18\x01 \x01(\tR\n" +
+	"merchantId\x12.\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status*#\n" +
 	"\vStoreStatus\x12\n" +
 	"\n" +
 	"\x06CLOSED\x10\x00\x12\b\n" +
-	"\x04OPEN\x10\x012\xdc\x04\n" +
+	"\x04OPEN\x10\x012\xe8\x05\n" +
 	"\x0fMerchantService\x12a\n" +
 	"\rListMerchants\x12\x16.google.protobuf.Empty\x1a .ihavefood.ListMerchantsResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/api/merchants\x12g\n" +
 	"\vGetMerchant\x12\x1d.ihavefood.GetMerchantRequest\x1a\x13.ihavefood.Merchant\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/merchants/{merchant_id}\x12f\n" +
-	"\x10RegisterMerchant\x12\".ihavefood.RegisterMerchantRequest\x1a\x13.ihavefood.Merchant\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/api/merchants\x12g\n" +
-	"\x0eCreateMenuItem\x12 .ihavefood.CreateMenuItemRequest\x1a\x13.ihavefood.MenuItem\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/merchants/menu\x12X\n" +
+	"\x10RegisterMerchant\x12\".ihavefood.RegisterMerchantRequest\x1a\x13.ihavefood.Merchant\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/api/merchants\x12w\n" +
+	"\n" +
+	"CreateMenu\x12\x1c.ihavefood.CreateMenuRequest\x1a\x1d.ihavefood.CreateMenuResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/api/merchants/menu/{merchant_id}\x12z\n" +
+	"\x0eUpdateMenuItem\x12 .ihavefood.UpdateMenuItemRequest\x1a\x13.ihavefood.MenuItem\"1\x82\xd3\xe4\x93\x02+:\x01*2&/api/merchants/menu_item/{merchant_id}\x12X\n" +
 	"\x11UpdateStoreStatus\x12#.ihavefood.UpdateStoreStatusRequest\x1a\x1e.ihavefood.StoreStatusResponse\x12R\n" +
 	"\x0eGetStoreStatus\x12 .ihavefood.GetStoreStatusRequest\x1a\x1e.ihavefood.StoreStatusResponseB\vZ\t/genprotob\x06proto3"
 
@@ -645,7 +749,7 @@ func file_merchantservice_proto_rawDescGZIP() []byte {
 }
 
 var file_merchantservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_merchantservice_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_merchantservice_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_merchantservice_proto_goTypes = []any{
 	(StoreStatus)(0),                 // 0: ihavefood.StoreStatus
 	(*Merchant)(nil),                 // 1: ihavefood.Merchant
@@ -653,40 +757,46 @@ var file_merchantservice_proto_goTypes = []any{
 	(*GetMerchantRequest)(nil),       // 3: ihavefood.GetMerchantRequest
 	(*ListMerchantsResponse)(nil),    // 4: ihavefood.ListMerchantsResponse
 	(*RegisterMerchantRequest)(nil),  // 5: ihavefood.RegisterMerchantRequest
-	(*CreateMenuItemRequest)(nil),    // 6: ihavefood.CreateMenuItemRequest
-	(*UpdateStoreStatusRequest)(nil), // 7: ihavefood.UpdateStoreStatusRequest
-	(*StoreStatusResponse)(nil),      // 8: ihavefood.StoreStatusResponse
-	(*GetStoreStatusRequest)(nil),    // 9: ihavefood.GetStoreStatusRequest
-	(*Address)(nil),                  // 10: ihavefood.Address
-	(*emptypb.Empty)(nil),            // 11: google.protobuf.Empty
+	(*CreateMenuRequest)(nil),        // 6: ihavefood.CreateMenuRequest
+	(*CreateMenuResponse)(nil),       // 7: ihavefood.CreateMenuResponse
+	(*UpdateMenuItemRequest)(nil),    // 8: ihavefood.UpdateMenuItemRequest
+	(*UpdateStoreStatusRequest)(nil), // 9: ihavefood.UpdateStoreStatusRequest
+	(*GetStoreStatusRequest)(nil),    // 10: ihavefood.GetStoreStatusRequest
+	(*StoreStatusResponse)(nil),      // 11: ihavefood.StoreStatusResponse
+	(*Address)(nil),                  // 12: ihavefood.Address
+	(*emptypb.Empty)(nil),            // 13: google.protobuf.Empty
 }
 var file_merchantservice_proto_depIdxs = []int32{
 	2,  // 0: ihavefood.Merchant.menu:type_name -> ihavefood.MenuItem
-	10, // 1: ihavefood.Merchant.address:type_name -> ihavefood.Address
+	12, // 1: ihavefood.Merchant.address:type_name -> ihavefood.Address
 	0,  // 2: ihavefood.Merchant.status:type_name -> ihavefood.StoreStatus
 	1,  // 3: ihavefood.ListMerchantsResponse.merchants:type_name -> ihavefood.Merchant
 	2,  // 4: ihavefood.RegisterMerchantRequest.menu:type_name -> ihavefood.MenuItem
-	10, // 5: ihavefood.RegisterMerchantRequest.address:type_name -> ihavefood.Address
-	2,  // 6: ihavefood.CreateMenuItemRequest.menu:type_name -> ihavefood.MenuItem
-	0,  // 7: ihavefood.UpdateStoreStatusRequest.status:type_name -> ihavefood.StoreStatus
-	0,  // 8: ihavefood.StoreStatusResponse.status:type_name -> ihavefood.StoreStatus
-	11, // 9: ihavefood.MerchantService.ListMerchants:input_type -> google.protobuf.Empty
-	3,  // 10: ihavefood.MerchantService.GetMerchant:input_type -> ihavefood.GetMerchantRequest
-	5,  // 11: ihavefood.MerchantService.RegisterMerchant:input_type -> ihavefood.RegisterMerchantRequest
-	6,  // 12: ihavefood.MerchantService.CreateMenuItem:input_type -> ihavefood.CreateMenuItemRequest
-	7,  // 13: ihavefood.MerchantService.UpdateStoreStatus:input_type -> ihavefood.UpdateStoreStatusRequest
-	9,  // 14: ihavefood.MerchantService.GetStoreStatus:input_type -> ihavefood.GetStoreStatusRequest
-	4,  // 15: ihavefood.MerchantService.ListMerchants:output_type -> ihavefood.ListMerchantsResponse
-	1,  // 16: ihavefood.MerchantService.GetMerchant:output_type -> ihavefood.Merchant
-	1,  // 17: ihavefood.MerchantService.RegisterMerchant:output_type -> ihavefood.Merchant
-	2,  // 18: ihavefood.MerchantService.CreateMenuItem:output_type -> ihavefood.MenuItem
-	8,  // 19: ihavefood.MerchantService.UpdateStoreStatus:output_type -> ihavefood.StoreStatusResponse
-	8,  // 20: ihavefood.MerchantService.GetStoreStatus:output_type -> ihavefood.StoreStatusResponse
-	15, // [15:21] is the sub-list for method output_type
-	9,  // [9:15] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	12, // 5: ihavefood.RegisterMerchantRequest.address:type_name -> ihavefood.Address
+	2,  // 6: ihavefood.CreateMenuRequest.menu:type_name -> ihavefood.MenuItem
+	2,  // 7: ihavefood.CreateMenuResponse.menu:type_name -> ihavefood.MenuItem
+	2,  // 8: ihavefood.UpdateMenuItemRequest.menu:type_name -> ihavefood.MenuItem
+	0,  // 9: ihavefood.UpdateStoreStatusRequest.status:type_name -> ihavefood.StoreStatus
+	0,  // 10: ihavefood.StoreStatusResponse.status:type_name -> ihavefood.StoreStatus
+	13, // 11: ihavefood.MerchantService.ListMerchants:input_type -> google.protobuf.Empty
+	3,  // 12: ihavefood.MerchantService.GetMerchant:input_type -> ihavefood.GetMerchantRequest
+	5,  // 13: ihavefood.MerchantService.RegisterMerchant:input_type -> ihavefood.RegisterMerchantRequest
+	6,  // 14: ihavefood.MerchantService.CreateMenu:input_type -> ihavefood.CreateMenuRequest
+	8,  // 15: ihavefood.MerchantService.UpdateMenuItem:input_type -> ihavefood.UpdateMenuItemRequest
+	9,  // 16: ihavefood.MerchantService.UpdateStoreStatus:input_type -> ihavefood.UpdateStoreStatusRequest
+	10, // 17: ihavefood.MerchantService.GetStoreStatus:input_type -> ihavefood.GetStoreStatusRequest
+	4,  // 18: ihavefood.MerchantService.ListMerchants:output_type -> ihavefood.ListMerchantsResponse
+	1,  // 19: ihavefood.MerchantService.GetMerchant:output_type -> ihavefood.Merchant
+	1,  // 20: ihavefood.MerchantService.RegisterMerchant:output_type -> ihavefood.Merchant
+	7,  // 21: ihavefood.MerchantService.CreateMenu:output_type -> ihavefood.CreateMenuResponse
+	2,  // 22: ihavefood.MerchantService.UpdateMenuItem:output_type -> ihavefood.MenuItem
+	11, // 23: ihavefood.MerchantService.UpdateStoreStatus:output_type -> ihavefood.StoreStatusResponse
+	11, // 24: ihavefood.MerchantService.GetStoreStatus:output_type -> ihavefood.StoreStatusResponse
+	18, // [18:25] is the sub-list for method output_type
+	11, // [11:18] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_merchantservice_proto_init() }
@@ -701,7 +811,7 @@ func file_merchantservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_merchantservice_proto_rawDesc), len(file_merchantservice_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

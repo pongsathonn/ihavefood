@@ -267,27 +267,27 @@ func (x *GetCouponRequest) GetCode() string {
 	return ""
 }
 
-type ListCouponResponse struct {
+type ListCouponsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Coupons       []*Coupon              `protobuf:"bytes,1,rep,name=coupons,proto3" json:"coupons,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListCouponResponse) Reset() {
-	*x = ListCouponResponse{}
+func (x *ListCouponsResponse) Reset() {
+	*x = ListCouponsResponse{}
 	mi := &file_couponservice_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListCouponResponse) String() string {
+func (x *ListCouponsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListCouponResponse) ProtoMessage() {}
+func (*ListCouponsResponse) ProtoMessage() {}
 
-func (x *ListCouponResponse) ProtoReflect() protoreflect.Message {
+func (x *ListCouponsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_couponservice_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -299,12 +299,12 @@ func (x *ListCouponResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListCouponResponse.ProtoReflect.Descriptor instead.
-func (*ListCouponResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListCouponsResponse.ProtoReflect.Descriptor instead.
+func (*ListCouponsResponse) Descriptor() ([]byte, []int) {
 	return file_couponservice_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ListCouponResponse) GetCoupons() []*Coupon {
+func (x *ListCouponsResponse) GetCoupons() []*Coupon {
 	if x != nil {
 		return x.Coupons
 	}
@@ -417,8 +417,8 @@ const file_couponservice_proto_rawDesc = "" +
 	"\x0eexpire_in_hour\x18\x03 \x01(\x05R\fexpireInHour\x12\x1a\n" +
 	"\bquantity\x18\x04 \x01(\x05R\bquantity\"&\n" +
 	"\x10GetCouponRequest\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\"A\n" +
-	"\x12ListCouponResponse\x12+\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\"B\n" +
+	"\x13ListCouponsResponse\x12+\n" +
 	"\acoupons\x18\x01 \x03(\v2\x11.ihavefood.CouponR\acoupons\")\n" +
 	"\x13RedeemCouponRequest\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\"0\n" +
@@ -427,10 +427,9 @@ const file_couponservice_proto_rawDesc = "" +
 	"\vCouponTypes\x12\x1c\n" +
 	"\x18COUPON_TYPE_UNSPECIFICED\x10\x00\x12\x18\n" +
 	"\x14COUPON_TYPE_DISCOUNT\x10\x01\x12\x1d\n" +
-	"\x19COUPON_TYPE_FREE_DELIVERY\x10\x022\xed\x02\n" +
-	"\rCouponService\x12Y\n" +
-	"\n" +
-	"ListCoupon\x12\x16.google.protobuf.Empty\x1a\x1d.ihavefood.ListCouponResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/api/coupons\x12X\n" +
+	"\x19COUPON_TYPE_FREE_DELIVERY\x10\x022\xef\x02\n" +
+	"\rCouponService\x12[\n" +
+	"\vListCoupons\x12\x16.google.protobuf.Empty\x1a\x1e.ihavefood.ListCouponsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/api/coupons\x12X\n" +
 	"\tGetCoupon\x12\x1b.ihavefood.GetCouponRequest\x1a\x11.ihavefood.Coupon\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/coupons/{code}\x12T\n" +
 	"\tAddCoupon\x12\x1b.ihavefood.AddCouponRequest\x1a\x11.ihavefood.Coupon\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/api/coupons\x12Q\n" +
 	"\fRedeemCoupon\x12\x1e.ihavefood.RedeemCouponRequest\x1a\x1f.ihavefood.RedeemCouponResponse\"\x00B\vZ\t/genprotob\x06proto3"
@@ -454,7 +453,7 @@ var file_couponservice_proto_goTypes = []any{
 	(*Coupon)(nil),               // 1: ihavefood.Coupon
 	(*AddCouponRequest)(nil),     // 2: ihavefood.AddCouponRequest
 	(*GetCouponRequest)(nil),     // 3: ihavefood.GetCouponRequest
-	(*ListCouponResponse)(nil),   // 4: ihavefood.ListCouponResponse
+	(*ListCouponsResponse)(nil),  // 4: ihavefood.ListCouponsResponse
 	(*RedeemCouponRequest)(nil),  // 5: ihavefood.RedeemCouponRequest
 	(*RedeemCouponResponse)(nil), // 6: ihavefood.RedeemCouponResponse
 	(*emptypb.Empty)(nil),        // 7: google.protobuf.Empty
@@ -462,12 +461,12 @@ var file_couponservice_proto_goTypes = []any{
 var file_couponservice_proto_depIdxs = []int32{
 	0, // 0: ihavefood.Coupon.types:type_name -> ihavefood.CouponTypes
 	0, // 1: ihavefood.AddCouponRequest.coupon_types:type_name -> ihavefood.CouponTypes
-	1, // 2: ihavefood.ListCouponResponse.coupons:type_name -> ihavefood.Coupon
-	7, // 3: ihavefood.CouponService.ListCoupon:input_type -> google.protobuf.Empty
+	1, // 2: ihavefood.ListCouponsResponse.coupons:type_name -> ihavefood.Coupon
+	7, // 3: ihavefood.CouponService.ListCoupons:input_type -> google.protobuf.Empty
 	3, // 4: ihavefood.CouponService.GetCoupon:input_type -> ihavefood.GetCouponRequest
 	2, // 5: ihavefood.CouponService.AddCoupon:input_type -> ihavefood.AddCouponRequest
 	5, // 6: ihavefood.CouponService.RedeemCoupon:input_type -> ihavefood.RedeemCouponRequest
-	4, // 7: ihavefood.CouponService.ListCoupon:output_type -> ihavefood.ListCouponResponse
+	4, // 7: ihavefood.CouponService.ListCoupons:output_type -> ihavefood.ListCouponsResponse
 	1, // 8: ihavefood.CouponService.GetCoupon:output_type -> ihavefood.Coupon
 	1, // 9: ihavefood.CouponService.AddCoupon:output_type -> ihavefood.Coupon
 	6, // 10: ihavefood.CouponService.RedeemCoupon:output_type -> ihavefood.RedeemCouponResponse

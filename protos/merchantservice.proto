@@ -33,13 +33,18 @@ service MerchantService {
     }
 
     // Menu management
-    rpc CreateMenuItem(CreateMenuItemRequest) returns(MenuItem){
+    rpc CreateMenu(CreateMenuRequest) returns(CreateMenuResponse) {
         option (google.api.http) = {
-            post: "/api/merchants/menu"
+            post: "/api/merchants/menu/{merchant_id}"
             body: "*"
         };
     }
-    // rpc UpdateMenuItem(UpdateMenuItemRequest) returns (MenuItem);
+    rpc UpdateMenuItem(UpdateMenuItemRequest) returns(MenuItem) {
+        option (google.api.http) = {
+            patch: "/api/merchants/menu_item/{merchant_id}"
+            body: "*"
+        };
+    }
 
     // Store Management
     rpc UpdateStoreStatus(UpdateStoreStatusRequest) returns (StoreStatusResponse);
@@ -82,9 +87,18 @@ message RegisterMerchantRequest {
     Address address = 3;
 }
 
-message CreateMenuItemRequest {
+message CreateMenuRequest {
     string merchant_id = 1;
     repeated MenuItem menu = 2;
+}
+
+message CreateMenuResponse {
+  repeated MenuItem menu = 1;
+}
+
+message UpdateMenuItemRequest {
+    string merchant_id = 1;
+    MenuItem menu = 2;
 }
 
 message UpdateStoreStatusRequest {
@@ -92,11 +106,10 @@ message UpdateStoreStatusRequest {
     StoreStatus status = 2;
 }
 
+message GetStoreStatusRequest {
+    string merchant_id = 1;
+}
 message StoreStatusResponse {
     string merchant_id = 1;
     StoreStatus status = 2;
-}
-
-message GetStoreStatusRequest {
-    string merchant_id = 1;
 }

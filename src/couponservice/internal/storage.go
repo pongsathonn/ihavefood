@@ -23,11 +23,9 @@ type dbCoupon struct {
 }
 
 type CouponStorage interface {
+	ListCoupons(ctx context.Context) ([]*dbCoupon, error)
 
-	// Coupons returns all coupons in database
-	Coupons(ctx context.Context) ([]*dbCoupon, error)
-
-	Coupon(ctx context.Context, code string) (*dbCoupon, error)
+	GetCoupon(ctx context.Context, code string) (*dbCoupon, error)
 
 	// Add inserts new coupon. If the coupon code already exists,
 	// update the quantity and expiration time instead
@@ -48,7 +46,7 @@ func NewCouponStorage(db *mongo.Client) CouponStorage {
 	return &couponStorage{db: db}
 }
 
-func (r *couponStorage) Coupons(ctx context.Context) ([]*dbCoupon, error) {
+func (r *couponStorage) ListCoupons(ctx context.Context) ([]*dbCoupon, error) {
 
 	coll := r.db.Database("db", nil).Collection("coupons")
 
@@ -67,7 +65,7 @@ func (r *couponStorage) Coupons(ctx context.Context) ([]*dbCoupon, error) {
 
 }
 
-func (r *couponStorage) Coupon(ctx context.Context, code string) (*dbCoupon, error) {
+func (r *couponStorage) GetCoupon(ctx context.Context, code string) (*dbCoupon, error) {
 
 	coll := r.db.Database("db", nil).Collection("coupons")
 

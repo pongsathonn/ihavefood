@@ -20,7 +20,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CouponService_ListCoupon_FullMethodName   = "/ihavefood.CouponService/ListCoupon"
+	CouponService_ListCoupons_FullMethodName  = "/ihavefood.CouponService/ListCoupons"
 	CouponService_GetCoupon_FullMethodName    = "/ihavefood.CouponService/GetCoupon"
 	CouponService_AddCoupon_FullMethodName    = "/ihavefood.CouponService/AddCoupon"
 	CouponService_RedeemCoupon_FullMethodName = "/ihavefood.CouponService/RedeemCoupon"
@@ -39,7 +39,7 @@ type CouponServiceClient interface {
 	//
 	// TODO: In the future, this method might be updated to list coupons by other condition,
 	// but currently, it responds with all coupons.
-	ListCoupon(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListCouponResponse, error)
+	ListCoupons(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListCouponsResponse, error)
 	// GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and
 	// has sufficient quantity.
 	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
@@ -60,10 +60,10 @@ func NewCouponServiceClient(cc grpc.ClientConnInterface) CouponServiceClient {
 	return &couponServiceClient{cc}
 }
 
-func (c *couponServiceClient) ListCoupon(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListCouponResponse, error) {
+func (c *couponServiceClient) ListCoupons(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListCouponsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListCouponResponse)
-	err := c.cc.Invoke(ctx, CouponService_ListCoupon_FullMethodName, in, out, cOpts...)
+	out := new(ListCouponsResponse)
+	err := c.cc.Invoke(ctx, CouponService_ListCoupons_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ type CouponServiceServer interface {
 	//
 	// TODO: In the future, this method might be updated to list coupons by other condition,
 	// but currently, it responds with all coupons.
-	ListCoupon(context.Context, *emptypb.Empty) (*ListCouponResponse, error)
+	ListCoupons(context.Context, *emptypb.Empty) (*ListCouponsResponse, error)
 	// GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and
 	// has sufficient quantity.
 	GetCoupon(context.Context, *GetCouponRequest) (*Coupon, error)
@@ -134,8 +134,8 @@ type CouponServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCouponServiceServer struct{}
 
-func (UnimplementedCouponServiceServer) ListCoupon(context.Context, *emptypb.Empty) (*ListCouponResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListCoupon not implemented")
+func (UnimplementedCouponServiceServer) ListCoupons(context.Context, *emptypb.Empty) (*ListCouponsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCoupons not implemented")
 }
 func (UnimplementedCouponServiceServer) GetCoupon(context.Context, *GetCouponRequest) (*Coupon, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCoupon not implemented")
@@ -167,20 +167,20 @@ func RegisterCouponServiceServer(s grpc.ServiceRegistrar, srv CouponServiceServe
 	s.RegisterService(&CouponService_ServiceDesc, srv)
 }
 
-func _CouponService_ListCoupon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CouponService_ListCoupons_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CouponServiceServer).ListCoupon(ctx, in)
+		return srv.(CouponServiceServer).ListCoupons(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CouponService_ListCoupon_FullMethodName,
+		FullMethod: CouponService_ListCoupons_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CouponServiceServer).ListCoupon(ctx, req.(*emptypb.Empty))
+		return srv.(CouponServiceServer).ListCoupons(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -247,8 +247,8 @@ var CouponService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CouponServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListCoupon",
-			Handler:    _CouponService_ListCoupon_Handler,
+			MethodName: "ListCoupons",
+			Handler:    _CouponService_ListCoupons_Handler,
 		},
 		{
 			MethodName: "GetCoupon",

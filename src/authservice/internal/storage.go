@@ -15,8 +15,7 @@ func NewStorage(db *sql.DB) *storage {
 	return &storage{db: db}
 }
 
-// Users returns a list of user credentials.
-func (s *storage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
+func (s *storage) ListUsers(ctx context.Context) ([]*dbUserCredentials, error) {
 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT 
@@ -59,8 +58,7 @@ func (s *storage) Users(ctx context.Context) ([]*dbUserCredentials, error) {
 	return users, nil
 }
 
-// User returns the user credentials.
-func (s *storage) User(ctx context.Context, userID string) (*dbUserCredentials, error) {
+func (s *storage) GetUser(ctx context.Context, userID string) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
@@ -96,8 +94,7 @@ func (s *storage) User(ctx context.Context, userID string) (*dbUserCredentials, 
 
 }
 
-// UserByUsername finds by username and return the user credentials.
-func (s *storage) UserByUsername(ctx context.Context, username string) (*dbUserCredentials, error) {
+func (s *storage) GetUserByUsername(ctx context.Context, username string) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 

@@ -32,7 +32,7 @@ func (x *CustomerService) ListCustomers(ctx context.Context, in *pb.ListCustomer
 
 	// TODO validate input
 
-	results, err := x.store.customers(ctx)
+	results, err := x.store.listCustomers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (x *CustomerService) GetCustomer(ctx context.Context, in *pb.GetCustomerReq
 
 	//TODO validate
 
-	customer, err := x.store.customer(ctx, in.CustomerId)
+	customer, err := x.store.getCustomer(ctx, in.CustomerId)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCusto
 		return nil, status.Errorf(codes.Internal, "failed to create user customer")
 	}
 
-	customer, err := x.store.customer(ctx, customerID)
+	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
 		slog.Error("failed to retrive user customer", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive user customer")
@@ -106,7 +106,7 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 	}
 
 	// edge case: if customerID not exists it will return nil customer as nil
-	customer, err := x.store.customer(ctx, customerID)
+	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
 		slog.Error("failed to retrive customer", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive customer")
@@ -135,7 +135,7 @@ func (x *CustomerService) UpdateCustomer(ctx context.Context, in *pb.UpdateCusto
 		return nil, status.Errorf(codes.Internal, "failed to update customer")
 	}
 
-	customer, err := x.store.customer(ctx, customerID)
+	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
 		slog.Error("failed to retrive customer", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrive customer")

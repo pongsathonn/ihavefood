@@ -85,7 +85,7 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 		return nil, errNoCouponCode
 	}
 
-	coupon, err := x.storage.Coupon(ctx, in.Code)
+	coupon, err := x.storage.GetCoupon(ctx, in.Code)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			slog.Error("retrive coupon", "err", err)
@@ -112,9 +112,9 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	}, nil
 }
 
-func (x *CouponService) ListCoupon(ctx context.Context, empty *emptypb.Empty) (*pb.ListCouponResponse, error) {
+func (x *CouponService) ListCoupons(ctx context.Context, empty *emptypb.Empty) (*pb.ListCouponsResponse, error) {
 
-	listCoupons, err := x.storage.Coupons(ctx)
+	listCoupons, err := x.storage.ListCoupons(ctx)
 	if err != nil {
 		slog.Error("retrive coupons", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrive list coupons")
@@ -131,7 +131,7 @@ func (x *CouponService) ListCoupon(ctx context.Context, empty *emptypb.Empty) (*
 		}
 		coupons = append(coupons, coupon)
 	}
-	return &pb.ListCouponResponse{Coupons: coupons}, nil
+	return &pb.ListsCouponResponse{Coupons: coupons}, nil
 }
 
 func (x *CouponService) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponRequest) (*pb.RedeemCouponResponse, error) {

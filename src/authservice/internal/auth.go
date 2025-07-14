@@ -18,9 +18,9 @@ import (
 )
 
 type AuthStorer interface {
-	Users(context.Context) ([]*dbUserCredentials, error)
-	User(ctx context.Context, userID string) (*dbUserCredentials, error)
-	UserByUsername(ctx context.Context, username string) (*dbUserCredentials, error)
+	ListUsers(context.Context) ([]*dbUserCredentials, error)
+	GetUser(ctx context.Context, userID string) (*dbUserCredentials, error)
+	GetUserByUsername(ctx context.Context, username string) (*dbUserCredentials, error)
 	Create(ctx context.Context, newUser *NewUserCredentials) (string, error)
 	UpdateRole(ctx context.Context, userID string, newRole dbRoles) (string, error)
 	Delete(ctx context.Context, userID string) error
@@ -62,7 +62,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
 	}
 
-	user, err := x.store.User(ctx, userID)
+	user, err := x.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrive user %v", err)
 	}
@@ -126,7 +126,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, errUserIncorrect
 	}
 
-	user, err := x.store.UserByUsername(ctx, in.Username)
+	user, err := x.store.GetUserByUsername(ctx, in.Username)
 	if err != nil {
 		slog.Error("failed to find user credentials", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to find user credentials %v", err)
@@ -207,7 +207,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		return nil, status.Error(codes.Internal, "failed to update role")
 	}
 
-	user, err := x.store.User(ctx, updatedID)
+	user, err := x.store.GetUser(ctx, updatedID)
 	if err != nil {
 		slog.Error("failed to find user credentials", "err", err)
 		return nil, status.Error(codes.Internal, "failed to find user credentials")

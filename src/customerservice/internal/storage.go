@@ -20,7 +20,7 @@ type customerStorage struct {
 }
 
 // Customers returns a list of customers.
-func (s *customerStorage) customers(ctx context.Context) ([]*dbCustomer, error) {
+func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, error) {
 	customerRows, err := s.db.QueryContext(ctx, `
 		SELECT
 			customer_id, username, bio, facebook, instagram, line, create_time, update_time
@@ -117,8 +117,7 @@ func (s *customerStorage) customers(ctx context.Context) ([]*dbCustomer, error) 
 	return customers, nil
 }
 
-// Customer returns the customer.
-func (s *customerStorage) customer(ctx context.Context, customerID string) (*dbCustomer, error) {
+func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*dbCustomer, error) {
 	var customer dbCustomer
 	if err := s.db.QueryRowContext(ctx, `
 		SELECT 
@@ -180,8 +179,6 @@ func (s *customerStorage) customer(ctx context.Context, customerID string) (*dbC
 	return &customer, nil
 }
 
-// Create inserts new customer with empty fields. it intends to create
-// column before update fields.
 func (s *customerStorage) create(ctx context.Context, newCustomer *newCustomer) (string, error) {
 
 	res := s.db.QueryRowContext(ctx, `
@@ -285,7 +282,6 @@ func (s *customerStorage) update(ctx context.Context, customerID string, update 
 
 }
 
-// remove the customer.
 func (s *customerStorage) remove(ctx context.Context, customerID string) error {
 
 	if _, err := s.db.ExecContext(ctx, `DELETE FROM customers WHERE customer_id=$1`, customerID); err != nil {
