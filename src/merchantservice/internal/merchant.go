@@ -29,23 +29,9 @@ func NewMerchantService(storage MerchantStorage, rabbitmq RabbitMQ) *MerchantSer
 	}
 }
 
-func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantRequest) (*pb.Merchant, error) {
-
-	// TODO validate input
-
-	merchant, err := x.storage.Merchant(ctx, in.MerchantId)
-	if err != nil {
-		slog.Error("failed to retrive merchant", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrieve merchant")
-	}
-	return dbToProto(merchant), nil
-}
-
 func (x *MerchantService) ListMerchant(ctx context.Context, empty *emptypb.Empty) (*pb.ListMerchantsResponse, error) {
 
-	// TODO validate input
-
-	results, err := x.storage.Merchants(ctx)
+	results, err := x.storage.ListMerchants(ctx)
 	if err != nil {
 		slog.Error("failed to retrive merchants", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve merchants")
@@ -60,9 +46,17 @@ func (x *MerchantService) ListMerchant(ctx context.Context, empty *emptypb.Empty
 	return &pb.ListMerchantsResponse{Merchants: merchants}, nil
 }
 
-func (x *MerchantService) RegisterMerchant(ctx context.Context, in *pb.RegisterMerchantRequest) (*pb.Merchant, error) {
+func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantRequest) (*pb.Merchant, error) {
 
-	// TODO validate input
+	merchant, err := x.storage.GetMerchant(ctx, in.MerchantId)
+	if err != nil {
+		slog.Error("failed to retrive merchant", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrieve merchant")
+	}
+	return dbToProto(merchant), nil
+}
+
+func (x *MerchantService) RegisterMerchant(ctx context.Context, in *pb.RegisterMerchantRequest) (*pb.Merchant, error) {
 
 	var menu []*dbMenuItem
 	for _, m := range in.Menu {
@@ -72,7 +66,7 @@ func (x *MerchantService) RegisterMerchant(ctx context.Context, in *pb.RegisterM
 		})
 	}
 
-	merchantNO, err := x.storage.SaveMerchant(ctx, &newMerchant{
+	merchant, err := x.storage.SaveMerchant(ctx, &newMerchant{
 		MerchantName: in.MerchantName,
 		Menu:         menu,
 		Address: &dbAddress{
@@ -88,40 +82,69 @@ func (x *MerchantService) RegisterMerchant(ctx context.Context, in *pb.RegisterM
 		return nil, status.Errorf(codes.Internal, "failed to save merchant")
 	}
 
-	merchant, err := x.storage.Merchant(ctx, merchantNO)
-	if err != nil {
-		slog.Error("failed to retrive merchant", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive merchant")
-	}
-
 	return dbToProto(merchant), nil
 }
 
-func (x *MerchantService) AddMenu(ctx context.Context, in *pb.CreateMenuItemRequest) (*pb.Merchant, error) {
-
-	// TODO validate input
+func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuRequest) (*pb.CreateMenuResponse, error) {
 
 	var menus []*dbMenuItem
-	for _, m := range in.Menu {
+	for _, m := range in.GetMenu() {
 		menus = append(menus, &dbMenuItem{
-			FoodName: m.FoodName,
-			Price:    m.Price,
+			FoodName:    m.FoodName,
+			Price:       m.Price,
+			Description: m.Description,
+			IsAvailable: m.IsAvailable,
 		})
 	}
 
-	merchantNO, err := x.storage.UpdateMenu(ctx, in.MerchantId, menus)
+	saveMenu, err := x.storage.SaveMenu(ctx, in.GetMerchantId(), menus)
+	if err != nil {
+		slog.Error("failed to save menu", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to save menu in database")
+	}
+
+	var menu []*pb.MenuItem
+	for _, v := range saveMenu {
+		menu = append(menu, &pb.MenuItem{
+			ItemId:      v.ItemID.Hex(),
+			FoodName:    v.FoodName,
+			Price:       v.Price,
+			Description: v.Description,
+			IsAvailable: v.IsAvailable,
+		})
+	}
+
+	return &pb.CreateMenuResponse{Menu: menu}, nil
+}
+
+func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuItemRequest) (*pb.MenuItem, error) {
+
+	updatedMenu, err := x.storage.UpdateMenuItem(ctx, in.MerchantId, &dbMenuItem{
+		FoodName:    in.Menu.FoodName,
+		Price:       in.Menu.Price,
+		Description: in.Menu.Description,
+		IsAvailable: in.Menu.IsAvailable,
+	})
 	if err != nil {
 		slog.Error("failed to update menu", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to update menu in database")
 	}
 
-	merchant, err := x.storage.Merchant(ctx, merchantNO)
-	if err != nil {
-		slog.Error("failed to retrive merchant", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive merchant")
-	}
+	return &pb.MenuItem{
+		ItemId:      updatedMenu.ItemID.Hex(),
+		FoodName:    updatedMenu.FoodName,
+		Price:       updatedMenu.Price,
+		Description: updatedMenu.Description,
+		IsAvailable: updatedMenu.IsAvailable,
+	}, nil
+}
 
-	return dbToProto(merchant), nil
+func (x *MerchantService) UpdateStoreStatus(context.Context, *pb.UpdateStoreStatusRequest) (*pb.StoreStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateStoreStatus not implemented")
+}
+
+func (x *MerchantService) GetStoreStatus(context.Context, *pb.GetStoreStatusRequest) (*pb.StoreStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStoreStatus not implemented")
 }
 
 // -------------------------------------------------------
@@ -197,8 +220,11 @@ func dbToProto(merchant *dbMerchant) *pb.Merchant {
 	var menu []*pb.MenuItem
 	for _, m := range merchant.Menu {
 		menu = append(menu, &pb.MenuItem{
-			FoodName: m.FoodName,
-			Price:    m.Price,
+			ItemId:      m.ItemID.Hex(),
+			FoodName:    m.FoodName,
+			Price:       m.Price,
+			Description: m.Description,
+			IsAvailable: m.IsAvailable,
 		})
 	}
 

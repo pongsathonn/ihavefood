@@ -40,7 +40,7 @@ func main() {
 }
 
 func initMongoClient() (*mongo.Client, error) {
-	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/merchant_database?authSource=admin",
+	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/db?authSource=admin",
 		os.Getenv("MERCHANT_MONGO_USER"),
 		os.Getenv("MERCHANT_MONGO_PASS"),
 		os.Getenv("MERCHANT_MONGO_HOST"),
@@ -59,8 +59,7 @@ func initMongoClient() (*mongo.Client, error) {
 		return nil, err
 	}
 
-	coll := client.Database("merchant_database", nil).Collection("merchantCollection")
-
+	coll := client.Database("db", nil).Collection("merchants")
 	indexModel := mongo.IndexModel{
 		Keys:    bson.D{{"merchantName", 1}},
 		Options: options.Index().SetUnique(true),

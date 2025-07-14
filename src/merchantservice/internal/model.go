@@ -17,16 +17,16 @@ type dbMerchant struct {
 	Name        string             `bson:"name"`
 	Menu        []*dbMenuItem      `bson:"menu"`
 	Address     *dbAddress         `bson:"address"`
-	PhoneNumber string             `bson:"phone_number"`
+	PhoneNumber string             `bson:"phoneNumber"`
 	Status      dbStoreStatus      `bson:"status"`
 }
 
 type dbMenuItem struct {
-	ItemID      string `bson:"item_id"`
-	FoodName    string `bson:"food_name"`
-	Price       int32  `bson:"price"`
-	Description string `bson:"description"`
-	IsAvailable bool   `bson:"is_available"`
+	ItemID      primitive.ObjectID `bson:"item_id"`
+	FoodName    string             `bson:"foodName"`
+	Price       int32              `bson:"price"`
+	Description string             `bson:"description"`
+	IsAvailable bool               `bson:"isAvailable"`
 }
 
 type dbAddress struct {

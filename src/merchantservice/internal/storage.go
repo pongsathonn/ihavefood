@@ -3,20 +3,20 @@ package internal
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MerchantStorage interface {
-	Merchant(ctx context.Context, merchantNO string) (*dbMerchant, error)
-
-	Merchants(ctx context.Context) ([]*dbMerchant, error)
-
-	SaveMerchant(ctx context.Context, newMerchant *newMerchant) (string, error)
-
-	UpdateMenu(ctx context.Context, merchantNO string, newMenu []*dbMenuItem) (string, error)
+	GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
+	ListMerchants(ctx context.Context) ([]*dbMerchant, error)
+	SaveMerchant(ctx context.Context, merchant *newMerchant) (*dbMerchant, error)
+	SaveMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
+	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error)
 }
 
 type merchantStorage struct {
@@ -27,11 +27,11 @@ func NewMerchantStorage(client *mongo.Client) MerchantStorage {
 	return &merchantStorage{client: client}
 }
 
-func (s *merchantStorage) Merchant(ctx context.Context, merchantNO string) (*dbMerchant, error) {
+func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error) {
 
-	coll := s.client.Database("merchant_database", nil).Collection("merchantCollection")
+	coll := s.client.Database("db", nil).Collection("merchants")
 
-	ID, err := primitive.ObjectIDFromHex(merchantNO)
+	ID, err := primitive.ObjectIDFromHex(merchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,9 +46,9 @@ func (s *merchantStorage) Merchant(ctx context.Context, merchantNO string) (*dbM
 	return &merchant, nil
 }
 
-func (s *merchantStorage) Merchants(ctx context.Context) ([]*dbMerchant, error) {
+func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*dbMerchant, error) {
 
-	coll := s.client.Database("merchant_database", nil).Collection("merchantCollection")
+	coll := s.client.Database("db", nil).Collection("merchants")
 
 	cursor, err := coll.Find(ctx, bson.D{})
 	if err != nil {
@@ -76,56 +76,100 @@ func (s *merchantStorage) Merchants(ctx context.Context) ([]*dbMerchant, error) 
 
 // ignore a merchant number and let Mongo generate _id
 func (s *merchantStorage) SaveMerchant(ctx context.Context,
-	newMerchant *newMerchant) (string, error) {
+	newMerchant *newMerchant) (*dbMerchant, error) {
 
-	coll := s.client.Database("merchant_database", nil).Collection("merchantCollection")
+	coll := s.client.Database("db", nil).Collection("merchants")
+
+	var menu []*dbMenuItem
+	for _, v := range newMerchant.Menu {
+		menu = append(menu, &dbMenuItem{
+			ItemID:      primitive.NewObjectID(),
+			FoodName:    v.FoodName,
+			Price:       v.Price,
+			Description: v.Description,
+			IsAvailable: v.IsAvailable,
+		})
+	}
 
 	res, err := coll.InsertOne(ctx, dbMerchant{
-		Name:    newMerchant.MerchantName,
-		Menu:    newMerchant.Menu,
-		Address: newMerchant.Address,
-		Status:  dbStoreStatus(StoreStatus_CLOSED),
+		Name:        newMerchant.MerchantName,
+		Menu:        menu,
+		Address:     newMerchant.Address,
+		PhoneNumber: newMerchant.PhoneNumber,
+		Status:      dbStoreStatus(StoreStatus_CLOSED),
 	})
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return "", errors.New("merchant name already exists")
+			return nil, errors.New("merchant name already exists")
 		}
-		return "", err
+		return nil, err
 	}
 
 	insertedID, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return "", errors.New("ID not primitive.ObjectID")
+		return nil, errors.New("ID not primitive.ObjectID")
 	}
 
-	return insertedID.Hex(), nil
+	var merchant *dbMerchant
+	if err := coll.FindOne(ctx, bson.M{"_id": insertedID}).Decode(&merchant); err != nil {
+		return nil, err
+	}
 
+	return merchant, nil
 }
 
-func (s *merchantStorage) UpdateMenu(ctx context.Context, merchantNO string, newMenu []*dbMenuItem) (string, error) {
+func (s *merchantStorage) SaveMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error) {
+	return nil, nil
+}
 
-	coll := s.client.Database("merchant_database", nil).Collection("merchantCollection")
+// UpdateMenuItem updates a specific menu item in a merchant's menu
+func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error) {
 
-	ID, err := primitive.ObjectIDFromHex(merchantNO)
+	coll := s.client.Database("db", nil).Collection("merchants")
+
+	objID, err := primitive.ObjectIDFromHex(merchantID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	update := bson.M{"$push": bson.M{"menus": bson.M{"$each": newMenu}}}
+	set := bson.M{}
+	if updateMenu.FoodName != "" {
+		set["menu.$.food_name"] = updateMenu.FoodName
+	}
+	if updateMenu.Price != 0 {
+		set["menu.$.price"] = updateMenu.Price
+	}
+	if updateMenu.Description != "" {
+		set["menu.$.description"] = updateMenu.Description
+	}
+	set["menu.$.is_available"] = updateMenu.IsAvailable
 
-	res, err := coll.UpdateByID(ctx, ID, update)
-	if err != nil {
-		return "", err
+	if len(set) == 0 {
+		return nil, fmt.Errorf("no fields to update")
 	}
 
-	if res.ModifiedCount == 0 {
-		return "", errors.New("merchant not found")
+	filter := bson.M{
+		"_id":          objID,
+		"menu.item_id": updateMenu.ItemID,
 	}
 
-	upsertedID, ok := res.UpsertedID.(primitive.ObjectID)
-	if !ok {
-		return "", errors.New("ID not primitive.ObjectID")
+	var updatedMerchant dbMerchant
+
+	update := bson.M{"$set": set}
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	if err = coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(updatedMerchant); err != nil {
+		return nil, fmt.Errorf("failed to update menu item: %v", err)
 	}
 
-	return upsertedID.Hex(), nil
+	if merchantID != updatedMerchant.ID.Hex() {
+		return nil, fmt.Errorf("invalid returned update ID: %v", err)
+	}
+
+	for _, updatedMenu := range updatedMerchant.Menu {
+		if updateMenu.ItemID == updatedMenu.ItemID {
+			return updateMenu, nil
+		}
+	}
+
+	return nil, nil
 }
