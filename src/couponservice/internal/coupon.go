@@ -131,7 +131,7 @@ func (x *CouponService) ListCoupons(ctx context.Context, empty *emptypb.Empty) (
 		}
 		coupons = append(coupons, coupon)
 	}
-	return &pb.ListsCouponResponse{Coupons: coupons}, nil
+	return &pb.ListCouponsResponse{Coupons: coupons}, nil
 }
 
 func (x *CouponService) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponRequest) (*pb.RedeemCouponResponse, error) {

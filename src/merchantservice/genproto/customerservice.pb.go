@@ -25,9 +25,9 @@ const (
 )
 
 type Customer struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	CustomerId string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	Username   string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	CustomerUuid string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
+	Username     string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	// bytes picture = 3;
 	Bio    string  `protobuf:"bytes,4,opt,name=bio,proto3" json:"bio,omitempty"`
 	Social *Social `protobuf:"bytes,5,opt,name=social,proto3" json:"social,omitempty"`
@@ -69,9 +69,9 @@ func (*Customer) Descriptor() ([]byte, []int) {
 	return file_customerservice_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Customer) GetCustomerId() string {
+func (x *Customer) GetCustomerUuid() string {
 	if x != nil {
-		return x.CustomerId
+		return x.CustomerUuid
 	}
 	return ""
 }
@@ -200,7 +200,7 @@ func (x *ListCustomersResponse) GetCustomers() []*Customer {
 
 type GetCustomerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	CustomerUuid  string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -235,16 +235,16 @@ func (*GetCustomerRequest) Descriptor() ([]byte, []int) {
 	return file_customerservice_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetCustomerRequest) GetCustomerId() string {
+func (x *GetCustomerRequest) GetCustomerUuid() string {
 	if x != nil {
-		return x.CustomerId
+		return x.CustomerUuid
 	}
 	return ""
 }
 
 type CreateCustomerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	CustomerUuid  string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -280,9 +280,9 @@ func (*CreateCustomerRequest) Descriptor() ([]byte, []int) {
 	return file_customerservice_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *CreateCustomerRequest) GetCustomerId() string {
+func (x *CreateCustomerRequest) GetCustomerUuid() string {
 	if x != nil {
-		return x.CustomerId
+		return x.CustomerUuid
 	}
 	return ""
 }
@@ -296,7 +296,7 @@ func (x *CreateCustomerRequest) GetUsername() string {
 
 type CreateAddressRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	CustomerUuid  string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
 	Address       *Address               `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -332,9 +332,9 @@ func (*CreateAddressRequest) Descriptor() ([]byte, []int) {
 	return file_customerservice_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *CreateAddressRequest) GetCustomerId() string {
+func (x *CreateAddressRequest) GetCustomerUuid() string {
 	if x != nil {
-		return x.CustomerId
+		return x.CustomerUuid
 	}
 	return ""
 }
@@ -347,8 +347,8 @@ func (x *CreateAddressRequest) GetAddress() *Address {
 }
 
 type UpdateCustomerRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	CustomerId string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	CustomerUuid string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
 	// username must has constraint for update
 	// such as update every XX months.
 	NewUsername string `protobuf:"bytes,2,opt,name=new_username,json=newUsername,proto3" json:"new_username,omitempty"`
@@ -389,9 +389,9 @@ func (*UpdateCustomerRequest) Descriptor() ([]byte, []int) {
 	return file_customerservice_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *UpdateCustomerRequest) GetCustomerId() string {
+func (x *UpdateCustomerRequest) GetCustomerUuid() string {
 	if x != nil {
-		return x.CustomerId
+		return x.CustomerUuid
 	}
 	return ""
 }
@@ -419,7 +419,7 @@ func (x *UpdateCustomerRequest) GetNewSocial() *Social {
 
 type DeleteCustomerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	CustomerUuid  string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -454,9 +454,9 @@ func (*DeleteCustomerRequest) Descriptor() ([]byte, []int) {
 	return file_customerservice_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *DeleteCustomerRequest) GetCustomerId() string {
+func (x *DeleteCustomerRequest) GetCustomerUuid() string {
 	if x != nil {
-		return x.CustomerId
+		return x.CustomerUuid
 	}
 	return ""
 }
@@ -465,10 +465,9 @@ var File_customerservice_proto protoreflect.FileDescriptor
 
 const file_customerservice_proto_rawDesc = "" +
 	"\n" +
-	"\x15customerservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\"\xb0\x02\n" +
-	"\bCustomer\x12\x1f\n" +
-	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\x12\x1a\n" +
+	"\x15customerservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\"\xb4\x02\n" +
+	"\bCustomer\x12#\n" +
+	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x10\n" +
 	"\x03bio\x18\x04 \x01(\tR\x03bio\x12)\n" +
 	"\x06social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\x06social\x120\n" +
@@ -479,35 +478,30 @@ const file_customerservice_proto_rawDesc = "" +
 	"updateTime\"\x16\n" +
 	"\x14ListCustomersRequest\"J\n" +
 	"\x15ListCustomersResponse\x121\n" +
-	"\tcustomers\x18\x01 \x03(\v2\x13.ihavefood.CustomerR\tcustomers\"5\n" +
-	"\x12GetCustomerRequest\x12\x1f\n" +
-	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\"T\n" +
-	"\x15CreateCustomerRequest\x12\x1f\n" +
-	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\"e\n" +
-	"\x14CreateAddressRequest\x12\x1f\n" +
-	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\x12,\n" +
-	"\aaddress\x18\x02 \x01(\v2\x12.ihavefood.AddressR\aaddress\"\xa6\x01\n" +
-	"\x15UpdateCustomerRequest\x12\x1f\n" +
-	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\x12!\n" +
+	"\tcustomers\x18\x01 \x03(\v2\x13.ihavefood.CustomerR\tcustomers\"9\n" +
+	"\x12GetCustomerRequest\x12#\n" +
+	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid\"X\n" +
+	"\x15CreateCustomerRequest\x12#\n" +
+	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"i\n" +
+	"\x14CreateAddressRequest\x12#\n" +
+	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid\x12,\n" +
+	"\aaddress\x18\x02 \x01(\v2\x12.ihavefood.AddressR\aaddress\"\xaa\x01\n" +
+	"\x15UpdateCustomerRequest\x12#\n" +
+	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid\x12!\n" +
 	"\fnew_username\x18\x02 \x01(\tR\vnewUsername\x12\x17\n" +
 	"\anew_bio\x18\x04 \x01(\tR\x06newBio\x120\n" +
 	"\n" +
-	"new_social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\tnewSocial\"8\n" +
-	"\x15DeleteCustomerRequest\x12\x1f\n" +
-	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId2\x8d\x05\n" +
+	"new_social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\tnewSocial\"<\n" +
+	"\x15DeleteCustomerRequest\x12#\n" +
+	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid2\x95\x05\n" +
 	"\x0fCustomerService\x12j\n" +
-	"\rListCustomers\x12\x1f.ihavefood.ListCustomersRequest\x1a .ihavefood.ListCustomersResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/api/customers\x12g\n" +
-	"\vGetCustomer\x12\x1d.ihavefood.GetCustomerRequest\x1a\x13.ihavefood.Customer\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/customers/{customer_id}\x12I\n" +
-	"\x0eCreateCustomer\x12 .ihavefood.CreateCustomerRequest\x1a\x13.ihavefood.Customer\"\x00\x12v\n" +
-	"\rCreateAddress\x12\x1f.ihavefood.CreateAddressRequest\x1a\x13.ihavefood.Customer\"/\x82\xd3\xe4\x93\x02):\x01*\"$/api/customers/{customer_id}/address\x12p\n" +
-	"\x0eUpdateCustomer\x12 .ihavefood.UpdateCustomerRequest\x1a\x13.ihavefood.Customer\"'\x82\xd3\xe4\x93\x02!:\x01*2\x1c/api/customers/{customer_id}\x12p\n" +
-	"\x0eDeleteCustomer\x12 .ihavefood.DeleteCustomerRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e*\x1c/api/customers/{customer_id}B\vZ\t/genprotob\x06proto3"
+	"\rListCustomers\x12\x1f.ihavefood.ListCustomersRequest\x1a .ihavefood.ListCustomersResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/api/customers\x12i\n" +
+	"\vGetCustomer\x12\x1d.ihavefood.GetCustomerRequest\x1a\x13.ihavefood.Customer\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/customers/{customer_uuid}\x12I\n" +
+	"\x0eCreateCustomer\x12 .ihavefood.CreateCustomerRequest\x1a\x13.ihavefood.Customer\"\x00\x12x\n" +
+	"\rCreateAddress\x12\x1f.ihavefood.CreateAddressRequest\x1a\x13.ihavefood.Customer\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/api/customers/{customer_uuid}/address\x12r\n" +
+	"\x0eUpdateCustomer\x12 .ihavefood.UpdateCustomerRequest\x1a\x13.ihavefood.Customer\")\x82\xd3\xe4\x93\x02#:\x01*2\x1e/api/customers/{customer_uuid}\x12r\n" +
+	"\x0eDeleteCustomer\x12 .ihavefood.DeleteCustomerRequest\x1a\x16.google.protobuf.Empty\"&\x82\xd3\xe4\x93\x02 *\x1e/api/customers/{customer_uuid}B\vZ\t/genprotob\x06proto3"
 
 var (
 	file_customerservice_proto_rawDescOnce sync.Once

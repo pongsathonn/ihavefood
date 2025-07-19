@@ -37,7 +37,7 @@ func (s *storage) ListUsers(ctx context.Context) ([]*dbUserCredentials, error) {
 	for rows.Next() {
 		var user dbUserCredentials
 		err := rows.Scan(
-			&user.UserID,
+			&user.UUID,
 			&user.Username,
 			&user.Email,
 			&user.Role,
@@ -78,7 +78,7 @@ func (s *storage) GetUser(ctx context.Context, userID string) (*dbUserCredential
 
 	var user dbUserCredentials
 	err := row.Scan(
-		&user.UserID,
+		&user.UUID,
 		&user.Username,
 		&user.Email,
 		&user.Role,
@@ -114,7 +114,7 @@ func (s *storage) GetUserByUsername(ctx context.Context, username string) (*dbUs
 
 	var user dbUserCredentials
 	err := row.Scan(
-		&user.UserID,
+		&user.UUID,
 		&user.Username,
 		&user.Email,
 		&user.Role,

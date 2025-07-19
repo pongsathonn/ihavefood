@@ -68,27 +68,30 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 
 	// Creates new customer in UserService
-	// TODO: handle error happen from UserService properly.
+	// TODO: handle error happen from CustomerService properly.
 	// 		 this one is difficult to debug.
+	//
+	// REFACTOR: rework registration logic
+	// gateway -> auth => customer,register,delivery
 	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
-		CustomerId: user.UserID,
-		Username:   user.Username,
+		CustomerUuid: user.UUID,
+		Username:     user.Username,
 	})
 	if err != nil {
 		slog.Error("UserService fails to create user customer: ", "err", err)
-		if err := x.store.Delete(context.TODO(), user.UserID); err != nil {
+		if err := x.store.Delete(context.TODO(), user.UUID); err != nil {
 			slog.Error("failed to delete user credential: ", "err", err)
 		}
 		return nil, status.Errorf(codes.Internal, "UserService failed to create user: %v", err)
 	}
 
-	if user.UserID != customer.CustomerId || user.Username != customer.Username {
-		slog.Error("UserID or Username does not match with CustomerService")
+	if user.UUID != customer.CustomerUuid || user.Username != customer.Username {
+		slog.Error("UUID or Username does not match with CustomerService")
 		return nil, status.Error(codes.Internal, "failed to register user")
 	}
 
 	return &pb.UserCredentials{
-		UserId:      user.UserID,
+		Uuid:        user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -132,7 +135,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Errorf(codes.Internal, "failed to find user credentials %v", err)
 	}
 
-	token, exp, err := createNewToken(user.UserID, pb.Roles(user.Role))
+	token, exp, err := createNewToken(user.UUID, pb.Roles(user.Role))
 	if err != nil {
 		slog.Error("generate new token", "err", err)
 		return nil, errGenerateToken
@@ -193,7 +196,7 @@ func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsern
 // prevent lower roles updating highter roles.
 func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UserCredentials, error) {
 
-	if in.UserId == "" {
+	if in.Uuid == "" {
 		return nil, status.Error(codes.InvalidArgument, "userID must be provided")
 	}
 
@@ -201,7 +204,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.NewRole.String())
 	}
 
-	updatedID, err := x.store.UpdateRole(ctx, in.UserId, dbRoles(in.NewRole))
+	updatedID, err := x.store.UpdateRole(ctx, in.Uuid, dbRoles(in.NewRole))
 	if err != nil {
 		slog.Error("failed to update user role", "err", err)
 		return nil, status.Error(codes.Internal, "failed to update role")
@@ -216,7 +219,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 	//TODO add update_time
 
 	return &pb.UserCredentials{
-		UserId:      user.UserID,
+		Uuid:        user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,

@@ -44,13 +44,13 @@ func request_OrderService_ListOrderHistory_0(ctx context.Context, marshaler runt
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
 	}
-	val, ok := pathParams["customer_id"]
+	val, ok := pathParams["customer_uuid"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customer_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customer_uuid")
 	}
-	protoReq.CustomerId, err = runtime.String(val)
+	protoReq.CustomerUuid, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customer_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customer_uuid", err)
 	}
 	msg, err := client.ListOrderHistory(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -62,13 +62,13 @@ func local_request_OrderService_ListOrderHistory_0(ctx context.Context, marshale
 		metadata runtime.ServerMetadata
 		err      error
 	)
-	val, ok := pathParams["customer_id"]
+	val, ok := pathParams["customer_uuid"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customer_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "customer_uuid")
 	}
-	protoReq.CustomerId, err = runtime.String(val)
+	protoReq.CustomerUuid, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customer_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "customer_uuid", err)
 	}
 	msg, err := server.ListOrderHistory(ctx, &protoReq)
 	return msg, metadata, err
@@ -113,7 +113,7 @@ func RegisterOrderServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.OrderService/ListOrderHistory", runtime.WithHTTPPathPattern("/api/orders/{customer_id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.OrderService/ListOrderHistory", runtime.WithHTTPPathPattern("/api/orders/customer-history/{customer_uuid}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -191,7 +191,7 @@ func RegisterOrderServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/ihavefood.OrderService/ListOrderHistory", runtime.WithHTTPPathPattern("/api/orders/{customer_id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/ihavefood.OrderService/ListOrderHistory", runtime.WithHTTPPathPattern("/api/orders/customer-history/{customer_uuid}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -225,7 +225,7 @@ func RegisterOrderServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_OrderService_ListOrderHistory_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "orders", "customer_id"}, ""))
+	pattern_OrderService_ListOrderHistory_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "orders", "customer-history", "customer_uuid"}, ""))
 	pattern_OrderService_HandlePlaceOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "orders", "place_order"}, ""))
 )
 

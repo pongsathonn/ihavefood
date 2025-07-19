@@ -144,7 +144,7 @@ func (x *PickupInfo) GetDropOffLocation() *Point {
 
 type Rider struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	RiderUuid     string                 `protobuf:"bytes,1,opt,name=rider_uuid,json=riderUuid,proto3" json:"rider_uuid,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -181,9 +181,9 @@ func (*Rider) Descriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Rider) GetId() string {
+func (x *Rider) GetRiderUuid() string {
 	if x != nil {
-		return x.Id
+		return x.RiderUuid
 	}
 	return ""
 }
@@ -249,7 +249,7 @@ func (x *GetOrderTrackingRequest) GetOrderId() string {
 type GetOrderTrackingResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	RiderId       string                 `protobuf:"bytes,2,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
+	RiderUuid     string                 `protobuf:"bytes,2,opt,name=rider_uuid,json=riderUuid,proto3" json:"rider_uuid,omitempty"`
 	RiderLocation *Point                 `protobuf:"bytes,3,opt,name=rider_location,json=riderLocation,proto3" json:"rider_location,omitempty"`
 	// The timestamp of the most recent update to the rider's location.
 	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
@@ -294,9 +294,9 @@ func (x *GetOrderTrackingResponse) GetOrderId() string {
 	return ""
 }
 
-func (x *GetOrderTrackingResponse) GetRiderId() string {
+func (x *GetOrderTrackingResponse) GetRiderUuid() string {
 	if x != nil {
-		return x.RiderId
+		return x.RiderUuid
 	}
 	return ""
 }
@@ -430,7 +430,7 @@ func (x *GetDeliveryFeeResponse) GetDeliveryFee() int32 {
 type ConfirmRiderAcceptRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	RiderId       string                 `protobuf:"bytes,2,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
+	RiderUuid     string                 `protobuf:"bytes,2,opt,name=rider_uuid,json=riderUuid,proto3" json:"rider_uuid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -472,9 +472,9 @@ func (x *ConfirmRiderAcceptRequest) GetOrderId() string {
 	return ""
 }
 
-func (x *ConfirmRiderAcceptRequest) GetRiderId() string {
+func (x *ConfirmRiderAcceptRequest) GetRiderUuid() string {
 	if x != nil {
-		return x.RiderId
+		return x.RiderUuid
 	}
 	return ""
 }
@@ -536,16 +536,18 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\vpickup_code\x18\x01 \x01(\tR\n" +
 	"pickupCode\x129\n" +
 	"\x0fpickup_location\x18\x02 \x01(\v2\x10.ihavefood.PointR\x0epickupLocation\x12<\n" +
-	"\x11drop_off_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\x0fdropOffLocation\"N\n" +
-	"\x05Rider\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x11drop_off_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\x0fdropOffLocation\"]\n" +
+	"\x05Rider\x12\x1d\n" +
+	"\n" +
+	"rider_uuid\x18\x01 \x01(\tR\triderUuid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12!\n" +
 	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\"4\n" +
 	"\x17GetOrderTrackingRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\"\xc6\x01\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\"\xca\x01\n" +
 	"\x18GetOrderTrackingResponse\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
-	"\brider_id\x18\x02 \x01(\tR\ariderId\x127\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x1d\n" +
+	"\n" +
+	"rider_uuid\x18\x02 \x01(\tR\triderUuid\x127\n" +
 	"\x0erider_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\rriderLocation\x12;\n" +
 	"\vupdate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"updateTime\"\xaf\x01\n" +
@@ -555,16 +557,18 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\fcustomer_lat\x18\x03 \x01(\x01R\vcustomerLat\x12#\n" +
 	"\rcustomer_long\x18\x04 \x01(\x01R\fcustomerLong\";\n" +
 	"\x16GetDeliveryFeeResponse\x12!\n" +
-	"\fdelivery_fee\x18\x01 \x01(\x05R\vdeliveryFee\"Q\n" +
+	"\fdelivery_fee\x18\x01 \x01(\x05R\vdeliveryFee\"U\n" +
 	"\x19ConfirmRiderAcceptRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
-	"\brider_id\x18\x02 \x01(\tR\ariderId\"7\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x1d\n" +
+	"\n" +
+	"rider_uuid\x18\x02 \x01(\tR\triderUuid\"7\n" +
 	"\x1aConfirmOrderDeliverRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId2\xf2\x03\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId2\xf4\x03\n" +
 	"\x0fDeliveryService\x12_\n" +
 	"\x10GetOrderTracking\x12\".ihavefood.GetOrderTrackingRequest\x1a#.ihavefood.GetOrderTrackingResponse\"\x000\x01\x12r\n" +
-	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x86\x01\n" +
-	"\x12ConfirmRiderAccept\x12$.ihavefood.ConfirmRiderAcceptRequest\x1a\x15.ihavefood.PickupInfo\"3\x82\xd3\xe4\x93\x02-:\brider_id2!/api/deliveries/{order_id}/accept\x12\x80\x01\n" +
+	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x88\x01\n" +
+	"\x12ConfirmRiderAccept\x12$.ihavefood.ConfirmRiderAcceptRequest\x1a\x15.ihavefood.PickupInfo\"5\x82\xd3\xe4\x93\x02/:\n" +
+	"rider_uuid2!/api/deliveries/{order_id}/accept\x12\x80\x01\n" +
 	"\x13ConfirmOrderDeliver\x12%.ihavefood.ConfirmOrderDeliverRequest\x1a\x16.google.protobuf.Empty\"*\x82\xd3\xe4\x93\x02$2\"/api/deliveries/{order_id}/deliverB\vZ\t/genprotob\x06proto3"
 
 var (

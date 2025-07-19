@@ -30,7 +30,7 @@ const (
 // ---------------------ORDER SERVICE------------------------------
 // Manages place order process.
 type OrderServiceClient interface {
-	// ListOrderHistory retrives Customer's place order history by CustomerID
+	// ListOrderHistory retrives Customer's place order history
 	ListOrderHistory(ctx context.Context, in *ListOrderHistoryRequest, opts ...grpc.CallOption) (*ListOrderHistoryResponse, error)
 	// HandlePlaceOrder handle incoming order from client
 	HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrder, error)
@@ -71,7 +71,7 @@ func (c *orderServiceClient) HandlePlaceOrder(ctx context.Context, in *HandlePla
 // ---------------------ORDER SERVICE------------------------------
 // Manages place order process.
 type OrderServiceServer interface {
-	// ListOrderHistory retrives Customer's place order history by CustomerID
+	// ListOrderHistory retrives Customer's place order history
 	ListOrderHistory(context.Context, *ListOrderHistoryRequest) (*ListOrderHistoryResponse, error)
 	// HandlePlaceOrder handle incoming order from client
 	HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*PlaceOrder, error)

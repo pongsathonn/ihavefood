@@ -39,7 +39,7 @@ type NewUserCredentials struct {
 //
 // NOTE: Do not response PasswordHash field.
 type dbUserCredentials struct {
-	UserID       string
+	UUID         string
 	Username     string
 	Email        string
 	PasswordHash string
