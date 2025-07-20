@@ -104,13 +104,11 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 // and returns it along with its expiration time. It returns an error if login fails or credentials are incorrect.
 func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 
-	// If Login uses http method "GET"
-	//
+	// For login with HTTP GET
 	// md, ok := metadata.FromIncomingContext(ctx)
 	// if !ok {
 	// 	return nil, status.Error(codes.Unknown, "missing metadata")
 	// }
-
 	// username, password, err := extractBasicAuth(md["authorization"])
 	// if err != nil {
 	// 	slog.Error("authorization", "err", err)

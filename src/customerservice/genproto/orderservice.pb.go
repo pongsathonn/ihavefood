@@ -187,7 +187,7 @@ type PlaceOrder struct {
 	// A unique request ID for server to detect duplicated requests.
 	RequestId         string           `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	OrderId           string           `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	CustomerUuid      string           `protobuf:"bytes,3,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
+	CustomerId        string           `protobuf:"bytes,3,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	RestaurantId      string           `protobuf:"bytes,4,opt,name=restaurant_id,json=restaurantId,proto3" json:"restaurant_id,omitempty"`
 	Menu              []*MenuItem      `protobuf:"bytes,5,rep,name=menu,proto3" json:"menu,omitempty"`
 	CouponCode        string           `protobuf:"bytes,6,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
@@ -249,9 +249,9 @@ func (x *PlaceOrder) GetOrderId() string {
 	return ""
 }
 
-func (x *PlaceOrder) GetCustomerUuid() string {
+func (x *PlaceOrder) GetCustomerId() string {
 	if x != nil {
-		return x.CustomerUuid
+		return x.CustomerId
 	}
 	return ""
 }
@@ -461,7 +461,7 @@ func (x *OrderTimestamps) GetCompleteTime() *timestamppb.Timestamp {
 
 type ListOrderHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	CustomerUuid  string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
+	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -496,9 +496,9 @@ func (*ListOrderHistoryRequest) Descriptor() ([]byte, []int) {
 	return file_orderservice_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ListOrderHistoryRequest) GetCustomerUuid() string {
+func (x *ListOrderHistoryRequest) GetCustomerId() string {
 	if x != nil {
-		return x.CustomerUuid
+		return x.CustomerId
 	}
 	return ""
 }
@@ -550,7 +550,7 @@ func (x *ListOrderHistoryResponse) GetPlaceOrders() []*PlaceOrder {
 type HandlePlaceOrderRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	RequestId         string                 `protobuf:"bytes,12,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	CustomerUuid      string                 `protobuf:"bytes,1,opt,name=customer_uuid,json=customerUuid,proto3" json:"customer_uuid,omitempty"`
+	CustomerId        string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	RestaurantId      string                 `protobuf:"bytes,2,opt,name=restaurant_id,json=restaurantId,proto3" json:"restaurant_id,omitempty"`
 	Menu              []*MenuItem            `protobuf:"bytes,3,rep,name=menu,proto3" json:"menu,omitempty"`
 	CouponCode        string                 `protobuf:"bytes,4,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
@@ -602,9 +602,9 @@ func (x *HandlePlaceOrderRequest) GetRequestId() string {
 	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetCustomerUuid() string {
+func (x *HandlePlaceOrderRequest) GetCustomerId() string {
 	if x != nil {
-		return x.CustomerUuid
+		return x.CustomerId
 	}
 	return ""
 }
@@ -683,13 +683,14 @@ var File_orderservice_proto protoreflect.FileDescriptor
 
 const file_orderservice_proto_rawDesc = "" +
 	"\n" +
-	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15merchantservice.proto\x1a\fcommon.proto\"\x88\x06\n" +
+	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15merchantservice.proto\x1a\fcommon.proto\"\x84\x06\n" +
 	"\n" +
 	"PlaceOrder\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x19\n" +
-	"\border_id\x18\x02 \x01(\tR\aorderId\x12#\n" +
-	"\rcustomer_uuid\x18\x03 \x01(\tR\fcustomerUuid\x12#\n" +
+	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x1f\n" +
+	"\vcustomer_id\x18\x03 \x01(\tR\n" +
+	"customerId\x12#\n" +
 	"\rrestaurant_id\x18\x04 \x01(\tR\frestaurantId\x12'\n" +
 	"\x04menu\x18\x05 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
 	"\vcoupon_code\x18\x06 \x01(\tR\n" +
@@ -713,15 +714,17 @@ const file_orderservice_proto_rawDesc = "" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"updateTime\x12?\n" +
-	"\rcomplete_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\fcompleteTime\">\n" +
-	"\x17ListOrderHistoryRequest\x12#\n" +
-	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid\"T\n" +
+	"\rcomplete_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\fcompleteTime\":\n" +
+	"\x17ListOrderHistoryRequest\x12\x1f\n" +
+	"\vcustomer_id\x18\x01 \x01(\tR\n" +
+	"customerId\"T\n" +
 	"\x18ListOrderHistoryResponse\x128\n" +
-	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xb7\x04\n" +
+	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xb3\x04\n" +
 	"\x17HandlePlaceOrderRequest\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\f \x01(\tR\trequestId\x12#\n" +
-	"\rcustomer_uuid\x18\x01 \x01(\tR\fcustomerUuid\x12#\n" +
+	"request_id\x18\f \x01(\tR\trequestId\x12\x1f\n" +
+	"\vcustomer_id\x18\x01 \x01(\tR\n" +
+	"customerId\x12#\n" +
 	"\rrestaurant_id\x18\x02 \x01(\tR\frestaurantId\x12'\n" +
 	"\x04menu\x18\x03 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
 	"\vcoupon_code\x18\x04 \x01(\tR\n" +
@@ -750,9 +753,9 @@ const file_orderservice_proto_rawDesc = "" +
 	"\x0fWAIT_FOR_PICKUP\x10\x03\x12\v\n" +
 	"\aONGOING\x10\x04\x12\r\n" +
 	"\tDELIVERED\x10\x05\x12\r\n" +
-	"\tCANCELLED\x10\x062\x95\x02\n" +
-	"\fOrderService\x12\x91\x01\n" +
-	"\x10ListOrderHistory\x12\".ihavefood.ListOrderHistoryRequest\x1a#.ihavefood.ListOrderHistoryResponse\"4\x82\xd3\xe4\x93\x02.\x12,/api/orders/customer-history/{customer_uuid}\x12q\n" +
+	"\tCANCELLED\x10\x062\x81\x02\n" +
+	"\fOrderService\x12~\n" +
+	"\x10ListOrderHistory\x12\".ihavefood.ListOrderHistoryRequest\x1a#.ihavefood.ListOrderHistoryResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/api/orders/{customer_id}\x12q\n" +
 	"\x10HandlePlaceOrder\x12\".ihavefood.HandlePlaceOrderRequest\x1a\x15.ihavefood.PlaceOrder\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/orders/place_orderB\vZ\t/genprotob\x06proto3"
 
 var (

@@ -26,11 +26,11 @@ const (
 type Roles int32
 
 const (
-	Roles_VISITOR        Roles = 0
-	Roles_ADMIN          Roles = 1
-	Roles_CUSTOMER       Roles = 2
-	Roles_RIDER          Roles = 3
-	Roles_MERCHANT_OWNER Roles = 4
+	Roles_VISITOR  Roles = 0
+	Roles_ADMIN    Roles = 1
+	Roles_CUSTOMER Roles = 2
+	Roles_MERCHANT Roles = 3
+	Roles_RIDER    Roles = 4
 )
 
 // Enum value maps for Roles.
@@ -39,15 +39,15 @@ var (
 		0: "VISITOR",
 		1: "ADMIN",
 		2: "CUSTOMER",
-		3: "RIDER",
-		4: "MERCHANT_OWNER",
+		3: "MERCHANT",
+		4: "RIDER",
 	}
 	Roles_value = map[string]int32{
-		"VISITOR":        0,
-		"ADMIN":          1,
-		"CUSTOMER":       2,
-		"RIDER":          3,
-		"MERCHANT_OWNER": 4,
+		"VISITOR":  0,
+		"ADMIN":    1,
+		"CUSTOMER": 2,
+		"MERCHANT": 3,
+		"RIDER":    4,
 	}
 )
 
@@ -78,14 +78,11 @@ func (Roles) EnumDescriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{0}
 }
 
-// customer,rider,merchant_owner must have these fields.
-// as their credentials
 type UserCredentials struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Uuid     string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Username string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Email    string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	// never include even hashed password in response
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
 	PhoneNumber   string                 `protobuf:"bytes,5,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	Role          Roles                  `protobuf:"varint,6,opt,name=role,proto3,enum=ihavefood.Roles" json:"role,omitempty"`
@@ -125,9 +122,9 @@ func (*UserCredentials) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *UserCredentials) GetUuid() string {
+func (x *UserCredentials) GetId() string {
 	if x != nil {
-		return x.Uuid
+		return x.Id
 	}
 	return ""
 }
@@ -187,6 +184,7 @@ type RegisterRequest struct {
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	PhoneNumber   string                 `protobuf:"bytes,4,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
+	Role          Roles                  `protobuf:"varint,5,opt,name=role,proto3,enum=ihavefood.Roles" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -247,6 +245,13 @@ func (x *RegisterRequest) GetPhoneNumber() string {
 		return x.PhoneNumber
 	}
 	return ""
+}
+
+func (x *RegisterRequest) GetRole() Roles {
+	if x != nil {
+		return x.Role
+	}
+	return Roles_VISITOR
 }
 
 type LoginRequest struct {
@@ -621,7 +626,7 @@ func (x *CheckUsernameExistsResponse) GetExists() bool {
 
 type UpdateUserRoleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	NewRole       Roles                  `protobuf:"varint,2,opt,name=new_role,json=newRole,proto3,enum=ihavefood.Roles" json:"new_role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -657,9 +662,9 @@ func (*UpdateUserRoleRequest) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *UpdateUserRoleRequest) GetUuid() string {
+func (x *UpdateUserRoleRequest) GetUserId() string {
 	if x != nil {
-		return x.Uuid
+		return x.UserId
 	}
 	return ""
 }
@@ -675,9 +680,9 @@ var File_authservice_proto protoreflect.FileDescriptor
 
 const file_authservice_proto_rawDesc = "" +
 	"\n" +
-	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb6\x02\n" +
-	"\x0fUserCredentials\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x1a\n" +
+	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb2\x02\n" +
+	"\x0fUserCredentials\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12!\n" +
@@ -686,12 +691,13 @@ const file_authservice_proto_rawDesc = "" +
 	"\vcreate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\x82\x01\n" +
+	"updateTime\"\xa8\x01\n" +
 	"\x0fRegisterRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x12!\n" +
-	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\"F\n" +
+	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12$\n" +
+	"\x04role\x18\x05 \x01(\x0e2\x10.ihavefood.RolesR\x04role\"F\n" +
 	"\fLoginRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"Q\n" +
@@ -710,16 +716,16 @@ const file_authservice_proto_rawDesc = "" +
 	"\x1aCheckUsernameExistsRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"5\n" +
 	"\x1bCheckUsernameExistsResponse\x12\x16\n" +
-	"\x06exists\x18\x01 \x01(\bR\x06exists\"X\n" +
-	"\x15UpdateUserRoleRequest\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12+\n" +
-	"\bnew_role\x18\x02 \x01(\x0e2\x10.ihavefood.RolesR\anewRole*L\n" +
+	"\x06exists\x18\x01 \x01(\bR\x06exists\"]\n" +
+	"\x15UpdateUserRoleRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12+\n" +
+	"\bnew_role\x18\x02 \x01(\x0e2\x10.ihavefood.RolesR\anewRole*F\n" +
 	"\x05Roles\x12\v\n" +
 	"\aVISITOR\x10\x00\x12\t\n" +
 	"\x05ADMIN\x10\x01\x12\f\n" +
-	"\bCUSTOMER\x10\x02\x12\t\n" +
-	"\x05RIDER\x10\x03\x12\x12\n" +
-	"\x0eMERCHANT_OWNER\x10\x042\xdd\x04\n" +
+	"\bCUSTOMER\x10\x02\x12\f\n" +
+	"\bMERCHANT\x10\x03\x12\t\n" +
+	"\x05RIDER\x10\x042\xdd\x04\n" +
 	"\vAuthService\x12]\n" +
 	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12R\n" +
 	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12`\n" +
@@ -761,24 +767,25 @@ var file_authservice_proto_depIdxs = []int32{
 	0,  // 0: ihavefood.UserCredentials.role:type_name -> ihavefood.Roles
 	12, // 1: ihavefood.UserCredentials.create_time:type_name -> google.protobuf.Timestamp
 	12, // 2: ihavefood.UserCredentials.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 3: ihavefood.UpdateUserRoleRequest.new_role:type_name -> ihavefood.Roles
-	2,  // 4: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
-	3,  // 5: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
-	5,  // 6: ihavefood.AuthService.ValidateUserToken:input_type -> ihavefood.ValidateUserTokenRequest
-	7,  // 7: ihavefood.AuthService.ValidateAdminToken:input_type -> ihavefood.ValidateAdminTokenRequest
-	9,  // 8: ihavefood.AuthService.CheckUsernameExists:input_type -> ihavefood.CheckUsernameExistsRequest
-	11, // 9: ihavefood.AuthService.UpdateUserRole:input_type -> ihavefood.UpdateUserRoleRequest
-	1,  // 10: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
-	4,  // 11: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
-	6,  // 12: ihavefood.AuthService.ValidateUserToken:output_type -> ihavefood.ValidateUserTokenResponse
-	8,  // 13: ihavefood.AuthService.ValidateAdminToken:output_type -> ihavefood.ValidateAdminTokenResponse
-	10, // 14: ihavefood.AuthService.CheckUsernameExists:output_type -> ihavefood.CheckUsernameExistsResponse
-	1,  // 15: ihavefood.AuthService.UpdateUserRole:output_type -> ihavefood.UserCredentials
-	10, // [10:16] is the sub-list for method output_type
-	4,  // [4:10] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	0,  // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
+	0,  // 4: ihavefood.UpdateUserRoleRequest.new_role:type_name -> ihavefood.Roles
+	2,  // 5: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
+	3,  // 6: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
+	5,  // 7: ihavefood.AuthService.ValidateUserToken:input_type -> ihavefood.ValidateUserTokenRequest
+	7,  // 8: ihavefood.AuthService.ValidateAdminToken:input_type -> ihavefood.ValidateAdminTokenRequest
+	9,  // 9: ihavefood.AuthService.CheckUsernameExists:input_type -> ihavefood.CheckUsernameExistsRequest
+	11, // 10: ihavefood.AuthService.UpdateUserRole:input_type -> ihavefood.UpdateUserRoleRequest
+	1,  // 11: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
+	4,  // 12: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
+	6,  // 13: ihavefood.AuthService.ValidateUserToken:output_type -> ihavefood.ValidateUserTokenResponse
+	8,  // 14: ihavefood.AuthService.ValidateAdminToken:output_type -> ihavefood.ValidateAdminTokenResponse
+	10, // 15: ihavefood.AuthService.CheckUsernameExists:output_type -> ihavefood.CheckUsernameExistsResponse
+	1,  // 16: ihavefood.AuthService.UpdateUserRole:output_type -> ihavefood.UserCredentials
+	11, // [11:17] is the sub-list for method output_type
+	5,  // [5:11] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_authservice_proto_init() }
