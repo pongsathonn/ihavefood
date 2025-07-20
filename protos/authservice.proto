@@ -54,10 +54,8 @@ service AuthService {
     */
 }
 
-// should be auth_id instead? becaseu role 'Restaurant' isn't user itself.
-// then authservice treats everything as authentication not manage users.
 message UserCredentials {
-    string user_id = 1;
+    string id = 1;
     string username = 2;
     string email = 3;
     string password = 4;
@@ -69,9 +67,10 @@ message UserCredentials {
 
 enum Roles {
     VISITOR = 0;
-    CUSTOMER = 1;
-    ADMIN = 2;
-    TODO = 3;
+    ADMIN = 1;
+    CUSTOMER = 2;
+    MERCHANT = 3;
+    RIDER = 4;
 }
 
 message RegisterRequest {
@@ -79,6 +78,7 @@ message RegisterRequest {
    string email = 2;
    string password = 3;
    string phone_number = 4;
+   Roles role = 5;
 }
 
 // uncomment RegisterResponse when gateway want to use this message
