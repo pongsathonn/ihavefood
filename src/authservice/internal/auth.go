@@ -74,8 +74,8 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	// REFACTOR: rework registration logic
 	// gateway -> auth => customer,register,delivery
 	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
-		CustomerUuid: user.UUID,
-		Username:     user.Username,
+		CustomerId: user.UUID,
+		Username:   user.Username,
 	})
 	if err != nil {
 		slog.Error("UserService fails to create user customer: ", "err", err)
@@ -85,13 +85,13 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "UserService failed to create user: %v", err)
 	}
 
-	if user.UUID != customer.CustomerUuid || user.Username != customer.Username {
+	if user.UUID != customer.CustomerId || user.Username != customer.Username {
 		slog.Error("UUID or Username does not match with CustomerService")
 		return nil, status.Error(codes.Internal, "failed to register user")
 	}
 
 	return &pb.UserCredentials{
-		Uuid:        user.UUID,
+		Id:          user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -194,7 +194,7 @@ func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsern
 // prevent lower roles updating highter roles.
 func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UserCredentials, error) {
 
-	if in.Uuid == "" {
+	if in.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "userID must be provided")
 	}
 
@@ -202,7 +202,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.NewRole.String())
 	}
 
-	updatedID, err := x.store.UpdateRole(ctx, in.Uuid, dbRoles(in.NewRole))
+	updatedID, err := x.store.UpdateRole(ctx, in.Id, dbRoles(in.NewRole))
 	if err != nil {
 		slog.Error("failed to update user role", "err", err)
 		return nil, status.Error(codes.Internal, "failed to update role")
@@ -217,7 +217,7 @@ func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleR
 	//TODO add update_time
 
 	return &pb.UserCredentials{
-		Uuid:        user.UUID,
+		Id:          user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,

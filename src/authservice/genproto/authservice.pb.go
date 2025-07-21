@@ -26,28 +26,32 @@ const (
 type Roles int32
 
 const (
-	Roles_VISITOR  Roles = 0
-	Roles_ADMIN    Roles = 1
-	Roles_CUSTOMER Roles = 2
-	Roles_MERCHANT Roles = 3
-	Roles_RIDER    Roles = 4
+	Roles_UNKNOWN  Roles = 0
+	Roles_CUSTOMER Roles = 1
+	Roles_MERCHANT Roles = 2
+	Roles_RIDER    Roles = 3
+	// For simplicity, admin roles are included in this enum.
+	Roles_SUPER_ADMIN Roles = 20
+	Roles_ADMIN       Roles = 21
 )
 
 // Enum value maps for Roles.
 var (
 	Roles_name = map[int32]string{
-		0: "VISITOR",
-		1: "ADMIN",
-		2: "CUSTOMER",
-		3: "MERCHANT",
-		4: "RIDER",
+		0:  "UNKNOWN",
+		1:  "CUSTOMER",
+		2:  "MERCHANT",
+		3:  "RIDER",
+		20: "SUPER_ADMIN",
+		21: "ADMIN",
 	}
 	Roles_value = map[string]int32{
-		"VISITOR":  0,
-		"ADMIN":    1,
-		"CUSTOMER": 2,
-		"MERCHANT": 3,
-		"RIDER":    4,
+		"UNKNOWN":     0,
+		"CUSTOMER":    1,
+		"MERCHANT":    2,
+		"RIDER":       3,
+		"SUPER_ADMIN": 20,
+		"ADMIN":       21,
 	}
 )
 
@@ -161,7 +165,7 @@ func (x *UserCredentials) GetRole() Roles {
 	if x != nil {
 		return x.Role
 	}
-	return Roles_VISITOR
+	return Roles_UNKNOWN
 }
 
 func (x *UserCredentials) GetCreateTime() *timestamppb.Timestamp {
@@ -251,13 +255,14 @@ func (x *RegisterRequest) GetRole() Roles {
 	if x != nil {
 		return x.Role
 	}
-	return Roles_VISITOR
+	return Roles_UNKNOWN
 }
 
 type LoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Identifier    string                 `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"` // username,email, or phone
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	Role          Roles                  `protobuf:"varint,3,opt,name=role,proto3,enum=ihavefood.Roles" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -292,9 +297,9 @@ func (*LoginRequest) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *LoginRequest) GetUsername() string {
+func (x *LoginRequest) GetIdentifier() string {
 	if x != nil {
-		return x.Username
+		return x.Identifier
 	}
 	return ""
 }
@@ -304,6 +309,13 @@ func (x *LoginRequest) GetPassword() string {
 		return x.Password
 	}
 	return ""
+}
+
+func (x *LoginRequest) GetRole() Roles {
+	if x != nil {
+		return x.Role
+	}
+	return Roles_UNKNOWN
 }
 
 type LoginResponse struct {
@@ -624,28 +636,30 @@ func (x *CheckUsernameExistsResponse) GetExists() bool {
 	return false
 }
 
-type UpdateUserRoleRequest struct {
+type CreateAdminRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	NewRole       Roles                  `protobuf:"varint,2,opt,name=new_role,json=newRole,proto3,enum=ihavefood.Roles" json:"new_role,omitempty"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	PhoneNumber   string                 `protobuf:"bytes,4,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdateUserRoleRequest) Reset() {
-	*x = UpdateUserRoleRequest{}
+func (x *CreateAdminRequest) Reset() {
+	*x = CreateAdminRequest{}
 	mi := &file_authservice_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdateUserRoleRequest) String() string {
+func (x *CreateAdminRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateUserRoleRequest) ProtoMessage() {}
+func (*CreateAdminRequest) ProtoMessage() {}
 
-func (x *UpdateUserRoleRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateAdminRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_authservice_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -657,23 +671,37 @@ func (x *UpdateUserRoleRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateUserRoleRequest.ProtoReflect.Descriptor instead.
-func (*UpdateUserRoleRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateAdminRequest.ProtoReflect.Descriptor instead.
+func (*CreateAdminRequest) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *UpdateUserRoleRequest) GetUserId() string {
+func (x *CreateAdminRequest) GetUsername() string {
 	if x != nil {
-		return x.UserId
+		return x.Username
 	}
 	return ""
 }
 
-func (x *UpdateUserRoleRequest) GetNewRole() Roles {
+func (x *CreateAdminRequest) GetEmail() string {
 	if x != nil {
-		return x.NewRole
+		return x.Email
 	}
-	return Roles_VISITOR
+	return ""
+}
+
+func (x *CreateAdminRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *CreateAdminRequest) GetPhoneNumber() string {
+	if x != nil {
+		return x.PhoneNumber
+	}
+	return ""
 }
 
 var File_authservice_proto protoreflect.FileDescriptor
@@ -697,10 +725,13 @@ const file_authservice_proto_rawDesc = "" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x12!\n" +
 	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12$\n" +
-	"\x04role\x18\x05 \x01(\x0e2\x10.ihavefood.RolesR\x04role\"F\n" +
-	"\fLoginRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"Q\n" +
+	"\x04role\x18\x05 \x01(\x0e2\x10.ihavefood.RolesR\x04role\"p\n" +
+	"\fLoginRequest\x12\x1e\n" +
+	"\n" +
+	"identifier\x18\x01 \x01(\tR\n" +
+	"identifier\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12$\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role\"Q\n" +
 	"\rLoginResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
 	"\n" +
@@ -716,23 +747,26 @@ const file_authservice_proto_rawDesc = "" +
 	"\x1aCheckUsernameExistsRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"5\n" +
 	"\x1bCheckUsernameExistsResponse\x12\x16\n" +
-	"\x06exists\x18\x01 \x01(\bR\x06exists\"]\n" +
-	"\x15UpdateUserRoleRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12+\n" +
-	"\bnew_role\x18\x02 \x01(\x0e2\x10.ihavefood.RolesR\anewRole*F\n" +
+	"\x06exists\x18\x01 \x01(\bR\x06exists\"\x85\x01\n" +
+	"\x12CreateAdminRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\x12!\n" +
+	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber*W\n" +
 	"\x05Roles\x12\v\n" +
-	"\aVISITOR\x10\x00\x12\t\n" +
-	"\x05ADMIN\x10\x01\x12\f\n" +
-	"\bCUSTOMER\x10\x02\x12\f\n" +
-	"\bMERCHANT\x10\x03\x12\t\n" +
-	"\x05RIDER\x10\x042\xdd\x04\n" +
+	"\aUNKNOWN\x10\x00\x12\f\n" +
+	"\bCUSTOMER\x10\x01\x12\f\n" +
+	"\bMERCHANT\x10\x02\x12\t\n" +
+	"\x05RIDER\x10\x03\x12\x0f\n" +
+	"\vSUPER_ADMIN\x10\x14\x12\t\n" +
+	"\x05ADMIN\x10\x152\xd1\x04\n" +
 	"\vAuthService\x12]\n" +
 	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12R\n" +
 	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12`\n" +
 	"\x11ValidateUserToken\x12#.ihavefood.ValidateUserTokenRequest\x1a$.ihavefood.ValidateUserTokenResponse\"\x00\x12c\n" +
 	"\x12ValidateAdminToken\x12$.ihavefood.ValidateAdminTokenRequest\x1a%.ihavefood.ValidateAdminTokenResponse\"\x00\x12f\n" +
-	"\x13CheckUsernameExists\x12%.ihavefood.CheckUsernameExistsRequest\x1a&.ihavefood.CheckUsernameExistsResponse\"\x00\x12l\n" +
-	"\x0eUpdateUserRole\x12 .ihavefood.UpdateUserRoleRequest\x1a\x1a.ihavefood.UserCredentials\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/auth/users/rolesB\vZ\t/genprotob\x06proto3"
+	"\x13CheckUsernameExists\x12%.ihavefood.CheckUsernameExistsRequest\x1a&.ihavefood.CheckUsernameExistsResponse\"\x00\x12`\n" +
+	"\vCreateAdmin\x12\x1d.ihavefood.CreateAdminRequest\x1a\x1a.ihavefood.UserCredentials\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/adminB\vZ\t/genprotob\x06proto3"
 
 var (
 	file_authservice_proto_rawDescOnce sync.Once
@@ -760,7 +794,7 @@ var file_authservice_proto_goTypes = []any{
 	(*ValidateAdminTokenResponse)(nil),  // 8: ihavefood.ValidateAdminTokenResponse
 	(*CheckUsernameExistsRequest)(nil),  // 9: ihavefood.CheckUsernameExistsRequest
 	(*CheckUsernameExistsResponse)(nil), // 10: ihavefood.CheckUsernameExistsResponse
-	(*UpdateUserRoleRequest)(nil),       // 11: ihavefood.UpdateUserRoleRequest
+	(*CreateAdminRequest)(nil),          // 11: ihavefood.CreateAdminRequest
 	(*timestamppb.Timestamp)(nil),       // 12: google.protobuf.Timestamp
 }
 var file_authservice_proto_depIdxs = []int32{
@@ -768,19 +802,19 @@ var file_authservice_proto_depIdxs = []int32{
 	12, // 1: ihavefood.UserCredentials.create_time:type_name -> google.protobuf.Timestamp
 	12, // 2: ihavefood.UserCredentials.update_time:type_name -> google.protobuf.Timestamp
 	0,  // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
-	0,  // 4: ihavefood.UpdateUserRoleRequest.new_role:type_name -> ihavefood.Roles
+	0,  // 4: ihavefood.LoginRequest.role:type_name -> ihavefood.Roles
 	2,  // 5: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
 	3,  // 6: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
 	5,  // 7: ihavefood.AuthService.ValidateUserToken:input_type -> ihavefood.ValidateUserTokenRequest
 	7,  // 8: ihavefood.AuthService.ValidateAdminToken:input_type -> ihavefood.ValidateAdminTokenRequest
 	9,  // 9: ihavefood.AuthService.CheckUsernameExists:input_type -> ihavefood.CheckUsernameExistsRequest
-	11, // 10: ihavefood.AuthService.UpdateUserRole:input_type -> ihavefood.UpdateUserRoleRequest
+	11, // 10: ihavefood.AuthService.CreateAdmin:input_type -> ihavefood.CreateAdminRequest
 	1,  // 11: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
 	4,  // 12: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
 	6,  // 13: ihavefood.AuthService.ValidateUserToken:output_type -> ihavefood.ValidateUserTokenResponse
 	8,  // 14: ihavefood.AuthService.ValidateAdminToken:output_type -> ihavefood.ValidateAdminTokenResponse
 	10, // 15: ihavefood.AuthService.CheckUsernameExists:output_type -> ihavefood.CheckUsernameExistsResponse
-	1,  // 16: ihavefood.AuthService.UpdateUserRole:output_type -> ihavefood.UserCredentials
+	1,  // 16: ihavefood.AuthService.CreateAdmin:output_type -> ihavefood.UserCredentials
 	11, // [11:17] is the sub-list for method output_type
 	5,  // [5:11] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name

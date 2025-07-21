@@ -24,7 +24,7 @@ const (
 	AuthService_ValidateUserToken_FullMethodName   = "/ihavefood.AuthService/ValidateUserToken"
 	AuthService_ValidateAdminToken_FullMethodName  = "/ihavefood.AuthService/ValidateAdminToken"
 	AuthService_CheckUsernameExists_FullMethodName = "/ihavefood.AuthService/CheckUsernameExists"
-	AuthService_UpdateUserRole_FullMethodName      = "/ihavefood.AuthService/UpdateUserRole"
+	AuthService_CreateAdmin_FullMethodName         = "/ihavefood.AuthService/CreateAdmin"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -42,9 +42,8 @@ type AuthServiceClient interface {
 	ValidateAdminToken(ctx context.Context, in *ValidateAdminTokenRequest, opts ...grpc.CallOption) (*ValidateAdminTokenResponse, error)
 	// Check whether username already exists returns true if username already exists, otherwise false.
 	CheckUsernameExists(ctx context.Context, in *CheckUsernameExistsRequest, opts ...grpc.CallOption) (*CheckUsernameExistsResponse, error)
-	// Promotes a user's role from "USER" to "ADMIN".
-	// This function intends to performe by users with the "ADMIN" role.
-	UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UserCredentials, error)
+	// only superadmin role can call this.
+	CreateAdmin(ctx context.Context, in *CreateAdminRequest, opts ...grpc.CallOption) (*UserCredentials, error)
 }
 
 type authServiceClient struct {
@@ -105,10 +104,10 @@ func (c *authServiceClient) CheckUsernameExists(ctx context.Context, in *CheckUs
 	return out, nil
 }
 
-func (c *authServiceClient) UpdateUserRole(ctx context.Context, in *UpdateUserRoleRequest, opts ...grpc.CallOption) (*UserCredentials, error) {
+func (c *authServiceClient) CreateAdmin(ctx context.Context, in *CreateAdminRequest, opts ...grpc.CallOption) (*UserCredentials, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserCredentials)
-	err := c.cc.Invoke(ctx, AuthService_UpdateUserRole_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AuthService_CreateAdmin_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -130,9 +129,8 @@ type AuthServiceServer interface {
 	ValidateAdminToken(context.Context, *ValidateAdminTokenRequest) (*ValidateAdminTokenResponse, error)
 	// Check whether username already exists returns true if username already exists, otherwise false.
 	CheckUsernameExists(context.Context, *CheckUsernameExistsRequest) (*CheckUsernameExistsResponse, error)
-	// Promotes a user's role from "USER" to "ADMIN".
-	// This function intends to performe by users with the "ADMIN" role.
-	UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UserCredentials, error)
+	// only superadmin role can call this.
+	CreateAdmin(context.Context, *CreateAdminRequest) (*UserCredentials, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -158,8 +156,8 @@ func (UnimplementedAuthServiceServer) ValidateAdminToken(context.Context, *Valid
 func (UnimplementedAuthServiceServer) CheckUsernameExists(context.Context, *CheckUsernameExistsRequest) (*CheckUsernameExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckUsernameExists not implemented")
 }
-func (UnimplementedAuthServiceServer) UpdateUserRole(context.Context, *UpdateUserRoleRequest) (*UserCredentials, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserRole not implemented")
+func (UnimplementedAuthServiceServer) CreateAdmin(context.Context, *CreateAdminRequest) (*UserCredentials, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAdmin not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -272,20 +270,20 @@ func _AuthService_CheckUsernameExists_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_UpdateUserRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateUserRoleRequest)
+func _AuthService_CreateAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAdminRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).UpdateUserRole(ctx, in)
+		return srv.(AuthServiceServer).CreateAdmin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_UpdateUserRole_FullMethodName,
+		FullMethod: AuthService_CreateAdmin_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).UpdateUserRole(ctx, req.(*UpdateUserRoleRequest))
+		return srv.(AuthServiceServer).CreateAdmin(ctx, req.(*CreateAdminRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -318,8 +316,8 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_CheckUsernameExists_Handler,
 		},
 		{
-			MethodName: "UpdateUserRole",
-			Handler:    _AuthService_UpdateUserRole_Handler,
+			MethodName: "CreateAdmin",
+			Handler:    _AuthService_CreateAdmin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

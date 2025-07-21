@@ -21,10 +21,10 @@ service AuthService {
     }
 
     rpc Login(LoginRequest) returns(LoginResponse){
-        option (google.api.http) = {
-            post: "/auth/login" 
-            body: "*"
-        };
+      option (google.api.http) = {
+        post: "/auth/login" 
+        body: "*"
+      };
     }
 
     // Validate token for role "USER" returns true if token valid, otherwise false.
@@ -36,14 +36,12 @@ service AuthService {
     // Check whether username already exists returns true if username already exists, otherwise false.
     rpc CheckUsernameExists(CheckUsernameExistsRequest) returns (CheckUsernameExistsResponse) {}
 
-
-    // Promotes a user's role from "USER" to "ADMIN".
-    // This function intends to performe by users with the "ADMIN" role.
-    rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserCredentials){
+    // only superadmin role can call this.
+    rpc CreateAdmin(CreateAdminRequest) returns(UserCredentials){
         option (google.api.http) = {
-            patch: "/auth/users/roles"
+            post: "/auth/admin" 
             body: "*"
-       };
+        };
     }
 
     /*
@@ -66,11 +64,14 @@ message UserCredentials {
 }
 
 enum Roles {
-    VISITOR = 0;
-    ADMIN = 1;
-    CUSTOMER = 2;
-    MERCHANT = 3;
-    RIDER = 4;
+    UNKNOWN = 0;
+    CUSTOMER = 1;
+    MERCHANT = 2;
+    RIDER = 3;
+
+    // For simplicity, admin roles are included in this enum.
+    SUPER_ADMIN = 20;
+    ADMIN = 21;
 }
 
 message RegisterRequest {
@@ -90,10 +91,10 @@ message RegisterRequest {
 // }
 
 message LoginRequest {
-    string username = 1;
+    string identifier = 1;  // username,email, or phone
     string password = 2;
+    Roles role = 3;
 }
-
 
 message LoginResponse {
     // Access token. Valid for 30 days.
@@ -126,8 +127,9 @@ message CheckUsernameExistsResponse{
     bool exists = 1;
 }
 
-message UpdateUserRoleRequest {
-    string user_id = 1;
-    Roles new_role = 2;
+message CreateAdminRequest {
+   string username = 1;
+   string email = 2;
+   string password = 3;
+   string phone_number = 4;
 }
-
