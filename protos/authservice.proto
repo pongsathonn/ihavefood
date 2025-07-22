@@ -27,11 +27,11 @@ service AuthService {
       };
     }
 
-    // Validate token for role "USER" returns true if token valid, otherwise false.
-    rpc ValidateUserToken(ValidateUserTokenRequest) returns(ValidateUserTokenResponse) {}
+    // verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
+    rpc VerifyUserToken(VerifyUserTokenRequest) returns(VerifyUserTokenResponse) {}
 
-    // Validate token for role "ADMIN" returns true if token valid, otherwise false.
-    rpc ValidateAdminToken(ValidateAdminTokenRequest) returns (ValidateAdminTokenResponse){}
+    // verify token for role "admin,superadmin" returns true if token valid, otherwise false.
+    rpc VerifyAdminToken(VerifyAdminTokenRequest) returns (VerifyAdminTokenResponse){}
 
     // Check whether username already exists returns true if username already exists, otherwise false.
     rpc CheckUsernameExists(CheckUsernameExistsRequest) returns (CheckUsernameExistsResponse) {}
@@ -103,19 +103,19 @@ message LoginResponse {
     int64 expires_in = 2;
 }
 
-message ValidateUserTokenRequest {
+message VerifyUserTokenRequest {
     string access_token = 1;
 }
 
-message ValidateUserTokenResponse {
+message VerifyUserTokenResponse {
     bool valid = 1;
 }
 
-message ValidateAdminTokenRequest {
+message VerifyAdminTokenRequest {
     string access_token = 1;
 }
 
-message ValidateAdminTokenResponse {
+message VerifyAdminTokenResponse {
     bool valid = 1;
 }
 
