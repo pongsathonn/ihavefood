@@ -19,19 +19,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-func newCustomerServiceClient() (pb.CustomerServiceClient, error) {
-
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-
-	conn, err := grpc.NewClient(os.Getenv("PROFILE_URI"), opt)
-	if err != nil {
-		return nil, err
-	}
-
-	slog.Info("Channel for CustomerServiceClient created successfully")
-	return pb.NewCustomerServiceClient(conn), nil
-}
-
 func initPostgres() (*sql.DB, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -115,16 +102,35 @@ func main() {
 	}
 	storage := internal.NewStorage(db)
 
-	if err := internal.CreateAdmin(storage); err != nil {
+	if err := internal.CreateSuperAdmin(storage); err != nil {
 		log.Printf("Failed to create admin user: %v", err)
 	}
 
-	client, err := newCustomerServiceClient()
+	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+
+	customers, err := grpc.NewClient(os.Getenv("CUSTOMER_URI"), opt)
 	if err != nil {
 		log.Fatalf("Failed to initialize CustomerService connection: %v", err)
 	}
 
-	service := internal.NewAuthService(storage, client)
-	startGRPCServer(service)
+	deliv, err := grpc.NewClient(os.Getenv("DELIVERY_URI"), opt)
+	if err != nil {
+		log.Fatalf("Failed to initialize DeliveryService connection: %v", err)
+	}
 
+	merchant, err := grpc.NewClient(os.Getenv("MERCHANT_URI"), opt)
+	if err != nil {
+		log.Fatalf("Failed to initialize MerchantService connection: %v", err)
+	}
+
+	slog.Info("Channel for CustomerServiceClient created successfully")
+	slog.Info("Channel for DeliveryServiceClient created successfully")
+	slog.Info("Channel for MerchantServiceClient created successfully")
+
+	startGRPCServer(internal.NewAuthService(&internal.AuthCfg{
+		Store:          storage,
+		CustomerClient: pb.NewCustomerServiceClient(customers),
+		DeliveryClient: pb.NewDeliveryServiceClient(deliv),
+		MerchantClient: pb.NewMerchantServiceClient(merchant),
+	}))
 }

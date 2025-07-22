@@ -9,8 +9,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-// TODO might be create model for response
-
 // FIXME this might not be good for prod, find other solution .
 // JWT signing key
 var signingKey []byte
@@ -25,34 +23,36 @@ type AuthClaims struct {
 	jwt.RegisteredClaims
 }
 
-// NewUserCredential contains information to create
+// dbNewUserCredential contains information to create
 // both new user credential and admin
-type NewUserCredentials struct {
+type dbNewUserCredentials struct {
 	Username    string
 	Email       string
-	Password    string
+	HashedPass  string
 	PhoneNumber string
 	Role        dbRoles
 }
 
-// dbUserCredentials contains ... TODO .
-//
-// NOTE: Do not response PasswordHash field.
 type dbUserCredentials struct {
-	UUID         string
-	Username     string
-	Email        string
-	PasswordHash string
-	Role         dbRoles
-	PhoneNumber  string
-	CreateTime   time.Time
-	UpdateTime   time.Time
+	ID          string
+	Username    string
+	Email       string
+	HashedPass  string
+	Role        dbRoles
+	PhoneNumber string
+	CreateTime  time.Time
+	UpdateTime  time.Time
 }
 
 type dbRoles int32
 
 const (
-	Roles_VISITOR dbRoles = 0
-	Roles_USER    dbRoles = 1
-	Roles_ADMIN   dbRoles = 2
+	Roles_UNKNOWN  dbRoles = 0
+	Roles_CUSTOMER dbRoles = 1
+	Roles_MERCHANT dbRoles = 2
+	Roles_RIDER    dbRoles = 3
+
+	// For simplicity, admin roles are included in this enum.
+	Roles_SUPER_ADMIN dbRoles = 20
+	Roles_ADMIN       dbRoles = 21
 )

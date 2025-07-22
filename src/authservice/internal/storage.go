@@ -3,8 +3,6 @@ package internal
 import (
 	"context"
 	"database/sql"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type storage struct {
@@ -37,7 +35,7 @@ func (s *storage) ListUsers(ctx context.Context) ([]*dbUserCredentials, error) {
 	for rows.Next() {
 		var user dbUserCredentials
 		err := rows.Scan(
-			&user.UUID,
+			&user.ID,
 			&user.Username,
 			&user.Email,
 			&user.Role,
@@ -78,7 +76,7 @@ func (s *storage) GetUser(ctx context.Context, userID string) (*dbUserCredential
 
 	var user dbUserCredentials
 	err := row.Scan(
-		&user.UUID,
+		&user.ID,
 		&user.Username,
 		&user.Email,
 		&user.Role,
@@ -94,13 +92,14 @@ func (s *storage) GetUser(ctx context.Context, userID string) (*dbUserCredential
 
 }
 
-func (s *storage) GetUserByUsername(ctx context.Context, username string) (*dbUserCredentials, error) {
+func (s *storage) GetUserByIdentifier(ctx context.Context, iden string) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
 			user_id,
 			username, 
 			email,
+			password,
 			role,
 			phone_number,
 			create_time,
@@ -108,15 +107,18 @@ func (s *storage) GetUserByUsername(ctx context.Context, username string) (*dbUs
 		FROM 
 			credentials
 		WHERE
-			username=$1
+			username=$1 OR
+			email=$1 OR
+			phone_number=$1 
 	`,
-		username)
+		iden)
 
 	var user dbUserCredentials
 	err := row.Scan(
-		&user.UUID,
+		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.HashedPass,
 		&user.Role,
 		&user.PhoneNumber,
 		&user.CreateTime,
@@ -131,12 +133,7 @@ func (s *storage) GetUserByUsername(ctx context.Context, username string) (*dbUs
 }
 
 // Create creates new user credential and return its ID.
-func (s *storage) Create(ctx context.Context, newUser *NewUserCredentials) (string, error) {
-
-	hashedPass, err := hashPassword(newUser.Password)
-	if err != nil {
-		return "", err
-	}
+func (s *storage) Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		INSERT INTO credentials(
@@ -148,35 +145,29 @@ func (s *storage) Create(ctx context.Context, newUser *NewUserCredentials) (stri
 			create_time
 		)VALUES(
 			$1,$2,$3,$4,$5,now()
-		)RETURNING 
-			user_id;
+		)RETURNING *;
 	`,
 		newUser.Username,
 		newUser.Email,
-		string(hashedPass),
+		newUser.HashedPass,
 		newUser.Role,
 		newUser.PhoneNumber,
 	)
 
-	var userID string
-	if err := row.Scan(&userID); err != nil {
-		return "", err
+	var user dbUserCredentials
+	if err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Role,
+		&user.PhoneNumber,
+		&user.CreateTime,
+		&user.UpdateTime,
+	); err != nil {
+		return nil, err
 	}
 
-	return userID, nil
-}
-
-// UpdateRole updates user role and returns ID.
-func (s *storage) UpdateRole(ctx context.Context, userID string, newRole dbRoles) (string, error) {
-
-	query := `UPDATE credentials SET role = $2 WHERE user_id = $1 RETURNING user_id `
-
-	var updatedID string
-	if err := s.db.QueryRowContext(ctx, query, userID, newRole).Scan(&updatedID); err != nil {
-		return "", err
-	}
-
-	return updatedID, nil
+	return &user, nil
 }
 
 // Delete deletes the user credential.
@@ -189,35 +180,6 @@ func (s *storage) Delete(ctx context.Context, userID string) error {
 	}
 
 	return nil
-}
-
-// ValidateLogin checks if the provided username and password are correct.
-// It returns true if the credentials are valid, or false if they are not.
-// Any non-nil error returned is related to the query execution not the
-// validation process. Callers should check the error before interpreting
-// the boolean result.
-func (s *storage) ValidateLogin(ctx context.Context, username, password string) (bool, error) {
-
-	var passwordHash string
-
-	query := `SELECT password FROM credentials WHERE username=$1`
-	err := s.db.QueryRowContext(ctx, query, username).Scan(&passwordHash)
-
-	// invalid username
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
-
-	if err != nil {
-		return false, err
-	}
-
-	// invalid password
-	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password)); err != nil {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 // CheckUsernameExists checks if the provided username already exists.
@@ -233,16 +195,4 @@ func (s *storage) CheckUsernameExists(ctx context.Context, username string) (boo
 	}
 
 	return exists, nil
-}
-
-func hashPassword(password string) ([]byte, error) {
-	hashedPass, err := bcrypt.GenerateFromPassword(
-		[]byte(password),
-		bcrypt.DefaultCost,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return hashedPass, nil
-
 }

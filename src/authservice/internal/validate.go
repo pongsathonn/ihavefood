@@ -34,13 +34,11 @@ func validateUser(in any) error {
 		"PhoneNumber": "required,vfphone",
 	}
 
-	// rule2 := map[string]string{}
-
 	validate.RegisterStructValidationMapRules(registerRule, pb.RegisterRequest{})
 	// validate.RegisterStructValidationMapRules(rule2, nil)
 
 	// prefix vf = validate format
-	// Ex. vfpass is validate password format
+	// Ex. vfpass validates password format
 	validate.RegisterValidation("vfpass", validatePassword)
 	validate.RegisterValidation("vfphone", validatePhone)
 
@@ -86,9 +84,9 @@ func validatePhone(fl validator.FieldLevel) bool {
 	return regexp.MustCompile(`^(06|08|09)\d{8}$`).MatchString(phoneNumber)
 }
 
-// validateUserToken verifies the validity of a JWT token using the provided signing key.
+// verifyUserToken verifies the validity of a JWT token using the provided signing key.
 // It returns true if the token is valid, false otherwise, along with any error encountered.
-func validateUserToken(tokenString string) (bool, error) {
+func verifyUserToken(tokenString string) (bool, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -106,7 +104,7 @@ func validateUserToken(tokenString string) (bool, error) {
 	return true, nil
 }
 
-func validateAdminToken(tokenString string) (bool, error) {
+func verifyAdminToken(tokenString string) (bool, error) {
 	token, err := jwt.ParseWithClaims(tokenString, new(AuthClaims), func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

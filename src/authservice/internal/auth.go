@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -20,11 +21,9 @@ import (
 type AuthStorer interface {
 	ListUsers(context.Context) ([]*dbUserCredentials, error)
 	GetUser(ctx context.Context, userID string) (*dbUserCredentials, error)
-	GetUserByUsername(ctx context.Context, username string) (*dbUserCredentials, error)
-	Create(ctx context.Context, newUser *NewUserCredentials) (string, error)
-	UpdateRole(ctx context.Context, userID string, newRole dbRoles) (string, error)
+	GetUserByIdentifier(ctx context.Context, iden string) (*dbUserCredentials, error)
+	Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
 	Delete(ctx context.Context, userID string) error
-	ValidateLogin(ctx context.Context, username, password string) (bool, error)
 	CheckUsernameExists(ctx context.Context, username string) (bool, error)
 }
 
@@ -33,12 +32,23 @@ type AuthService struct {
 
 	store          AuthStorer
 	customerClient pb.CustomerServiceClient
+	deliveryClient pb.DeliveryServiceClient
+	merchantClient pb.MerchantServiceClient
 }
 
-func NewAuthService(store AuthStorer, customerClient pb.CustomerServiceClient) *AuthService {
+type AuthCfg struct {
+	Store          AuthStorer
+	CustomerClient pb.CustomerServiceClient
+	DeliveryClient pb.DeliveryServiceClient
+	MerchantClient pb.MerchantServiceClient
+}
+
+func NewAuthService(cfg *AuthCfg) *AuthService {
 	return &AuthService{
-		store:          store,
-		customerClient: customerClient,
+		store:          cfg.Store,
+		customerClient: cfg.CustomerClient,
+		deliveryClient: cfg.DeliveryClient,
+		merchantClient: cfg.MerchantClient,
 	}
 }
 
@@ -51,47 +61,65 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, "validation failed : %v", err)
 	}
 
-	userID, err := x.store.Create(ctx, &NewUserCredentials{
+	switch in.Role {
+	case pb.Roles_MERCHANT:
+		if in.Username != "" {
+			return nil, status.Errorf(codes.InvalidArgument, "merchant do not use usernames")
+		}
+	case pb.Roles_UNKNOWN, pb.Roles_ADMIN, pb.Roles_SUPER_ADMIN:
+		return nil, status.Error(codes.InvalidArgument, "invalid role for registration")
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported role provided: %s", in.Role.String())
+	}
+
+	hashPass, err := hashPassword(in.Password)
+	if err != nil {
+		slog.Error("failed to hash password", "err", err)
+		return nil, status.Error(codes.Internal, "hashing password failed")
+	}
+
+	user, err := x.store.Create(ctx, &dbNewUserCredentials{
 		Username:    in.Username,
 		Email:       in.Email,
-		Password:    in.Password,
+		HashedPass:  string(hashPass),
 		PhoneNumber: in.PhoneNumber,
-		Role:        Roles_USER,
+		Role:        dbRoles(in.Role),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
 	}
 
-	user, err := x.store.GetUser(ctx, userID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to retrive user %v", err)
-	}
 
-	// Creates new customer in UserService
-	// TODO: handle error happen from CustomerService properly.
-	// 		 this one is difficult to debug.
-	//
-	// REFACTOR: rework registration logic
-	// gateway -> auth => customer,register,delivery
-	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
-		CustomerId: user.UUID,
-		Username:   user.Username,
-	})
-	if err != nil {
-		slog.Error("UserService fails to create user customer: ", "err", err)
-		if err := x.store.Delete(context.TODO(), user.UUID); err != nil {
-			slog.Error("failed to delete user credential: ", "err", err)
+	TODO: this part
+
+	// distribute id and profile datas to services
+	switch in.Role {
+	case pb.Roles_CUSTOMER:
+		customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
+			CustomerId: user.ID,
+			Username:   user.Username,
+		})
+		if err != nil {
+			slog.Error("UserService fails to create user customer: ", "err", err)
+			if err := x.store.Delete(context.TODO(), user.ID); err != nil {
+				slog.Error("failed to delete user credential: ", "err", err)
+			}
+			return nil, status.Errorf(codes.Internal, "UserService failed to create user: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "UserService failed to create user: %v", err)
-	}
 
-	if user.UUID != customer.CustomerId || user.Username != customer.Username {
-		slog.Error("UUID or Username does not match with CustomerService")
-		return nil, status.Error(codes.Internal, "failed to register user")
+		if user.ID != customer.CustomerId || user.Username != customer.Username {
+			slog.Error("ID or Username does not match with CustomerService")
+			return nil, status.Error(codes.Internal, "failed to register user")
+		}
+	case pb.Roles_RIDER:
+	// TODO: create rider
+	case pb.Roles_MERCHANT:
+		// TODO: create merchant profile ?
+		// x.merchantClient.()
 	}
 
 	return &pb.UserCredentials{
-		Id:          user.UUID,
+		Id:          user.ID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -115,25 +143,21 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	// 	return nil, status.Error(codes.Unauthenticated, "invalid authorization")
 	// }
 
-	// TODO validate login request body
-
-	valid, err := x.store.ValidateLogin(ctx, in.Username, in.Password)
-	if err != nil {
-		slog.Error("failed to validate user login", "err", err)
-		return nil, status.Error(codes.Internal, "failed to validate user login")
-	}
-
-	if !valid {
-		return nil, errUserIncorrect
-	}
-
-	user, err := x.store.GetUserByUsername(ctx, in.Username)
+	user, err := x.store.GetUserByIdentifier(ctx, in.Identifier)
 	if err != nil {
 		slog.Error("failed to find user credentials", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to find user credentials %v", err)
+		return nil, status.Error(codes.Internal, "failed to find user credentials")
 	}
 
-	token, exp, err := createNewToken(user.UUID, pb.Roles(user.Role))
+	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPass), []byte(in.Password)); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return nil, errUserIncorrect
+		}
+		slog.Error("bcrypt verification failed unexpectedly", "err", err)
+		return nil, status.Error(codes.Internal, "authentication failed due to server error")
+	}
+
+	token, exp, err := createNewToken(user.ID, pb.Roles(user.Role))
 	if err != nil {
 		slog.Error("generate new token", "err", err)
 		return nil, errGenerateToken
@@ -145,30 +169,31 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	}, nil
 }
 
-func (x *AuthService) ValidateUserToken(ctx context.Context, in *pb.ValidateUserTokenRequest) (*pb.ValidateUserTokenResponse, error) {
+func (x *AuthService) VerifyUserToken(ctx context.Context, in *pb.VerifyUserTokenRequest) (*pb.VerifyUserTokenResponse, error) {
 
 	if in.AccessToken == "" {
 		return nil, errNoToken
 	}
 
-	if valid, err := validateUserToken(in.AccessToken); !valid {
-		slog.Error("validate token", "err", err)
+	if valid, err := verifyUserToken(in.AccessToken); !valid {
+		slog.Error("verify token", "err", err)
 		return nil, errInvalidToken
 	}
-	return &pb.ValidateUserTokenResponse{Valid: true}, nil
+
+	return &pb.VerifyUserTokenResponse{Valid: true}, nil
 }
 
-func (x *AuthService) ValidateAdminToken(ctx context.Context, in *pb.ValidateAdminTokenRequest) (*pb.ValidateAdminTokenResponse, error) {
+func (x *AuthService) VerifyAdminToken(ctx context.Context, in *pb.VerifyAdminTokenRequest) (*pb.VerifyAdminTokenResponse, error) {
 
 	if in.AccessToken == "" {
 		return nil, errNoToken
 	}
 
-	if valid, err := validateAdminToken(in.AccessToken); !valid {
-		slog.Error("validate admin token", "err", err)
+	if valid, err := verifyAdminToken(in.AccessToken); !valid {
+		slog.Error("verify admin token", "err", err)
 		return nil, errInvalidToken
 	}
-	return &pb.ValidateAdminTokenResponse{Valid: true}, nil
+	return &pb.VerifyAdminTokenResponse{Valid: true}, nil
 }
 
 func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsernameExistsRequest) (*pb.CheckUsernameExistsResponse, error) {
@@ -188,44 +213,6 @@ func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsern
 	return &pb.CheckUsernameExistsResponse{Exists: true}, nil
 }
 
-// UpdateUserRole updates an existing user's role to specific roles.
-//
-// NOTE: Calling this function should be preceded by middleware first to
-// prevent lower roles updating highter roles.
-func (x *AuthService) UpdateUserRole(ctx context.Context, in *pb.UpdateUserRoleRequest) (*pb.UserCredentials, error) {
-
-	if in.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "userID must be provided")
-	}
-
-	if _, ok := pb.Roles_value[in.NewRole.String()]; !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "role %s invalid", in.NewRole.String())
-	}
-
-	updatedID, err := x.store.UpdateRole(ctx, in.Id, dbRoles(in.NewRole))
-	if err != nil {
-		slog.Error("failed to update user role", "err", err)
-		return nil, status.Error(codes.Internal, "failed to update role")
-	}
-
-	user, err := x.store.GetUser(ctx, updatedID)
-	if err != nil {
-		slog.Error("failed to find user credentials", "err", err)
-		return nil, status.Error(codes.Internal, "failed to find user credentials")
-	}
-
-	//TODO add update_time
-
-	return &pb.UserCredentials{
-		Id:          user.UUID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		Role:        pb.Roles(user.Role),
-		CreateTime:  timestamppb.New(user.CreateTime),
-	}, nil
-}
-
 func InitSigningKey() error {
 	if key := os.Getenv("JWT_SIGNING_KEY"); key != "" {
 		signingKey = []byte(key)
@@ -234,23 +221,26 @@ func InitSigningKey() error {
 	return errors.New("JWT_SIGNING_KEY environment variable is empty")
 }
 
-// CreateAdmin creates the default admin user. The reason the default admin is created
-// in Go is to ensure that the password is hashed using the same hashing function.
-func CreateAdmin(store AuthStorer) error {
+func CreateSuperAdmin(store AuthStorer) error {
 
-	admin := os.Getenv("DEFAULT_ADMIN_USER")
-	email := os.Getenv("DEFAULT_ADMIN_EMAIL")
-	password := os.Getenv("DEFAULT_ADMIN_PASS")
+	admin := os.Getenv("SUPER_ADMIN_USER")
+	email := os.Getenv("SUPER_ADMIN_EMAIL")
+	password := os.Getenv("SUPER_ADMIN_PASS")
 
 	if admin == "" || email == "" || password == "" {
-		return errors.New("some of admin environment variables are not set")
+		return errors.New("some of super admin environment variables are not set")
 	}
 
-	if _, err := store.Create(context.TODO(), &NewUserCredentials{
-		Username: admin,
-		Email:    email,
-		Password: password,
-		Role:     dbRoles(Roles_ADMIN),
+	hashPass, err := hashPassword(password)
+	if err != nil {
+		return errors.New("hashing password failed")
+	}
+
+	if _, err := store.Create(context.TODO(), &dbNewUserCredentials{
+		Username:   admin,
+		Email:      email,
+		HashedPass: string(hashPass),
+		Role:       dbRoles(Roles_SUPER_ADMIN),
 	}); err != nil {
 		return err
 	}
@@ -301,4 +291,16 @@ func createNewToken(id string, role pb.Roles) (signedToken string, expiration in
 	}
 
 	return ss, exp.Unix(), nil
+}
+
+func hashPassword(password string) ([]byte, error) {
+	hashedPass, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return hashedPass, nil
+
 }
