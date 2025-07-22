@@ -372,27 +372,27 @@ func (x *LoginResponse) GetExpiresIn() int64 {
 	return 0
 }
 
-type ValidateUserTokenRequest struct {
+type VerifyUserTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ValidateUserTokenRequest) Reset() {
-	*x = ValidateUserTokenRequest{}
+func (x *VerifyUserTokenRequest) Reset() {
+	*x = VerifyUserTokenRequest{}
 	mi := &file_authservice_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ValidateUserTokenRequest) String() string {
+func (x *VerifyUserTokenRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ValidateUserTokenRequest) ProtoMessage() {}
+func (*VerifyUserTokenRequest) ProtoMessage() {}
 
-func (x *ValidateUserTokenRequest) ProtoReflect() protoreflect.Message {
+func (x *VerifyUserTokenRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_authservice_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -404,39 +404,39 @@ func (x *ValidateUserTokenRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidateUserTokenRequest.ProtoReflect.Descriptor instead.
-func (*ValidateUserTokenRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use VerifyUserTokenRequest.ProtoReflect.Descriptor instead.
+func (*VerifyUserTokenRequest) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ValidateUserTokenRequest) GetAccessToken() string {
+func (x *VerifyUserTokenRequest) GetAccessToken() string {
 	if x != nil {
 		return x.AccessToken
 	}
 	return ""
 }
 
-type ValidateUserTokenResponse struct {
+type VerifyUserTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ValidateUserTokenResponse) Reset() {
-	*x = ValidateUserTokenResponse{}
+func (x *VerifyUserTokenResponse) Reset() {
+	*x = VerifyUserTokenResponse{}
 	mi := &file_authservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ValidateUserTokenResponse) String() string {
+func (x *VerifyUserTokenResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ValidateUserTokenResponse) ProtoMessage() {}
+func (*VerifyUserTokenResponse) ProtoMessage() {}
 
-func (x *ValidateUserTokenResponse) ProtoReflect() protoreflect.Message {
+func (x *VerifyUserTokenResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_authservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -448,39 +448,39 @@ func (x *ValidateUserTokenResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidateUserTokenResponse.ProtoReflect.Descriptor instead.
-func (*ValidateUserTokenResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use VerifyUserTokenResponse.ProtoReflect.Descriptor instead.
+func (*VerifyUserTokenResponse) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *ValidateUserTokenResponse) GetValid() bool {
+func (x *VerifyUserTokenResponse) GetValid() bool {
 	if x != nil {
 		return x.Valid
 	}
 	return false
 }
 
-type ValidateAdminTokenRequest struct {
+type VerifyAdminTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ValidateAdminTokenRequest) Reset() {
-	*x = ValidateAdminTokenRequest{}
+func (x *VerifyAdminTokenRequest) Reset() {
+	*x = VerifyAdminTokenRequest{}
 	mi := &file_authservice_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ValidateAdminTokenRequest) String() string {
+func (x *VerifyAdminTokenRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ValidateAdminTokenRequest) ProtoMessage() {}
+func (*VerifyAdminTokenRequest) ProtoMessage() {}
 
-func (x *ValidateAdminTokenRequest) ProtoReflect() protoreflect.Message {
+func (x *VerifyAdminTokenRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_authservice_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -492,39 +492,39 @@ func (x *ValidateAdminTokenRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidateAdminTokenRequest.ProtoReflect.Descriptor instead.
-func (*ValidateAdminTokenRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use VerifyAdminTokenRequest.ProtoReflect.Descriptor instead.
+func (*VerifyAdminTokenRequest) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ValidateAdminTokenRequest) GetAccessToken() string {
+func (x *VerifyAdminTokenRequest) GetAccessToken() string {
 	if x != nil {
 		return x.AccessToken
 	}
 	return ""
 }
 
-type ValidateAdminTokenResponse struct {
+type VerifyAdminTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ValidateAdminTokenResponse) Reset() {
-	*x = ValidateAdminTokenResponse{}
+func (x *VerifyAdminTokenResponse) Reset() {
+	*x = VerifyAdminTokenResponse{}
 	mi := &file_authservice_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ValidateAdminTokenResponse) String() string {
+func (x *VerifyAdminTokenResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ValidateAdminTokenResponse) ProtoMessage() {}
+func (*VerifyAdminTokenResponse) ProtoMessage() {}
 
-func (x *ValidateAdminTokenResponse) ProtoReflect() protoreflect.Message {
+func (x *VerifyAdminTokenResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_authservice_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -536,12 +536,12 @@ func (x *ValidateAdminTokenResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidateAdminTokenResponse.ProtoReflect.Descriptor instead.
-func (*ValidateAdminTokenResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use VerifyAdminTokenResponse.ProtoReflect.Descriptor instead.
+func (*VerifyAdminTokenResponse) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ValidateAdminTokenResponse) GetValid() bool {
+func (x *VerifyAdminTokenResponse) GetValid() bool {
 	if x != nil {
 		return x.Valid
 	}
@@ -735,14 +735,14 @@ const file_authservice_proto_rawDesc = "" +
 	"\rLoginResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
 	"\n" +
-	"expires_in\x18\x02 \x01(\x03R\texpiresIn\"=\n" +
-	"\x18ValidateUserTokenRequest\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"1\n" +
-	"\x19ValidateUserTokenResponse\x12\x14\n" +
-	"\x05valid\x18\x01 \x01(\bR\x05valid\">\n" +
-	"\x19ValidateAdminTokenRequest\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"2\n" +
-	"\x1aValidateAdminTokenResponse\x12\x14\n" +
+	"expires_in\x18\x02 \x01(\x03R\texpiresIn\";\n" +
+	"\x16VerifyUserTokenRequest\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"/\n" +
+	"\x17VerifyUserTokenResponse\x12\x14\n" +
+	"\x05valid\x18\x01 \x01(\bR\x05valid\"<\n" +
+	"\x17VerifyAdminTokenRequest\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"0\n" +
+	"\x18VerifyAdminTokenResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\"8\n" +
 	"\x1aCheckUsernameExistsRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"5\n" +
@@ -759,12 +759,12 @@ const file_authservice_proto_rawDesc = "" +
 	"\bMERCHANT\x10\x02\x12\t\n" +
 	"\x05RIDER\x10\x03\x12\x0f\n" +
 	"\vSUPER_ADMIN\x10\x14\x12\t\n" +
-	"\x05ADMIN\x10\x152\xd1\x04\n" +
+	"\x05ADMIN\x10\x152\xc5\x04\n" +
 	"\vAuthService\x12]\n" +
 	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12R\n" +
-	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12`\n" +
-	"\x11ValidateUserToken\x12#.ihavefood.ValidateUserTokenRequest\x1a$.ihavefood.ValidateUserTokenResponse\"\x00\x12c\n" +
-	"\x12ValidateAdminToken\x12$.ihavefood.ValidateAdminTokenRequest\x1a%.ihavefood.ValidateAdminTokenResponse\"\x00\x12f\n" +
+	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12Z\n" +
+	"\x0fVerifyUserToken\x12!.ihavefood.VerifyUserTokenRequest\x1a\".ihavefood.VerifyUserTokenResponse\"\x00\x12]\n" +
+	"\x10VerifyAdminToken\x12\".ihavefood.VerifyAdminTokenRequest\x1a#.ihavefood.VerifyAdminTokenResponse\"\x00\x12f\n" +
 	"\x13CheckUsernameExists\x12%.ihavefood.CheckUsernameExistsRequest\x1a&.ihavefood.CheckUsernameExistsResponse\"\x00\x12`\n" +
 	"\vCreateAdmin\x12\x1d.ihavefood.CreateAdminRequest\x1a\x1a.ihavefood.UserCredentials\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/adminB\vZ\t/genprotob\x06proto3"
 
@@ -788,10 +788,10 @@ var file_authservice_proto_goTypes = []any{
 	(*RegisterRequest)(nil),             // 2: ihavefood.RegisterRequest
 	(*LoginRequest)(nil),                // 3: ihavefood.LoginRequest
 	(*LoginResponse)(nil),               // 4: ihavefood.LoginResponse
-	(*ValidateUserTokenRequest)(nil),    // 5: ihavefood.ValidateUserTokenRequest
-	(*ValidateUserTokenResponse)(nil),   // 6: ihavefood.ValidateUserTokenResponse
-	(*ValidateAdminTokenRequest)(nil),   // 7: ihavefood.ValidateAdminTokenRequest
-	(*ValidateAdminTokenResponse)(nil),  // 8: ihavefood.ValidateAdminTokenResponse
+	(*VerifyUserTokenRequest)(nil),      // 5: ihavefood.VerifyUserTokenRequest
+	(*VerifyUserTokenResponse)(nil),     // 6: ihavefood.VerifyUserTokenResponse
+	(*VerifyAdminTokenRequest)(nil),     // 7: ihavefood.VerifyAdminTokenRequest
+	(*VerifyAdminTokenResponse)(nil),    // 8: ihavefood.VerifyAdminTokenResponse
 	(*CheckUsernameExistsRequest)(nil),  // 9: ihavefood.CheckUsernameExistsRequest
 	(*CheckUsernameExistsResponse)(nil), // 10: ihavefood.CheckUsernameExistsResponse
 	(*CreateAdminRequest)(nil),          // 11: ihavefood.CreateAdminRequest
@@ -805,14 +805,14 @@ var file_authservice_proto_depIdxs = []int32{
 	0,  // 4: ihavefood.LoginRequest.role:type_name -> ihavefood.Roles
 	2,  // 5: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
 	3,  // 6: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
-	5,  // 7: ihavefood.AuthService.ValidateUserToken:input_type -> ihavefood.ValidateUserTokenRequest
-	7,  // 8: ihavefood.AuthService.ValidateAdminToken:input_type -> ihavefood.ValidateAdminTokenRequest
+	5,  // 7: ihavefood.AuthService.VerifyUserToken:input_type -> ihavefood.VerifyUserTokenRequest
+	7,  // 8: ihavefood.AuthService.VerifyAdminToken:input_type -> ihavefood.VerifyAdminTokenRequest
 	9,  // 9: ihavefood.AuthService.CheckUsernameExists:input_type -> ihavefood.CheckUsernameExistsRequest
 	11, // 10: ihavefood.AuthService.CreateAdmin:input_type -> ihavefood.CreateAdminRequest
 	1,  // 11: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
 	4,  // 12: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
-	6,  // 13: ihavefood.AuthService.ValidateUserToken:output_type -> ihavefood.ValidateUserTokenResponse
-	8,  // 14: ihavefood.AuthService.ValidateAdminToken:output_type -> ihavefood.ValidateAdminTokenResponse
+	6,  // 13: ihavefood.AuthService.VerifyUserToken:output_type -> ihavefood.VerifyUserTokenResponse
+	8,  // 14: ihavefood.AuthService.VerifyAdminToken:output_type -> ihavefood.VerifyAdminTokenResponse
 	10, // 15: ihavefood.AuthService.CheckUsernameExists:output_type -> ihavefood.CheckUsernameExistsResponse
 	1,  // 16: ihavefood.AuthService.CreateAdmin:output_type -> ihavefood.UserCredentials
 	11, // [11:17] is the sub-list for method output_type

@@ -32,7 +32,7 @@ func (m *AuthMiddleware) Authn(next http.Handler) http.Handler {
 			return
 		}
 
-		if valid, err := m.validateUserToken(token); !valid {
+		if valid, err := m.verifyUserToken(token); !valid {
 			log.Printf("validate token failed: %v\n", err)
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
@@ -55,7 +55,7 @@ func (m *AuthMiddleware) Authz(next http.Handler) http.Handler {
 			return
 		}
 
-		valid, err := m.validateAdminToken(token)
+		valid, err := m.verifyAdminToken(token)
 		if err != nil {
 			log.Printf("Token validation error: %v\n", err)
 			http.Error(w, "Token validation failed", http.StatusUnauthorized)
@@ -104,9 +104,9 @@ func (m *AuthMiddleware) checkUsernameExists(username string) (bool, error) {
 }
 
 // validateToken checks if the provided token is valid by calling the AuthService.
-func (m *AuthMiddleware) validateUserToken(token string) (bool, error) {
+func (m *AuthMiddleware) verifyUserToken(token string) (bool, error) {
 
-	res, err := m.clientAuth.ValidateUserToken(context.TODO(), &pb.ValidateUserTokenRequest{
+	res, err := m.clientAuth.VerifyUserToken(context.TODO(), &pb.VerifyUserTokenRequest{
 		AccessToken: token,
 	})
 	if err != nil {
@@ -116,12 +116,12 @@ func (m *AuthMiddleware) validateUserToken(token string) (bool, error) {
 	return res.Valid, nil
 }
 
-// validateAdminToken check if a Token is valid for admin role permission
-func (m *AuthMiddleware) validateAdminToken(token string) (bool, error) {
+// verifyAdminToken check if a Token is valid for admin role permission
+func (m *AuthMiddleware) verifyAdminToken(token string) (bool, error) {
 
-	res, err := m.clientAuth.ValidateAdminToken(
+	res, err := m.clientAuth.VerifyAdminToken(
 		context.TODO(),
-		&pb.ValidateAdminTokenRequest{AccessToken: token},
+		&pb.VerifyAdminTokenRequest{AccessToken: token},
 	)
 	if err != nil {
 		return false, err
