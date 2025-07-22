@@ -21,8 +21,8 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AuthService_Register_FullMethodName            = "/ihavefood.AuthService/Register"
 	AuthService_Login_FullMethodName               = "/ihavefood.AuthService/Login"
-	AuthService_ValidateUserToken_FullMethodName   = "/ihavefood.AuthService/ValidateUserToken"
-	AuthService_ValidateAdminToken_FullMethodName  = "/ihavefood.AuthService/ValidateAdminToken"
+	AuthService_VerifyUserToken_FullMethodName     = "/ihavefood.AuthService/VerifyUserToken"
+	AuthService_VerifyAdminToken_FullMethodName    = "/ihavefood.AuthService/VerifyAdminToken"
 	AuthService_CheckUsernameExists_FullMethodName = "/ihavefood.AuthService/CheckUsernameExists"
 	AuthService_CreateAdmin_FullMethodName         = "/ihavefood.AuthService/CreateAdmin"
 )
@@ -36,10 +36,10 @@ const (
 type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*UserCredentials, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
-	// Validate token for role "USER" returns true if token valid, otherwise false.
-	ValidateUserToken(ctx context.Context, in *ValidateUserTokenRequest, opts ...grpc.CallOption) (*ValidateUserTokenResponse, error)
-	// Validate token for role "ADMIN" returns true if token valid, otherwise false.
-	ValidateAdminToken(ctx context.Context, in *ValidateAdminTokenRequest, opts ...grpc.CallOption) (*ValidateAdminTokenResponse, error)
+	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
+	VerifyUserToken(ctx context.Context, in *VerifyUserTokenRequest, opts ...grpc.CallOption) (*VerifyUserTokenResponse, error)
+	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
+	VerifyAdminToken(ctx context.Context, in *VerifyAdminTokenRequest, opts ...grpc.CallOption) (*VerifyAdminTokenResponse, error)
 	// Check whether username already exists returns true if username already exists, otherwise false.
 	CheckUsernameExists(ctx context.Context, in *CheckUsernameExistsRequest, opts ...grpc.CallOption) (*CheckUsernameExistsResponse, error)
 	// only superadmin role can call this.
@@ -74,20 +74,20 @@ func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ..
 	return out, nil
 }
 
-func (c *authServiceClient) ValidateUserToken(ctx context.Context, in *ValidateUserTokenRequest, opts ...grpc.CallOption) (*ValidateUserTokenResponse, error) {
+func (c *authServiceClient) VerifyUserToken(ctx context.Context, in *VerifyUserTokenRequest, opts ...grpc.CallOption) (*VerifyUserTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ValidateUserTokenResponse)
-	err := c.cc.Invoke(ctx, AuthService_ValidateUserToken_FullMethodName, in, out, cOpts...)
+	out := new(VerifyUserTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_VerifyUserToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) ValidateAdminToken(ctx context.Context, in *ValidateAdminTokenRequest, opts ...grpc.CallOption) (*ValidateAdminTokenResponse, error) {
+func (c *authServiceClient) VerifyAdminToken(ctx context.Context, in *VerifyAdminTokenRequest, opts ...grpc.CallOption) (*VerifyAdminTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ValidateAdminTokenResponse)
-	err := c.cc.Invoke(ctx, AuthService_ValidateAdminToken_FullMethodName, in, out, cOpts...)
+	out := new(VerifyAdminTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_VerifyAdminToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,10 +123,10 @@ func (c *authServiceClient) CreateAdmin(ctx context.Context, in *CreateAdminRequ
 type AuthServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*UserCredentials, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	// Validate token for role "USER" returns true if token valid, otherwise false.
-	ValidateUserToken(context.Context, *ValidateUserTokenRequest) (*ValidateUserTokenResponse, error)
-	// Validate token for role "ADMIN" returns true if token valid, otherwise false.
-	ValidateAdminToken(context.Context, *ValidateAdminTokenRequest) (*ValidateAdminTokenResponse, error)
+	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
+	VerifyUserToken(context.Context, *VerifyUserTokenRequest) (*VerifyUserTokenResponse, error)
+	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
+	VerifyAdminToken(context.Context, *VerifyAdminTokenRequest) (*VerifyAdminTokenResponse, error)
 	// Check whether username already exists returns true if username already exists, otherwise false.
 	CheckUsernameExists(context.Context, *CheckUsernameExistsRequest) (*CheckUsernameExistsResponse, error)
 	// only superadmin role can call this.
@@ -147,11 +147,11 @@ func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest
 func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthServiceServer) ValidateUserToken(context.Context, *ValidateUserTokenRequest) (*ValidateUserTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ValidateUserToken not implemented")
+func (UnimplementedAuthServiceServer) VerifyUserToken(context.Context, *VerifyUserTokenRequest) (*VerifyUserTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyUserToken not implemented")
 }
-func (UnimplementedAuthServiceServer) ValidateAdminToken(context.Context, *ValidateAdminTokenRequest) (*ValidateAdminTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ValidateAdminToken not implemented")
+func (UnimplementedAuthServiceServer) VerifyAdminToken(context.Context, *VerifyAdminTokenRequest) (*VerifyAdminTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyAdminToken not implemented")
 }
 func (UnimplementedAuthServiceServer) CheckUsernameExists(context.Context, *CheckUsernameExistsRequest) (*CheckUsernameExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckUsernameExists not implemented")
@@ -216,38 +216,38 @@ func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_ValidateUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ValidateUserTokenRequest)
+func _AuthService_VerifyUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyUserTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).ValidateUserToken(ctx, in)
+		return srv.(AuthServiceServer).VerifyUserToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_ValidateUserToken_FullMethodName,
+		FullMethod: AuthService_VerifyUserToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).ValidateUserToken(ctx, req.(*ValidateUserTokenRequest))
+		return srv.(AuthServiceServer).VerifyUserToken(ctx, req.(*VerifyUserTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_ValidateAdminToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ValidateAdminTokenRequest)
+func _AuthService_VerifyAdminToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyAdminTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).ValidateAdminToken(ctx, in)
+		return srv.(AuthServiceServer).VerifyAdminToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_ValidateAdminToken_FullMethodName,
+		FullMethod: AuthService_VerifyAdminToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).ValidateAdminToken(ctx, req.(*ValidateAdminTokenRequest))
+		return srv.(AuthServiceServer).VerifyAdminToken(ctx, req.(*VerifyAdminTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -304,12 +304,12 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_Login_Handler,
 		},
 		{
-			MethodName: "ValidateUserToken",
-			Handler:    _AuthService_ValidateUserToken_Handler,
+			MethodName: "VerifyUserToken",
+			Handler:    _AuthService_VerifyUserToken_Handler,
 		},
 		{
-			MethodName: "ValidateAdminToken",
-			Handler:    _AuthService_ValidateAdminToken_Handler,
+			MethodName: "VerifyAdminToken",
+			Handler:    _AuthService_VerifyAdminToken_Handler,
 		},
 		{
 			MethodName: "CheckUsernameExists",
