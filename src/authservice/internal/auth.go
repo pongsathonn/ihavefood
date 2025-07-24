@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"log/slog"
@@ -19,10 +20,12 @@ import (
 )
 
 type AuthStorer interface {
+	Begin() (*sql.Tx, error)
 	ListUsers(context.Context) ([]*dbUserCredentials, error)
 	GetUser(ctx context.Context, userID string) (*dbUserCredentials, error)
 	GetUserByIdentifier(ctx context.Context, iden string) (*dbUserCredentials, error)
 	Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
+	CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
 	Delete(ctx context.Context, userID string) error
 	CheckUsernameExists(ctx context.Context, username string) (bool, error)
 }
@@ -78,7 +81,13 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Error(codes.Internal, "hashing password failed")
 	}
 
-	user, err := x.store.Create(ctx, &dbNewUserCredentials{
+	tx, err := x.store.Begin()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	defer tx.Rollback()
+
+	user, err := x.store.CreateTx(ctx, tx, &dbNewUserCredentials{
 		Username:    in.Username,
 		Email:       in.Email,
 		HashedPass:  string(hashPass),
@@ -89,33 +98,19 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
 	}
 
-
-	TODO: this part
-
-	// distribute id and profile datas to services
 	switch in.Role {
 	case pb.Roles_CUSTOMER:
-		customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
-			CustomerId: user.ID,
-			Username:   user.Username,
-		})
-		if err != nil {
-			slog.Error("UserService fails to create user customer: ", "err", err)
-			if err := x.store.Delete(context.TODO(), user.ID); err != nil {
-				slog.Error("failed to delete user credential: ", "err", err)
-			}
-			return nil, status.Errorf(codes.Internal, "UserService failed to create user: %v", err)
-		}
-
-		if user.ID != customer.CustomerId || user.Username != customer.Username {
-			slog.Error("ID or Username does not match with CustomerService")
-			return nil, status.Error(codes.Internal, "failed to register user")
+		if err := x.createCustomer(ctx, user); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
 		}
 	case pb.Roles_RIDER:
-	// TODO: create rider
+		// TODO: impl create rider
 	case pb.Roles_MERCHANT:
-		// TODO: create merchant profile ?
-		// x.merchantClient.()
+		// TODO: impl create rider
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, status.Error(codes.Internal, "unable to commit register transaction")
 	}
 
 	return &pb.UserCredentials{
@@ -211,6 +206,20 @@ func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsern
 	}
 
 	return &pb.CheckUsernameExistsResponse{Exists: true}, nil
+}
+
+func (x *AuthService) createCustomer(ctx context.Context, user *dbUserCredentials) error {
+	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
+		CustomerId: user.ID,
+		Username:   user.Username,
+	})
+	if err != nil {
+		return err
+	}
+	if user.ID != customer.CustomerId || user.Username != customer.Username {
+		return errors.New("ID or Username in AuthService and CustomerService are inconsistent")
+	}
+	return nil
 }
 
 func InitSigningKey() error {

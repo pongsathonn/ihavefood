@@ -13,6 +13,10 @@ func NewStorage(db *sql.DB) *storage {
 	return &storage{db: db}
 }
 
+func (s *storage) Begin() (*sql.Tx, error) {
+	return s.db.Begin()
+}
+
 func (s *storage) ListUsers(ctx context.Context) ([]*dbUserCredentials, error) {
 
 	rows, err := s.db.QueryContext(ctx, `
@@ -136,6 +140,44 @@ func (s *storage) GetUserByIdentifier(ctx context.Context, iden string) (*dbUser
 func (s *storage) Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
+		INSERT INTO credentials(
+			username,
+			email,
+			password,
+			role,
+			phone_number,
+			create_time
+		)VALUES(
+			$1,$2,$3,$4,$5,now()
+		)RETURNING *;
+	`,
+		newUser.Username,
+		newUser.Email,
+		newUser.HashedPass,
+		newUser.Role,
+		newUser.PhoneNumber,
+	)
+
+	var user dbUserCredentials
+	if err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Role,
+		&user.PhoneNumber,
+		&user.CreateTime,
+		&user.UpdateTime,
+	); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// Create creates new user credential and return its ID.
+func (s *storage) CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCredentials) (*dbUserCredentials, error) {
+
+	row := tx.QueryRowContext(ctx, `
 		INSERT INTO credentials(
 			username,
 			email,

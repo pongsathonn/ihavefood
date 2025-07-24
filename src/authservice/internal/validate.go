@@ -121,5 +121,3 @@ func verifyAdminToken(tokenString string) (bool, error) {
 
 	return true, nil
 }
-
-//===========================
