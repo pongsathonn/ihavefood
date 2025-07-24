@@ -64,17 +64,6 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, "validation failed : %v", err)
 	}
 
-	switch in.Role {
-	case pb.Roles_MERCHANT:
-		if in.Username != "" {
-			return nil, status.Errorf(codes.InvalidArgument, "merchant do not use usernames")
-		}
-	case pb.Roles_UNKNOWN, pb.Roles_ADMIN, pb.Roles_SUPER_ADMIN:
-		return nil, status.Error(codes.InvalidArgument, "invalid role for registration")
-	default:
-		return nil, status.Errorf(codes.InvalidArgument, "unsupported role provided: %s", in.Role.String())
-	}
-
 	hashPass, err := hashPassword(in.Password)
 	if err != nil {
 		slog.Error("failed to hash password", "err", err)
@@ -98,15 +87,8 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
 	}
 
-	switch in.Role {
-	case pb.Roles_CUSTOMER:
-		if err := x.createCustomer(ctx, user); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
-		}
-	case pb.Roles_RIDER:
-		// TODO: impl create rider
-	case pb.Roles_MERCHANT:
-		// TODO: impl create rider
+	if err := x.dispatchCreation(ctx, in.Role, user); err != nil {
+		return nil, status.Errorf(codes.Internal, "downstream service creation failed %v", err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -208,6 +190,24 @@ func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsern
 	return &pb.CheckUsernameExistsResponse{Exists: true}, nil
 }
 
+func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user *dbUserCredentials) error {
+	switch role {
+	case pb.Roles_CUSTOMER:
+		if err := x.createCustomer(ctx, user); err != nil {
+			return err
+		}
+	case pb.Roles_RIDER:
+		if err := x.createRider(ctx, user); err != nil {
+			return err
+		}
+	case pb.Roles_MERCHANT:
+		if err := x.createMerchant(ctx, user); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (x *AuthService) createCustomer(ctx context.Context, user *dbUserCredentials) error {
 	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
 		CustomerId: user.ID,
@@ -218,6 +218,31 @@ func (x *AuthService) createCustomer(ctx context.Context, user *dbUserCredential
 	}
 	if user.ID != customer.CustomerId || user.Username != customer.Username {
 		return errors.New("ID or Username in AuthService and CustomerService are inconsistent")
+	}
+	return nil
+}
+
+func (x *AuthService) createMerchant(ctx context.Context, user *dbUserCredentials) error {
+	merchant, err := x.merchantClient.CreateMerchant(ctx, &pb.CreateMerchantRequest{MerchantId: user.ID})
+	if err != nil {
+		return err
+	}
+	if merchant.MerchantId != user.ID {
+		return errors.New("ID in AuthService and MerchantService are inconsistent")
+	}
+	return nil
+}
+
+func (x *AuthService) createRider(ctx context.Context, user *dbUserCredentials) error {
+	rider, err := x.deliveryClient.CreateRider(ctx, &pb.CreateRiderRequest{
+		RiderId:  user.ID,
+		Username: user.Username,
+	})
+	if err != nil {
+		return err
+	}
+	if rider.RiderId != user.ID || rider.Username != user.Username {
+		return errors.New("ID or Username in AuthService and DeliveryService are inconsistent")
 	}
 	return nil
 }
