@@ -46,11 +46,8 @@ service DeliveryService {
         };
     }
 
-    // TODO might seperate Rider to RiderService but now stick with DeliveryService
-    // Rider management draft 
-    // rpc GetRiderInformation
-    // rpc RegisterRider
-
+    // Rider management 
+    rpc CreateRider(CreateRiderRequest) returns(Rider){}
 }
 
 
@@ -72,8 +69,8 @@ message PickupInfo {
 }
 
 message Rider {
-    string id = 1;
-    string name = 2;
+    string rider_id = 1;
+    string username = 2;
     string phone_number = 3;
 }
 
@@ -109,3 +106,7 @@ message ConfirmOrderDeliverRequest {
     string order_id = 1;
 }
 
+message CreateRiderRequest {
+  string rider_id = 1;
+  string username = 2;
+}
