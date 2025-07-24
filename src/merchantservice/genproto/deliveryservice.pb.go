@@ -144,8 +144,8 @@ func (x *PickupInfo) GetDropOffLocation() *Point {
 
 type Rider struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -181,16 +181,16 @@ func (*Rider) Descriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Rider) GetId() string {
+func (x *Rider) GetRiderId() string {
 	if x != nil {
-		return x.Id
+		return x.RiderId
 	}
 	return ""
 }
 
-func (x *Rider) GetName() string {
+func (x *Rider) GetUsername() string {
 	if x != nil {
-		return x.Name
+		return x.Username
 	}
 	return ""
 }
@@ -523,6 +523,58 @@ func (x *ConfirmOrderDeliverRequest) GetOrderId() string {
 	return ""
 }
 
+type CreateRiderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRiderRequest) Reset() {
+	*x = CreateRiderRequest{}
+	mi := &file_deliveryservice_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRiderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRiderRequest) ProtoMessage() {}
+
+func (x *CreateRiderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_deliveryservice_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRiderRequest.ProtoReflect.Descriptor instead.
+func (*CreateRiderRequest) Descriptor() ([]byte, []int) {
+	return file_deliveryservice_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CreateRiderRequest) GetRiderId() string {
+	if x != nil {
+		return x.RiderId
+	}
+	return ""
+}
+
+func (x *CreateRiderRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
 var File_deliveryservice_proto protoreflect.FileDescriptor
 
 const file_deliveryservice_proto_rawDesc = "" +
@@ -536,10 +588,10 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\vpickup_code\x18\x01 \x01(\tR\n" +
 	"pickupCode\x129\n" +
 	"\x0fpickup_location\x18\x02 \x01(\v2\x10.ihavefood.PointR\x0epickupLocation\x12<\n" +
-	"\x11drop_off_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\x0fdropOffLocation\"N\n" +
-	"\x05Rider\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12!\n" +
+	"\x11drop_off_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\x0fdropOffLocation\"a\n" +
+	"\x05Rider\x12\x19\n" +
+	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
 	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\"4\n" +
 	"\x17GetOrderTrackingRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\"\xc6\x01\n" +
@@ -560,12 +612,16 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\"7\n" +
 	"\x1aConfirmOrderDeliverRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId2\xf2\x03\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\"K\n" +
+	"\x12CreateRiderRequest\x12\x19\n" +
+	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername2\xb4\x04\n" +
 	"\x0fDeliveryService\x12_\n" +
 	"\x10GetOrderTracking\x12\".ihavefood.GetOrderTrackingRequest\x1a#.ihavefood.GetOrderTrackingResponse\"\x000\x01\x12r\n" +
 	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x86\x01\n" +
 	"\x12ConfirmRiderAccept\x12$.ihavefood.ConfirmRiderAcceptRequest\x1a\x15.ihavefood.PickupInfo\"3\x82\xd3\xe4\x93\x02-:\brider_id2!/api/deliveries/{order_id}/accept\x12\x80\x01\n" +
-	"\x13ConfirmOrderDeliver\x12%.ihavefood.ConfirmOrderDeliverRequest\x1a\x16.google.protobuf.Empty\"*\x82\xd3\xe4\x93\x02$2\"/api/deliveries/{order_id}/deliverB\vZ\t/genprotob\x06proto3"
+	"\x13ConfirmOrderDeliver\x12%.ihavefood.ConfirmOrderDeliverRequest\x1a\x16.google.protobuf.Empty\"*\x82\xd3\xe4\x93\x02$2\"/api/deliveries/{order_id}/deliver\x12@\n" +
+	"\vCreateRider\x12\x1d.ihavefood.CreateRiderRequest\x1a\x10.ihavefood.Rider\"\x00B\vZ\t/genprotob\x06proto3"
 
 var (
 	file_deliveryservice_proto_rawDescOnce sync.Once
@@ -579,7 +635,7 @@ func file_deliveryservice_proto_rawDescGZIP() []byte {
 	return file_deliveryservice_proto_rawDescData
 }
 
-var file_deliveryservice_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_deliveryservice_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_deliveryservice_proto_goTypes = []any{
 	(*Point)(nil),                      // 0: ihavefood.Point
 	(*PickupInfo)(nil),                 // 1: ihavefood.PickupInfo
@@ -590,24 +646,27 @@ var file_deliveryservice_proto_goTypes = []any{
 	(*GetDeliveryFeeResponse)(nil),     // 6: ihavefood.GetDeliveryFeeResponse
 	(*ConfirmRiderAcceptRequest)(nil),  // 7: ihavefood.ConfirmRiderAcceptRequest
 	(*ConfirmOrderDeliverRequest)(nil), // 8: ihavefood.ConfirmOrderDeliverRequest
-	(*timestamppb.Timestamp)(nil),      // 9: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),              // 10: google.protobuf.Empty
+	(*CreateRiderRequest)(nil),         // 9: ihavefood.CreateRiderRequest
+	(*timestamppb.Timestamp)(nil),      // 10: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),              // 11: google.protobuf.Empty
 }
 var file_deliveryservice_proto_depIdxs = []int32{
 	0,  // 0: ihavefood.PickupInfo.pickup_location:type_name -> ihavefood.Point
 	0,  // 1: ihavefood.PickupInfo.drop_off_location:type_name -> ihavefood.Point
 	0,  // 2: ihavefood.GetOrderTrackingResponse.rider_location:type_name -> ihavefood.Point
-	9,  // 3: ihavefood.GetOrderTrackingResponse.update_time:type_name -> google.protobuf.Timestamp
+	10, // 3: ihavefood.GetOrderTrackingResponse.update_time:type_name -> google.protobuf.Timestamp
 	3,  // 4: ihavefood.DeliveryService.GetOrderTracking:input_type -> ihavefood.GetOrderTrackingRequest
 	5,  // 5: ihavefood.DeliveryService.GetDeliveryFee:input_type -> ihavefood.GetDeliveryFeeRequest
 	7,  // 6: ihavefood.DeliveryService.ConfirmRiderAccept:input_type -> ihavefood.ConfirmRiderAcceptRequest
 	8,  // 7: ihavefood.DeliveryService.ConfirmOrderDeliver:input_type -> ihavefood.ConfirmOrderDeliverRequest
-	4,  // 8: ihavefood.DeliveryService.GetOrderTracking:output_type -> ihavefood.GetOrderTrackingResponse
-	6,  // 9: ihavefood.DeliveryService.GetDeliveryFee:output_type -> ihavefood.GetDeliveryFeeResponse
-	1,  // 10: ihavefood.DeliveryService.ConfirmRiderAccept:output_type -> ihavefood.PickupInfo
-	10, // 11: ihavefood.DeliveryService.ConfirmOrderDeliver:output_type -> google.protobuf.Empty
-	8,  // [8:12] is the sub-list for method output_type
-	4,  // [4:8] is the sub-list for method input_type
+	9,  // 8: ihavefood.DeliveryService.CreateRider:input_type -> ihavefood.CreateRiderRequest
+	4,  // 9: ihavefood.DeliveryService.GetOrderTracking:output_type -> ihavefood.GetOrderTrackingResponse
+	6,  // 10: ihavefood.DeliveryService.GetDeliveryFee:output_type -> ihavefood.GetDeliveryFeeResponse
+	1,  // 11: ihavefood.DeliveryService.ConfirmRiderAccept:output_type -> ihavefood.PickupInfo
+	11, // 12: ihavefood.DeliveryService.ConfirmOrderDeliver:output_type -> google.protobuf.Empty
+	2,  // 13: ihavefood.DeliveryService.CreateRider:output_type -> ihavefood.Rider
+	9,  // [9:14] is the sub-list for method output_type
+	4,  // [4:9] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -624,7 +683,7 @@ func file_deliveryservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_deliveryservice_proto_rawDesc), len(file_deliveryservice_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

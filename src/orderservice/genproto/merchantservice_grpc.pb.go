@@ -22,8 +22,9 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	MerchantService_ListMerchants_FullMethodName     = "/ihavefood.MerchantService/ListMerchants"
 	MerchantService_GetMerchant_FullMethodName       = "/ihavefood.MerchantService/GetMerchant"
-	MerchantService_RegisterMerchant_FullMethodName  = "/ihavefood.MerchantService/RegisterMerchant"
-	MerchantService_CreateMenu_FullMethodName        = "/ihavefood.MerchantService/CreateMenu"
+	MerchantService_CreateMerchant_FullMethodName    = "/ihavefood.MerchantService/CreateMerchant"
+	MerchantService_UpdateMerchant_FullMethodName    = "/ihavefood.MerchantService/UpdateMerchant"
+	MerchantService_UpdateMenu_FullMethodName        = "/ihavefood.MerchantService/UpdateMenu"
 	MerchantService_UpdateMenuItem_FullMethodName    = "/ihavefood.MerchantService/UpdateMenuItem"
 	MerchantService_UpdateStoreStatus_FullMethodName = "/ihavefood.MerchantService/UpdateStoreStatus"
 	MerchantService_GetStoreStatus_FullMethodName    = "/ihavefood.MerchantService/GetStoreStatus"
@@ -38,10 +39,10 @@ const (
 type MerchantServiceClient interface {
 	ListMerchants(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMerchantsResponse, error)
 	GetMerchant(ctx context.Context, in *GetMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
-	// RegisterMerchant registers a new merchant.
-	RegisterMerchant(ctx context.Context, in *RegisterMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
+	CreateMerchant(ctx context.Context, in *CreateMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
 	// Menu management
-	CreateMenu(ctx context.Context, in *CreateMenuRequest, opts ...grpc.CallOption) (*CreateMenuResponse, error)
+	UpdateMerchant(ctx context.Context, in *UpdateMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
+	UpdateMenu(ctx context.Context, in *UpdateMenuRequest, opts ...grpc.CallOption) (*UpdateMenuResponse, error)
 	UpdateMenuItem(ctx context.Context, in *UpdateMenuItemRequest, opts ...grpc.CallOption) (*MenuItem, error)
 	// Store Management
 	UpdateStoreStatus(ctx context.Context, in *UpdateStoreStatusRequest, opts ...grpc.CallOption) (*StoreStatusResponse, error)
@@ -76,20 +77,30 @@ func (c *merchantServiceClient) GetMerchant(ctx context.Context, in *GetMerchant
 	return out, nil
 }
 
-func (c *merchantServiceClient) RegisterMerchant(ctx context.Context, in *RegisterMerchantRequest, opts ...grpc.CallOption) (*Merchant, error) {
+func (c *merchantServiceClient) CreateMerchant(ctx context.Context, in *CreateMerchantRequest, opts ...grpc.CallOption) (*Merchant, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Merchant)
-	err := c.cc.Invoke(ctx, MerchantService_RegisterMerchant_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MerchantService_CreateMerchant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *merchantServiceClient) CreateMenu(ctx context.Context, in *CreateMenuRequest, opts ...grpc.CallOption) (*CreateMenuResponse, error) {
+func (c *merchantServiceClient) UpdateMerchant(ctx context.Context, in *UpdateMerchantRequest, opts ...grpc.CallOption) (*Merchant, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateMenuResponse)
-	err := c.cc.Invoke(ctx, MerchantService_CreateMenu_FullMethodName, in, out, cOpts...)
+	out := new(Merchant)
+	err := c.cc.Invoke(ctx, MerchantService_UpdateMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *merchantServiceClient) UpdateMenu(ctx context.Context, in *UpdateMenuRequest, opts ...grpc.CallOption) (*UpdateMenuResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateMenuResponse)
+	err := c.cc.Invoke(ctx, MerchantService_UpdateMenu_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -135,10 +146,10 @@ func (c *merchantServiceClient) GetStoreStatus(ctx context.Context, in *GetStore
 type MerchantServiceServer interface {
 	ListMerchants(context.Context, *emptypb.Empty) (*ListMerchantsResponse, error)
 	GetMerchant(context.Context, *GetMerchantRequest) (*Merchant, error)
-	// RegisterMerchant registers a new merchant.
-	RegisterMerchant(context.Context, *RegisterMerchantRequest) (*Merchant, error)
+	CreateMerchant(context.Context, *CreateMerchantRequest) (*Merchant, error)
 	// Menu management
-	CreateMenu(context.Context, *CreateMenuRequest) (*CreateMenuResponse, error)
+	UpdateMerchant(context.Context, *UpdateMerchantRequest) (*Merchant, error)
+	UpdateMenu(context.Context, *UpdateMenuRequest) (*UpdateMenuResponse, error)
 	UpdateMenuItem(context.Context, *UpdateMenuItemRequest) (*MenuItem, error)
 	// Store Management
 	UpdateStoreStatus(context.Context, *UpdateStoreStatusRequest) (*StoreStatusResponse, error)
@@ -159,11 +170,14 @@ func (UnimplementedMerchantServiceServer) ListMerchants(context.Context, *emptyp
 func (UnimplementedMerchantServiceServer) GetMerchant(context.Context, *GetMerchantRequest) (*Merchant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMerchant not implemented")
 }
-func (UnimplementedMerchantServiceServer) RegisterMerchant(context.Context, *RegisterMerchantRequest) (*Merchant, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterMerchant not implemented")
+func (UnimplementedMerchantServiceServer) CreateMerchant(context.Context, *CreateMerchantRequest) (*Merchant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMerchant not implemented")
 }
-func (UnimplementedMerchantServiceServer) CreateMenu(context.Context, *CreateMenuRequest) (*CreateMenuResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateMenu not implemented")
+func (UnimplementedMerchantServiceServer) UpdateMerchant(context.Context, *UpdateMerchantRequest) (*Merchant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMerchant not implemented")
+}
+func (UnimplementedMerchantServiceServer) UpdateMenu(context.Context, *UpdateMenuRequest) (*UpdateMenuResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMenu not implemented")
 }
 func (UnimplementedMerchantServiceServer) UpdateMenuItem(context.Context, *UpdateMenuItemRequest) (*MenuItem, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMenuItem not implemented")
@@ -231,38 +245,56 @@ func _MerchantService_GetMerchant_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MerchantService_RegisterMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterMerchantRequest)
+func _MerchantService_CreateMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateMerchantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MerchantServiceServer).RegisterMerchant(ctx, in)
+		return srv.(MerchantServiceServer).CreateMerchant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MerchantService_RegisterMerchant_FullMethodName,
+		FullMethod: MerchantService_CreateMerchant_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MerchantServiceServer).RegisterMerchant(ctx, req.(*RegisterMerchantRequest))
+		return srv.(MerchantServiceServer).CreateMerchant(ctx, req.(*CreateMerchantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MerchantService_CreateMenu_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateMenuRequest)
+func _MerchantService_UpdateMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMerchantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MerchantServiceServer).CreateMenu(ctx, in)
+		return srv.(MerchantServiceServer).UpdateMerchant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MerchantService_CreateMenu_FullMethodName,
+		FullMethod: MerchantService_UpdateMerchant_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MerchantServiceServer).CreateMenu(ctx, req.(*CreateMenuRequest))
+		return srv.(MerchantServiceServer).UpdateMerchant(ctx, req.(*UpdateMerchantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MerchantService_UpdateMenu_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMenuRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MerchantServiceServer).UpdateMenu(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MerchantService_UpdateMenu_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MerchantServiceServer).UpdateMenu(ctx, req.(*UpdateMenuRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -337,12 +369,16 @@ var MerchantService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MerchantService_GetMerchant_Handler,
 		},
 		{
-			MethodName: "RegisterMerchant",
-			Handler:    _MerchantService_RegisterMerchant_Handler,
+			MethodName: "CreateMerchant",
+			Handler:    _MerchantService_CreateMerchant_Handler,
 		},
 		{
-			MethodName: "CreateMenu",
-			Handler:    _MerchantService_CreateMenu_Handler,
+			MethodName: "UpdateMerchant",
+			Handler:    _MerchantService_UpdateMerchant_Handler,
+		},
+		{
+			MethodName: "UpdateMenu",
+			Handler:    _MerchantService_UpdateMenu_Handler,
 		},
 		{
 			MethodName: "UpdateMenuItem",

@@ -15,7 +15,7 @@ type MerchantStorage interface {
 	GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
 	ListMerchants(ctx context.Context) ([]*dbMerchant, error)
 	SaveMerchant(ctx context.Context, merchant *newMerchant) (*dbMerchant, error)
-	SaveMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
+	UpdateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
 	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error)
 }
 
@@ -118,8 +118,8 @@ func (s *merchantStorage) SaveMerchant(ctx context.Context,
 	return merchant, nil
 }
 
-func (s *merchantStorage) SaveMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error) {
-	return nil, nil
+func (s *merchantStorage) UpdateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error) {
+	return nil, errors.New("TODO: impl")
 }
 
 // UpdateMenuItem updates a specific menu item in a merchant's menu

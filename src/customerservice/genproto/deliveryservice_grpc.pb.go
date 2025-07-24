@@ -24,6 +24,7 @@ const (
 	DeliveryService_GetDeliveryFee_FullMethodName      = "/ihavefood.DeliveryService/GetDeliveryFee"
 	DeliveryService_ConfirmRiderAccept_FullMethodName  = "/ihavefood.DeliveryService/ConfirmRiderAccept"
 	DeliveryService_ConfirmOrderDeliver_FullMethodName = "/ihavefood.DeliveryService/ConfirmOrderDeliver"
+	DeliveryService_CreateRider_FullMethodName         = "/ihavefood.DeliveryService/CreateRider"
 )
 
 // DeliveryServiceClient is the client API for DeliveryService service.
@@ -47,6 +48,8 @@ type DeliveryServiceClient interface {
 	ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*PickupInfo, error)
 	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
 	ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Rider management
+	CreateRider(ctx context.Context, in *CreateRiderRequest, opts ...grpc.CallOption) (*Rider, error)
 }
 
 type deliveryServiceClient struct {
@@ -106,6 +109,16 @@ func (c *deliveryServiceClient) ConfirmOrderDeliver(ctx context.Context, in *Con
 	return out, nil
 }
 
+func (c *deliveryServiceClient) CreateRider(ctx context.Context, in *CreateRiderRequest, opts ...grpc.CallOption) (*Rider, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Rider)
+	err := c.cc.Invoke(ctx, DeliveryService_CreateRider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeliveryServiceServer is the server API for DeliveryService service.
 // All implementations must embed UnimplementedDeliveryServiceServer
 // for forward compatibility.
@@ -127,6 +140,8 @@ type DeliveryServiceServer interface {
 	ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*PickupInfo, error)
 	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
 	ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*emptypb.Empty, error)
+	// Rider management
+	CreateRider(context.Context, *CreateRiderRequest) (*Rider, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
 
@@ -148,6 +163,9 @@ func (UnimplementedDeliveryServiceServer) ConfirmRiderAccept(context.Context, *C
 }
 func (UnimplementedDeliveryServiceServer) ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmOrderDeliver not implemented")
+}
+func (UnimplementedDeliveryServiceServer) CreateRider(context.Context, *CreateRiderRequest) (*Rider, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRider not implemented")
 }
 func (UnimplementedDeliveryServiceServer) mustEmbedUnimplementedDeliveryServiceServer() {}
 func (UnimplementedDeliveryServiceServer) testEmbeddedByValue()                         {}
@@ -235,6 +253,24 @@ func _DeliveryService_ConfirmOrderDeliver_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeliveryService_CreateRider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRiderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeliveryServiceServer).CreateRider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeliveryService_CreateRider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeliveryServiceServer).CreateRider(ctx, req.(*CreateRiderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeliveryService_ServiceDesc is the grpc.ServiceDesc for DeliveryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -253,6 +289,10 @@ var DeliveryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfirmOrderDeliver",
 			Handler:    _DeliveryService_ConfirmOrderDeliver_Handler,
+		},
+		{
+			MethodName: "CreateRider",
+			Handler:    _DeliveryService_CreateRider_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
