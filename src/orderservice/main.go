@@ -62,9 +62,9 @@ func initRabbitMQ() *amqp.Connection {
 func initMongoClient() *mongo.Client {
 
 	uri := fmt.Sprintf("mongodb://%s:%s@%s/db?authSource=admin",
-		os.Getenv("ORDER_MONGO_USER"),
-		os.Getenv("ORDER_MONGO_PASS"),
-		os.Getenv("ORDER_MONGO_HOST"),
+		os.Getenv("ORDER_DB_USER"),
+		os.Getenv("ORDER_DB_PASS"),
+		os.Getenv("ORDER_DB_HOST"),
 	)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
