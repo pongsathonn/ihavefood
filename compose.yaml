@@ -46,11 +46,10 @@ services:
   orderdb:
     container_name: orderdb
     image: mongo:latest
+    env_file:
+      - path: ./src/orderservice/.env
     ports:
       - "27052:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS}
     networks:
       - mynetwork
 
@@ -76,11 +75,10 @@ services:
   merchantdb:
     container_name: merchantdb
     image: mongo:latest
+    env_file:
+      - path: ./src/merchantservice/.env
     ports:
       - "27051:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS}
     networks:
       - mynetwork
 
@@ -113,9 +111,9 @@ services:
     env_file:
       - path: ./src/customerservice/.env
     environment:
-      - POSTGRES_PASSWORD=${PG_ROOT_PASS}
+      - POSTGRES_PASSWORD=${CUSTOMER_POSTGRES_PASS}
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U postgres"]
+      test: ["CMD-SHELL","pg_isready -U $$CUSTOMER_POSTGRES_USER -d $$CUSTOMER_POSTGRES_DATABASE"]
       interval: 5s 
       timeout: 5s
     networks:
@@ -148,9 +146,9 @@ services:
     env_file:
       - path: ./src/authservice/.env
     environment:
-      - POSTGRES_PASSWORD=${PG_ROOT_PASS}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$AUTH_POSTGRES_DATABASE" ]
       interval: 5s 
       timeout: 10s
     networks:
@@ -209,9 +207,6 @@ services:
     image: mongo:latest
     ports:
       - "27054:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS}
     networks:
       - mynetwork
 
@@ -220,7 +215,7 @@ services:
     image: rabbitmq:management
     ports:
       - "15672:15672" # UI
-      - "5672:5672" # Debugging purpose (let delivery connect from local)
+      - "5672:5672" # Debugging purpose (connectable from local)
     env_file:
       - path: ./.env
     environment:
