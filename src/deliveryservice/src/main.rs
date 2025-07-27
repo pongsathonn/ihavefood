@@ -24,11 +24,10 @@ pub mod ihavefood {
 async fn init_amqp_conn() -> Connection {
     let conn = Connection::connect(
         format!(
-            "amqp://{}:{}@{}:{}",
+            "amqp://{}:{}@{}",
             dotenv::var("DELIVERY_AMQP_USER").expect("DELIVERY_AMQP_USER must be set"),
             dotenv::var("DELIVERY_AMQP_PASS").expect("DELIVERY_AMQP_PASS must be set"),
             dotenv::var("DELIVERY_AMQP_HOST").expect("DELIVERY_AMQP_HOST must be set"),
-            dotenv::var("DELIVERY_AMQP_PORT").expect("DELIVERY_AMQP_PORT must be set"),
         )
         .as_str(),
         ConnectionProperties::default(),

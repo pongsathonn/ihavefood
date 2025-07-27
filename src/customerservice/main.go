@@ -32,11 +32,10 @@ func main() {
 }
 
 func initRabbitMQ() *amqp.Connection {
-	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+	uri := fmt.Sprintf("amqp://%s:%s@%s",
 		os.Getenv("CUSTOMER_AMQP_USER"),
 		os.Getenv("CUSTOMER_AMQP_PASS"),
 		os.Getenv("CUSTOMER_AMQP_HOST"),
-		os.Getenv("CUSTOMER_AMQP_PORT"),
 	)
 	maxRetries := 5
 	var conn *amqp.Connection
@@ -62,12 +61,11 @@ func initRabbitMQ() *amqp.Connection {
 
 func initPostgres() (*sql.DB, error) {
 
-	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		os.Getenv("CUSTOMER_POSTGRES_USER"),
-		os.Getenv("CUSTOMER_POSTGRES_PASS"),
-		os.Getenv("CUSTOMER_POSTGRES_HOST"),
-		os.Getenv("CUSTOMER_POSTGRES_PORT"),
-		os.Getenv("CUSTOMER_POSTGRES_DATABASE"),
+	uri := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+		os.Getenv("CUSTOMER_DB_USER"),
+		os.Getenv("CUSTOMER_DB_PASS"),
+		os.Getenv("CUSTOMER_DB_HOST"),
+		os.Getenv("CUSTOMER_DB_NAME"),
 	)
 
 	db, err := sql.Open("postgres", uri)

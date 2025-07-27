@@ -40,11 +40,10 @@ func main() {
 }
 
 func initMongoClient() (*mongo.Client, error) {
-	uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/db?authSource=admin",
-		os.Getenv("MERCHANT_MONGO_USER"),
-		os.Getenv("MERCHANT_MONGO_PASS"),
-		os.Getenv("MERCHANT_MONGO_HOST"),
-		os.Getenv("MERCHANT_MONGO_PORT"),
+	uri := fmt.Sprintf("mongodb://%s:%s@%s/db?authSource=admin",
+		os.Getenv("MERCHANT_DB_USER"),
+		os.Getenv("MERCHANT_DB_PASS"),
+		os.Getenv("MERCHANT_DB_HOST"),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -73,11 +72,10 @@ func initMongoClient() (*mongo.Client, error) {
 }
 
 func initRabbitMQ() *amqp.Connection {
-	uri := fmt.Sprintf("amqp://%s:%s@%s:%s",
+	uri := fmt.Sprintf("amqp://%s:%s@%s",
 		os.Getenv("MERCHANT_AMQP_USER"),
 		os.Getenv("MERCHANT_AMQP_PASS"),
 		os.Getenv("MERCHANT_AMQP_HOST"),
-		os.Getenv("MERCHANT_AMQP_PORT"),
 	)
 	maxRetries := 5
 	var conn *amqp.Connection

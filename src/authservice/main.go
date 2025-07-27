@@ -24,17 +24,15 @@ func initPostgres() (*sql.DB, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	user := os.Getenv("AUTH_POSTGRES_USER")
-	pass := os.Getenv("AUTH_POSTGRES_PASS")
-	host := os.Getenv("AUTH_POSTGRES_HOST")
-	port := os.Getenv("AUTH_POSTGRES_PORT")
-	dbName := os.Getenv("AUTH_POSTGRES_DATABASE")
+	user := os.Getenv("AUTH_DB_USER")
+	pass := os.Getenv("AUTH_DB_PASS")
+	host := os.Getenv("AUTH_DB_HOST")
+	dbName := os.Getenv("AUTH_DB_NAME")
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		user,
 		pass,
 		host,
-		port,
 		dbName,
 	))
 	if err != nil {
@@ -45,11 +43,7 @@ func initPostgres() (*sql.DB, error) {
 		return nil, err
 	}
 
-	slog.Info("Database initialized successfully",
-		"host", host,
-		"port", port,
-	)
-
+	slog.Info("Database initialized successfully", "host", host)
 	return db, nil
 }
 

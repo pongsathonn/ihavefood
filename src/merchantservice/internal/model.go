@@ -4,13 +4,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type newMerchant struct {
-	MerchantName string        `json:"merchantName"`
-	Menu         []*dbMenuItem `json:"menu"`
-	Address      *dbAddress    `json:"address"`
-	PhoneNumber  string        `json:"phoneNumber"`
-	Status       dbStoreStatus `json:"status"`
-}
+// dbUpdateMerchant ?
+// type dbNewMerchant struct {
+// 	MerchantName string        `json:"merchantName"`
+// 	Menu         []*dbMenuItem `json:"menu"`
+// 	Address      *dbAddress    `json:"address"`
+// 	PhoneNumber  string        `json:"phoneNumber"`
+// 	Status       dbStoreStatus `json:"status"`
+// }
 
 type dbMerchant struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`

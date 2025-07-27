@@ -11,14 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MerchantStorage interface {
-	GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
-	ListMerchants(ctx context.Context) ([]*dbMerchant, error)
-	SaveMerchant(ctx context.Context, merchant *newMerchant) (*dbMerchant, error)
-	UpdateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
-	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error)
-}
-
 type merchantStorage struct {
 	client *mongo.Client
 }
@@ -74,34 +66,17 @@ func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*dbMerchant, err
 
 }
 
-// ignore a merchant number and let Mongo generate _id
-func (s *merchantStorage) SaveMerchant(ctx context.Context,
-	newMerchant *newMerchant) (*dbMerchant, error) {
+func (s *merchantStorage) SaveMerchant(ctx context.Context, merchantID string) (*dbMerchant, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 
-	var menu []*dbMenuItem
-	for _, v := range newMerchant.Menu {
-		menu = append(menu, &dbMenuItem{
-			ItemID:      primitive.NewObjectID(),
-			FoodName:    v.FoodName,
-			Price:       v.Price,
-			Description: v.Description,
-			IsAvailable: v.IsAvailable,
-		})
+	id, err := primitive.ObjectIDFromHex(merchantID)
+	if err != nil {
+		return nil, err
 	}
 
-	res, err := coll.InsertOne(ctx, dbMerchant{
-		Name:        newMerchant.MerchantName,
-		Menu:        menu,
-		Address:     newMerchant.Address,
-		PhoneNumber: newMerchant.PhoneNumber,
-		Status:      dbStoreStatus(StoreStatus_CLOSED),
-	})
+	res, err := coll.InsertOne(ctx, dbMerchant{ID: id})
 	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return nil, errors.New("merchant name already exists")
-		}
 		return nil, err
 	}
 

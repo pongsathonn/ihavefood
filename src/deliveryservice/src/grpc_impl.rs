@@ -134,4 +134,11 @@ impl DeliveryService for MyDelivery {
             .unwrap();
         Ok(Response::new(::prost_wkt_types::Empty {}))
     }
+
+    async fn create_rider(
+        &self,
+        request: Request<CreateRiderRequest>,
+    ) -> Result<Response<Rider>, Status> {
+        unimplemented!();
+    }
 }

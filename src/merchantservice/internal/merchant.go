@@ -15,6 +15,14 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+type MerchantStorage interface {
+	GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
+	ListMerchants(ctx context.Context) ([]*dbMerchant, error)
+	SaveMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
+	UpdateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
+	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error)
+}
+
 type MerchantService struct {
 	pb.UnimplementedMerchantServiceServer
 
@@ -56,27 +64,9 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 	return dbToProto(merchant), nil
 }
 
-func (x *MerchantService) RegisterMerchant(ctx context.Context, in *pb.RegisterMerchantRequest) (*pb.Merchant, error) {
+func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerchantRequest) (*pb.Merchant, error) {
 
-	var menu []*dbMenuItem
-	for _, m := range in.Menu {
-		menu = append(menu, &dbMenuItem{
-			FoodName: m.FoodName,
-			Price:    m.Price,
-		})
-	}
-
-	merchant, err := x.storage.SaveMerchant(ctx, &newMerchant{
-		MerchantName: in.MerchantName,
-		Menu:         menu,
-		Address: &dbAddress{
-			AddressName: in.Address.AddressName,
-			SubDistrict: in.Address.SubDistrict,
-			District:    in.Address.District,
-			Province:    in.Address.Province,
-			PostalCode:  in.Address.PostalCode,
-		},
-	})
+	merchant, err := x.storage.SaveMerchant(ctx, in.MerchantId)
 	if err != nil {
 		slog.Error("failed to save merchant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save merchant")
@@ -85,7 +75,11 @@ func (x *MerchantService) RegisterMerchant(ctx context.Context, in *pb.RegisterM
 	return dbToProto(merchant), nil
 }
 
-func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuRequest) (*pb.CreateMenuResponse, error) {
+func (x *MerchantService) UpdateMerchant(ctx context.Context, in *pb.UpdateMerchantRequest) (*pb.Merchant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMerchant not implemented")
+}
+
+func (x *MerchantService) UpdateMenu(ctx context.Context, in *pb.UpdateMenuRequest) (*pb.UpdateMenuResponse, error) {
 
 	var menus []*dbMenuItem
 	for _, m := range in.GetMenu() {
@@ -97,7 +91,7 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 		})
 	}
 
-	saveMenu, err := x.storage.SaveMenu(ctx, in.GetMerchantId(), menus)
+	saveMenu, err := x.storage.UpdateMenu(ctx, in.GetMerchantId(), menus)
 	if err != nil {
 		slog.Error("failed to save menu", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save menu in database")
@@ -114,7 +108,7 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 		})
 	}
 
-	return &pb.CreateMenuResponse{Menu: menu}, nil
+	return &pb.UpdateMenuResponse{Menu: menu}, nil
 }
 
 func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuItemRequest) (*pb.MenuItem, error) {
