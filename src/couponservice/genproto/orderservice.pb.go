@@ -185,24 +185,24 @@ func (OrderStatus) EnumDescriptor() ([]byte, []int) {
 type PlaceOrder struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// A unique request ID for server to detect duplicated requests.
-	RequestId         string           `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	OrderId           string           `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	CustomerId        string           `protobuf:"bytes,3,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	RestaurantId      string           `protobuf:"bytes,4,opt,name=restaurant_id,json=restaurantId,proto3" json:"restaurant_id,omitempty"`
-	Menu              []*MenuItem      `protobuf:"bytes,5,rep,name=menu,proto3" json:"menu,omitempty"`
-	CouponCode        string           `protobuf:"bytes,6,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
-	CouponDiscount    int32            `protobuf:"varint,7,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
-	DeliveryFee       int32            `protobuf:"varint,8,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
-	Total             int32            `protobuf:"varint,9,opt,name=total,proto3" json:"total,omitempty"`
-	CustomerAddress   *Address         `protobuf:"bytes,10,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
-	RestaurantAddress *Address         `protobuf:"bytes,11,opt,name=restaurant_address,json=restaurantAddress,proto3" json:"restaurant_address,omitempty"`
-	CustomerContact   *ContactInfo     `protobuf:"bytes,12,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
-	PaymentMethods    PaymentMethods   `protobuf:"varint,13,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
-	PaymentStatus     PaymentStatus    `protobuf:"varint,14,opt,name=payment_status,json=paymentStatus,proto3,enum=ihavefood.PaymentStatus" json:"payment_status,omitempty"`
-	OrderStatus       OrderStatus      `protobuf:"varint,15,opt,name=order_status,json=orderStatus,proto3,enum=ihavefood.OrderStatus" json:"order_status,omitempty"`
-	OrderTimestamps   *OrderTimestamps `protobuf:"bytes,16,opt,name=order_timestamps,json=orderTimestamps,proto3" json:"order_timestamps,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	RequestId       string           `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	OrderId         string           `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	CustomerId      string           `protobuf:"bytes,3,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	MerchantId      string           `protobuf:"bytes,4,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	Menu            []*MenuItem      `protobuf:"bytes,5,rep,name=menu,proto3" json:"menu,omitempty"`
+	CouponCode      string           `protobuf:"bytes,6,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
+	CouponDiscount  int32            `protobuf:"varint,7,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
+	DeliveryFee     int32            `protobuf:"varint,8,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
+	Total           int32            `protobuf:"varint,9,opt,name=total,proto3" json:"total,omitempty"`
+	CustomerAddress *Address         `protobuf:"bytes,10,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
+	MerchantAddress *Address         `protobuf:"bytes,11,opt,name=merchant_address,json=merchantAddress,proto3" json:"merchant_address,omitempty"`
+	CustomerContact *ContactInfo     `protobuf:"bytes,12,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
+	PaymentMethods  PaymentMethods   `protobuf:"varint,13,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
+	PaymentStatus   PaymentStatus    `protobuf:"varint,14,opt,name=payment_status,json=paymentStatus,proto3,enum=ihavefood.PaymentStatus" json:"payment_status,omitempty"`
+	OrderStatus     OrderStatus      `protobuf:"varint,15,opt,name=order_status,json=orderStatus,proto3,enum=ihavefood.OrderStatus" json:"order_status,omitempty"`
+	OrderTimestamps *OrderTimestamps `protobuf:"bytes,16,opt,name=order_timestamps,json=orderTimestamps,proto3" json:"order_timestamps,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PlaceOrder) Reset() {
@@ -256,9 +256,9 @@ func (x *PlaceOrder) GetCustomerId() string {
 	return ""
 }
 
-func (x *PlaceOrder) GetRestaurantId() string {
+func (x *PlaceOrder) GetMerchantId() string {
 	if x != nil {
-		return x.RestaurantId
+		return x.MerchantId
 	}
 	return ""
 }
@@ -305,9 +305,9 @@ func (x *PlaceOrder) GetCustomerAddress() *Address {
 	return nil
 }
 
-func (x *PlaceOrder) GetRestaurantAddress() *Address {
+func (x *PlaceOrder) GetMerchantAddress() *Address {
 	if x != nil {
-		return x.RestaurantAddress
+		return x.MerchantAddress
 	}
 	return nil
 }
@@ -548,21 +548,21 @@ func (x *ListOrderHistoryResponse) GetPlaceOrders() []*PlaceOrder {
 }
 
 type HandlePlaceOrderRequest struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	RequestId         string                 `protobuf:"bytes,12,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	CustomerId        string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	RestaurantId      string                 `protobuf:"bytes,2,opt,name=restaurant_id,json=restaurantId,proto3" json:"restaurant_id,omitempty"`
-	Menu              []*MenuItem            `protobuf:"bytes,3,rep,name=menu,proto3" json:"menu,omitempty"`
-	CouponCode        string                 `protobuf:"bytes,4,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
-	CouponDiscount    int32                  `protobuf:"varint,5,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
-	DeliveryFee       int32                  `protobuf:"varint,6,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
-	Total             int32                  `protobuf:"varint,7,opt,name=total,proto3" json:"total,omitempty"`
-	CustomerAddress   *Address               `protobuf:"bytes,8,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
-	RestaurantAddress *Address               `protobuf:"bytes,9,opt,name=restaurant_address,json=restaurantAddress,proto3" json:"restaurant_address,omitempty"`
-	CustomerContact   *ContactInfo           `protobuf:"bytes,10,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
-	PaymentMethods    PaymentMethods         `protobuf:"varint,11,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RequestId       string                 `protobuf:"bytes,12,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	CustomerId      string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	MerchantId      string                 `protobuf:"bytes,2,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	Menu            []*MenuItem            `protobuf:"bytes,3,rep,name=menu,proto3" json:"menu,omitempty"`
+	CouponCode      string                 `protobuf:"bytes,4,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
+	CouponDiscount  int32                  `protobuf:"varint,5,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
+	DeliveryFee     int32                  `protobuf:"varint,6,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
+	Total           int32                  `protobuf:"varint,7,opt,name=total,proto3" json:"total,omitempty"`
+	CustomerAddress *Address               `protobuf:"bytes,8,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
+	MerchantAddress *Address               `protobuf:"bytes,9,opt,name=merchant_address,json=merchantAddress,proto3" json:"merchant_address,omitempty"`
+	CustomerContact *ContactInfo           `protobuf:"bytes,10,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
+	PaymentMethods  PaymentMethods         `protobuf:"varint,11,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *HandlePlaceOrderRequest) Reset() {
@@ -609,9 +609,9 @@ func (x *HandlePlaceOrderRequest) GetCustomerId() string {
 	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetRestaurantId() string {
+func (x *HandlePlaceOrderRequest) GetMerchantId() string {
 	if x != nil {
-		return x.RestaurantId
+		return x.MerchantId
 	}
 	return ""
 }
@@ -658,9 +658,9 @@ func (x *HandlePlaceOrderRequest) GetCustomerAddress() *Address {
 	return nil
 }
 
-func (x *HandlePlaceOrderRequest) GetRestaurantAddress() *Address {
+func (x *HandlePlaceOrderRequest) GetMerchantAddress() *Address {
 	if x != nil {
-		return x.RestaurantAddress
+		return x.MerchantAddress
 	}
 	return nil
 }
@@ -683,15 +683,16 @@ var File_orderservice_proto protoreflect.FileDescriptor
 
 const file_orderservice_proto_rawDesc = "" +
 	"\n" +
-	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15merchantservice.proto\x1a\fcommon.proto\"\x84\x06\n" +
+	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15merchantservice.proto\x1a\fcommon.proto\"\xfc\x05\n" +
 	"\n" +
 	"PlaceOrder\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\tR\aorderId\x12\x1f\n" +
 	"\vcustomer_id\x18\x03 \x01(\tR\n" +
-	"customerId\x12#\n" +
-	"\rrestaurant_id\x18\x04 \x01(\tR\frestaurantId\x12'\n" +
+	"customerId\x12\x1f\n" +
+	"\vmerchant_id\x18\x04 \x01(\tR\n" +
+	"merchantId\x12'\n" +
 	"\x04menu\x18\x05 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
 	"\vcoupon_code\x18\x06 \x01(\tR\n" +
 	"couponCode\x12'\n" +
@@ -699,8 +700,8 @@ const file_orderservice_proto_rawDesc = "" +
 	"\fdelivery_fee\x18\b \x01(\x05R\vdeliveryFee\x12\x14\n" +
 	"\x05total\x18\t \x01(\x05R\x05total\x12=\n" +
 	"\x10customer_address\x18\n" +
-	" \x01(\v2\x12.ihavefood.AddressR\x0fcustomerAddress\x12A\n" +
-	"\x12restaurant_address\x18\v \x01(\v2\x12.ihavefood.AddressR\x11restaurantAddress\x12A\n" +
+	" \x01(\v2\x12.ihavefood.AddressR\x0fcustomerAddress\x12=\n" +
+	"\x10merchant_address\x18\v \x01(\v2\x12.ihavefood.AddressR\x0fmerchantAddress\x12A\n" +
 	"\x10customer_contact\x18\f \x01(\v2\x16.ihavefood.ContactInfoR\x0fcustomerContact\x12B\n" +
 	"\x0fpayment_methods\x18\r \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods\x12?\n" +
 	"\x0epayment_status\x18\x0e \x01(\x0e2\x18.ihavefood.PaymentStatusR\rpaymentStatus\x129\n" +
@@ -719,21 +720,22 @@ const file_orderservice_proto_rawDesc = "" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\"T\n" +
 	"\x18ListOrderHistoryResponse\x128\n" +
-	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xb3\x04\n" +
+	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xab\x04\n" +
 	"\x17HandlePlaceOrderRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\f \x01(\tR\trequestId\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\x12#\n" +
-	"\rrestaurant_id\x18\x02 \x01(\tR\frestaurantId\x12'\n" +
+	"customerId\x12\x1f\n" +
+	"\vmerchant_id\x18\x02 \x01(\tR\n" +
+	"merchantId\x12'\n" +
 	"\x04menu\x18\x03 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
 	"\vcoupon_code\x18\x04 \x01(\tR\n" +
 	"couponCode\x12'\n" +
 	"\x0fcoupon_discount\x18\x05 \x01(\x05R\x0ecouponDiscount\x12!\n" +
 	"\fdelivery_fee\x18\x06 \x01(\x05R\vdeliveryFee\x12\x14\n" +
 	"\x05total\x18\a \x01(\x05R\x05total\x12=\n" +
-	"\x10customer_address\x18\b \x01(\v2\x12.ihavefood.AddressR\x0fcustomerAddress\x12A\n" +
-	"\x12restaurant_address\x18\t \x01(\v2\x12.ihavefood.AddressR\x11restaurantAddress\x12A\n" +
+	"\x10customer_address\x18\b \x01(\v2\x12.ihavefood.AddressR\x0fcustomerAddress\x12=\n" +
+	"\x10merchant_address\x18\t \x01(\v2\x12.ihavefood.AddressR\x0fmerchantAddress\x12A\n" +
 	"\x10customer_contact\x18\n" +
 	" \x01(\v2\x16.ihavefood.ContactInfoR\x0fcustomerContact\x12B\n" +
 	"\x0fpayment_methods\x18\v \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods*\x88\x01\n" +
@@ -789,7 +791,7 @@ var file_orderservice_proto_goTypes = []any{
 var file_orderservice_proto_depIdxs = []int32{
 	9,  // 0: ihavefood.PlaceOrder.menu:type_name -> ihavefood.MenuItem
 	10, // 1: ihavefood.PlaceOrder.customer_address:type_name -> ihavefood.Address
-	10, // 2: ihavefood.PlaceOrder.restaurant_address:type_name -> ihavefood.Address
+	10, // 2: ihavefood.PlaceOrder.merchant_address:type_name -> ihavefood.Address
 	4,  // 3: ihavefood.PlaceOrder.customer_contact:type_name -> ihavefood.ContactInfo
 	0,  // 4: ihavefood.PlaceOrder.payment_methods:type_name -> ihavefood.PaymentMethods
 	1,  // 5: ihavefood.PlaceOrder.payment_status:type_name -> ihavefood.PaymentStatus
@@ -801,7 +803,7 @@ var file_orderservice_proto_depIdxs = []int32{
 	3,  // 11: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
 	9,  // 12: ihavefood.HandlePlaceOrderRequest.menu:type_name -> ihavefood.MenuItem
 	10, // 13: ihavefood.HandlePlaceOrderRequest.customer_address:type_name -> ihavefood.Address
-	10, // 14: ihavefood.HandlePlaceOrderRequest.restaurant_address:type_name -> ihavefood.Address
+	10, // 14: ihavefood.HandlePlaceOrderRequest.merchant_address:type_name -> ihavefood.Address
 	4,  // 15: ihavefood.HandlePlaceOrderRequest.customer_contact:type_name -> ihavefood.ContactInfo
 	0,  // 16: ihavefood.HandlePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
 	6,  // 17: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest

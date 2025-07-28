@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
@@ -34,7 +35,7 @@ type dbNewUserCredentials struct {
 }
 
 type dbUserCredentials struct {
-	ID          string
+	ID          uuid.UUID
 	Username    string
 	Email       string
 	HashedPass  string

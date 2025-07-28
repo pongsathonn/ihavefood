@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -14,20 +15,20 @@ import (
 // }
 
 type dbMerchant struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name"`
-	Menu        []*dbMenuItem      `bson:"menu"`
-	Address     *dbAddress         `bson:"address"`
-	PhoneNumber string             `bson:"phoneNumber"`
-	Status      dbStoreStatus      `bson:"status"`
+	ID          uuid.UUID     `bson:"_id,omitempty"`
+	Name        string        `bson:"name"`
+	Menu        []*dbMenuItem `bson:"menu"`
+	Address     *dbAddress    `bson:"address"`
+	PhoneNumber string        `bson:"phoneNumber"`
+	Status      dbStoreStatus `bson:"status"`
 }
 
 type dbMenuItem struct {
-	ItemID      primitive.ObjectID `bson:"item_id"`
-	FoodName    string             `bson:"foodName"`
-	Price       int32              `bson:"price"`
-	Description string             `bson:"description"`
-	IsAvailable bool               `bson:"isAvailable"`
+	ItemID      uuid.UUID `bson:"item_id"`
+	FoodName    string    `bson:"foodName"`
+	Price       int32     `bson:"price"`
+	Description string    `bson:"description"`
+	IsAvailable bool      `bson:"isAvailable"`
 }
 
 type dbAddress struct {

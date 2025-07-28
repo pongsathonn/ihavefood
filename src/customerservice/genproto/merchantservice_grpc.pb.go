@@ -35,7 +35,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // ---------------------MERCHANT SERVICE------------------------
-// merchant manages restaurant
 type MerchantServiceClient interface {
 	ListMerchants(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMerchantsResponse, error)
 	GetMerchant(ctx context.Context, in *GetMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
@@ -142,7 +141,6 @@ func (c *merchantServiceClient) GetStoreStatus(ctx context.Context, in *GetStore
 // for forward compatibility.
 //
 // ---------------------MERCHANT SERVICE------------------------
-// merchant manages restaurant
 type MerchantServiceServer interface {
 	ListMerchants(context.Context, *emptypb.Empty) (*ListMerchantsResponse, error)
 	GetMerchant(context.Context, *GetMerchantRequest) (*Merchant, error)
