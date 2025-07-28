@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # ensure that rabbitmq server is started before running commands.
 rabbitmq-server &
 RABBITMQ_PID=$!
@@ -15,7 +17,7 @@ panda() {
 }
 
 panda "$RBMQ_ORDER_USER" "$RBMQ_ORDER_PASS"
-panda "$RBMQ_RESTAURANT_USER" "$RBMQ_RESTAURANT_PASS"
+panda "$RBMQ_MERCHANT_USER" "$RBMQ_MERCHANT_PASS"
 panda "$RBMQ_CUSTOMER_USER" "$RBMQ_CUSTOMER_PASS"
 panda "$RBMQ_DELIVERY_USER" "$RBMQ_DELIVERY_PASS"
 panda "$RBMQ_COUPON_USER" "$RBMQ_COUPON_PASS"
