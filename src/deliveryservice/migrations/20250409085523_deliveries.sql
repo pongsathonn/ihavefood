@@ -1,7 +1,7 @@
 -- Add migration script here
 
 CREATE TABLE IF NOT EXISTS riders (
-    id           INTEGER NOT NULL,
+    id           BLOB NOT NULL,
     name         TEXT UNIQUE NOT NULL,
     phone_number TEXT UNIQUE NOT NULL,
     PRIMARY KEY(id)
