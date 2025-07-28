@@ -21,11 +21,11 @@ service DeliveryService {
     rpc GetOrderTracking(GetOrderTrackingRequest) returns(stream GetOrderTrackingResponse){}
 
     // GetDeliveryFee calculates and returns the delivery fee based on the distance
-    // between the customer's location and the restaurant's location.
+    // between the customer's location and the merchant's location.
     rpc GetDeliveryFee(GetDeliveryFeeRequest) returns(GetDeliveryFeeResponse) {
         option (google.api.http) = { 
             // Example query:
-            //  ?restaurant_lat=111&restaurant_long222&customer_lat=333&customer_long444
+            //  ?merchant_lat=111&merchant_long222&customer_lat=333&customer_long444
             get: "/api/deliveries/fee"
         };
     }
@@ -62,7 +62,7 @@ message PickupInfo {
     // pickup_code is a simplified code used for identifying an order 
     // for the rider. use three digit i.e 712 , 415
     string pickup_code = 1;
-    // Restaurant address
+    // Merchant address
     Point pickup_location = 2; 
     // Customer address
     Point drop_off_location = 3;
@@ -87,8 +87,8 @@ message GetOrderTrackingResponse {
 }
 
 message GetDeliveryFeeRequest {
-    double restaurant_lat = 1;
-    double restaurant_long = 2;
+    double merchant_lat = 1;
+    double merchant_long = 2;
     double customer_lat = 3;
     double customer_long = 4;
 }

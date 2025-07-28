@@ -5,39 +5,39 @@ import (
 )
 
 type newPlaceOrder struct {
-	RequestID         string
-	CustomerID        string
-	RestaurantID      string
-	Menu              []*dbMenuItem
-	CouponCode        string
-	CouponDiscount    int32
-	DeliveryFee       int32
-	Total             int32
-	CustomerAddress   *dbAddress
-	RestaurantAddress *dbAddress
-	CustomerContact   *dbContactInfo
-	PaymentMethods    dbPaymentMethods
+	RequestID       string
+	CustomerID      string
+	MerchantID      string
+	Menu            []*dbMenuItem
+	CouponCode      string
+	CouponDiscount  int32
+	DeliveryFee     int32
+	Total           int32
+	CustomerAddress *dbAddress
+	MerchantAddress *dbAddress
+	CustomerContact *dbContactInfo
+	PaymentMethods  dbPaymentMethods
 }
 
 // if not omitempty at id Mongo will use zero as id ( when insert )
 type dbPlaceOrder struct {
 	//OrderID           primitive.ObjectID `bson:"_id,omitempty"`
-	OrderID           string           `bson:"_id,omitempty"`
-	RequestID         string           `bson:"requestId"`
-	CustomerID        string           `bson:"customerId"`
-	RestaurantID      string           `bson:"restaurantId"`
-	Menu              []*dbMenuItem    `bson:"menus"`
-	CouponCode        string           `bson:"couponCode"`
-	CouponDiscount    int32            `bson:"couponDiscount"`
-	DeliveryFee       int32            `bson:"deliveryFee"`
-	Total             int32            `bson:"total"`
-	CustomerAddress   *dbAddress       `bson:"customerAddress"`
-	RestaurantAddress *dbAddress       `bson:"restaurantAddress"`
-	CustomerContact   *dbContactInfo   `bson:"customerContact"`
-	PaymentMethods    dbPaymentMethods `bson:"paymentMethods"`
-	PaymentStatus     dbPaymentStatus  `bson:"paymentStatus"`
-	OrderStatus       dbOrderStatus    `bson:"orderStatus"`
-	Timestamps        *dbTimestamps    `bson:"timestamps"`
+	OrderID         string           `bson:"_id,omitempty"`
+	RequestID       string           `bson:"requestId"`
+	CustomerID      string           `bson:"customerId"`
+	MerchantID      string           `bson:"merchantId"`
+	Menu            []*dbMenuItem    `bson:"menus"`
+	CouponCode      string           `bson:"couponCode"`
+	CouponDiscount  int32            `bson:"couponDiscount"`
+	DeliveryFee     int32            `bson:"deliveryFee"`
+	Total           int32            `bson:"total"`
+	CustomerAddress *dbAddress       `bson:"customerAddress"`
+	MerchantAddress *dbAddress       `bson:"merchantAddress"`
+	CustomerContact *dbContactInfo   `bson:"customerContact"`
+	PaymentMethods  dbPaymentMethods `bson:"paymentMethods"`
+	PaymentStatus   dbPaymentStatus  `bson:"paymentStatus"`
+	OrderStatus     dbOrderStatus    `bson:"orderStatus"`
+	Timestamps      *dbTimestamps    `bson:"timestamps"`
 }
 
 type dbMenuItem struct {

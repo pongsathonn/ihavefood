@@ -196,9 +196,9 @@ impl MyDelivery {
 
         let pickup_location = address_to_point(
             order
-                .restaurant_address
+                .merchant_address
                 .as_ref()
-                .ok_or_else(|| anyhow!("Restaurant address is empty"))?,
+                .ok_or_else(|| anyhow!("Merchant address is empty"))?,
         );
 
         let drop_off_location = address_to_point(
@@ -295,13 +295,12 @@ mod tests {
             latitude: 18.7883,
             longitude: 98.9853,
         };
-        let restaurant_point = Point {
+        let merchant_point = Point {
             latitude: 18.6870,
             longitude: 98.8897,
         };
 
-        let delivery_fee =
-            MyDelivery::calc_delivery_fee(&customer_point, &restaurant_point).unwrap();
+        let delivery_fee = MyDelivery::calc_delivery_fee(&customer_point, &merchant_point).unwrap();
         println!("{}", delivery_fee);
         assert_eq!(delivery_fee, 50);
     }
@@ -312,12 +311,12 @@ mod tests {
             latitude: 18.7883,
             longitude: 98.9853,
         };
-        let restaurant_point = Point {
+        let merchant_point = Point {
             latitude: 50.0000,
             longitude: 50.0000,
         };
 
-        let result = MyDelivery::calc_delivery_fee(&customer_point, &restaurant_point);
+        let result = MyDelivery::calc_delivery_fee(&customer_point, &merchant_point);
 
         assert!(result.is_err());
         assert!(result
@@ -351,7 +350,7 @@ mod tests {
     // fn test_prepare_order_delivery_failure() {
     //     let order = PlaceOrder {
     //         order_id: "test_order_456".to_string(),
-    //         restaurant_address: None, // Missing address
+    //         merchant_address: None, // Missing address
     //         customer_address: Some(Address {
     //             district: "Hang Dong".to_string(),
     //             street: "User Street".to_string(),
@@ -365,7 +364,7 @@ mod tests {
     //     assert!(result
     //         .unwrap_err()
     //         .to_string()
-    //         .contains("Restaurant address is empty"));
+    //         .contains("Merchant address is empty"));
     // }
     //
     // #[test]

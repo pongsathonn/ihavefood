@@ -10,7 +10,6 @@ import "common.proto";
 
 
 // ---------------------MERCHANT SERVICE------------------------
-// merchant manages restaurant
 service MerchantService {
 
     rpc ListMerchants(google.protobuf.Empty) returns(ListMerchantsResponse){

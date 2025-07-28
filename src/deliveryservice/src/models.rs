@@ -8,7 +8,7 @@ pub struct DbDelivery {
     pub rider: Option<DbRider>,
     // PickupCode is code 3 digit for rider pickup
     pub pickup_code: String,
-    // pickup_location is Restaurant address
+    // pickup_location is Merchant address
     pub pickup_location: DbPoint,
     // drop_off_location is User address
     pub drop_off_location: DbPoint,

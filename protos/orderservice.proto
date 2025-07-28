@@ -35,14 +35,14 @@ message PlaceOrder {
     string request_id = 1;
     string order_id = 2 ;
     string customer_id = 3;
-    string restaurant_id = 4;
+    string merchant_id = 4;
     repeated MenuItem menu = 5;
     string coupon_code = 6;
     int32 coupon_discount =7;
     int32 delivery_fee = 8;
     int32 total = 9;
     Address customer_address = 10;
-    Address restaurant_address = 11;
+    Address merchant_address = 11;
     ContactInfo customer_contact = 12;
     PaymentMethods payment_methods = 13;
     PaymentStatus payment_status = 14;
@@ -94,14 +94,14 @@ message ListOrderHistoryResponse {
 message HandlePlaceOrderRequest {
     string request_id = 12;
     string customer_id = 1;
-    string restaurant_id = 2;
+    string merchant_id = 2;
     repeated MenuItem menu = 3;
     string coupon_code = 4;
     int32 coupon_discount =5;
     int32 delivery_fee = 6;
     int32 total = 7;
     Address customer_address = 8;
-    Address restaurant_address = 9;
+    Address merchant_address = 9;
     ContactInfo customer_contact = 10;
     PaymentMethods payment_methods = 11;
 }

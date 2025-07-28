@@ -83,7 +83,7 @@ type PickupInfo struct {
 	// pickup_code is a simplified code used for identifying an order
 	// for the rider. use three digit i.e 712 , 415
 	PickupCode string `protobuf:"bytes,1,opt,name=pickup_code,json=pickupCode,proto3" json:"pickup_code,omitempty"`
-	// Restaurant address
+	// Merchant address
 	PickupLocation *Point `protobuf:"bytes,2,opt,name=pickup_location,json=pickupLocation,proto3" json:"pickup_location,omitempty"`
 	// Customer address
 	DropOffLocation *Point `protobuf:"bytes,3,opt,name=drop_off_location,json=dropOffLocation,proto3" json:"drop_off_location,omitempty"`
@@ -316,13 +316,13 @@ func (x *GetOrderTrackingResponse) GetUpdateTime() *timestamppb.Timestamp {
 }
 
 type GetDeliveryFeeRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	RestaurantLat  float64                `protobuf:"fixed64,1,opt,name=restaurant_lat,json=restaurantLat,proto3" json:"restaurant_lat,omitempty"`
-	RestaurantLong float64                `protobuf:"fixed64,2,opt,name=restaurant_long,json=restaurantLong,proto3" json:"restaurant_long,omitempty"`
-	CustomerLat    float64                `protobuf:"fixed64,3,opt,name=customer_lat,json=customerLat,proto3" json:"customer_lat,omitempty"`
-	CustomerLong   float64                `protobuf:"fixed64,4,opt,name=customer_long,json=customerLong,proto3" json:"customer_long,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MerchantLat   float64                `protobuf:"fixed64,1,opt,name=merchant_lat,json=merchantLat,proto3" json:"merchant_lat,omitempty"`
+	MerchantLong  float64                `protobuf:"fixed64,2,opt,name=merchant_long,json=merchantLong,proto3" json:"merchant_long,omitempty"`
+	CustomerLat   float64                `protobuf:"fixed64,3,opt,name=customer_lat,json=customerLat,proto3" json:"customer_lat,omitempty"`
+	CustomerLong  float64                `protobuf:"fixed64,4,opt,name=customer_long,json=customerLong,proto3" json:"customer_long,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetDeliveryFeeRequest) Reset() {
@@ -355,16 +355,16 @@ func (*GetDeliveryFeeRequest) Descriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetDeliveryFeeRequest) GetRestaurantLat() float64 {
+func (x *GetDeliveryFeeRequest) GetMerchantLat() float64 {
 	if x != nil {
-		return x.RestaurantLat
+		return x.MerchantLat
 	}
 	return 0
 }
 
-func (x *GetDeliveryFeeRequest) GetRestaurantLong() float64 {
+func (x *GetDeliveryFeeRequest) GetMerchantLong() float64 {
 	if x != nil {
-		return x.RestaurantLong
+		return x.MerchantLong
 	}
 	return 0
 }
@@ -600,10 +600,10 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\x127\n" +
 	"\x0erider_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\rriderLocation\x12;\n" +
 	"\vupdate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\xaf\x01\n" +
-	"\x15GetDeliveryFeeRequest\x12%\n" +
-	"\x0erestaurant_lat\x18\x01 \x01(\x01R\rrestaurantLat\x12'\n" +
-	"\x0frestaurant_long\x18\x02 \x01(\x01R\x0erestaurantLong\x12!\n" +
+	"updateTime\"\xa7\x01\n" +
+	"\x15GetDeliveryFeeRequest\x12!\n" +
+	"\fmerchant_lat\x18\x01 \x01(\x01R\vmerchantLat\x12#\n" +
+	"\rmerchant_long\x18\x02 \x01(\x01R\fmerchantLong\x12!\n" +
 	"\fcustomer_lat\x18\x03 \x01(\x01R\vcustomerLat\x12#\n" +
 	"\rcustomer_long\x18\x04 \x01(\x01R\fcustomerLong\";\n" +
 	"\x16GetDeliveryFeeResponse\x12!\n" +

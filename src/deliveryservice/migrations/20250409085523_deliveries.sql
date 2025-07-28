@@ -1,17 +1,16 @@
 -- Add migration script here
 
 CREATE TABLE IF NOT EXISTS riders (
-    id           BLOB NOT NULL,
+    id           TEXT NOT NULL,
     name         TEXT UNIQUE NOT NULL,
     phone_number TEXT UNIQUE NOT NULL,
     PRIMARY KEY(id)
 );
 
--- order_id is generated from OrderService (Mongo ObjectID 12bytes)
 CREATE TABLE IF NOT EXISTS deliveries(
-    id             INTEGER NOT NULL,
+    id             TEXT NOT NULL,
     order_id       TEXT UNIQUE NOT NULL,
-    rider_id       INTEGER,
+    rider_id       TEXT,
     pickup_code    TEXT NOT NULL,
     pickup_lat     REAL NOT NULL,
     pickup_lng     REAL NOT NULL,

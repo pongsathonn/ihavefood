@@ -166,7 +166,6 @@ pub mod merchant_service_client {
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     /// ---------------------MERCHANT SERVICE------------------------
-    /// merchant manages restaurant
     #[derive(Debug, Clone)]
     pub struct MerchantServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -494,7 +493,6 @@ pub mod merchant_service_server {
         >;
     }
     /// ---------------------MERCHANT SERVICE------------------------
-    /// merchant manages restaurant
     #[derive(Debug)]
     pub struct MerchantServiceServer<T> {
         inner: Arc<T>,
@@ -986,7 +984,7 @@ pub struct PlaceOrder {
     #[prost(string, tag = "3")]
     pub customer_id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
-    pub restaurant_id: ::prost::alloc::string::String,
+    pub merchant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "5")]
     pub menu: ::prost::alloc::vec::Vec<MenuItem>,
     #[prost(string, tag = "6")]
@@ -1000,7 +998,7 @@ pub struct PlaceOrder {
     #[prost(message, optional, tag = "10")]
     pub customer_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "11")]
-    pub restaurant_address: ::core::option::Option<Address>,
+    pub merchant_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "12")]
     pub customer_contact: ::core::option::Option<ContactInfo>,
     #[prost(enumeration = "PaymentMethods", tag = "13")]
@@ -1050,7 +1048,7 @@ pub struct HandlePlaceOrderRequest {
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub restaurant_id: ::prost::alloc::string::String,
+    pub merchant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "3")]
     pub menu: ::prost::alloc::vec::Vec<MenuItem>,
     #[prost(string, tag = "4")]
@@ -1064,7 +1062,7 @@ pub struct HandlePlaceOrderRequest {
     #[prost(message, optional, tag = "8")]
     pub customer_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "9")]
-    pub restaurant_address: ::core::option::Option<Address>,
+    pub merchant_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "10")]
     pub customer_contact: ::core::option::Option<ContactInfo>,
     #[prost(enumeration = "PaymentMethods", tag = "11")]
@@ -1566,7 +1564,7 @@ pub struct PickupInfo {
     /// for the rider. use three digit i.e 712 , 415
     #[prost(string, tag = "1")]
     pub pickup_code: ::prost::alloc::string::String,
-    /// Restaurant address
+    /// Merchant address
     #[prost(message, optional, tag = "2")]
     pub pickup_location: ::core::option::Option<Point>,
     /// Customer address
@@ -1606,9 +1604,9 @@ pub struct GetOrderTrackingResponse {
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GetDeliveryFeeRequest {
     #[prost(double, tag = "1")]
-    pub restaurant_lat: f64,
+    pub merchant_lat: f64,
     #[prost(double, tag = "2")]
-    pub restaurant_long: f64,
+    pub merchant_long: f64,
     #[prost(double, tag = "3")]
     pub customer_lat: f64,
     #[prost(double, tag = "4")]
@@ -1767,7 +1765,7 @@ pub mod delivery_service_client {
             self.inner.server_streaming(req, path, codec).await
         }
         /// GetDeliveryFee calculates and returns the delivery fee based on the distance
-        /// between the customer's location and the restaurant's location.
+        /// between the customer's location and the merchant's location.
         pub async fn get_delivery_fee(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDeliveryFeeRequest>,
@@ -1903,7 +1901,7 @@ pub mod delivery_service_server {
             tonic::Status,
         >;
         /// GetDeliveryFee calculates and returns the delivery fee based on the distance
-        /// between the customer's location and the restaurant's location.
+        /// between the customer's location and the merchant's location.
         async fn get_delivery_fee(
             &self,
             request: tonic::Request<super::GetDeliveryFeeRequest>,

@@ -110,7 +110,7 @@ func (x *OrderService) StartConsume() {
 		handler chan<- amqp.Delivery
 	}{
 		{"order_status_update_queue", "rider.finding.event", x.handleOrderStatus()},
-		{"order_status_update_queue", "restaurant.accepted.event", x.handleOrderStatus()},
+		{"order_status_update_queue", "merchant.accepted.event", x.handleOrderStatus()},
 		{"order_status_update_queue", "rider.assigned.event", x.handleOrderStatus()},
 		{"order_status_update_queue", "rider.delivered.event", x.handleOrderStatus()},
 		{"payment_status_update_queue", "order.paid.event", x.handlePaymentStatus()},
@@ -145,7 +145,7 @@ func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 			switch msg.RoutingKey {
 			case "rider.finding.event":
 				status = pb.OrderStatus_FINDING_RIDER
-			case "restaurant.accepted.event":
+			case "merchant.accepted.event":
 				status = pb.OrderStatus_PREPARING_ORDER
 			case "food.ready.event":
 				status = pb.OrderStatus_WAIT_FOR_PICKUP
@@ -227,7 +227,7 @@ func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
 		//OrderID:  - ,
 		RequestID:      in.RequestId,
 		CustomerID:     in.CustomerId,
-		RestaurantID:   in.RestaurantId,
+		MerchantID:     in.MerchantId,
 		Menu:           menu,
 		CouponCode:     in.CouponCode,
 		CouponDiscount: in.CouponDiscount,
@@ -240,7 +240,7 @@ func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
 			Province:    in.CustomerAddress.Province,
 			PostalCode:  in.CustomerAddress.Province,
 		},
-		RestaurantAddress: &dbAddress{
+		MerchantAddress: &dbAddress{
 			AddressName: in.CustomerAddress.AddressName,
 			SubDistrict: in.CustomerAddress.SubDistrict,
 			District:    in.CustomerAddress.District,
@@ -276,7 +276,7 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 		OrderId:        order.OrderID,
 		RequestId:      order.RequestID,
 		CustomerId:     order.CustomerID,
-		RestaurantId:   order.RestaurantID,
+		MerchantId:     order.MerchantID,
 		Menu:           menu,
 		CouponCode:     order.CouponCode,
 		CouponDiscount: order.CouponDiscount,
@@ -289,12 +289,12 @@ func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
 			Province:    order.CustomerAddress.Province,
 			PostalCode:  order.CustomerAddress.PostalCode,
 		},
-		RestaurantAddress: &pb.Address{
-			AddressName: order.RestaurantAddress.AddressName,
-			SubDistrict: order.RestaurantAddress.SubDistrict,
-			District:    order.RestaurantAddress.District,
-			Province:    order.RestaurantAddress.Province,
-			PostalCode:  order.RestaurantAddress.PostalCode,
+		MerchantAddress: &pb.Address{
+			AddressName: order.MerchantAddress.AddressName,
+			SubDistrict: order.MerchantAddress.SubDistrict,
+			District:    order.MerchantAddress.District,
+			Province:    order.MerchantAddress.Province,
+			PostalCode:  order.MerchantAddress.PostalCode,
 		},
 		CustomerContact: &pb.ContactInfo{
 			PhoneNumber: order.CustomerContact.PhoneNumber,
@@ -320,8 +320,8 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 		return errors.New("request ID must be provided")
 	case in.CustomerId == "":
 		return errors.New("customer ID must be provided")
-	case in.RestaurantId == "":
-		return errors.New("restaurant ID must be provided")
+	case in.MerchantId == "":
+		return errors.New("merchant ID must be provided")
 	case len(in.Menu) == 0:
 		return errors.New("menu should be at least one")
 	case in.CouponCode == "":
@@ -332,8 +332,8 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 		return errors.New("total should not be zero")
 	case in.CustomerAddress == nil:
 		return errors.New("customer address must be provided")
-	case in.RestaurantAddress == nil:
-		return errors.New("restaurant address must be provided")
+	case in.MerchantAddress == nil:
+		return errors.New("merchant address must be provided")
 	case in.CustomerContact == nil:
 		return errors.New("customer contact infomation must be provided")
 	}

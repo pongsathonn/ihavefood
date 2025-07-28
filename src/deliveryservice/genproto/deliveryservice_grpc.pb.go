@@ -41,7 +41,7 @@ type DeliveryServiceClient interface {
 	// This function should be called from OrderService to track
 	GetOrderTracking(ctx context.Context, in *GetOrderTrackingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetOrderTrackingResponse], error)
 	// GetDeliveryFee calculates and returns the delivery fee based on the distance
-	// between the customer's location and the restaurant's location.
+	// between the customer's location and the merchant's location.
 	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
 	// ConfirmRiderAccept updates the order with the rider who accepted it and returns
 	// the pickup information.
@@ -133,7 +133,7 @@ type DeliveryServiceServer interface {
 	// This function should be called from OrderService to track
 	GetOrderTracking(*GetOrderTrackingRequest, grpc.ServerStreamingServer[GetOrderTrackingResponse]) error
 	// GetDeliveryFee calculates and returns the delivery fee based on the distance
-	// between the customer's location and the restaurant's location.
+	// between the customer's location and the merchant's location.
 	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
 	// ConfirmRiderAccept updates the order with the rider who accepted it and returns
 	// the pickup information.
