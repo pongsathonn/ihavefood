@@ -1,6 +1,6 @@
-
 *.swp
 *.env
+*.txt
 .todo.md
 .thought.md
 

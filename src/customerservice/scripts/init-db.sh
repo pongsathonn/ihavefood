@@ -18,7 +18,7 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$CUSTOMER_DB" <<-EOSQL
     GRANT ALL PRIVILEGES ON SCHEMA public TO "$CUSTOMER_USER";
 
     CREATE TABLE customers (
-        customer_id VARCHAR(255),
+        customer_id UUID,
         username VARCHAR(255) UNIQUE NOT NULL,     
         bio TEXT,                                  
         facebook VARCHAR(255),                     
