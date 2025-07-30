@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,11 +24,11 @@ import (
 type AuthStorer interface {
 	Begin() (*sql.Tx, error)
 	ListUsers(context.Context) ([]*dbUserCredentials, error)
-	GetUser(ctx context.Context, userID string) (*dbUserCredentials, error)
+	GetUser(ctx context.Context, userID uuid.UUID) (*dbUserCredentials, error)
 	GetUserByIdentifier(ctx context.Context, iden string) (*dbUserCredentials, error)
 	Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
 	CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
-	Delete(ctx context.Context, userID string) error
+	Delete(ctx context.Context, userID uuid.UUID) error
 	CheckUsernameExists(ctx context.Context, username string) (bool, error)
 }
 
@@ -56,7 +58,6 @@ func NewAuthService(cfg *AuthCfg) *AuthService {
 }
 
 // Register handles user registration by creating a new user credentials
-// and calling the UserService to create a user customer.
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
 
 	if err := validateUser(in); err != nil {
@@ -96,7 +97,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 
 	return &pb.UserCredentials{
-		Id:          user.ID,
+		Id:          user.ID.String(),
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -123,7 +124,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	user, err := x.store.GetUserByIdentifier(ctx, in.Identifier)
 	if err != nil {
 		slog.Error("failed to find user credentials", "err", err)
-		return nil, status.Error(codes.Internal, "failed to find user credentials")
+		return nil, errUserIncorrect
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPass), []byte(in.Password)); err != nil {
@@ -134,7 +135,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Error(codes.Internal, "authentication failed due to server error")
 	}
 
-	token, exp, err := createNewToken(user.ID, pb.Roles(user.Role))
+	token, exp, err := createNewToken(user.ID.String(), pb.Roles(user.Role))
 	if err != nil {
 		slog.Error("generate new token", "err", err)
 		return nil, errGenerateToken
@@ -204,30 +205,45 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user 
 		if err := x.createMerchant(ctx, user); err != nil {
 			return err
 		}
+	default:
+		return errors.New("invalid role")
 	}
+
 	return nil
 }
 
 func (x *AuthService) createCustomer(ctx context.Context, user *dbUserCredentials) error {
+
 	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
-		CustomerId: user.ID,
+		CustomerId: user.ID.String(),
 		Username:   user.Username,
 	})
 	if err != nil {
 		return err
 	}
-	if user.ID != customer.CustomerId || user.Username != customer.Username {
+
+	if user.ID.String() != customer.CustomerId || user.Username != customer.Username {
 		return errors.New("ID or Username in AuthService and CustomerService are inconsistent")
 	}
+
 	return nil
 }
 
 func (x *AuthService) createMerchant(ctx context.Context, user *dbUserCredentials) error {
-	merchant, err := x.merchantClient.CreateMerchant(ctx, &pb.CreateMerchantRequest{MerchantId: user.ID})
+
+	defaultMerchantName, _, found := strings.Cut(user.Email, "@")
+	if !found {
+		return errors.New("invalid email format: missing '@'")
+	}
+
+	merchant, err := x.merchantClient.CreateMerchant(ctx, &pb.CreateMerchantRequest{
+		MerchantId:   user.ID.String(),
+		MerchantName: defaultMerchantName,
+	})
 	if err != nil {
 		return err
 	}
-	if merchant.MerchantId != user.ID {
+	if merchant.MerchantId != user.ID.String() {
 		return errors.New("ID in AuthService and MerchantService are inconsistent")
 	}
 	return nil
@@ -235,13 +251,13 @@ func (x *AuthService) createMerchant(ctx context.Context, user *dbUserCredential
 
 func (x *AuthService) createRider(ctx context.Context, user *dbUserCredentials) error {
 	rider, err := x.deliveryClient.CreateRider(ctx, &pb.CreateRiderRequest{
-		RiderId:  user.ID,
+		RiderId:  user.ID.String(),
 		Username: user.Username,
 	})
 	if err != nil {
 		return err
 	}
-	if rider.RiderId != user.ID || rider.Username != user.Username {
+	if rider.RiderId != user.ID.String() || rider.Username != user.Username {
 		return errors.New("ID or Username in AuthService and DeliveryService are inconsistent")
 	}
 	return nil

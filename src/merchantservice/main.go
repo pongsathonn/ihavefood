@@ -60,7 +60,7 @@ func initMongoClient() (*mongo.Client, error) {
 
 	coll := client.Database("db", nil).Collection("merchants")
 	indexModel := mongo.IndexModel{
-		Keys:    bson.D{{"merchantName", 1}},
+		Keys:    bson.D{{"name", 1}},
 		Options: options.Index().SetUnique(true),
 	}
 

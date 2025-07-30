@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"log/slog"
-	"strings"
 )
 
 var ErrCustomerNotFound = errors.New("customer not found")
@@ -19,21 +19,19 @@ type customerStorage struct {
 	db *sql.DB
 }
 
-// Customers returns a list of customers.
 func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, error) {
 	customerRows, err := s.db.QueryContext(ctx, `
-		SELECT
+		SELECT 
 			customer_id, username, bio, facebook, instagram, line, create_time, update_time
 		FROM customers
-		ORDER BY CAST(customer_id AS INTEGER)
 	`)
 	if err != nil {
 		return nil, err
 	}
 	defer customerRows.Close()
 
-	customersMap := make(map[string]*dbCustomer)
-	var customerIDs []string
+	customersMap := make(map[uuid.UUID]*dbCustomer)
+	var customerIDs uuid.UUIDs
 
 	for customerRows.Next() {
 		var p dbCustomer
@@ -48,7 +46,6 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 		customersMap[p.CustomerID] = &p
 		customerIDs = append(customerIDs, p.CustomerID)
 	}
-
 	if err = customerRows.Err(); err != nil {
 		return nil, err
 	}
@@ -57,12 +54,7 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 		return []*dbCustomer{}, nil
 	}
 
-	placeholders := make([]string, len(customerIDs))
-	for i := range placeholders {
-		placeholders[i] = fmt.Sprintf("$%d", i+1)
-	}
-
-	query := fmt.Sprintf(`
+	query := `
 		SELECT
 			customer_id,
 			address_name,
@@ -71,15 +63,10 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 			province,
 			postal_code
 		FROM addresses
-		WHERE customer_id IN (%s)
-	`, strings.Join(placeholders, ","))
+		WHERE customer_id IN =  ANY($1)
+	`
 
-	args := make([]any, len(customerIDs))
-	for i, id := range customerIDs {
-		args[i] = id
-	}
-
-	addressRows, err := s.db.QueryContext(ctx, query, args...)
+	addressRows, err := s.db.QueryContext(ctx, query, pq.Array(customerIDs))
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +75,17 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 	for addressRows.Next() {
 
 		var (
-			customerID string
+			customerID uuid.UUID
 			addr       dbAddress
 		)
 
 		if err := addressRows.Scan(
-			customerID, &addr.AddressName, &addr.SubDistrict,
-			&addr.District, &addr.Province, &addr.PostalCode,
+			&customerID,
+			&addr.AddressName,
+			&addr.SubDistrict,
+			&addr.District,
+			&addr.Province,
+			&addr.PostalCode,
 		); err != nil {
 			return nil, err
 		}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -21,22 +20,14 @@ func NewMerchantStorage(client *mongo.Client) MerchantStorage {
 	return &merchantStorage{client: client}
 }
 
-func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error) {
+func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID uuid.UUID) (*dbMerchant, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 
-	ID, err := primitive.ObjectIDFromHex(merchantID)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"_id": ID}
-
 	var merchant dbMerchant
-	if err := coll.FindOne(ctx, filter).Decode(&merchant); err != nil {
+	if err := coll.FindOne(ctx, bson.M{"_id": merchantID}).Decode(&merchant); err != nil {
 		return nil, err
 	}
-
 	return &merchant, nil
 }
 
@@ -68,46 +59,34 @@ func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*dbMerchant, err
 
 }
 
-func (s *merchantStorage) SaveMerchant(ctx context.Context, merchantID string) (*dbMerchant, error) {
+func (s *merchantStorage) SaveMerchant(ctx context.Context, merchantID string, merchantName string) (*dbMerchant, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 
-	id, err := primitive.ObjectIDFromHex(merchantID)
+	res, err := coll.InsertOne(ctx, dbMerchant{
+		ID:   merchantID,
+		Name: merchantName,
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	res, err := coll.InsertOne(ctx, dbMerchant{ID: id})
-	if err != nil {
-		return nil, err
-	}
-
-	insertedID, ok := res.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return nil, errors.New("ID not primitive.ObjectID")
 	}
 
 	var merchant *dbMerchant
-	if err := coll.FindOne(ctx, bson.M{"_id": insertedID}).Decode(&merchant); err != nil {
+	if err := coll.FindOne(ctx, bson.M{"_id": res.InsertedID}).Decode(&merchant); err != nil {
 		return nil, err
 	}
 
 	return merchant, nil
 }
 
-func (s *merchantStorage) UpdateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error) {
-	return nil, errors.New("TODO: impl")
+func (s *merchantStorage) CreateMenu(ctx context.Context, merchantID uuid.UUID, menu []*dbMenuItem) ([]*dbMenuItem, error) {
+	return nil, errors.New("TODO: CreateMenu not implement")
 }
 
 // UpdateMenuItem updates a specific menu item in a merchant's menu
-func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error) {
+func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID uuid.UUID, updateMenu *dbMenuItem) (*dbMenuItem, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
-
-	objID, err := primitive.ObjectIDFromHex(merchantID)
-	if err != nil {
-		return nil, err
-	}
 
 	set := bson.M{}
 	if updateMenu.FoodName != "" {
@@ -126,7 +105,7 @@ func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string,
 	}
 
 	filter := bson.M{
-		"_id":          objID,
+		"_id":          merchantID,
 		"menu.item_id": updateMenu.ItemID,
 	}
 
@@ -134,12 +113,8 @@ func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string,
 
 	update := bson.M{"$set": set}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
-	if err = coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(updatedMerchant); err != nil {
+	if err := coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(updatedMerchant); err != nil {
 		return nil, fmt.Errorf("failed to update menu item: %v", err)
-	}
-
-	if merchantID != updatedMerchant.ID.Hex() {
-		return nil, fmt.Errorf("invalid returned update ID: %v", err)
 	}
 
 	for _, updatedMenu := range updatedMerchant.Menu {

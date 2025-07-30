@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -59,10 +60,14 @@ func (x *CustomerService) GetCustomer(ctx context.Context, in *pb.GetCustomerReq
 
 func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCustomerRequest) (*pb.Customer, error) {
 
-	// TODO validate input
+	uuid, err := uuid.Parse(in.CustomerId)
+	if err != nil {
+		slog.Error("invalid uuid", "err", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid uuid customer id")
+	}
 
 	customerID, err := x.store.create(ctx, &newCustomer{
-		CustomerID: in.CustomerId,
+		CustomerID: uuid,
 		Username:   in.Username,
 	})
 	if err != nil {
@@ -158,7 +163,6 @@ func (x *CustomerService) DeleteCustomer(ctx context.Context, in *pb.DeleteCusto
 	return &emptypb.Empty{}, nil
 }
 
-// TODO
 func protoToDb(customer *pb.Customer) *dbCustomer {
 
 	var addresses []*dbAddress
@@ -201,7 +205,7 @@ func dbToProto(customer *dbCustomer) *pb.Customer {
 	}
 
 	return &pb.Customer{
-		CustomerId: customer.CustomerID,
+		CustomerId: customer.CustomerID.String(),
 		Username:   customer.Username,
 		Bio:        customer.Bio.String,
 		Social: &pb.Social{

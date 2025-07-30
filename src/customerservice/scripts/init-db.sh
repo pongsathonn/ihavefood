@@ -30,8 +30,8 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$CUSTOMER_DB" <<-EOSQL
     );
 
     CREATE TABLE addresses (
-        address_id INT GENERATED ALWAYS AS IDENTITY,
-        customer_id VARCHAR(255),
+        address_id UUID DEFAULT gen_random_uuid(),
+        customer_id UUID,
         address_name VARCHAR(255),                 
         sub_district VARCHAR(255),                 
         district VARCHAR(255),

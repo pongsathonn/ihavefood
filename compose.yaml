@@ -207,6 +207,8 @@ services:
     image: mongo:latest
     ports:
       - "27054:27017"
+    env_file:
+      - path: ./src/couponservice/.env
     networks:
       - mynetwork
 

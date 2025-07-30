@@ -70,6 +70,8 @@ pub struct ListMerchantsResponse {
 pub struct CreateMerchantRequest {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub merchant_name: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -85,7 +87,7 @@ pub struct UpdateMerchantRequest {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateMenuRequest {
+pub struct CreateMenuRequest {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "2")]
@@ -93,7 +95,7 @@ pub struct UpdateMenuRequest {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateMenuResponse {
+pub struct CreateMenuResponse {
     #[prost(message, repeated, tag = "1")]
     pub menu: ::prost::alloc::vec::Vec<MenuItem>,
 }
@@ -102,8 +104,16 @@ pub struct UpdateMenuResponse {
 pub struct UpdateMenuItemRequest {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
-    #[prost(message, optional, tag = "2")]
-    pub menu: ::core::option::Option<MenuItem>,
+    #[prost(string, tag = "2")]
+    pub item_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub food_name: ::prost::alloc::string::String,
+    #[prost(int32, tag = "4")]
+    pub price: i32,
+    #[prost(string, tag = "5")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(bool, tag = "6")]
+    pub is_available: bool,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -312,7 +322,6 @@ pub mod merchant_service_client {
                 .insert(GrpcMethod::new("ihavefood.MerchantService", "CreateMerchant"));
             self.inner.unary(req, path, codec).await
         }
-        /// Menu management
         pub async fn update_merchant(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateMerchantRequest>,
@@ -334,11 +343,12 @@ pub mod merchant_service_client {
                 .insert(GrpcMethod::new("ihavefood.MerchantService", "UpdateMerchant"));
             self.inner.unary(req, path, codec).await
         }
-        pub async fn update_menu(
+        /// Menu management
+        pub async fn create_menu(
             &mut self,
-            request: impl tonic::IntoRequest<super::UpdateMenuRequest>,
+            request: impl tonic::IntoRequest<super::CreateMenuRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::UpdateMenuResponse>,
+            tonic::Response<super::CreateMenuResponse>,
             tonic::Status,
         > {
             self.inner
@@ -351,11 +361,11 @@ pub mod merchant_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.MerchantService/UpdateMenu",
+                "/ihavefood.MerchantService/CreateMenu",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ihavefood.MerchantService", "UpdateMenu"));
+                .insert(GrpcMethod::new("ihavefood.MerchantService", "CreateMenu"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn update_menu_item(
@@ -460,16 +470,16 @@ pub mod merchant_service_server {
             &self,
             request: tonic::Request<super::CreateMerchantRequest>,
         ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status>;
-        /// Menu management
         async fn update_merchant(
             &self,
             request: tonic::Request<super::UpdateMerchantRequest>,
         ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status>;
-        async fn update_menu(
+        /// Menu management
+        async fn create_menu(
             &self,
-            request: tonic::Request<super::UpdateMenuRequest>,
+            request: tonic::Request<super::CreateMenuRequest>,
         ) -> std::result::Result<
-            tonic::Response<super::UpdateMenuResponse>,
+            tonic::Response<super::CreateMenuResponse>,
             tonic::Status,
         >;
         async fn update_menu_item(
@@ -752,25 +762,25 @@ pub mod merchant_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/ihavefood.MerchantService/UpdateMenu" => {
+                "/ihavefood.MerchantService/CreateMenu" => {
                     #[allow(non_camel_case_types)]
-                    struct UpdateMenuSvc<T: MerchantService>(pub Arc<T>);
+                    struct CreateMenuSvc<T: MerchantService>(pub Arc<T>);
                     impl<
                         T: MerchantService,
-                    > tonic::server::UnaryService<super::UpdateMenuRequest>
-                    for UpdateMenuSvc<T> {
-                        type Response = super::UpdateMenuResponse;
+                    > tonic::server::UnaryService<super::CreateMenuRequest>
+                    for CreateMenuSvc<T> {
+                        type Response = super::CreateMenuResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::UpdateMenuRequest>,
+                            request: tonic::Request<super::CreateMenuRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as MerchantService>::update_menu(&inner, request).await
+                                <T as MerchantService>::create_menu(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -781,7 +791,7 @@ pub mod merchant_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = UpdateMenuSvc(inner);
+                        let method = CreateMenuSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

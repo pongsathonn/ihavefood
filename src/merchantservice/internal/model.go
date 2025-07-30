@@ -1,10 +1,5 @@
 package internal
 
-import (
-	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
-
 // dbUpdateMerchant ?
 // type dbNewMerchant struct {
 // 	MerchantName string        `json:"merchantName"`
@@ -15,7 +10,7 @@ import (
 // }
 
 type dbMerchant struct {
-	ID          uuid.UUID     `bson:"_id,omitempty"`
+	ID          string        `bson:"_id,omitempty"`
 	Name        string        `bson:"name"`
 	Menu        []*dbMenuItem `bson:"menu"`
 	Address     *dbAddress    `bson:"address"`
@@ -24,11 +19,11 @@ type dbMerchant struct {
 }
 
 type dbMenuItem struct {
-	ItemID      uuid.UUID `bson:"item_id"`
-	FoodName    string    `bson:"foodName"`
-	Price       int32     `bson:"price"`
-	Description string    `bson:"description"`
-	IsAvailable bool      `bson:"isAvailable"`
+	ItemID      string `bson:"item_id"`
+	FoodName    string `bson:"foodName"`
+	Price       int32  `bson:"price"`
+	Description string `bson:"description"`
+	IsAvailable bool   `bson:"isAvailable"`
 }
 
 type dbAddress struct {

@@ -101,7 +101,6 @@ func main() {
 	}
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-
 	customers, err := grpc.NewClient(os.Getenv("CUSTOMER_URI"), opt)
 	if err != nil {
 		log.Fatalf("Failed to initialize CustomerService connection: %v", err)
@@ -116,10 +115,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize MerchantService connection: %v", err)
 	}
-
-	slog.Info("Channel for CustomerServiceClient created successfully")
-	slog.Info("Channel for DeliveryServiceClient created successfully")
-	slog.Info("Channel for MerchantServiceClient created successfully")
+	slog.Info("Downstream gRPC channels created successfully")
 
 	startGRPCServer(internal.NewAuthService(&internal.AuthCfg{
 		Store:          storage,

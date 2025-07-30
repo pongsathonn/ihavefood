@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -16,11 +17,11 @@ import (
 )
 
 type MerchantStorage interface {
-	GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
+	GetMerchant(ctx context.Context, merchantID uuid.UUID) (*dbMerchant, error)
 	ListMerchants(ctx context.Context) ([]*dbMerchant, error)
-	SaveMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
-	UpdateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
-	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error)
+	SaveMerchant(ctx context.Context, merchantID string, merchantName string) (*dbMerchant, error)
+	CreateMenu(ctx context.Context, merchantID uuid.UUID, menu []*dbMenuItem) ([]*dbMenuItem, error)
+	UpdateMenuItem(ctx context.Context, merchantID uuid.UUID, updateMenu *dbMenuItem) (*dbMenuItem, error)
 }
 
 type MerchantService struct {
@@ -56,7 +57,13 @@ func (x *MerchantService) ListMerchant(ctx context.Context, empty *emptypb.Empty
 
 func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantRequest) (*pb.Merchant, error) {
 
-	merchant, err := x.storage.GetMerchant(ctx, in.MerchantId)
+	uuid, err := uuid.Parse(in.MerchantId)
+	if err != nil {
+		slog.Error("invalid uuid", "err", err)
+		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+	}
+
+	merchant, err := x.storage.GetMerchant(ctx, uuid)
 	if err != nil {
 		slog.Error("failed to retrive merchant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve merchant")
@@ -66,7 +73,7 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 
 func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerchantRequest) (*pb.Merchant, error) {
 
-	merchant, err := x.storage.SaveMerchant(ctx, in.MerchantId)
+	merchant, err := x.storage.SaveMerchant(ctx, in.MerchantId, in.MerchantName)
 	if err != nil {
 		slog.Error("failed to save merchant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save merchant")
@@ -79,11 +86,17 @@ func (x *MerchantService) UpdateMerchant(ctx context.Context, in *pb.UpdateMerch
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMerchant not implemented")
 }
 
-func (x *MerchantService) UpdateMenu(ctx context.Context, in *pb.UpdateMenuRequest) (*pb.UpdateMenuResponse, error) {
+func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuRequest) (*pb.CreateMenuResponse, error) {
 
-	var menus []*dbMenuItem
+	uuid, err := uuid.Parse(in.MerchantId)
+	if err != nil {
+		slog.Error("invalid uuid", "err", err)
+		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+	}
+
+	var newMenu []*dbMenuItem
 	for _, m := range in.GetMenu() {
-		menus = append(menus, &dbMenuItem{
+		newMenu = append(newMenu, &dbMenuItem{
 			FoodName:    m.FoodName,
 			Price:       m.Price,
 			Description: m.Description,
@@ -91,16 +104,16 @@ func (x *MerchantService) UpdateMenu(ctx context.Context, in *pb.UpdateMenuReque
 		})
 	}
 
-	saveMenu, err := x.storage.UpdateMenu(ctx, in.GetMerchantId(), menus)
+	createdMenu, err := x.storage.CreateMenu(ctx, uuid, newMenu)
 	if err != nil {
 		slog.Error("failed to save menu", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save menu in database")
 	}
 
 	var menu []*pb.MenuItem
-	for _, v := range saveMenu {
+	for _, v := range createdMenu {
 		menu = append(menu, &pb.MenuItem{
-			ItemId:      v.ItemID.Hex(),
+			ItemId:      v.ItemID,
 			FoodName:    v.FoodName,
 			Price:       v.Price,
 			Description: v.Description,
@@ -108,16 +121,22 @@ func (x *MerchantService) UpdateMenu(ctx context.Context, in *pb.UpdateMenuReque
 		})
 	}
 
-	return &pb.UpdateMenuResponse{Menu: menu}, nil
+	return &pb.CreateMenuResponse{Menu: menu}, nil
 }
 
 func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuItemRequest) (*pb.MenuItem, error) {
 
-	updatedMenu, err := x.storage.UpdateMenuItem(ctx, in.MerchantId, &dbMenuItem{
-		FoodName:    in.Menu.FoodName,
-		Price:       in.Menu.Price,
-		Description: in.Menu.Description,
-		IsAvailable: in.Menu.IsAvailable,
+	uuid, err := uuid.Parse(in.MerchantId)
+	if err != nil {
+		slog.Error("invalid uuid", "err", err)
+		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+	}
+
+	updatedMenu, err := x.storage.UpdateMenuItem(ctx, uuid, &dbMenuItem{
+		FoodName:    in.FoodName,
+		Price:       in.Price,
+		Description: in.Description,
+		IsAvailable: in.IsAvailable,
 	})
 	if err != nil {
 		slog.Error("failed to update menu", "err", err)
@@ -125,7 +144,7 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 	}
 
 	return &pb.MenuItem{
-		ItemId:      updatedMenu.ItemID.Hex(),
+		ItemId:      updatedMenu.ItemID,
 		FoodName:    updatedMenu.FoodName,
 		Price:       updatedMenu.Price,
 		Description: updatedMenu.Description,
@@ -214,7 +233,7 @@ func dbToProto(merchant *dbMerchant) *pb.Merchant {
 	var menu []*pb.MenuItem
 	for _, m := range merchant.Menu {
 		menu = append(menu, &pb.MenuItem{
-			ItemId:      m.ItemID.Hex(),
+			ItemId:      m.ItemID,
 			FoodName:    m.FoodName,
 			Price:       m.Price,
 			Description: m.Description,
@@ -222,17 +241,22 @@ func dbToProto(merchant *dbMerchant) *pb.Merchant {
 		})
 	}
 
-	return &pb.Merchant{
-		MerchantId:   merchant.ID.Hex(),
-		MerchantName: merchant.Name,
-		Menu:         menu,
-		Address: &pb.Address{
+	var address *pb.Address
+	if merchant.Address != nil {
+		address = &pb.Address{
 			AddressName: merchant.Address.AddressName,
 			SubDistrict: merchant.Address.SubDistrict,
 			District:    merchant.Address.District,
 			Province:    merchant.Address.Province,
 			PostalCode:  merchant.Address.PostalCode,
-		},
-		Status: pb.StoreStatus(merchant.Status),
+		}
+	}
+
+	return &pb.Merchant{
+		MerchantId:   merchant.ID,
+		MerchantName: merchant.Name,
+		Menu:         menu,
+		Address:      address,
+		Status:       pb.StoreStatus(merchant.Status),
 	}
 }

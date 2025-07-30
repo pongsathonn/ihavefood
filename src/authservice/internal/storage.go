@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"github.com/google/uuid"
 )
 
 type storage struct {
@@ -60,7 +61,7 @@ func (s *storage) ListUsers(ctx context.Context) ([]*dbUserCredentials, error) {
 	return users, nil
 }
 
-func (s *storage) GetUser(ctx context.Context, userID string) (*dbUserCredentials, error) {
+func (s *storage) GetUser(ctx context.Context, userID uuid.UUID) (*dbUserCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
@@ -145,10 +146,9 @@ func (s *storage) Create(ctx context.Context, newUser *dbNewUserCredentials) (*d
 			email,
 			password,
 			role,
-			phone_number,
-			create_time
+			phone_number
 		)VALUES(
-			$1,$2,$3,$4,$5,now()
+			$1,$2,$3,$4,$5
 		)RETURNING *;
 	`,
 		newUser.Username,
@@ -163,6 +163,7 @@ func (s *storage) Create(ctx context.Context, newUser *dbNewUserCredentials) (*d
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.HashedPass,
 		&user.Role,
 		&user.PhoneNumber,
 		&user.CreateTime,
@@ -201,6 +202,7 @@ func (s *storage) CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCr
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.HashedPass,
 		&user.Role,
 		&user.PhoneNumber,
 		&user.CreateTime,
@@ -213,7 +215,7 @@ func (s *storage) CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCr
 }
 
 // Delete deletes the user credential.
-func (s *storage) Delete(ctx context.Context, userID string) error {
+func (s *storage) Delete(ctx context.Context, userID uuid.UUID) error {
 
 	query := `DELETE FROM credentials WHERE user_id=$1`
 

@@ -24,8 +24,6 @@ service MerchantService {
     }
 
     rpc CreateMerchant(CreateMerchantRequest) returns(Merchant){}
-
-    // Menu management
     rpc UpdateMerchant(UpdateMerchantRequest) returns(Merchant) {
         option (google.api.http) = {
             patch: "/api/merchants/{merchant_id}"
@@ -33,16 +31,17 @@ service MerchantService {
         };
     }
 
-    rpc UpdateMenu(UpdateMenuRequest) returns(UpdateMenuResponse) {
+    // Menu management
+    rpc CreateMenu(CreateMenuRequest) returns(CreateMenuResponse) {
         option (google.api.http) = {
-            post: "/api/merchants/menu/{merchant_id}"
+            post: "/api/merchants/{merchant_id}/menu"
             body: "*"
         };
     }
 
     rpc UpdateMenuItem(UpdateMenuItemRequest) returns(MenuItem) {
         option (google.api.http) = {
-            patch: "/api/merchants/menu_item/{merchant_id}"
+            patch: "/api/merchants/{merchant_id}/menu/items/{item_id}"
             body: "*"
         };
     }
@@ -84,6 +83,7 @@ message ListMerchantsResponse{
 
 message CreateMerchantRequest {
     string merchant_id = 1;
+    string merchant_name = 2;
 }
 
 message UpdateMerchantRequest {
@@ -92,25 +92,28 @@ message UpdateMerchantRequest {
     repeated MenuItem menu = 3;
     Address address = 4;
 }
-message UpdateMenuRequest {
+message CreateMenuRequest {
     string merchant_id = 1;
     repeated MenuItem menu = 2;
 }
 
-message UpdateMenuResponse {
+message CreateMenuResponse {
   repeated MenuItem menu = 1;
 }
 
 message UpdateMenuItemRequest {
     string merchant_id = 1;
-    MenuItem menu = 2;
+    string item_id = 2;
+    string food_name = 3;
+    int32 price = 4;
+    string description = 5;
+    bool is_available = 6;
 }
 
 message UpdateStoreStatusRequest {
     string merchant_id = 1;
     StoreStatus status = 2;
 }
-
 
 message GetStoreStatusRequest {
     string merchant_id = 1;
