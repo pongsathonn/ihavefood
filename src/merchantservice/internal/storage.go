@@ -8,8 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"github.com/google/uuid"
 )
 
 type merchantStorage struct {
@@ -20,7 +18,7 @@ func NewMerchantStorage(client *mongo.Client) MerchantStorage {
 	return &merchantStorage{client: client}
 }
 
-func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID uuid.UUID) (*dbMerchant, error) {
+func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 
@@ -79,12 +77,12 @@ func (s *merchantStorage) SaveMerchant(ctx context.Context, merchantID string, m
 	return merchant, nil
 }
 
-func (s *merchantStorage) CreateMenu(ctx context.Context, merchantID uuid.UUID, menu []*dbMenuItem) ([]*dbMenuItem, error) {
+func (s *merchantStorage) CreateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error) {
 	return nil, errors.New("TODO: CreateMenu not implement")
 }
 
 // UpdateMenuItem updates a specific menu item in a merchant's menu
-func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID uuid.UUID, updateMenu *dbMenuItem) (*dbMenuItem, error) {
+func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 

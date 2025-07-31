@@ -4,17 +4,16 @@ package internal
 
 import (
 	"database/sql"
-	"github.com/google/uuid"
 	"time"
 )
 
 type newCustomer struct {
-	CustomerID uuid.UUID
+	CustomerID string
 	Username   string
 }
 
 type dbCustomer struct {
-	CustomerID uuid.UUID
+	CustomerID string
 	Username   string
 	//Picture    []byte
 	Bio        sql.NullString

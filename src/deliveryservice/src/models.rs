@@ -18,7 +18,7 @@ pub struct DbDelivery {
 }
 
 pub struct DbRider {
-    pub id: Option<i32>,
+    pub id: Option<String>,
     pub name: String,
     pub phone_number: String,
 }

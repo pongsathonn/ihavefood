@@ -67,7 +67,7 @@ func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCusto
 	}
 
 	customerID, err := x.store.create(ctx, &newCustomer{
-		CustomerID: uuid,
+		CustomerID: uuid.String(),
 		Username:   in.Username,
 	})
 	if err != nil {
@@ -205,7 +205,7 @@ func dbToProto(customer *dbCustomer) *pb.Customer {
 	}
 
 	return &pb.Customer{
-		CustomerId: customer.CustomerID.String(),
+		CustomerId: customer.CustomerID,
 		Username:   customer.Username,
 		Bio:        customer.Bio.String,
 		Social: &pb.Social{

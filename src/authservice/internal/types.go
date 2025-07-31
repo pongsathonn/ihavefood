@@ -1,12 +1,10 @@
-// This file contains the structure need for moving data between
-// the app and the database
 package internal
 
 import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
@@ -35,7 +33,7 @@ type dbNewUserCredentials struct {
 }
 
 type dbUserCredentials struct {
-	ID          uuid.UUID
+	ID          string
 	Username    string
 	Email       string
 	HashedPass  string

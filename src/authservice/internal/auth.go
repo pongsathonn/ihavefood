@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -97,7 +96,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 
 	return &pb.UserCredentials{
-		Id:          user.ID.String(),
+		Id:          user.ID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -135,7 +134,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Error(codes.Internal, "authentication failed due to server error")
 	}
 
-	token, exp, err := createNewToken(user.ID.String(), pb.Roles(user.Role))
+	token, exp, err := createNewToken(user.ID, pb.Roles(user.Role))
 	if err != nil {
 		slog.Error("generate new token", "err", err)
 		return nil, errGenerateToken
@@ -215,14 +214,14 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user 
 func (x *AuthService) createCustomer(ctx context.Context, user *dbUserCredentials) error {
 
 	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
-		CustomerId: user.ID.String(),
+		CustomerId: user.ID,
 		Username:   user.Username,
 	})
 	if err != nil {
 		return err
 	}
 
-	if user.ID.String() != customer.CustomerId || user.Username != customer.Username {
+	if user.ID != customer.CustomerId || user.Username != customer.Username {
 		return errors.New("ID or Username in AuthService and CustomerService are inconsistent")
 	}
 
@@ -237,13 +236,13 @@ func (x *AuthService) createMerchant(ctx context.Context, user *dbUserCredential
 	}
 
 	merchant, err := x.merchantClient.CreateMerchant(ctx, &pb.CreateMerchantRequest{
-		MerchantId:   user.ID.String(),
+		MerchantId:   user.ID,
 		MerchantName: defaultMerchantName,
 	})
 	if err != nil {
 		return err
 	}
-	if merchant.MerchantId != user.ID.String() {
+	if merchant.MerchantId != user.ID {
 		return errors.New("ID in AuthService and MerchantService are inconsistent")
 	}
 	return nil
@@ -251,13 +250,13 @@ func (x *AuthService) createMerchant(ctx context.Context, user *dbUserCredential
 
 func (x *AuthService) createRider(ctx context.Context, user *dbUserCredentials) error {
 	rider, err := x.deliveryClient.CreateRider(ctx, &pb.CreateRiderRequest{
-		RiderId:  user.ID.String(),
+		RiderId:  user.ID,
 		Username: user.Username,
 	})
 	if err != nil {
 		return err
 	}
-	if rider.RiderId != user.ID.String() || rider.Username != user.Username {
+	if rider.RiderId != user.ID || rider.Username != user.Username {
 		return errors.New("ID or Username in AuthService and DeliveryService are inconsistent")
 	}
 	return nil

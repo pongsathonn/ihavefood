@@ -17,11 +17,11 @@ import (
 )
 
 type MerchantStorage interface {
-	GetMerchant(ctx context.Context, merchantID uuid.UUID) (*dbMerchant, error)
+	GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
 	ListMerchants(ctx context.Context) ([]*dbMerchant, error)
 	SaveMerchant(ctx context.Context, merchantID string, merchantName string) (*dbMerchant, error)
-	CreateMenu(ctx context.Context, merchantID uuid.UUID, menu []*dbMenuItem) ([]*dbMenuItem, error)
-	UpdateMenuItem(ctx context.Context, merchantID uuid.UUID, updateMenu *dbMenuItem) (*dbMenuItem, error)
+	CreateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
+	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error)
 }
 
 type MerchantService struct {
@@ -63,7 +63,7 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
-	merchant, err := x.storage.GetMerchant(ctx, uuid)
+	merchant, err := x.storage.GetMerchant(ctx, uuid.String())
 	if err != nil {
 		slog.Error("failed to retrive merchant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve merchant")
@@ -73,7 +73,13 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 
 func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerchantRequest) (*pb.Merchant, error) {
 
-	merchant, err := x.storage.SaveMerchant(ctx, in.MerchantId, in.MerchantName)
+	uuid, err := uuid.Parse(in.MerchantId)
+	if err != nil {
+		slog.Error("invalid uuid", "err", err)
+		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+	}
+
+	merchant, err := x.storage.SaveMerchant(ctx, uuid.String(), in.MerchantName)
 	if err != nil {
 		slog.Error("failed to save merchant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save merchant")
@@ -104,7 +110,7 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 		})
 	}
 
-	createdMenu, err := x.storage.CreateMenu(ctx, uuid, newMenu)
+	createdMenu, err := x.storage.CreateMenu(ctx, uuid.String(), newMenu)
 	if err != nil {
 		slog.Error("failed to save menu", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save menu in database")
@@ -132,7 +138,7 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
-	updatedMenu, err := x.storage.UpdateMenuItem(ctx, uuid, &dbMenuItem{
+	updatedMenu, err := x.storage.UpdateMenuItem(ctx, uuid.String(), &dbMenuItem{
 		FoodName:    in.FoodName,
 		Price:       in.Price,
 		Description: in.Description,

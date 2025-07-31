@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"log/slog"
 )
@@ -30,8 +29,8 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 	}
 	defer customerRows.Close()
 
-	customersMap := make(map[uuid.UUID]*dbCustomer)
-	var customerIDs uuid.UUIDs
+	customersMap := make(map[string]*dbCustomer)
+	var customerIDs []string
 
 	for customerRows.Next() {
 		var p dbCustomer
@@ -75,7 +74,7 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 	for addressRows.Next() {
 
 		var (
-			customerID uuid.UUID
+			customerID string
 			addr       dbAddress
 		)
 
