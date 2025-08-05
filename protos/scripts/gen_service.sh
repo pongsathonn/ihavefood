@@ -95,13 +95,13 @@ protoc -I "$protos" \
     "$protos/couponservice.proto"
 
 # gateway
-gateway_gen_dir="../../gateway/genproto"
+gateway_gen_dir="../../api-gateway/genproto"
 if [ -d "$gateway_gen_dir" ]; then
     echo "Removing existing directory: $gateway_gen_dir"
     rm -rf "$gateway_gen_dir"
 fi
 
-outdir_gateway=../../gateway
+outdir_gateway=../../api-gateway
 
 protoc -I "$protos" \
     --go_out="$outdir_gateway" \

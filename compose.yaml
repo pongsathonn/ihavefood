@@ -6,14 +6,14 @@ name: ihavefood
 
 services:
 
-  gateway:
-    container_name: gateway
-    build: gateway
+  api-gateway:
+    container_name: api-gateway
+    build: api-gateway
     ports:
       - "9999:9999" 
       - "4041:4041" 
     env_file:
-      - path: ./gateway/.env
+      - path: ./api-gateway/.env
     networks:
       - mynetwork
     depends_on:
@@ -161,6 +161,8 @@ services:
       dockerfile: Dockerfile
     env_file:
       - path: ./src/deliveryservice/.env
+    volumes:
+      - ./src/deliveryservice/delivery.db:/delivery.db
     networks:
       - mynetwork
     ports:
