@@ -1,0 +1,31 @@
+patch:
+  tags:
+    - delivery
+  summary: Accept an order
+  description: TODO
+  parameters:
+    - name: user_id
+      in: path
+      required: true
+      description: TODO
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            riderId:
+              type: string
+        examples:
+          ex:
+            value: 
+              riderId: "rider002"
+  responses:
+    '200':
+      description: Update successful
+    '400':
+      description: Invalid request
+

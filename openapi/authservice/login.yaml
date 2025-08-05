@@ -1,0 +1,39 @@
+post:
+  tags:
+    - auth
+  summary: Logs user into the system
+  description: "XXXXXXXXXXX"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+        examples:
+          example1:
+            value:
+              username: "yuki002"
+              password: "pPassword."
+  responses:
+    '200':
+      description: Successful login with access token and token expiration time (Unix)
+      content:
+        application/json:
+          schema:
+             properties:
+               accessToken:
+                 type: string
+                 example: "eyJhbG6IkpXVCJ9.NzMyNaosdhoqwqjc4MjI2fQ.hRPUaRZPE09Bo"
+               expiresIn:
+                 type: string
+                 example: "1735290508"
+    "400":
+      description: Bad request
+  security: []
+
+

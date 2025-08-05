@@ -1,0 +1,16 @@
+get:
+  tags:
+    - order
+  summary: List user order history
+  description: Returns list order history for a specific user.
+  parameters:
+    - name: user_id
+      in: path
+      required: true
+      description: The userID whose orders are to be retrieved.
+      schema:
+        type: string
+  responses:
+    '200':
+      description: List of orders for the user
+

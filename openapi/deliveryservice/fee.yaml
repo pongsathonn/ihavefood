@@ -1,0 +1,44 @@
+get:
+  tags:
+    - delivery
+  summary: calculate delivery fee
+  description: TODO
+  parameters:
+    - in: query
+      name: restaurant_lat
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Latitude of the restaurant
+      example: 40.7128 
+    - in: query
+      name: restaurant_long
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Longitude of the restaurant
+      example: -74.0060 
+    - in: query
+      name: user_lat
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Latitude of the user
+      example: 40.7306
+    - in: query
+      name: user_long
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Longitude of the user
+      example: -73.9352
+  responses:
+    '200':
+      description: ok
+    '400':
+      description: Invalid request
+
