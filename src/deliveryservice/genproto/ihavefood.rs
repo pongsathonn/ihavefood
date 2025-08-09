@@ -1649,6 +1649,8 @@ pub struct CreateRiderRequest {
     pub rider_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub username: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub phone_number: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
 pub mod delivery_service_client {

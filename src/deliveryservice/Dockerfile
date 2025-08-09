@@ -26,6 +26,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
+
 COPY --from=build /bin/deliveryservice /bin/
+# COPY /queries /queries
 
 CMD ["/bin/deliveryservice"]

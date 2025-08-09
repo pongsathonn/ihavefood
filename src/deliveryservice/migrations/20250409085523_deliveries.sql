@@ -1,12 +1,11 @@
--- Add migration script here
-
 CREATE TABLE IF NOT EXISTS riders (
     id           TEXT NOT NULL,
-    name         TEXT UNIQUE NOT NULL,
+    username     TEXT UNIQUE NOT NULL,
     phone_number TEXT UNIQUE NOT NULL,
     PRIMARY KEY(id)
 );
 
+-- TODO: might remove deliveries.id and use order_id as PK
 CREATE TABLE IF NOT EXISTS deliveries(
     id             TEXT NOT NULL,
     order_id       TEXT UNIQUE NOT NULL,

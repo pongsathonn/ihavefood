@@ -109,4 +109,5 @@ message ConfirmOrderDeliverRequest {
 message CreateRiderRequest {
   string rider_id = 1;
   string username = 2;
+  string phone_number = 3;
 }

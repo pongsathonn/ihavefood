@@ -1,5 +1,6 @@
 use crate::models::*;
 use anyhow::Result;
+use log::info;
 use sqlx::sqlite::SqlitePool;
 
 #[derive(Debug)]
@@ -28,11 +29,24 @@ impl Db {
         Ok(())
     }
 
+    pub async fn create_rider(&self, new_rider: &NewRider) -> Result<()> {
+        sqlx::query_file!(
+            "queries/create-rider.sql",
+            new_rider.rider_id,
+            new_rider.username,
+            new_rider.phone_number,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     pub async fn get_delivery(&self, order_id: &str) -> Result<DbDelivery> {
-        // The query_as! macro doesn't use FromRow, and DbDelivery has a nested struct
-        // with conflicting field names, requiring a manual FromRow impl and making fn
-        // query_as() necessary.Since sqlx lacks fn query_file_as(), the SQL is loaded
-        // using std::fs from the /query directory.
+        // 1) The query_as! macro doesn't use FromRow,
+        // 2) DbDelivery has a nested struct with conflicting field names,
+        //    requiring a manual FromRow impl and making fn query_as() necessary.
+        // 3) Since sqlx lacks fn query_file_as(), the SQL is loaded using std::fs
+        //    from the /query directory.
         let sql = std::fs::read_to_string("queries/delivery-by-id.sql")?;
         let delivery = sqlx::query_as(sql.as_str())
             .bind(order_id)
@@ -41,8 +55,16 @@ impl Db {
         Ok(delivery)
     }
 
+    pub async fn get_rider(&self, rider_id: &str) -> Result<DbRider> {
+        let rider = sqlx::query_file_as!(DbRider, "queries/rider-by-id.sql", rider_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(rider)
+    }
+
     pub async fn get_delivery_status(&self, order_id: &str) -> Result<DbDeliveryStatus> {
-        let status = sqlx::query_file_scalar!("queries/delivery-status-by-id.sql", order_id,)
+        let status = sqlx::query_file_scalar!("queries/delivery-status-by-id.sql", order_id)
             .fetch_one(&self.pool)
             .await?;
         Ok(status)

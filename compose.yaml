@@ -1,8 +1,6 @@
 name: ihavefood
 
-# NOTE: DONT USE THIS FILE IN PROD
-#
-# port 40XX for debugging
+# - port 40XX for debugging
 
 services:
 
@@ -13,6 +11,7 @@ services:
       - "9999:9999" 
       - "4041:4041" 
     env_file:
+      - path: .env
       - path: ./api-gateway/.env
     networks:
       - mynetwork
@@ -29,6 +28,7 @@ services:
     build: ./src/orderservice
     env_file:
       - path: ./src/orderservice/.env
+      - path: .env
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -58,6 +58,7 @@ services:
     build: ./src/merchantservice
     env_file:
       - path: ./src/merchantservice/.env
+      - path: .env
     networks:
       - mynetwork
     ports:
@@ -87,6 +88,7 @@ services:
     build: ./src/customerservice
     env_file:
       - path: ./src/customerservice/.env
+      - path: .env
     networks:
       - mynetwork
     ports:
@@ -124,6 +126,7 @@ services:
     build: ./src/authservice
     env_file:
       - path: ./src/authservice/.env
+      - path: .env
     networks:
       - mynetwork
     ports:
@@ -161,8 +164,7 @@ services:
       dockerfile: Dockerfile
     env_file:
       - path: ./src/deliveryservice/.env
-    volumes:
-      - ./src/deliveryservice/delivery.db:/delivery.db
+      - path: .env
     networks:
       - mynetwork
     ports:
@@ -173,23 +175,13 @@ services:
       rabbitmqx: 
         condition: service_healthy
         restart: true
-
-  # deliverydb:
-  #   container_name: deliverydb
-  #   image: mongo:latest
-  #   ports:
-  #     - "27053:27017"
-  #   environment:
-  #     - MONGO_INITDB_ROOT_USERNAME=${}
-  #     - MONGO_INITDB_ROOT_PASSWORD=${}
-  # networks:
-  #   - mynetwork
         
   coupon:
     container_name: coupon
     build: ./src/couponservice
     env_file:
       - path: ./src/couponservice/.env
+      - path: .env
     networks:
       - mynetwork
     ports:

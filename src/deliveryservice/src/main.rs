@@ -5,13 +5,19 @@ mod grpc_impl;
 mod models;
 
 use anyhow::Result;
+
 use broker::RabbitMQ;
 use database::Db;
 use delivery::MyDelivery;
 use ihavefood::delivery_service_server::DeliveryServiceServer;
 use lapin::{Connection, ConnectionProperties};
 use log::info;
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqlitePool},
+    Pool, Sqlite,
+};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 use tonic::transport::Server;
@@ -36,19 +42,24 @@ async fn init_amqp_conn() -> Connection {
     .expect("Failed to connect AMQP");
 
     info!("AMQP connection established successfully");
-
     conn
 }
 
-// TODO: connect to sqlite engine
 async fn init_sqlite_pool() -> Pool<Sqlite> {
-    dotenv::dotenv().ok();
+    let url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    let pool = SqlitePoolOptions::new()
-        .max_connections(15)
-        .connect(&dotenv::var("DATABASE_URL").expect("DELIVERY must be set"))
+    let opts = SqliteConnectOptions::from_str(url.as_str())
+        .expect("Failed to parse DATABASE_URL")
+        .create_if_missing(true);
+
+    let pool = SqlitePool::connect_with(opts)
         .await
-        .expect("Failed to create Sqlite connection pool");
+        .expect("Failed to create Sqlite pool");
+
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .expect("Failed to run sqlx migration");
 
     info!("SQLite connection pool initialized");
     pool
@@ -56,6 +67,7 @@ async fn init_sqlite_pool() -> Pool<Sqlite> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv::dotenv().ok();
     std::env::set_var("RUST_LOG", "debug,lapin=warn");
 
     env_logger::builder()
@@ -70,9 +82,14 @@ async fn main() -> Result<()> {
         task_limiter: Arc::new(Semaphore::new(100)),
     };
 
+    let socket = SocketAddr::new(
+        IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+        dotenv::var("DELIVERY_SERVER_PORT")?.parse()?,
+    );
+
     let server = Server::builder()
         .add_service(DeliveryServiceServer::new(app.clone()))
-        .serve(dotenv::var("DELIVERY_URI")?.parse()?);
+        .serve(socket);
 
     tokio::spawn(async move {
         app.clone().start_services().await.unwrap();
@@ -80,7 +97,7 @@ async fn main() -> Result<()> {
 
     info!(
         "Server initialized and listening on {}",
-        dotenv::var("DELIVERY_URI")?
+        dotenv::var("DELIVERY_SERVER_PORT")?
     );
 
     server.await?;

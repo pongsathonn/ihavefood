@@ -1,9 +1,9 @@
 use crate::delivery::MyDelivery;
 use crate::ihavefood::delivery_service_server::DeliveryService;
 use crate::ihavefood::*;
-use crate::models::DbDeliveryStatus;
+use crate::models::{DbDeliveryStatus, NewRider};
 
-use log::error;
+use log::{error, info};
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 use tokio_stream::wrappers::ReceiverStream;
@@ -139,6 +139,20 @@ impl DeliveryService for MyDelivery {
         &self,
         request: Request<CreateRiderRequest>,
     ) -> Result<Response<Rider>, Status> {
-        unimplemented!();
+        let req = request.into_inner();
+        let new_rider = &NewRider {
+            rider_id: req.rider_id.clone(),
+            username: req.username,
+            phone_number: String::from(""),
+        };
+
+        let _ = self.db.create_rider(new_rider).await.unwrap();
+        let rider = self.db.get_rider(req.rider_id.as_str()).await.unwrap();
+
+        Ok(Response::new(Rider {
+            rider_id: rider.id,
+            username: rider.username,
+            phone_number: rider.phone_number,
+        }))
     }
 }

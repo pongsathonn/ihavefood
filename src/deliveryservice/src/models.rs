@@ -17,9 +17,10 @@ pub struct DbDelivery {
     pub timestamp: DbTimestamp,
 }
 
+#[derive(Debug, FromRow)]
 pub struct DbRider {
-    pub id: Option<String>,
-    pub name: String,
+    pub id: String,
+    pub username: String,
     pub phone_number: String,
 }
 
@@ -59,6 +60,12 @@ pub struct NewDelivery {
     pub create_time: DateTime<Utc>,
 }
 
+pub struct NewRider {
+    pub rider_id: String,
+    pub username: String,
+    pub phone_number: String,
+}
+
 //==============================
 //            impl
 //==============================
@@ -68,8 +75,8 @@ impl FromRow<'_, SqliteRow> for DbDelivery {
         Ok(Self {
             order_id: row.try_get("order_id")?,
             rider: Some(DbRider {
-                id: Some(row.try_get("rider_id")?),
-                name: row.try_get("rider_name")?,
+                id: row.try_get("rider_id")?,
+                username: row.try_get("rider_name")?,
                 phone_number: row.try_get("rider_phone_number")?,
             }),
             pickup_code: row.try_get("pickup_code")?,
@@ -90,6 +97,16 @@ impl FromRow<'_, SqliteRow> for DbDelivery {
         })
     }
 }
+
+// impl FromRow<'_, SqliteRow> for DbRider {
+//     fn from_row(row: &SqliteRow) -> sqlx::Result<Self> {
+//         Ok(Self {
+//             id: row.try_get("id")?,
+//             username: row.try_get("username")?,
+//             phone_number: row.try_get("phone_number")?,
+//         })
+//     }
+// }
 
 //impl<'q> Encode<'q, Sqlite> for DbDeliveryStatus {
 //    fn encode_by_ref(
