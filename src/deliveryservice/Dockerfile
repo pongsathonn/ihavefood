@@ -28,6 +28,5 @@ RUN apt-get update && \
     apt-get clean
 
 COPY --from=build /bin/deliveryservice /bin/
-# COPY /queries /queries
 
 CMD ["/bin/deliveryservice"]
