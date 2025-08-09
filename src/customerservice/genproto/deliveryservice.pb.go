@@ -527,6 +527,7 @@ type CreateRiderRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -575,6 +576,13 @@ func (x *CreateRiderRequest) GetUsername() string {
 	return ""
 }
 
+func (x *CreateRiderRequest) GetPhoneNumber() string {
+	if x != nil {
+		return x.PhoneNumber
+	}
+	return ""
+}
+
 var File_deliveryservice_proto protoreflect.FileDescriptor
 
 const file_deliveryservice_proto_rawDesc = "" +
@@ -612,10 +620,11 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\"7\n" +
 	"\x1aConfirmOrderDeliverRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\"K\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\"n\n" +
 	"\x12CreateRiderRequest\x12\x19\n" +
 	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername2\xb4\x04\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
+	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber2\xb4\x04\n" +
 	"\x0fDeliveryService\x12_\n" +
 	"\x10GetOrderTracking\x12\".ihavefood.GetOrderTrackingRequest\x1a#.ihavefood.GetOrderTrackingResponse\"\x000\x01\x12r\n" +
 	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x86\x01\n" +

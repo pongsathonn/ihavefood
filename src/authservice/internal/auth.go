@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -88,7 +89,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 
 	if err := x.dispatchCreation(ctx, in.Role, user); err != nil {
-		return nil, status.Errorf(codes.Internal, "downstream service creation failed %v", err)
+		return nil, status.Errorf(codes.Internal, "downstream service creation failed: %v", err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -194,15 +195,15 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user 
 	switch role {
 	case pb.Roles_CUSTOMER:
 		if err := x.createCustomer(ctx, user); err != nil {
-			return err
+			return fmt.Errorf("failed to create customer: %v", err)
 		}
 	case pb.Roles_RIDER:
 		if err := x.createRider(ctx, user); err != nil {
-			return err
+			return fmt.Errorf("failed to create rider: %v", err)
 		}
 	case pb.Roles_MERCHANT:
 		if err := x.createMerchant(ctx, user); err != nil {
-			return err
+			return fmt.Errorf("failed to create merchant: %v", err)
 		}
 	default:
 		return errors.New("invalid role")
@@ -250,8 +251,9 @@ func (x *AuthService) createMerchant(ctx context.Context, user *dbUserCredential
 
 func (x *AuthService) createRider(ctx context.Context, user *dbUserCredentials) error {
 	rider, err := x.deliveryClient.CreateRider(ctx, &pb.CreateRiderRequest{
-		RiderId:  user.ID,
-		Username: user.Username,
+		RiderId:     user.ID,
+		Username:    user.Username,
+		PhoneNumber: user.PhoneNumber,
 	})
 	if err != nil {
 		return err
