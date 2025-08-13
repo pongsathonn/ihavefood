@@ -9,6 +9,11 @@ use tokio::time::{sleep, Duration};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Code, Request, Response, Status};
 
+// fn customErr() {
+//     let st = Status::new(Code::Unimplemented, "TODO");
+//     Status::with_details(…)
+// }
+
 #[tonic::async_trait]
 impl DeliveryService for MyDelivery {
     type GetOrderTrackingStream = ReceiverStream<Result<GetOrderTrackingResponse, Status>>;
