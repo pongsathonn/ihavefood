@@ -62,7 +62,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 
 	if err := validateUser(in); err != nil {
 		slog.Error("failed to validate user", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "validation failed : %v", err)
+		return nil, status.Error(codes.InvalidArgument, "register validation failed")
 	}
 
 	hashPass, err := hashPassword(in.Password)
@@ -73,7 +73,8 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 
 	tx, err := x.store.Begin()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		slog.Error("failed to begin transaction", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
 	defer tx.Rollback()
 
@@ -85,14 +86,17 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		Role:        dbRoles(in.Role),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create user %v", err)
+		slog.Error("failed to create user", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to create user")
 	}
 
 	if err := x.dispatchCreation(ctx, in.Role, user); err != nil {
-		return nil, status.Errorf(codes.Internal, "downstream service creation failed: %v", err)
+		slog.Error("failed to dispatch creation", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to create user from downstream service")
 	}
 
 	if err := tx.Commit(); err != nil {
+		slog.Error("failed to commit transaction", "err", err)
 		return nil, status.Error(codes.Internal, "unable to commit register transaction")
 	}
 
