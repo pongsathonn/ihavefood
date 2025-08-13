@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 package ihavefood;
-
 option go_package =  "/genproto";
 
 message Address {
@@ -17,5 +16,3 @@ message Social {
     string instagram = 2;
     string line = 3;
 }
-
-

@@ -45,21 +45,3 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
 
 
 
-
-
-
-
-# gRPC error handling
-
-SEE: https://google.aip.dev/193#statusdetails
-
-- Code from [grpc status code](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md).
-- Message The message field is a developer-facing, human-readable "debug message"
-- Details type from [gRPC standard detail payloads](https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto)
-### for simplicity just use [ErrInfo](https://google.aip.dev/193#errorinfo)
-
-
-
-
-
-

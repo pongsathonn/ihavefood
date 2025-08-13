@@ -82,9 +82,8 @@ message RegisterRequest {
    Roles role = 5;
 }
 
-// uncomment RegisterResponse when gateway want to use this message
-// to config code response such as change success code RegisterResponse 
-// from 200 to 201.
+// uncomment this if gateway want to  config code response 
+// such as change success code from 200 to 201.
 //
 // message RegisterResponse {
 //    UserCredentials user = 1;
