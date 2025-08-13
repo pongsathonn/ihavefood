@@ -97,7 +97,7 @@ func main() {
 	storage := internal.NewStorage(db)
 
 	if err := internal.CreateSuperAdmin(storage); err != nil {
-		log.Printf("Failed to create admin user: %v", err)
+		slog.Error("Failed to create admin user", "err", err)
 	}
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
