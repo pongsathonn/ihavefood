@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"time"
@@ -19,6 +20,10 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	}))
+	slog.SetDefault(logger)
 
 	mongo := initMongoClient()
 
@@ -46,7 +51,7 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			log.Println("Successfully connected to RabbitMQ")
+			log.Print("Successfully connected to RabbitMQ")
 			return conn
 		}
 		if i == maxRetries {

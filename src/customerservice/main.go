@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"time"
@@ -82,6 +83,10 @@ func initPostgres() (*sql.DB, error) {
 }
 
 func startGRPCServer(s *internal.CustomerService) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	}))
+	slog.SetDefault(logger)
 
 	if s == nil {
 		log.Fatal("profile service instance is nil")
