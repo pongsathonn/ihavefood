@@ -186,7 +186,7 @@ services:
       - mynetwork
     ports:
       - "4047:4047"
-    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
+    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
     security_opt:
       - seccomp:unconfined
     depends_on:

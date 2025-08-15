@@ -42,7 +42,7 @@ func (x *OrderService) ListOrderHistory(ctx context.Context,
 
 	dbOrders, err := x.storage.ListPlaceOrders(ctx, in.CustomerId)
 	if err != nil {
-		slog.Error("retrive place order", "err", err)
+		slog.Error("failed to list place orders", "err", err)
 		return nil, status.Error(codes.Internal, "failed to retrieve customer's place orders")
 	}
 
@@ -63,7 +63,8 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 	in *pb.HandlePlaceOrderRequest) (*pb.PlaceOrder, error) {
 
 	if err := validatePlaceOrderRequest(in); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request: %v", err)
+		slog.Error("validation failed", "err", err)
+		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request")
 	}
 
 	// TODO validate place order fields valid such as customerID , restuarntName already exists
@@ -84,7 +85,8 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 
 	body, err := proto.Marshal(order)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to marshal: %v", err)
+		slog.Error("failed to marshal order", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to marshal")
 	}
 
 	err = x.rabbitmq.Publish(ctx, "order.placed.event", amqp.Publishing{
@@ -92,7 +94,8 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		Body: body,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to publish event: %v", err)
+		slog.Error("failed to publish an event", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to publish event")
 	}
 
 	slog.Info("published event", "orderId", order.OrderId)
