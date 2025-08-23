@@ -33,9 +33,6 @@ service AuthService {
     // verify token for role "admin,superadmin" returns true if token valid, otherwise false.
     rpc VerifyAdminToken(VerifyAdminTokenRequest) returns (VerifyAdminTokenResponse){}
 
-    // Check whether username already exists returns true if username already exists, otherwise false.
-    rpc CheckUsernameExists(CheckUsernameExistsRequest) returns (CheckUsernameExistsResponse) {}
-
     // only superadmin role can call this.
     rpc CreateAdmin(CreateAdminRequest) returns(UserCredentials){
         option (google.api.http) = {
@@ -74,55 +71,6 @@ enum Roles {
     ADMIN = 21;
 }
 
-enum Reason {
-    REASON_UNSPECIFIED = 0;
-    
-    // Invalid credentials provided (wrong username/password)
-    INVALID_CREDENTIALS = 1000;
-    INVALID_TOKEN = 1001;
-    TOKEN_EXPIRED = 1002;
-    // Token signature verification failed
-    TOKEN_SIGNATURE_INVALID = 1003;
-    // Required authentication header missing
-    MISSING_AUTH_HEADER = 1004;
-    // Invalid token format (Bearer token expected)
-    INVALID_TOKEN_FORMAT = 1005;
-    
-    // User doesn't have required role/permission
-    INSUFFICIENT_PERMISSIONS = 2000;
-    // Action requires admin role but user is not admin
-    ADMIN_ROLE_REQUIRED = 2001;
-    // Action requires super admin role but user is not super admin
-    SUPER_ADMIN_ROLE_REQUIRED = 2002;
-    // User role doesn't match expected role for this operation
-    ROLE_MISMATCH = 2003;
-    
-    // Required field is missing or empty
-    MISSING_REQUIRED_FIELD = 3000;
-    INVALID_FIELD_VALUE = 3001;
-    INVALID_USERNAME_FORMAT = 3002;
-    INVALID_EMAIL_FORMAT = 3003;
-    INVALID_PASSWORD_FORMAT = 3004;
-    INVALID_PHONE_FORMAT = 3005;
-    INVALID_ROLE = 3006;
-    INVALID_ADMIN_ROLE = 10000;
-    USERNAME_LENGTH_INVALID = 3007;
-    PASSWORD_TOO_SHORT = 3008;
-    PASSWORD_COMPLEXITY_INSUFFICIENT = 3009;
-    
-    USERNAME_ALREADY_EXISTS = 4000;
-    EMAIL_ALREADY_EXISTS = 4001;
-    PHONE_ALREADY_EXISTS = 4002;
-    USER_NOT_FOUND = 5000;
-    ADMIN_NOT_FOUND = 5001;
-    USERNAME_NOT_FOUND = 5002;
-    
-    INTERNAL_SERVER_ERROR = 8000;
-    DATABASE_ERROR = 8001;
-    EXTERNAL_SERVICE_UNAVAILABLE = 8002;
-    TOKEN_GENERATION_FAILED = 8003;
-    PASSWORD_HASHING_FAILED = 8004;
-}
 
 message RegisterRequest {
    string username = 1;
