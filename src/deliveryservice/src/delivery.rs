@@ -38,7 +38,7 @@ impl MyDelivery {
         {
             Ok(consumer) => consumer,
             Err(e) => {
-                error!("Failed to subscribe to delivery queue: {}", e);
+                error!("broker subscribe: {}", e);
                 return Ok(());
             }
         };
@@ -51,14 +51,14 @@ impl MyDelivery {
                 let _permit = match task_limiter.acquire().await {
                     Ok(permit) => permit,
                     Err(e) => {
-                        error!("Failed to acquire task permit: {}", e);
+                        error!("task limiter acquire: {}", e);
                         return;
                     }
                 };
 
                 if let Ok(delivery) = delivery {
                     if let Err(err) = delivery.ack(BasicAckOptions::default()).await {
-                        error!("Failed to ack:{}", err);
+                        error!("delivery ack:{}", err);
                         return;
                     }
 
@@ -67,7 +67,7 @@ impl MyDelivery {
                     let place_order = match PlaceOrder::decode(delivery.data.as_ref()) {
                         Ok(p) => p,
                         Err(e) => {
-                            error!("Failed to decode place order:{}", e);
+                            error!("decode place order:{}", e);
                             return;
                         }
                     };
@@ -75,7 +75,7 @@ impl MyDelivery {
                     let (riders, pickup_info) = match Self::prepare_order_delivery(&place_order) {
                         Ok(v) => v,
                         Err(e) => {
-                            error!("Failed to prepare order:{}", e);
+                            error!("prepare order delivery:{}", e);
                             return;
                         }
                     };
@@ -83,7 +83,7 @@ impl MyDelivery {
                     let pickup_location = match pickup_info.pickup_location {
                         Some(location) => location,
                         None => {
-                            error!("Empty pickup information");
+                            error!("no pickup information");
                             return;
                         }
                     };
@@ -91,7 +91,7 @@ impl MyDelivery {
                     let drop_off_location = match pickup_info.drop_off_location {
                         Some(location) => location,
                         None => {
-                            error!("Empty pickup information");
+                            error!("no drop off location");
                             return;
                         }
                     };
@@ -112,7 +112,7 @@ impl MyDelivery {
                         })
                         .await
                     {
-                        error!("Failed to create delivery record: {}", e);
+                        error!("database create delivery: {}", e);
                         return;
                     }
 

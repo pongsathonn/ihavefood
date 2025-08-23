@@ -62,7 +62,7 @@ impl DeliveryService for MyDelivery {
 
         let delivery_fee =
             Self::calc_delivery_fee(&customer_point, &merchant_point).map_err(|err| {
-                error!("Error: {err}");
+                error!("calculate delivery fee: {err}");
                 Status::new(Code::Internal, "failed to calculate delivery fee")
             })?;
 
@@ -80,7 +80,7 @@ impl DeliveryService for MyDelivery {
         {
             Ok(v) => v,
             Err(e) => {
-                error!("Failed to query:{}", e);
+                error!("database get delivery:{}", e);
                 return Err(Status::internal("Failed to get delivery"));
             }
         };
