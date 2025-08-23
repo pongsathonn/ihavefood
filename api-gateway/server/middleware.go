@@ -87,22 +87,6 @@ func (m *AuthMiddleware) validateRequest(next http.Handler) http.Handler {
 	})
 }
 
-// checkUserExists checks whether a user with the given username exists by
-// calling the AuthService. returns true if username already exists, otherwise
-// false
-func (m *AuthMiddleware) checkUsernameExists(username string) (bool, error) {
-
-	res, err := m.clientAuth.CheckUsernameExists(
-		context.TODO(),
-		&pb.CheckUsernameExistsRequest{Username: username},
-	)
-	if err != nil {
-		return false, err
-	}
-
-	return res.Exists, nil
-}
-
 // validateToken checks if the provided token is valid by calling the AuthService.
 func (m *AuthMiddleware) verifyUserToken(token string) (bool, error) {
 
