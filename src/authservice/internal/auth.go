@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,6 +21,8 @@ import (
 
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
+
+var ()
 
 type AuthStorer interface {
 	Begin() (*sql.Tx, error)
@@ -29,7 +32,6 @@ type AuthStorer interface {
 	Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
 	CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
-	CheckUsernameExists(ctx context.Context, username string) (bool, error)
 }
 
 type AuthService struct {
@@ -61,19 +63,19 @@ func NewAuthService(cfg *AuthCfg) *AuthService {
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
 
 	if err := validateUser(in); err != nil {
-		slog.Error("failed to validate user", "err", err)
-		return nil, status.Error(codes.InvalidArgument, "register validation failed")
+		slog.Error("validate new user", "err", err)
+		return nil, status.Errorf(codes.InvalidArgument, "register validation failed")
 	}
 
 	hashPass, err := hashPassword(in.Password)
 	if err != nil {
-		slog.Error("failed to hash password", "err", err)
+		slog.Error("hashing password", "err", err)
 		return nil, status.Error(codes.Internal, "hashing password failed")
 	}
 
 	tx, err := x.store.Begin()
 	if err != nil {
-		slog.Error("failed to begin transaction", "err", err)
+		slog.Error("begin transaction", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
 	defer tx.Rollback()
@@ -86,17 +88,22 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		Role:        dbRoles(in.Role),
 	})
 	if err != nil {
-		slog.Error("failed to create user", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to create user")
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return nil, errors.New("user already exists")
+		}
+
+		slog.Error("storage create new user", "err", err)
+		return nil, errors.New("failed to create new user")
 	}
 
 	if err := x.dispatchCreation(ctx, in.Role, user); err != nil {
-		slog.Error("failed to dispatch creation", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to create user from downstream service")
+		slog.Error("dispatch creation", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to create user from external service")
 	}
 
 	if err := tx.Commit(); err != nil {
-		slog.Error("failed to commit transaction", "err", err)
+		slog.Error("commit transaction", "err", err)
 		return nil, status.Error(codes.Internal, "unable to commit register transaction")
 	}
 
@@ -127,22 +134,26 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 
 	user, err := x.store.GetUserByIdentifier(ctx, in.Identifier)
 	if err != nil {
-		slog.Error("failed to find user credentials", "err", err)
-		return nil, errUserIncorrect
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		slog.Error("storage get user by identifier", "err", err)
+		return nil, status.Error(codes.Internal, "failed to get user by identifier")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPass), []byte(in.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return nil, errUserIncorrect
+			slog.Error("bcrypt error mismatch", "err", err)
+			return nil, status.Error(codes.InvalidArgument, "username or password incorrect")
 		}
 		slog.Error("bcrypt verification failed unexpectedly", "err", err)
-		return nil, status.Error(codes.Internal, "authentication failed due to server error")
+		return nil, status.Error(codes.Internal, "authentication failed")
 	}
 
 	token, exp, err := createNewToken(user.ID, pb.Roles(user.Role))
 	if err != nil {
-		slog.Error("generate new token", "err", err)
-		return nil, errGenerateToken
+		slog.Error("create new token", "err", err)
+		return nil, status.Error(codes.Internal, "failed to generate authentication token")
 	}
 
 	return &pb.LoginResponse{
@@ -154,12 +165,12 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 func (x *AuthService) VerifyUserToken(ctx context.Context, in *pb.VerifyUserTokenRequest) (*pb.VerifyUserTokenResponse, error) {
 
 	if in.AccessToken == "" {
-		return nil, errNoToken
+		return nil, status.Error(codes.InvalidArgument, "token must be provided")
 	}
 
 	if valid, err := verifyUserToken(in.AccessToken); !valid {
-		slog.Error("verify token", "err", err)
-		return nil, errInvalidToken
+		slog.Error("verify user token", "err", err)
+		return nil, status.Error(codes.Unauthenticated, "invalid user token")
 	}
 
 	return &pb.VerifyUserTokenResponse{Valid: true}, nil
@@ -168,31 +179,14 @@ func (x *AuthService) VerifyUserToken(ctx context.Context, in *pb.VerifyUserToke
 func (x *AuthService) VerifyAdminToken(ctx context.Context, in *pb.VerifyAdminTokenRequest) (*pb.VerifyAdminTokenResponse, error) {
 
 	if in.AccessToken == "" {
-		return nil, errNoToken
+		return nil, status.Error(codes.InvalidArgument, "token must be provided")
 	}
 
 	if valid, err := verifyAdminToken(in.AccessToken); !valid {
 		slog.Error("verify admin token", "err", err)
-		return nil, errInvalidToken
+		return nil, status.Error(codes.Unauthenticated, "invalid admin token")
 	}
 	return &pb.VerifyAdminTokenResponse{Valid: true}, nil
-}
-
-func (x *AuthService) CheckUsernameExists(ctx context.Context, in *pb.CheckUsernameExistsRequest) (*pb.CheckUsernameExistsResponse, error) {
-
-	// TODO validate request
-
-	exists, err := x.store.CheckUsernameExists(ctx, in.Username)
-	if err != nil {
-		slog.Error("failed to check existence user", "err", err)
-		return nil, status.Error(codes.Internal, "failed to check existence user")
-	}
-
-	if !exists {
-		return nil, errUserNotFound
-	}
-
-	return &pb.CheckUsernameExistsResponse{Exists: true}, nil
 }
 
 func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user *dbUserCredentials) error {
@@ -359,3 +353,17 @@ func hashPassword(password string) ([]byte, error) {
 	return hashedPass, nil
 
 }
+
+// func statusErrInfo(c codes.Code, msg string, reason pb.Reason, meta map[string]string) error {
+// 	st := status.New(c, msg)
+// 	wd, err := st.WithDetails(&epb.ErrorInfo{
+// 		Reason:   reason.String(),
+// 		Domain:   pb.AuthService_ServiceDesc.ServiceName,
+// 		Metadata: meta,
+// 	})
+// 	if err != nil {
+// 		return st.Err()
+// 	}
+//
+// 	return wd.Err()
+// }

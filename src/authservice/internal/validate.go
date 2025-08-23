@@ -9,39 +9,26 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-)
-
-var (
-	errUserIncorrect   = status.Error(codes.InvalidArgument, "username or password incorrect")
-	errUserNotFound    = status.Error(codes.NotFound, "user not found")
-	errPasswordHashing = status.Error(codes.Internal, "password hashing failed")
-
-	errNoToken       = status.Error(codes.InvalidArgument, "token must be provided")
-	errInvalidToken  = status.Error(codes.Unauthenticated, "invalid token")
-	errGenerateToken = status.Error(codes.Internal, "failed to generate authentication token")
 )
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
-func validateUser(in any) error {
-
-	registerRule := map[string]string{
+func SetupValidator() {
+	validate.RegisterStructValidationMapRules(map[string]string{
 		"Username":    "required,min=6,max=16,lowercase",
 		"Email":       "required,email",
 		"Password":    "required,vfpass,min=8,max=16",
 		"PhoneNumber": "required,vfphone",
-	}
-
-	validate.RegisterStructValidationMapRules(registerRule, pb.RegisterRequest{})
+	}, pb.RegisterRequest{})
 	// validate.RegisterStructValidationMapRules(rule2, nil)
 
 	// prefix vf = validate format
 	// Ex. vfpass validates password format
 	validate.RegisterValidation("vfpass", validatePassword)
 	validate.RegisterValidation("vfphone", validatePhone)
+}
 
+func validateUser(in any) error {
 	if err := validate.Struct(in); err != nil {
 		var errs []string
 		for _, v := range err.(validator.ValidationErrors) {

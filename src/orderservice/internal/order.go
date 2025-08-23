@@ -42,8 +42,8 @@ func (x *OrderService) ListOrderHistory(ctx context.Context,
 
 	dbOrders, err := x.storage.ListPlaceOrders(ctx, in.CustomerId)
 	if err != nil {
-		slog.Error("failed to list place orders", "err", err)
-		return nil, status.Error(codes.Internal, "failed to retrieve customer's place orders")
+		slog.Error("storage list place orders", "err", err)
+		return nil, status.Error(codes.Internal, "failed to list place orders")
 	}
 
 	var placeOrders []*pb.PlaceOrder
@@ -63,7 +63,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 	in *pb.HandlePlaceOrderRequest) (*pb.PlaceOrder, error) {
 
 	if err := validatePlaceOrderRequest(in); err != nil {
-		slog.Error("validation failed", "err", err)
+		slog.Error("validate place order request failed", "err", err)
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request")
 	}
 
@@ -71,22 +71,22 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 
 	orderID, err := x.storage.Create(ctx, prepareNewOrder(in))
 	if err != nil {
-		slog.Error("failed to insert place order", "err", err)
-		return nil, status.Error(codes.Internal, "failed to save place order")
+		slog.Error("storage create new order", "err", err)
+		return nil, status.Error(codes.Internal, "failed to create place order")
 	}
 
 	dbOrder, err := x.storage.GetPlaceOrder(ctx, orderID)
 	if err != nil {
-		slog.Error("failed to retrive place order", "err", err)
-		return nil, status.Error(codes.Internal, "failed to retrive place order")
+		slog.Error("storage get place order", "err", err)
+		return nil, status.Error(codes.Internal, "failed to get place order")
 	}
 
 	order := dbToProto(dbOrder)
 
 	body, err := proto.Marshal(order)
 	if err != nil {
-		slog.Error("failed to marshal order", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to marshal")
+		slog.Error("protobuf marshal failed", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to marshal place order")
 	}
 
 	err = x.rabbitmq.Publish(ctx, "order.placed.event", amqp.Publishing{
@@ -94,7 +94,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		Body: body,
 	})
 	if err != nil {
-		slog.Error("failed to publish an event", "err", err)
+		slog.Error("rabbitmq publish", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to publish event")
 	}
 

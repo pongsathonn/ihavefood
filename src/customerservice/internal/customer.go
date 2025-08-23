@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -31,11 +32,10 @@ func NewCustomerService(rabbitmq *rabbitMQ, store *customerStorage) *CustomerSer
 
 func (x *CustomerService) ListCustomers(ctx context.Context, in *pb.ListCustomersRequest) (*pb.ListCustomersResponse, error) {
 
-	// TODO validate input
-
 	results, err := x.store.listCustomers(ctx)
 	if err != nil {
-		return nil, err
+		slog.Error("storage list customers", "err", err)
+		return nil, status.Error(codes.Internal, "failed to list customers")
 	}
 
 	var customers []*pb.Customer
@@ -48,13 +48,13 @@ func (x *CustomerService) ListCustomers(ctx context.Context, in *pb.ListCustomer
 
 func (x *CustomerService) GetCustomer(ctx context.Context, in *pb.GetCustomerRequest) (*pb.Customer, error) {
 
-	//TODO validate
-
 	customer, err := x.store.getCustomer(ctx, in.CustomerId)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "customer not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get customer")
 	}
-
 	return dbToProto(customer), nil
 }
 
@@ -63,7 +63,7 @@ func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCusto
 	uuid, err := uuid.Parse(in.CustomerId)
 	if err != nil {
 		slog.Error("invalid uuid", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "invalid uuid customer id")
+		return nil, status.Error(codes.InvalidArgument, "invalid uuid customer id")
 	}
 
 	customerID, err := x.store.create(ctx, &newCustomer{
@@ -71,16 +71,15 @@ func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCusto
 		Username:   in.Username,
 	})
 	if err != nil {
-		slog.Error("failed to create user customer", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to create user customer")
+		slog.Error("storage create customer", "err", err)
+		return nil, status.Error(codes.Internal, "failed to create customer")
 	}
 
 	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
-		slog.Error("failed to retrive user customer", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive user customer")
+		slog.Error("storage get customer", "err", err)
+		return nil, status.Error(codes.Internal, "failed to get customer")
 	}
-
 	return dbToProto(customer), nil
 }
 
@@ -91,11 +90,11 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 	numAddr, err := x.store.countAddress(ctx, in.CustomerId)
 	if err != nil {
 		slog.Error("failed to count user customer address", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to count adress")
+		return nil, status.Error(codes.Internal, "failed to count adress")
 	}
 
 	if numAddr >= 5 {
-		return nil, status.Errorf(codes.ResourceExhausted, "user has reached the limit of five addresses")
+		return nil, status.Error(codes.ResourceExhausted, "user has reached the limit of five addresses")
 	}
 
 	customerID, err := x.store.createAddress(ctx, in.CustomerId, &dbAddress{
@@ -107,14 +106,14 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 	})
 	if err != nil {
 		slog.Error("failed to update customer address", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to update adress")
+		return nil, status.Error(codes.Internal, "failed to update adress")
 	}
 
 	// edge case: if customerID not exists it will return nil customer as nil
 	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
-		slog.Error("failed to retrive customer", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive customer")
+		slog.Error("failed to get customer", "err", err)
+		return nil, status.Error(codes.Internal, "failed to get customer")
 	}
 
 	return dbToProto(customer), nil
@@ -137,13 +136,13 @@ func (x *CustomerService) UpdateCustomer(ctx context.Context, in *pb.UpdateCusto
 	customerID, err := x.store.update(ctx, in.CustomerId, update)
 	if err != nil {
 		slog.Error("failed to update customer", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to update customer")
+		return nil, status.Error(codes.Internal, "failed to update customer")
 	}
 
 	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
-		slog.Error("failed to retrive customer", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrive customer")
+		slog.Error("failed to get customer", "err", err)
+		return nil, status.Error(codes.Internal, "failed to get customer")
 	}
 
 	return dbToProto(customer), nil
@@ -157,7 +156,7 @@ func (x *CustomerService) DeleteCustomer(ctx context.Context, in *pb.DeleteCusto
 	err := x.store.remove(ctx, in.CustomerId)
 	if err != nil {
 		slog.Error("delete user customer", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to delete user")
+		return nil, status.Error(codes.Internal, "failed to delete user")
 	}
 
 	return &emptypb.Empty{}, nil

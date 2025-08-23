@@ -3,12 +3,9 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"github.com/lib/pq"
 	"log/slog"
 )
-
-var ErrCustomerNotFound = errors.New("customer not found")
 
 func NewCustomerStorage(db *sql.DB) *customerStorage {
 	return &customerStorage{db: db}
@@ -125,9 +122,6 @@ func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*
 		&customer.CreateTime,
 		&customer.UpdateTime,
 	); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrCustomerNotFound
-		}
 		return nil, err
 	}
 

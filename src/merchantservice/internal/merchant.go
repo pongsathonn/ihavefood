@@ -3,11 +3,13 @@ package internal
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -42,8 +44,8 @@ func (x *MerchantService) ListMerchant(ctx context.Context, empty *emptypb.Empty
 
 	results, err := x.storage.ListMerchants(ctx)
 	if err != nil {
-		slog.Error("failed to retrive merchants", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrieve merchants")
+		slog.Error("storage list merchants", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to list merchants")
 	}
 
 	var merchants []*pb.Merchant
@@ -65,8 +67,11 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 
 	merchant, err := x.storage.GetMerchant(ctx, uuid.String())
 	if err != nil {
-		slog.Error("failed to retrive merchant", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to retrieve merchant")
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, status.Error(codes.NotFound, "merchant not found")
+		}
+		slog.Error("storage get merchant", "err", err)
+		return nil, status.Error(codes.Internal, "failed to retrieve merchant")
 	}
 	return dbToProto(merchant), nil
 }
@@ -81,7 +86,7 @@ func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerch
 
 	merchant, err := x.storage.SaveMerchant(ctx, uuid.String(), in.MerchantName)
 	if err != nil {
-		slog.Error("failed to save merchant", "err", err)
+		slog.Error("storage save merchant", "err", err)
 		return nil, status.Errorf(codes.Internal, "failed to save merchant")
 	}
 
@@ -112,8 +117,8 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 
 	createdMenu, err := x.storage.CreateMenu(ctx, uuid.String(), newMenu)
 	if err != nil {
-		slog.Error("failed to save menu", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to save menu in database")
+		slog.Error("storage create menu", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to create menu")
 	}
 
 	var menu []*pb.MenuItem
@@ -145,8 +150,8 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 		IsAvailable: in.IsAvailable,
 	})
 	if err != nil {
-		slog.Error("failed to update menu", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to update menu in database")
+		slog.Error("storage update menu item", "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to update menu item")
 	}
 
 	return &pb.MenuItem{

@@ -225,18 +225,3 @@ func (s *storage) Delete(ctx context.Context, userID uuid.UUID) error {
 
 	return nil
 }
-
-// CheckUsernameExists checks if the provided username already exists.
-// It returns true if the username exists, false if it does not exist,
-// and an error if any issues occur during the query process.
-func (s *storage) CheckUsernameExists(ctx context.Context, username string) (bool, error) {
-
-	query := `SELECT EXISTS (SELECT 1 FROM credentials WHERE username=$1);`
-
-	var exists bool
-	if err := s.db.QueryRowContext(ctx, query, username).Scan(&exists); err != nil {
-		return false, err
-	}
-
-	return exists, nil
-}

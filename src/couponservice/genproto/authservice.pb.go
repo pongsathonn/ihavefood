@@ -82,154 +82,6 @@ func (Roles) EnumDescriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{0}
 }
 
-type Reason int32
-
-const (
-	Reason_REASON_UNSPECIFIED Reason = 0
-	// Invalid credentials provided (wrong username/password)
-	Reason_INVALID_CREDENTIALS Reason = 1000
-	Reason_INVALID_TOKEN       Reason = 1001
-	Reason_TOKEN_EXPIRED       Reason = 1002
-	// Token signature verification failed
-	Reason_TOKEN_SIGNATURE_INVALID Reason = 1003
-	// Required authentication header missing
-	Reason_MISSING_AUTH_HEADER Reason = 1004
-	// Invalid token format (Bearer token expected)
-	Reason_INVALID_TOKEN_FORMAT Reason = 1005
-	// User doesn't have required role/permission
-	Reason_INSUFFICIENT_PERMISSIONS Reason = 2000
-	// Action requires admin role but user is not admin
-	Reason_ADMIN_ROLE_REQUIRED Reason = 2001
-	// Action requires super admin role but user is not super admin
-	Reason_SUPER_ADMIN_ROLE_REQUIRED Reason = 2002
-	// User role doesn't match expected role for this operation
-	Reason_ROLE_MISMATCH Reason = 2003
-	// Required field is missing or empty
-	Reason_MISSING_REQUIRED_FIELD           Reason = 3000
-	Reason_INVALID_FIELD_VALUE              Reason = 3001
-	Reason_INVALID_USERNAME_FORMAT          Reason = 3002
-	Reason_INVALID_EMAIL_FORMAT             Reason = 3003
-	Reason_INVALID_PASSWORD_FORMAT          Reason = 3004
-	Reason_INVALID_PHONE_FORMAT             Reason = 3005
-	Reason_INVALID_ROLE                     Reason = 3006
-	Reason_INVALID_ADMIN_ROLE               Reason = 10000
-	Reason_USERNAME_LENGTH_INVALID          Reason = 3007
-	Reason_PASSWORD_TOO_SHORT               Reason = 3008
-	Reason_PASSWORD_COMPLEXITY_INSUFFICIENT Reason = 3009
-	Reason_USERNAME_ALREADY_EXISTS          Reason = 4000
-	Reason_EMAIL_ALREADY_EXISTS             Reason = 4001
-	Reason_PHONE_ALREADY_EXISTS             Reason = 4002
-	Reason_USER_NOT_FOUND                   Reason = 5000
-	Reason_ADMIN_NOT_FOUND                  Reason = 5001
-	Reason_USERNAME_NOT_FOUND               Reason = 5002
-	Reason_INTERNAL_SERVER_ERROR            Reason = 8000
-	Reason_DATABASE_ERROR                   Reason = 8001
-	Reason_EXTERNAL_SERVICE_UNAVAILABLE     Reason = 8002
-	Reason_TOKEN_GENERATION_FAILED          Reason = 8003
-	Reason_PASSWORD_HASHING_FAILED          Reason = 8004
-)
-
-// Enum value maps for Reason.
-var (
-	Reason_name = map[int32]string{
-		0:     "REASON_UNSPECIFIED",
-		1000:  "INVALID_CREDENTIALS",
-		1001:  "INVALID_TOKEN",
-		1002:  "TOKEN_EXPIRED",
-		1003:  "TOKEN_SIGNATURE_INVALID",
-		1004:  "MISSING_AUTH_HEADER",
-		1005:  "INVALID_TOKEN_FORMAT",
-		2000:  "INSUFFICIENT_PERMISSIONS",
-		2001:  "ADMIN_ROLE_REQUIRED",
-		2002:  "SUPER_ADMIN_ROLE_REQUIRED",
-		2003:  "ROLE_MISMATCH",
-		3000:  "MISSING_REQUIRED_FIELD",
-		3001:  "INVALID_FIELD_VALUE",
-		3002:  "INVALID_USERNAME_FORMAT",
-		3003:  "INVALID_EMAIL_FORMAT",
-		3004:  "INVALID_PASSWORD_FORMAT",
-		3005:  "INVALID_PHONE_FORMAT",
-		3006:  "INVALID_ROLE",
-		10000: "INVALID_ADMIN_ROLE",
-		3007:  "USERNAME_LENGTH_INVALID",
-		3008:  "PASSWORD_TOO_SHORT",
-		3009:  "PASSWORD_COMPLEXITY_INSUFFICIENT",
-		4000:  "USERNAME_ALREADY_EXISTS",
-		4001:  "EMAIL_ALREADY_EXISTS",
-		4002:  "PHONE_ALREADY_EXISTS",
-		5000:  "USER_NOT_FOUND",
-		5001:  "ADMIN_NOT_FOUND",
-		5002:  "USERNAME_NOT_FOUND",
-		8000:  "INTERNAL_SERVER_ERROR",
-		8001:  "DATABASE_ERROR",
-		8002:  "EXTERNAL_SERVICE_UNAVAILABLE",
-		8003:  "TOKEN_GENERATION_FAILED",
-		8004:  "PASSWORD_HASHING_FAILED",
-	}
-	Reason_value = map[string]int32{
-		"REASON_UNSPECIFIED":               0,
-		"INVALID_CREDENTIALS":              1000,
-		"INVALID_TOKEN":                    1001,
-		"TOKEN_EXPIRED":                    1002,
-		"TOKEN_SIGNATURE_INVALID":          1003,
-		"MISSING_AUTH_HEADER":              1004,
-		"INVALID_TOKEN_FORMAT":             1005,
-		"INSUFFICIENT_PERMISSIONS":         2000,
-		"ADMIN_ROLE_REQUIRED":              2001,
-		"SUPER_ADMIN_ROLE_REQUIRED":        2002,
-		"ROLE_MISMATCH":                    2003,
-		"MISSING_REQUIRED_FIELD":           3000,
-		"INVALID_FIELD_VALUE":              3001,
-		"INVALID_USERNAME_FORMAT":          3002,
-		"INVALID_EMAIL_FORMAT":             3003,
-		"INVALID_PASSWORD_FORMAT":          3004,
-		"INVALID_PHONE_FORMAT":             3005,
-		"INVALID_ROLE":                     3006,
-		"INVALID_ADMIN_ROLE":               10000,
-		"USERNAME_LENGTH_INVALID":          3007,
-		"PASSWORD_TOO_SHORT":               3008,
-		"PASSWORD_COMPLEXITY_INSUFFICIENT": 3009,
-		"USERNAME_ALREADY_EXISTS":          4000,
-		"EMAIL_ALREADY_EXISTS":             4001,
-		"PHONE_ALREADY_EXISTS":             4002,
-		"USER_NOT_FOUND":                   5000,
-		"ADMIN_NOT_FOUND":                  5001,
-		"USERNAME_NOT_FOUND":               5002,
-		"INTERNAL_SERVER_ERROR":            8000,
-		"DATABASE_ERROR":                   8001,
-		"EXTERNAL_SERVICE_UNAVAILABLE":     8002,
-		"TOKEN_GENERATION_FAILED":          8003,
-		"PASSWORD_HASHING_FAILED":          8004,
-	}
-)
-
-func (x Reason) Enum() *Reason {
-	p := new(Reason)
-	*p = x
-	return p
-}
-
-func (x Reason) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Reason) Descriptor() protoreflect.EnumDescriptor {
-	return file_authservice_proto_enumTypes[1].Descriptor()
-}
-
-func (Reason) Type() protoreflect.EnumType {
-	return &file_authservice_proto_enumTypes[1]
-}
-
-func (x Reason) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Reason.Descriptor instead.
-func (Reason) EnumDescriptor() ([]byte, []int) {
-	return file_authservice_proto_rawDescGZIP(), []int{1}
-}
-
 type UserCredentials struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -907,47 +759,12 @@ const file_authservice_proto_rawDesc = "" +
 	"\bMERCHANT\x10\x02\x12\t\n" +
 	"\x05RIDER\x10\x03\x12\x0f\n" +
 	"\vSUPER_ADMIN\x10\x14\x12\t\n" +
-	"\x05ADMIN\x10\x15*\xfd\x06\n" +
-	"\x06Reason\x12\x16\n" +
-	"\x12REASON_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x13INVALID_CREDENTIALS\x10\xe8\a\x12\x12\n" +
-	"\rINVALID_TOKEN\x10\xe9\a\x12\x12\n" +
-	"\rTOKEN_EXPIRED\x10\xea\a\x12\x1c\n" +
-	"\x17TOKEN_SIGNATURE_INVALID\x10\xeb\a\x12\x18\n" +
-	"\x13MISSING_AUTH_HEADER\x10\xec\a\x12\x19\n" +
-	"\x14INVALID_TOKEN_FORMAT\x10\xed\a\x12\x1d\n" +
-	"\x18INSUFFICIENT_PERMISSIONS\x10\xd0\x0f\x12\x18\n" +
-	"\x13ADMIN_ROLE_REQUIRED\x10\xd1\x0f\x12\x1e\n" +
-	"\x19SUPER_ADMIN_ROLE_REQUIRED\x10\xd2\x0f\x12\x12\n" +
-	"\rROLE_MISMATCH\x10\xd3\x0f\x12\x1b\n" +
-	"\x16MISSING_REQUIRED_FIELD\x10\xb8\x17\x12\x18\n" +
-	"\x13INVALID_FIELD_VALUE\x10\xb9\x17\x12\x1c\n" +
-	"\x17INVALID_USERNAME_FORMAT\x10\xba\x17\x12\x19\n" +
-	"\x14INVALID_EMAIL_FORMAT\x10\xbb\x17\x12\x1c\n" +
-	"\x17INVALID_PASSWORD_FORMAT\x10\xbc\x17\x12\x19\n" +
-	"\x14INVALID_PHONE_FORMAT\x10\xbd\x17\x12\x11\n" +
-	"\fINVALID_ROLE\x10\xbe\x17\x12\x17\n" +
-	"\x12INVALID_ADMIN_ROLE\x10\x90N\x12\x1c\n" +
-	"\x17USERNAME_LENGTH_INVALID\x10\xbf\x17\x12\x17\n" +
-	"\x12PASSWORD_TOO_SHORT\x10\xc0\x17\x12%\n" +
-	" PASSWORD_COMPLEXITY_INSUFFICIENT\x10\xc1\x17\x12\x1c\n" +
-	"\x17USERNAME_ALREADY_EXISTS\x10\xa0\x1f\x12\x19\n" +
-	"\x14EMAIL_ALREADY_EXISTS\x10\xa1\x1f\x12\x19\n" +
-	"\x14PHONE_ALREADY_EXISTS\x10\xa2\x1f\x12\x13\n" +
-	"\x0eUSER_NOT_FOUND\x10\x88'\x12\x14\n" +
-	"\x0fADMIN_NOT_FOUND\x10\x89'\x12\x17\n" +
-	"\x12USERNAME_NOT_FOUND\x10\x8a'\x12\x1a\n" +
-	"\x15INTERNAL_SERVER_ERROR\x10\xc0>\x12\x13\n" +
-	"\x0eDATABASE_ERROR\x10\xc1>\x12!\n" +
-	"\x1cEXTERNAL_SERVICE_UNAVAILABLE\x10\xc2>\x12\x1c\n" +
-	"\x17TOKEN_GENERATION_FAILED\x10\xc3>\x12\x1c\n" +
-	"\x17PASSWORD_HASHING_FAILED\x10\xc4>2\xc5\x04\n" +
+	"\x05ADMIN\x10\x152\xdd\x03\n" +
 	"\vAuthService\x12]\n" +
 	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12R\n" +
 	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12Z\n" +
 	"\x0fVerifyUserToken\x12!.ihavefood.VerifyUserTokenRequest\x1a\".ihavefood.VerifyUserTokenResponse\"\x00\x12]\n" +
-	"\x10VerifyAdminToken\x12\".ihavefood.VerifyAdminTokenRequest\x1a#.ihavefood.VerifyAdminTokenResponse\"\x00\x12f\n" +
-	"\x13CheckUsernameExists\x12%.ihavefood.CheckUsernameExistsRequest\x1a&.ihavefood.CheckUsernameExistsResponse\"\x00\x12`\n" +
+	"\x10VerifyAdminToken\x12\".ihavefood.VerifyAdminTokenRequest\x1a#.ihavefood.VerifyAdminTokenResponse\"\x00\x12`\n" +
 	"\vCreateAdmin\x12\x1d.ihavefood.CreateAdminRequest\x1a\x1a.ihavefood.UserCredentials\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/adminB\vZ\t/genprotob\x06proto3"
 
 var (
@@ -962,44 +779,41 @@ func file_authservice_proto_rawDescGZIP() []byte {
 	return file_authservice_proto_rawDescData
 }
 
-var file_authservice_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_authservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_authservice_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_authservice_proto_goTypes = []any{
 	(Roles)(0),                          // 0: ihavefood.Roles
-	(Reason)(0),                         // 1: ihavefood.Reason
-	(*UserCredentials)(nil),             // 2: ihavefood.UserCredentials
-	(*RegisterRequest)(nil),             // 3: ihavefood.RegisterRequest
-	(*LoginRequest)(nil),                // 4: ihavefood.LoginRequest
-	(*LoginResponse)(nil),               // 5: ihavefood.LoginResponse
-	(*VerifyUserTokenRequest)(nil),      // 6: ihavefood.VerifyUserTokenRequest
-	(*VerifyUserTokenResponse)(nil),     // 7: ihavefood.VerifyUserTokenResponse
-	(*VerifyAdminTokenRequest)(nil),     // 8: ihavefood.VerifyAdminTokenRequest
-	(*VerifyAdminTokenResponse)(nil),    // 9: ihavefood.VerifyAdminTokenResponse
-	(*CheckUsernameExistsRequest)(nil),  // 10: ihavefood.CheckUsernameExistsRequest
-	(*CheckUsernameExistsResponse)(nil), // 11: ihavefood.CheckUsernameExistsResponse
-	(*CreateAdminRequest)(nil),          // 12: ihavefood.CreateAdminRequest
-	(*timestamppb.Timestamp)(nil),       // 13: google.protobuf.Timestamp
+	(*UserCredentials)(nil),             // 1: ihavefood.UserCredentials
+	(*RegisterRequest)(nil),             // 2: ihavefood.RegisterRequest
+	(*LoginRequest)(nil),                // 3: ihavefood.LoginRequest
+	(*LoginResponse)(nil),               // 4: ihavefood.LoginResponse
+	(*VerifyUserTokenRequest)(nil),      // 5: ihavefood.VerifyUserTokenRequest
+	(*VerifyUserTokenResponse)(nil),     // 6: ihavefood.VerifyUserTokenResponse
+	(*VerifyAdminTokenRequest)(nil),     // 7: ihavefood.VerifyAdminTokenRequest
+	(*VerifyAdminTokenResponse)(nil),    // 8: ihavefood.VerifyAdminTokenResponse
+	(*CheckUsernameExistsRequest)(nil),  // 9: ihavefood.CheckUsernameExistsRequest
+	(*CheckUsernameExistsResponse)(nil), // 10: ihavefood.CheckUsernameExistsResponse
+	(*CreateAdminRequest)(nil),          // 11: ihavefood.CreateAdminRequest
+	(*timestamppb.Timestamp)(nil),       // 12: google.protobuf.Timestamp
 }
 var file_authservice_proto_depIdxs = []int32{
 	0,  // 0: ihavefood.UserCredentials.role:type_name -> ihavefood.Roles
-	13, // 1: ihavefood.UserCredentials.create_time:type_name -> google.protobuf.Timestamp
-	13, // 2: ihavefood.UserCredentials.update_time:type_name -> google.protobuf.Timestamp
+	12, // 1: ihavefood.UserCredentials.create_time:type_name -> google.protobuf.Timestamp
+	12, // 2: ihavefood.UserCredentials.update_time:type_name -> google.protobuf.Timestamp
 	0,  // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
 	0,  // 4: ihavefood.LoginRequest.role:type_name -> ihavefood.Roles
-	3,  // 5: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
-	4,  // 6: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
-	6,  // 7: ihavefood.AuthService.VerifyUserToken:input_type -> ihavefood.VerifyUserTokenRequest
-	8,  // 8: ihavefood.AuthService.VerifyAdminToken:input_type -> ihavefood.VerifyAdminTokenRequest
-	10, // 9: ihavefood.AuthService.CheckUsernameExists:input_type -> ihavefood.CheckUsernameExistsRequest
-	12, // 10: ihavefood.AuthService.CreateAdmin:input_type -> ihavefood.CreateAdminRequest
-	2,  // 11: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
-	5,  // 12: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
-	7,  // 13: ihavefood.AuthService.VerifyUserToken:output_type -> ihavefood.VerifyUserTokenResponse
-	9,  // 14: ihavefood.AuthService.VerifyAdminToken:output_type -> ihavefood.VerifyAdminTokenResponse
-	11, // 15: ihavefood.AuthService.CheckUsernameExists:output_type -> ihavefood.CheckUsernameExistsResponse
-	2,  // 16: ihavefood.AuthService.CreateAdmin:output_type -> ihavefood.UserCredentials
-	11, // [11:17] is the sub-list for method output_type
-	5,  // [5:11] is the sub-list for method input_type
+	2,  // 5: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
+	3,  // 6: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
+	5,  // 7: ihavefood.AuthService.VerifyUserToken:input_type -> ihavefood.VerifyUserTokenRequest
+	7,  // 8: ihavefood.AuthService.VerifyAdminToken:input_type -> ihavefood.VerifyAdminTokenRequest
+	11, // 9: ihavefood.AuthService.CreateAdmin:input_type -> ihavefood.CreateAdminRequest
+	1,  // 10: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
+	4,  // 11: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
+	6,  // 12: ihavefood.AuthService.VerifyUserToken:output_type -> ihavefood.VerifyUserTokenResponse
+	8,  // 13: ihavefood.AuthService.VerifyAdminToken:output_type -> ihavefood.VerifyAdminTokenResponse
+	1,  // 14: ihavefood.AuthService.CreateAdmin:output_type -> ihavefood.UserCredentials
+	10, // [10:15] is the sub-list for method output_type
+	5,  // [5:10] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -1015,7 +829,7 @@ func file_authservice_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_authservice_proto_rawDesc), len(file_authservice_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
