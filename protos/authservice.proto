@@ -5,9 +5,8 @@ package ihavefood;
 option go_package =  "/genproto";
 
 import "google/api/annotations.proto";
-// import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 // ---------------------AUTH SERVICE------------------------------
 // Manages user credentials
@@ -18,13 +17,19 @@ service AuthService {
             post: "/auth/register" 
             body: "*"
         };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            security: { } // Disable security key
+        };
     }
 
     rpc Login(LoginRequest) returns(LoginResponse){
-      option (google.api.http) = {
-        post: "/auth/login" 
-        body: "*"
-      };
+        option (google.api.http) = {
+            post: "/auth/login" 
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            security: { } // Disable security key
+        };
     }
 
     // verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
@@ -50,10 +55,13 @@ service AuthService {
 }
 
 message UserCredentials {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"username\": \"anurak\", \"email\": \"anurak@example.co.th\", \"phone_number\": \"+66812345678\", \"role\": \"CUSTOMER\", \"create_time\": \"2025-08-26T14:00:00Z\", \"update_time\": \"2025-08-26T14:00:00Z\"}"
+    };
+
     string id = 1;
     string username = 2;
     string email = 3;
-    string password = 4;
     string phone_number = 5;
     Roles role = 6;
     google.protobuf.Timestamp create_time = 7;
@@ -73,6 +81,9 @@ enum Roles {
 
 
 message RegisterRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        example: "{\"username\": \"somsak\", \"email\": \"somsak@example.com\", \"password\": \"sSecret88\", \"phone_number\": \"+66812345678\", \"role\": 1}"
+    };
    string username = 1;
    string email = 2;
    string password = 3;
