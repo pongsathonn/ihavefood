@@ -1,0 +1,1496 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "IHAVEFOOD",
+    "description": "TODO",
+    "version": "0.1"
+  },
+  "tags": [
+    {
+      "name": "CustomerService"
+    },
+    {
+      "name": "AuthService"
+    },
+    {
+      "name": "MerchantService"
+    },
+    {
+      "name": "DeliveryService"
+    },
+    {
+      "name": "OrderService"
+    },
+    {
+      "name": "CouponService"
+    }
+  ],
+  "host": "localhost:9999",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/coupons": {
+      "get": {
+        "summary": "ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.\nThis method is intended to be used by the frontend to display a list of all coupons to customers, \nregardless of their validity or availability.",
+        "description": "TODO: In the future, this method might be updated to list coupons by other condition,\nbut currently, it responds with all coupons.",
+        "operationId": "CouponService_ListCoupons",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListCouponsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "tags": [
+          "CouponService"
+        ]
+      },
+      "post": {
+        "summary": "AddCoupon creates a new coupon with the specified details. There are two types of coupons:\nDiscount and Free. The discount value for Discount type coupons must be between 1 and 99.\nIf the coupon type is Free, the discount field is ignored and automatically set to zero.",
+        "operationId": "CouponService_AddCoupon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Coupon"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddCouponRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CouponService"
+        ]
+      }
+    },
+    "/api/coupons/{code}": {
+      "get": {
+        "summary": "GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and \nhas sufficient quantity.",
+        "operationId": "CouponService_GetCoupon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Coupon"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CouponService"
+        ]
+      }
+    },
+    "/api/customers": {
+      "get": {
+        "operationId": "CustomerService_ListCustomers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListCustomersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/customers/{customerId}": {
+      "get": {
+        "operationId": "CustomerService_GetCustomer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      },
+      "delete": {
+        "operationId": "CustomerService_DeleteCustomer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      },
+      "patch": {
+        "operationId": "CustomerService_UpdateCustomer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateCustomerBody"
+            }
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/customers/{customerId}/address": {
+      "post": {
+        "summary": "CreateAddress creates new address to exists uer customer.",
+        "operationId": "CustomerService_CreateAddress",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateAddressBody"
+            }
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/deliveries/fee": {
+      "get": {
+        "summary": "GetDeliveryFee calculates and returns the delivery fee based on the distance\nbetween the customer's location and the merchant's location.",
+        "operationId": "DeliveryService_GetDeliveryFee",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/GetDeliveryFeeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantLat",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "merchantLong",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "customerLat",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "customerLong",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          }
+        ],
+        "tags": [
+          "DeliveryService"
+        ]
+      }
+    },
+    "/api/deliveries/{orderId}/accept": {
+      "patch": {
+        "summary": "ConfirmRiderAccept updates the order with the rider who accepted it and returns \nthe pickup information.",
+        "operationId": "DeliveryService_ConfirmRiderAccept",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/PickupInfo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "riderId",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "DeliveryService"
+        ]
+      }
+    },
+    "/api/deliveries/{orderId}/deliver": {
+      "patch": {
+        "summary": "ConfirmOrderDeliver updates the delivery status after rider has delivered.",
+        "operationId": "DeliveryService_ConfirmOrderDeliver",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DeliveryService"
+        ]
+      }
+    },
+    "/api/merchants": {
+      "get": {
+        "operationId": "MerchantService_ListMerchants",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListMerchantsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/merchants/{merchantId}": {
+      "get": {
+        "operationId": "MerchantService_GetMerchant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Merchant"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      },
+      "patch": {
+        "operationId": "MerchantService_UpdateMerchant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Merchant"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateMerchantBody"
+            }
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/merchants/{merchantId}/menu": {
+      "post": {
+        "summary": "Menu management",
+        "operationId": "MerchantService_CreateMenu",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CreateMenuResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateMenuBody"
+            }
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/merchants/{merchantId}/menu/items/{itemId}": {
+      "patch": {
+        "operationId": "MerchantService_UpdateMenuItem",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/MenuItem"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateMenuItemBody"
+            }
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/orders/place_order": {
+      "post": {
+        "summary": "HandlePlaceOrder handle incoming order from client",
+        "operationId": "OrderService_HandlePlaceOrder",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/PlaceOrder"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HandlePlaceOrderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "OrderService"
+        ]
+      }
+    },
+    "/api/orders/{customerId}": {
+      "get": {
+        "summary": "ListOrderHistory retrives Customer's place order history by CustomerID",
+        "operationId": "OrderService_ListOrderHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListOrderHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "OrderService"
+        ]
+      }
+    },
+    "/auth/admin": {
+      "post": {
+        "summary": "only superadmin role can call this.",
+        "operationId": "AuthService_CreateAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/UserCredentials"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateAdminRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthService_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthService_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/UserCredentials"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    }
+  },
+  "definitions": {
+    "AddCouponRequest": {
+      "type": "object",
+      "properties": {
+        "couponTypes": {
+          "$ref": "#/definitions/CouponTypes"
+        },
+        "discount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "expireInHour": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The coupon expiration time in hours from now.\nFor example expire_in_hour is 72 means the coupon will be expired\nin 3 days (72 hours) from now."
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "addressName": {
+          "type": "string"
+        },
+        "subDistrict": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        }
+      }
+    },
+    "Any": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "ContactInfo": {
+      "type": "object",
+      "properties": {
+        "phoneNumber": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "Coupon": {
+      "type": "object",
+      "properties": {
+        "types": {
+          "$ref": "#/definitions/CouponTypes"
+        },
+        "code": {
+          "type": "string"
+        },
+        "discount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.\nThe server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY."
+        },
+        "expiresIn": {
+          "type": "string",
+          "format": "int64",
+          "description": "Number of seconds until the coupon expires."
+        },
+        "quantityCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "CouponTypes": {
+      "type": "string",
+      "enum": [
+        "COUPON_TYPE_UNSPECIFICED",
+        "COUPON_TYPE_DISCOUNT",
+        "COUPON_TYPE_FREE_DELIVERY"
+      ],
+      "default": "COUPON_TYPE_UNSPECIFICED",
+      "description": " - COUPON_TYPE_DISCOUNT: Discount is a fixed amount, not a percentage."
+    },
+    "CreateAddressBody": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        }
+      }
+    },
+    "CreateAdminRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        }
+      }
+    },
+    "CreateMenuBody": {
+      "type": "object",
+      "properties": {
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        }
+      }
+    },
+    "CreateMenuResponse": {
+      "type": "object",
+      "properties": {
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        }
+      }
+    },
+    "Customer": {
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string",
+          "title": "bytes picture = 3;"
+        },
+        "social": {
+          "$ref": "#/definitions/Social"
+        },
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Address"
+          },
+          "title": "User can have many address"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "GetDeliveryFeeResponse": {
+      "type": "object",
+      "properties": {
+        "deliveryFee": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "GetOrderTrackingResponse": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string"
+        },
+        "riderId": {
+          "type": "string"
+        },
+        "riderLocation": {
+          "$ref": "#/definitions/Point"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the most recent update to the rider's location."
+        }
+      }
+    },
+    "HandlePlaceOrderRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "customerId": {
+          "type": "string"
+        },
+        "merchantId": {
+          "type": "string"
+        },
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        },
+        "couponCode": {
+          "type": "string"
+        },
+        "couponDiscount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "deliveryFee": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "merchantAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "customerContact": {
+          "$ref": "#/definitions/ContactInfo"
+        },
+        "paymentMethods": {
+          "$ref": "#/definitions/PaymentMethods"
+        }
+      }
+    },
+    "ListCouponsResponse": {
+      "type": "object",
+      "properties": {
+        "coupons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Coupon"
+          }
+        }
+      }
+    },
+    "ListCustomersResponse": {
+      "type": "object",
+      "properties": {
+        "customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Customer"
+          }
+        }
+      }
+    },
+    "ListMerchantsResponse": {
+      "type": "object",
+      "properties": {
+        "merchants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Merchant"
+          }
+        }
+      }
+    },
+    "ListOrderHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "placeOrders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PlaceOrder"
+          }
+        }
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "title": "username,email, or phone"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/Roles"
+        }
+      }
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string",
+          "description": "Access token. Valid for 30 days."
+        },
+        "expiresIn": {
+          "type": "string",
+          "format": "int64",
+          "description": "Number of seconds until the access token expires."
+        }
+      }
+    },
+    "MenuItem": {
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string"
+        },
+        "foodName": {
+          "type": "string"
+        },
+        "price": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isAvailable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Merchant": {
+      "type": "object",
+      "properties": {
+        "merchantId": {
+          "type": "string"
+        },
+        "merchantName": {
+          "type": "string"
+        },
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        },
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/StoreStatus"
+        }
+      }
+    },
+    "OrderStatus": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "PREPARING_ORDER",
+        "FINDING_RIDER",
+        "WAIT_FOR_PICKUP",
+        "ONGOING",
+        "DELIVERED",
+        "CANCELLED"
+      ],
+      "default": "PENDING"
+    },
+    "OrderTimestamps": {
+      "type": "object",
+      "properties": {
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completeTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "PaymentMethods": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_METHOD_UNSPECIFIED",
+        "PAYMENT_METHOD_CASH",
+        "PAYMENT_METHOD_CREDIT_CARD",
+        "PAYMENT_METHOD_PROMPT_PAY"
+      ],
+      "default": "PAYMENT_METHOD_UNSPECIFIED"
+    },
+    "PaymentStatus": {
+      "type": "string",
+      "enum": [
+        "UNPAID",
+        "PAID"
+      ],
+      "default": "UNPAID"
+    },
+    "PickupInfo": {
+      "type": "object",
+      "properties": {
+        "pickupCode": {
+          "type": "string",
+          "title": "pickup_code is a simplified code used for identifying an order \nfor the rider. use three digit i.e 712 , 415"
+        },
+        "pickupLocation": {
+          "$ref": "#/definitions/Point",
+          "title": "Merchant address"
+        },
+        "dropOffLocation": {
+          "$ref": "#/definitions/Point",
+          "title": "Customer address"
+        }
+      }
+    },
+    "PlaceOrder": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "description": "A unique request ID for server to detect duplicated requests."
+        },
+        "orderId": {
+          "type": "string"
+        },
+        "customerId": {
+          "type": "string"
+        },
+        "merchantId": {
+          "type": "string"
+        },
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        },
+        "couponCode": {
+          "type": "string"
+        },
+        "couponDiscount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "deliveryFee": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "merchantAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "customerContact": {
+          "$ref": "#/definitions/ContactInfo"
+        },
+        "paymentMethods": {
+          "$ref": "#/definitions/PaymentMethods"
+        },
+        "paymentStatus": {
+          "$ref": "#/definitions/PaymentStatus"
+        },
+        "orderStatus": {
+          "$ref": "#/definitions/OrderStatus"
+        },
+        "orderTimestamps": {
+          "$ref": "#/definitions/OrderTimestamps"
+        }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "double",
+          "description": "The latitude in degrees. It must be in the range [-90.0, +90.0]."
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double",
+          "description": "The longitude in degrees. It must be in the range [-180.0, +180.0]."
+        }
+      }
+    },
+    "RedeemCouponResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "RegisterRequest": {
+      "type": "object",
+      "example": {
+        "username": "somsak",
+        "email": "somsak@example.com",
+        "password": "sSecret88",
+        "phone_number": "+66812345678",
+        "role": 1
+      },
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/Roles"
+        }
+      }
+    },
+    "Rider": {
+      "type": "object",
+      "properties": {
+        "riderId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        }
+      }
+    },
+    "Roles": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "CUSTOMER",
+        "MERCHANT",
+        "RIDER",
+        "SUPER_ADMIN",
+        "ADMIN"
+      ],
+      "default": "UNKNOWN",
+      "description": " - SUPER_ADMIN: For simplicity, admin roles are included in this enum."
+    },
+    "Social": {
+      "type": "object",
+      "properties": {
+        "facebook": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "line": {
+          "type": "string"
+        }
+      }
+    },
+    "Status": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Any"
+          }
+        }
+      }
+    },
+    "StoreStatus": {
+      "type": "string",
+      "enum": [
+        "CLOSED",
+        "OPEN"
+      ],
+      "default": "CLOSED"
+    },
+    "StoreStatusResponse": {
+      "type": "object",
+      "properties": {
+        "merchantId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/StoreStatus"
+        }
+      }
+    },
+    "UpdateCustomerBody": {
+      "type": "object",
+      "properties": {
+        "newUsername": {
+          "type": "string",
+          "description": "username must has constraint for update\nsuch as update every XX months."
+        },
+        "newBio": {
+          "type": "string",
+          "title": "bytes new_picture = 3;"
+        },
+        "newSocial": {
+          "$ref": "#/definitions/Social"
+        }
+      }
+    },
+    "UpdateMenuItemBody": {
+      "type": "object",
+      "properties": {
+        "foodName": {
+          "type": "string"
+        },
+        "price": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isAvailable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "UpdateMerchantBody": {
+      "type": "object",
+      "properties": {
+        "merchantName": {
+          "type": "string"
+        },
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        },
+        "address": {
+          "$ref": "#/definitions/Address"
+        }
+      }
+    },
+    "UserCredentials": {
+      "type": "object",
+      "example": {
+        "id": "0cf361e1-4b44-483d-a159-54dabdf7e814",
+        "username": "anurak",
+        "email": "anurak@example.co.th",
+        "phone_number": "+66812345678",
+        "role": "CUSTOMER",
+        "create_time": "2025-08-26T14:00:00Z",
+        "update_time": "2025-08-26T14:00:00Z"
+      },
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/Roles"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "VerifyAdminTokenResponse": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        }
+      }
+    },
+    "VerifyUserTokenResponse": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "bearer": {
+      "type": "apiKey",
+      "description": "Authentication token, prefixed by Bearer: Bearer \u003ctoken\u003e",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}
