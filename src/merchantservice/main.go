@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,8 +22,16 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+
+			if a.Key == slog.SourceKey {
+				source := a.Value.Any().(*slog.Source)
+				source.File = filepath.Base(source.File)
+			}
+			return a
+		},
 	}))
 	slog.SetDefault(logger)
 
@@ -89,7 +98,7 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			log.Println("Successfully connected to RabbitMQ")
+			slog.Info("Successfully connected to RabbitMQ")
 			return conn
 		}
 		if i == maxRetries {
@@ -113,7 +122,7 @@ func startGRPCServer(s *internal.MerchantService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterMerchantServiceServer(grpcServer, s)
 
-	log.Printf("merchant service is running on port %s\n", os.Getenv("MERCHANT_SERVER_PORT"))
+	slog.Info("merchant service is running", "port", os.Getenv("MERCHANT_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)

@@ -6,6 +6,8 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"path/filepath"
+
 	"os"
 	"time"
 
@@ -45,7 +47,7 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			log.Println("Successfully connected to RabbitMQ")
+			slog.Info("Successfully connected to RabbitMQ")
 			return conn
 		}
 
@@ -83,8 +85,16 @@ func initPostgres() (*sql.DB, error) {
 }
 
 func startGRPCServer(s *internal.CustomerService) {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+
+			if a.Key == slog.SourceKey {
+				source := a.Value.Any().(*slog.Source)
+				source.File = filepath.Base(source.File)
+			}
+			return a
+		},
 	}))
 	slog.SetDefault(logger)
 
@@ -101,7 +111,7 @@ func startGRPCServer(s *internal.CustomerService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterCustomerServiceServer(grpcServer, s)
 
-	log.Printf("profile service is running on port %s\n", os.Getenv("CUSTOMER_SERVER_PORT"))
+	slog.Info("profile service is running", "port", os.Getenv("CUSTOMER_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)

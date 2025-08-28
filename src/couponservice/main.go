@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"path/filepath"
+
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,25 +20,6 @@ import (
 	"github.com/pongsathonn/ihavefood/src/couponservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
-
-func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-	}))
-	slog.SetDefault(logger)
-
-	mongo := initMongoClient()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go cleanUpCoupons(ctx, mongo)
-
-	startGRPCServer(internal.NewCouponService(
-		initRabbitMQ(),
-		internal.NewCouponStorage(mongo),
-	))
-}
 
 func initRabbitMQ() *amqp.Connection {
 	uri := fmt.Sprintf("amqp://%s:%s@%s",
@@ -51,7 +34,7 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			log.Print("Successfully connected to RabbitMQ")
+			slog.Info("Successfully connected to RabbitMQ")
 			return conn
 		}
 		if i == maxRetries {
@@ -104,7 +87,7 @@ func startGRPCServer(s *internal.CouponService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterCouponServiceServer(grpcServer, s)
 
-	log.Printf("coupon service is running on port %s\n", os.Getenv("COUPON_SERVER_PORT"))
+	slog.Info("coupon service is running", "port", os.Getenv("COUPON_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
@@ -139,11 +122,37 @@ func cleanUpCoupons(ctx context.Context, client *mongo.Client) {
 				{"quantity": bson.M{"$lt": 1}},
 			}}
 			if _, err := coll.DeleteMany(ctx, filter); err != nil {
-				log.Printf("Clean Up delete failed: %v", err)
+				slog.Error("clean up coupons failed", "err", err)
 			}
 		case <-ctx.Done():
-			log.Println("Clean Up stopped")
+			slog.Info("clean up stopped")
 			return
 		}
 	}
+}
+
+func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.SourceKey {
+				source := a.Value.Any().(*slog.Source)
+				source.File = filepath.Base(source.File)
+			}
+			return a
+		},
+	}))
+	slog.SetDefault(logger)
+
+	mongo := initMongoClient()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go cleanUpCoupons(ctx, mongo)
+
+	startGRPCServer(internal.NewCouponService(
+		initRabbitMQ(),
+		internal.NewCouponStorage(mongo),
+	))
 }
