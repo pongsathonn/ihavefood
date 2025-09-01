@@ -8,6 +8,8 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "common.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
 
 // ---------------------CUSTOMER SERVICE------------------------------
 service CustomerService {
@@ -75,6 +77,9 @@ message ListCustomersResponse{
 }
 
 message GetCustomerRequest{
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\" }"
+    };
     string customer_id = 1;
 }
 
@@ -84,11 +89,19 @@ message CreateCustomerRequest {
 }
 
 message CreateAddressRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"address\": {\"address_name\": \"Arun House\", \"sub_district\": \"Suthep\", \"district\": \"Mueang Chiang Mai\", \"province\": \"Chiang Mai\", \"postal_code\": \"50200\"}}"
+    };    
+
     string customer_id = 1;
     Address address = 2;
 }
 
 message UpdateCustomerRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"new_username\": \"anurak_new\", \"new_bio\": \"Loves coffee and coding.\", \"new_social\": {\"facebook\": \"anurak.chiangmai\", \"instagram\": \"@anurak_insta\", \"line\": \"@anurak\"}}"
+    };
+
     string customer_id = 1;
     // username must has constraint for update
     // such as update every XX months.
@@ -99,6 +112,10 @@ message UpdateCustomerRequest {
 }
 
 message DeleteCustomerRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\"}"
+    };
+
     string customer_id = 1;
 }
 

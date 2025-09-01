@@ -73,7 +73,16 @@ message MenuItem {
     bool is_available = 5;
 }
 
+message NewMenuItem {
+    string food_name = 1;
+    int32 price = 2;
+    string description = 3;
+}
+
 message GetMerchantRequest{
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"merchant_id\": \"a1b2c3d4-5678-90ab-cdef-1234567890ab\"}"
+    };
     string merchant_id = 1;
 }
 
@@ -87,14 +96,22 @@ message CreateMerchantRequest {
 }
 
 message UpdateMerchantRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_merchant_name\":\"Jaidee Tamsung 2\",\"new_address\":{\"address_name\":\"Second Branch\",\"sub_district\":\"Nimman\",\"district\":\"Mueang Chiang Mai\",\"province\":\"Chiang Mai\",\"postal_code\":\"50200\"}}"
+    };
+
     string merchant_id = 1 ;
-    string merchant_name = 2;
-    repeated MenuItem menu = 3;
-    Address address = 4;
+    string new_merchant_name = 2;
+    Address new_address = 3;
 }
+
 message CreateMenuRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_menu\":[{\"food_name\":\"Khai Jiao\",\"price\":50,\"description\":\"Omelette Thai style\"},{\"food_name\":\"Pad Thai\",\"price\":60,\"description\":\"Stir-fried noodles with shrimp\"},{\"food_name\":\"Kra Prao Moo Sub\",\"price\":70,\"description\":\"Stir-fried minced pork with basil\"},{\"food_name\":\"Khao Pad Goong\",\"price\":80,\"description\":\"Fried rice with shrimp\"}]}"
+    };
+
     string merchant_id = 1;
-    repeated MenuItem menu = 2;
+    repeated NewMenuItem new_menu = 2;
 }
 
 message CreateMenuResponse {
@@ -102,6 +119,10 @@ message CreateMenuResponse {
 }
 
 message UpdateMenuItemRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      example: "{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"item_id\":\"a1111111-1111-1111-1111-111111111111\",\"food_name\":\"Khai Jiao\",\"price\":55,\"description\":\"Omelette Thai style with extra herbs\",\"is_available\":true}"
+    };
+
     string merchant_id = 1;
     string item_id = 2;
     string food_name = 3;

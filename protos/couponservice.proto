@@ -6,6 +6,8 @@ option go_package =  "/genproto";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
 
 
 // ---------------------COUPON SERVICE-----------------------------
@@ -73,6 +75,10 @@ enum CouponTypes{
 
 
 message AddCouponRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}"
+    };
+
     CouponTypes coupon_types = 1;
     int32 discount = 2;
 
@@ -84,8 +90,11 @@ message AddCouponRequest {
     int32 quantity = 4;
 }
 
-
 message GetCouponRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"code\": \"SAVE20FORYOU\"}"
+    };
+
     string code = 1;
 }
 
