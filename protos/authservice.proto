@@ -19,6 +19,22 @@ service AuthService {
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             security: { } // Disable security key
+            responses: {
+              key: "200"
+              value: {description: "register successful"}
+            }
+            responses: {
+              key: "400"
+              value: {description: "invalid input or validation failed"}
+            }
+            responses: {
+              key: "409"
+              value: {description: "user already exists"}
+            }
+            responses: {
+              key: "500"
+              value: {description: "internal server error"}
+            }        
         };
     }
 
@@ -29,6 +45,18 @@ service AuthService {
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             security: { } // Disable security key
+            responses: {
+              key: "200"
+              value: {description: "login successful"}
+            }
+            responses: {
+              key: "401"
+              value: {description: "username or password incorrect"}
+            }
+            responses: {
+              key: "500"
+              value: {description: "internal server error"}
+            }        
         };
     }
 
@@ -56,7 +84,7 @@ service AuthService {
 
 message UserCredentials {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"username\": \"anurak\", \"email\": \"anurak@example.co.th\", \"phone_number\": \"+66812345678\", \"role\": \"CUSTOMER\", \"create_time\": \"2025-08-26T14:00:00Z\", \"update_time\": \"2025-08-26T14:00:00Z\"}"
+      example: "{\"id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"username\": \"anurak\", \"email\": \"anurak@example.co.th\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\", \"create_time\": \"2025-08-26T14:00:00Z\", \"update_time\": \"2025-08-26T14:00:00Z\"}"
     };
 
     string id = 1;
@@ -82,8 +110,9 @@ enum Roles {
 
 message RegisterRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        example: "{\"username\": \"somsak\", \"email\": \"somsak@example.com\", \"password\": \"sSecret88\", \"phone_number\": \"+66812345678\", \"role\": 1}"
+        example: "{\"username\": \"somsak\", \"email\": \"somsak@example.com\", \"password\": \"nEwpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
     };
+
    string username = 1;
    string email = 2;
    string password = 3;
