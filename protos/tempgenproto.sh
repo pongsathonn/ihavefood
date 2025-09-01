@@ -14,7 +14,7 @@ for s in "${SERVICES[@]}"; do
         --go-grpc_out="$path$s" \
         --grpc-gateway_out="$path$s" \
         --openapiv2_out=. \
-        --openapiv2_opt=openapi_naming_strategy=simple,allow_merge=true,merge_file_name=foo \
+        --openapiv2_opt=openapi_naming_strategy=simple,allow_merge=true,logtostderr=true,disable_default_errors=true \
         "common.proto" \
         "customerservice.proto" \
         "authservice.proto" \

@@ -4,13 +4,8 @@ info:
   description: TODO add link to repo on git
   version: 0.1.0
 servers:
-<<<<<<< HEAD
     - url: http://localhost:1800
-=======
-    - url: http://localhost:180
->>>>>>> 662b2561f3aae9c11e203a2b92997f242dc19b49
-      description: TODO
-      
+
 paths:
 
 #---------------Auth Service--------------------

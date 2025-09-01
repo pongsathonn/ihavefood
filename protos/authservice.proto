@@ -110,7 +110,7 @@ enum Roles {
 
 message RegisterRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        example: "{\"username\": \"somsak\", \"email\": \"somsak@example.com\", \"password\": \"nEwpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
+        example: "{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
     };
 
    string username = 1;
@@ -128,6 +128,10 @@ message RegisterRequest {
 // }
 
 message LoginRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        example: "{\"identifier\": \"somsak22\", \"password\": \"Newpa$sword9\",\"role\": \"CUSTOMER\"}"
+    };
+
     string identifier = 1;  // username,email, or phone
     string password = 2;
     Roles role = 3;
