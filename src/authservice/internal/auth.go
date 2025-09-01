@@ -63,22 +63,22 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	if err := ValidateStruct(in); err != nil {
 		var ve myValidatorErrs
 		if errors.As(err, &ve) {
-			return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("failed to register: %s", ve.Error()))
+			return nil, status.Errorf(codes.InvalidArgument, "failed to register: %s", ve.Error())
 		}
 		slog.Error("validate struct", "err", err)
-		return nil, status.Errorf(codes.Internal, "register validation failed")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	hashPass, err := hashPassword(in.Password)
 	if err != nil {
 		slog.Error("hashing password", "err", err)
-		return nil, status.Error(codes.Internal, "hashing password failed")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	tx, err := x.store.Begin()
 	if err != nil {
 		slog.Error("begin transaction", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 	defer tx.Rollback()
 
@@ -96,17 +96,17 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		}
 
 		slog.Error("storage create new user", "err", err)
-		return nil, errors.New("failed to create new user")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	if err := x.dispatchCreation(ctx, in.Role, user); err != nil {
 		slog.Error("dispatch creation", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to create user from external service")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	if err := tx.Commit(); err != nil {
 		slog.Error("commit transaction", "err", err)
-		return nil, status.Error(codes.Internal, "unable to commit register transaction")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return &pb.UserCredentials{
@@ -135,6 +135,15 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	// 	return nil, status.Error(codes.Unauthenticated, "invalid authorization")
 	// }
 
+	if err := ValidateStruct(in); err != nil {
+		var ve myValidatorErrs
+		if errors.As(err, &ve) {
+			return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("failed to login: %s", ve.Error()))
+		}
+		slog.Error("validate struct", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
 	user, err := x.store.GetUserByIdentifier(ctx, in.Identifier)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -142,7 +151,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 			return nil, status.Error(codes.Unauthenticated, "username or password incorrect")
 		}
 		slog.Error("storage get user by identifier", "err", err)
-		return nil, status.Error(codes.Internal, "failed to get user")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPass), []byte(in.Password)); err != nil {
@@ -151,13 +160,13 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 			return nil, status.Error(codes.Unauthenticated, "username or password incorrect")
 		}
 		slog.Error("bcrypt verification failed unexpectedly", "err", err)
-		return nil, status.Error(codes.Internal, "authentication failed")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	token, exp, err := createNewToken(user.ID, pb.Roles(user.Role))
 	if err != nil {
 		slog.Error("create new token", "err", err)
-		return nil, status.Error(codes.Internal, "failed to generate authentication token")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return &pb.LoginResponse{

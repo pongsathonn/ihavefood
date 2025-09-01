@@ -66,8 +66,8 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		Quantity:   in.Quantity,
 	})
 	if err != nil {
-		slog.Error("save coupon", "err", err)
-		return nil, status.Error(codes.Internal, "failed to save coupon")
+		slog.Error("storage add", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return &pb.Coupon{
@@ -116,8 +116,8 @@ func (x *CouponService) ListCoupons(ctx context.Context, empty *emptypb.Empty) (
 
 	listCoupons, err := x.storage.ListCoupons(ctx)
 	if err != nil {
-		slog.Error("retrive coupons", "err", err)
-		return nil, status.Error(codes.Internal, "failed to retrive list coupons")
+		slog.Error("storage list coupons", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	var coupons []*pb.Coupon
@@ -142,7 +142,7 @@ func (x *CouponService) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponReq
 
 	if _, err := x.storage.UpdateQuantity(ctx, in.Code); err != nil {
 		slog.Error("update coupon quantity", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to update coupon quantity")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return &pb.RedeemCouponResponse{Success: true}, nil
