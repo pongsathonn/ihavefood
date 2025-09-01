@@ -39,6 +39,12 @@ func SetupValidator() {
 		"Password":    "required,vfpass,min=8,max=16",
 		"PhoneNumber": "required,vfphone",
 	}, pb.RegisterRequest{})
+
+	validate.RegisterStructValidationMapRules(map[string]string{
+		"Username": "required",
+		"Password": "required",
+	}, pb.LoginRequest{})
+
 	// validate.RegisterStructValidationMapRules(rule2, nil)
 
 	// prefix vf = validate format
