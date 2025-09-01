@@ -66,13 +66,13 @@ service AuthService {
     // verify token for role "admin,superadmin" returns true if token valid, otherwise false.
     rpc VerifyAdminToken(VerifyAdminTokenRequest) returns (VerifyAdminTokenResponse){}
 
-    // only superadmin role can call this.
-    rpc CreateAdmin(CreateAdminRequest) returns(UserCredentials){
-        option (google.api.http) = {
-            post: "/auth/admin" 
-            body: "*"
-        };
-    }
+    // CreateAdmin required super admin role.
+    // rpc CreateAdmin(CreateAdminRequest) returns(UserCredentials){
+    //     option (google.api.http) = {
+    //         post: "/auth/admin" 
+    //         body: "*"
+    //     };
+    // }
 
     /*
         rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
@@ -164,10 +164,10 @@ message CheckUsernameExistsResponse{
     bool exists = 1;
 }
 
-message CreateAdminRequest {
-   string username = 1;
-   string email = 2;
-   string password = 3;
-   string phone_number = 4;
-}
-
+// message CreateAdminRequest {
+//    string username = 1;
+//    string email = 2;
+//    string password = 3;
+//    string phone_number = 4;
+// }
+//
