@@ -45,7 +45,7 @@ func (x *MerchantService) ListMerchant(ctx context.Context, empty *emptypb.Empty
 	results, err := x.storage.ListMerchants(ctx)
 	if err != nil {
 		slog.Error("storage list merchants", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to list merchants")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	var merchants []*pb.Merchant
@@ -62,7 +62,7 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 	uuid, err := uuid.Parse(in.MerchantId)
 	if err != nil {
 		slog.Error("invalid uuid", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
 	merchant, err := x.storage.GetMerchant(ctx, uuid.String())
@@ -71,7 +71,7 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 			return nil, status.Error(codes.NotFound, "merchant not found")
 		}
 		slog.Error("storage get merchant", "err", err)
-		return nil, status.Error(codes.Internal, "failed to retrieve merchant")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 	return dbToProto(merchant), nil
 }
@@ -81,20 +81,20 @@ func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerch
 	uuid, err := uuid.Parse(in.MerchantId)
 	if err != nil {
 		slog.Error("invalid uuid", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
 	merchant, err := x.storage.SaveMerchant(ctx, uuid.String(), in.MerchantName)
 	if err != nil {
 		slog.Error("storage save merchant", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to save merchant")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return dbToProto(merchant), nil
 }
 
 func (x *MerchantService) UpdateMerchant(ctx context.Context, in *pb.UpdateMerchantRequest) (*pb.Merchant, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateMerchant not implemented")
+	return nil, status.Error(codes.Unimplemented, "method UpdateMerchant not implemented")
 }
 
 func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuRequest) (*pb.CreateMenuResponse, error) {
@@ -102,7 +102,7 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 	uuid, err := uuid.Parse(in.MerchantId)
 	if err != nil {
 		slog.Error("invalid uuid", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
 	var newMenu []*dbMenuItem
@@ -118,7 +118,7 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 	createdMenu, err := x.storage.CreateMenu(ctx, uuid.String(), newMenu)
 	if err != nil {
 		slog.Error("storage create menu", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to create menu")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	var menu []*pb.MenuItem
@@ -140,7 +140,7 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 	uuid, err := uuid.Parse(in.MerchantId)
 	if err != nil {
 		slog.Error("invalid uuid", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "uuid invalid for merchant id")
+		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
 	updatedMenu, err := x.storage.UpdateMenuItem(ctx, uuid.String(), &dbMenuItem{
@@ -151,7 +151,7 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 	})
 	if err != nil {
 		slog.Error("storage update menu item", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to update menu item")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return &pb.MenuItem{
@@ -164,11 +164,11 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 }
 
 func (x *MerchantService) UpdateStoreStatus(context.Context, *pb.UpdateStoreStatusRequest) (*pb.StoreStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateStoreStatus not implemented")
+	return nil, status.Error(codes.Unimplemented, "method UpdateStoreStatus not implemented")
 }
 
 func (x *MerchantService) GetStoreStatus(context.Context, *pb.GetStoreStatusRequest) (*pb.StoreStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStoreStatus not implemented")
+	return nil, status.Error(codes.Unimplemented, "method GetStoreStatus not implemented")
 }
 
 // -------------------------------------------------------

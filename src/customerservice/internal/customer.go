@@ -35,7 +35,7 @@ func (x *CustomerService) ListCustomers(ctx context.Context, in *pb.ListCustomer
 	results, err := x.store.listCustomers(ctx)
 	if err != nil {
 		slog.Error("storage list customers", "err", err)
-		return nil, status.Error(codes.Internal, "failed to list customers")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	var customers []*pb.Customer
@@ -53,7 +53,8 @@ func (x *CustomerService) GetCustomer(ctx context.Context, in *pb.GetCustomerReq
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "customer not found")
 		}
-		return nil, status.Error(codes.Internal, "failed to get customer")
+		slog.Error("store get customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 	return dbToProto(customer), nil
 }
@@ -72,13 +73,13 @@ func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCusto
 	})
 	if err != nil {
 		slog.Error("storage create customer", "err", err)
-		return nil, status.Error(codes.Internal, "failed to create customer")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
-		slog.Error("storage get customer", "err", err)
-		return nil, status.Error(codes.Internal, "failed to get customer")
+		slog.Error("store get customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 	return dbToProto(customer), nil
 }
@@ -89,8 +90,8 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 
 	numAddr, err := x.store.countAddress(ctx, in.CustomerId)
 	if err != nil {
-		slog.Error("failed to count user customer address", "err", err)
-		return nil, status.Error(codes.Internal, "failed to count adress")
+		slog.Error("store count user customer address", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	if numAddr >= 5 {
@@ -105,15 +106,15 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 		PostalCode:  sql.NullString{String: in.Address.PostalCode},
 	})
 	if err != nil {
-		slog.Error("failed to update customer address", "err", err)
-		return nil, status.Error(codes.Internal, "failed to update adress")
+		slog.Error("store create address", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	// edge case: if customerID not exists it will return nil customer as nil
+	// FIX: if customerID not exists it will return nil customer as nil
 	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
-		slog.Error("failed to get customer", "err", err)
-		return nil, status.Error(codes.Internal, "failed to get customer")
+		slog.Error("store get customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return dbToProto(customer), nil
@@ -135,14 +136,14 @@ func (x *CustomerService) UpdateCustomer(ctx context.Context, in *pb.UpdateCusto
 
 	customerID, err := x.store.update(ctx, in.CustomerId, update)
 	if err != nil {
-		slog.Error("failed to update customer", "err", err)
-		return nil, status.Error(codes.Internal, "failed to update customer")
+		slog.Error("store update customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	customer, err := x.store.getCustomer(ctx, customerID)
 	if err != nil {
-		slog.Error("failed to get customer", "err", err)
-		return nil, status.Error(codes.Internal, "failed to get customer")
+		slog.Error("store get customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return dbToProto(customer), nil
@@ -155,8 +156,8 @@ func (x *CustomerService) DeleteCustomer(ctx context.Context, in *pb.DeleteCusto
 
 	err := x.store.remove(ctx, in.CustomerId)
 	if err != nil {
-		slog.Error("delete user customer", "err", err)
-		return nil, status.Error(codes.Internal, "failed to delete user")
+		slog.Error("store remove customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	return &emptypb.Empty{}, nil

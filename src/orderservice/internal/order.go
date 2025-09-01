@@ -43,7 +43,7 @@ func (x *OrderService) ListOrderHistory(ctx context.Context,
 	dbOrders, err := x.storage.ListPlaceOrders(ctx, in.CustomerId)
 	if err != nil {
 		slog.Error("storage list place orders", "err", err)
-		return nil, status.Error(codes.Internal, "failed to list place orders")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	var placeOrders []*pb.PlaceOrder
@@ -64,7 +64,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 
 	if err := validatePlaceOrderRequest(in); err != nil {
 		slog.Error("validate place order request failed", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "failed to validate place order request")
+		return nil, status.Error(codes.InvalidArgument, "failed to validate place order request")
 	}
 
 	// TODO validate place order fields valid such as customerID , restuarntName already exists
@@ -72,13 +72,13 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 	orderID, err := x.storage.Create(ctx, prepareNewOrder(in))
 	if err != nil {
 		slog.Error("storage create new order", "err", err)
-		return nil, status.Error(codes.Internal, "failed to create place order")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	dbOrder, err := x.storage.GetPlaceOrder(ctx, orderID)
 	if err != nil {
 		slog.Error("storage get place order", "err", err)
-		return nil, status.Error(codes.Internal, "failed to get place order")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	order := dbToProto(dbOrder)
@@ -86,7 +86,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 	body, err := proto.Marshal(order)
 	if err != nil {
 		slog.Error("protobuf marshal failed", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to marshal place order")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	err = x.rabbitmq.Publish(ctx, "order.placed.event", amqp.Publishing{
@@ -95,7 +95,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 	})
 	if err != nil {
 		slog.Error("rabbitmq publish", "err", err)
-		return nil, status.Errorf(codes.Internal, "failed to publish event")
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	slog.Info("published event", "orderId", order.OrderId)
