@@ -96,6 +96,8 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
+	internal.SetupValidator()
+
 	if err := initTimeZone(); err != nil {
 		slog.Error("failed to init time zone", "err", err)
 	}

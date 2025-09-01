@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # stage 1: build
-FROM golang:1.22 AS builder
+FROM golang:1.23 AS builder
 WORKDIR /src/auth
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify

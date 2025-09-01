@@ -7,6 +7,7 @@
 package genproto
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -161,7 +162,7 @@ var File_common_proto protoreflect.FileDescriptor
 
 const file_common_proto_rawDesc = "" +
 	"\n" +
-	"\fcommon.proto\x12\tihavefood\"\xa8\x01\n" +
+	"\fcommon.proto\x12\tihavefood\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xa8\x01\n" +
 	"\aAddress\x12!\n" +
 	"\faddress_name\x18\x01 \x01(\tR\vaddressName\x12!\n" +
 	"\fsub_district\x18\x02 \x01(\tR\vsubDistrict\x12\x1a\n" +
@@ -172,7 +173,13 @@ const file_common_proto_rawDesc = "" +
 	"\x06Social\x12\x1a\n" +
 	"\bfacebook\x18\x01 \x01(\tR\bfacebook\x12\x1c\n" +
 	"\tinstagram\x18\x02 \x01(\tR\tinstagram\x12\x12\n" +
-	"\x04line\x18\x03 \x01(\tR\x04lineB\vZ\t/genprotob\x06proto3"
+	"\x04line\x18\x03 \x01(\tR\x04lineB\xc8\x01\x92A\xb9\x01\x12\x16\n" +
+	"\tIHAVEFOOD\x12\x04TODO2\x030.1\x1a\x0elocalhost:9999*\x02\x01\x022\x10application/json:\x10application/jsonZY\n" +
+	"W\n" +
+	"\x06bearer\x12M\b\x02\x128Authentication token, prefixed by Bearer: Bearer <token>\x1a\rAuthorization \x02b\f\n" +
+	"\n" +
+	"\n" +
+	"\x06bearer\x12\x00Z\t/genprotob\x06proto3"
 
 var (
 	file_common_proto_rawDescOnce sync.Once

@@ -7,6 +7,7 @@
 package genproto
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -87,7 +88,6 @@ type UserCredentials struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
 	PhoneNumber   string                 `protobuf:"bytes,5,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	Role          Roles                  `protobuf:"varint,6,opt,name=role,proto3,enum=ihavefood.Roles" json:"role,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
@@ -143,13 +143,6 @@ func (x *UserCredentials) GetUsername() string {
 func (x *UserCredentials) GetEmail() string {
 	if x != nil {
 		return x.Email
-	}
-	return ""
-}
-
-func (x *UserCredentials) GetPassword() string {
-	if x != nil {
-		return x.Password
 	}
 	return ""
 }
@@ -636,102 +629,33 @@ func (x *CheckUsernameExistsResponse) GetExists() bool {
 	return false
 }
 
-type CreateAdminRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,4,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateAdminRequest) Reset() {
-	*x = CreateAdminRequest{}
-	mi := &file_authservice_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateAdminRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateAdminRequest) ProtoMessage() {}
-
-func (x *CreateAdminRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_authservice_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateAdminRequest.ProtoReflect.Descriptor instead.
-func (*CreateAdminRequest) Descriptor() ([]byte, []int) {
-	return file_authservice_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *CreateAdminRequest) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *CreateAdminRequest) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
-func (x *CreateAdminRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *CreateAdminRequest) GetPhoneNumber() string {
-	if x != nil {
-		return x.PhoneNumber
-	}
-	return ""
-}
-
 var File_authservice_proto protoreflect.FileDescriptor
 
 const file_authservice_proto_rawDesc = "" +
 	"\n" +
-	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb2\x02\n" +
+	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x83\x04\n" +
 	"\x0fUserCredentials\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
-	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\x12!\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12!\n" +
 	"\fphone_number\x18\x05 \x01(\tR\vphoneNumber\x12$\n" +
 	"\x04role\x18\x06 \x01(\x0e2\x10.ihavefood.RolesR\x04role\x12;\n" +
 	"\vcreate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\xa8\x01\n" +
+	"updateTime:\xea\x01\x92A\xe6\x012\xe3\x01{\"id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"username\": \"anurak\", \"email\": \"anurak@example.com\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\", \"create_time\": \"2025-08-26T14:00:00Z\", \"update_time\": \"2025-08-26T14:00:00Z\"}\"\xb7\x02\n" +
 	"\x0fRegisterRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x12!\n" +
 	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12$\n" +
-	"\x04role\x18\x05 \x01(\x0e2\x10.ihavefood.RolesR\x04role\"p\n" +
+	"\x04role\x18\x05 \x01(\x0e2\x10.ihavefood.RolesR\x04role:\x8c\x01\x92A\x88\x012\x85\x01{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}\"\xc0\x01\n" +
 	"\fLoginRequest\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x01 \x01(\tR\n" +
 	"identifier\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12$\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role\"Q\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:N\x92AK2I{\"identifier\": \"somsak22\", \"password\": \"Newpa$sword9\",\"role\": \"CUSTOMER\"}\"Q\n" +
 	"\rLoginResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
 	"\n" +
@@ -747,25 +671,33 @@ const file_authservice_proto_rawDesc = "" +
 	"\x1aCheckUsernameExistsRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"5\n" +
 	"\x1bCheckUsernameExistsResponse\x12\x16\n" +
-	"\x06exists\x18\x01 \x01(\bR\x06exists\"\x85\x01\n" +
-	"\x12CreateAdminRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\x12!\n" +
-	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber*W\n" +
+	"\x06exists\x18\x01 \x01(\bR\x06exists*W\n" +
 	"\x05Roles\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\f\n" +
 	"\bCUSTOMER\x10\x01\x12\f\n" +
 	"\bMERCHANT\x10\x02\x12\t\n" +
 	"\x05RIDER\x10\x03\x12\x0f\n" +
 	"\vSUPER_ADMIN\x10\x14\x12\t\n" +
-	"\x05ADMIN\x10\x152\xdd\x03\n" +
-	"\vAuthService\x12]\n" +
-	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12R\n" +
-	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12Z\n" +
+	"\x05ADMIN\x10\x152\xf6\x04\n" +
+	"\vAuthService\x12\xed\x01\n" +
+	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\xa8\x01\x92A\x8b\x01J\x1c\n" +
+	"\x03200\x12\x15\n" +
+	"\x13register successfulJ+\n" +
+	"\x03400\x12$\n" +
+	"\"invalid input or validation failedJ\x1c\n" +
+	"\x03409\x12\x15\n" +
+	"\x13user already existsJ\x1e\n" +
+	"\x03500\x12\x17\n" +
+	"\x15internal server errorb\x00\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12\xbb\x01\n" +
+	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x7f\x92AfJ\x19\n" +
+	"\x03200\x12\x12\n" +
+	"\x10login successfulJ'\n" +
+	"\x03401\x12 \n" +
+	"\x1eusername or password incorrectJ\x1e\n" +
+	"\x03500\x12\x17\n" +
+	"\x15internal server errorb\x00\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12Z\n" +
 	"\x0fVerifyUserToken\x12!.ihavefood.VerifyUserTokenRequest\x1a\".ihavefood.VerifyUserTokenResponse\"\x00\x12]\n" +
-	"\x10VerifyAdminToken\x12\".ihavefood.VerifyAdminTokenRequest\x1a#.ihavefood.VerifyAdminTokenResponse\"\x00\x12`\n" +
-	"\vCreateAdmin\x12\x1d.ihavefood.CreateAdminRequest\x1a\x1a.ihavefood.UserCredentials\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/adminB\vZ\t/genprotob\x06proto3"
+	"\x10VerifyAdminToken\x12\".ihavefood.VerifyAdminTokenRequest\x1a#.ihavefood.VerifyAdminTokenResponse\"\x00B\vZ\t/genprotob\x06proto3"
 
 var (
 	file_authservice_proto_rawDescOnce sync.Once
@@ -780,7 +712,7 @@ func file_authservice_proto_rawDescGZIP() []byte {
 }
 
 var file_authservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_authservice_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_authservice_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_authservice_proto_goTypes = []any{
 	(Roles)(0),                          // 0: ihavefood.Roles
 	(*UserCredentials)(nil),             // 1: ihavefood.UserCredentials
@@ -793,27 +725,24 @@ var file_authservice_proto_goTypes = []any{
 	(*VerifyAdminTokenResponse)(nil),    // 8: ihavefood.VerifyAdminTokenResponse
 	(*CheckUsernameExistsRequest)(nil),  // 9: ihavefood.CheckUsernameExistsRequest
 	(*CheckUsernameExistsResponse)(nil), // 10: ihavefood.CheckUsernameExistsResponse
-	(*CreateAdminRequest)(nil),          // 11: ihavefood.CreateAdminRequest
-	(*timestamppb.Timestamp)(nil),       // 12: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
 }
 var file_authservice_proto_depIdxs = []int32{
 	0,  // 0: ihavefood.UserCredentials.role:type_name -> ihavefood.Roles
-	12, // 1: ihavefood.UserCredentials.create_time:type_name -> google.protobuf.Timestamp
-	12, // 2: ihavefood.UserCredentials.update_time:type_name -> google.protobuf.Timestamp
+	11, // 1: ihavefood.UserCredentials.create_time:type_name -> google.protobuf.Timestamp
+	11, // 2: ihavefood.UserCredentials.update_time:type_name -> google.protobuf.Timestamp
 	0,  // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
 	0,  // 4: ihavefood.LoginRequest.role:type_name -> ihavefood.Roles
 	2,  // 5: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
 	3,  // 6: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
 	5,  // 7: ihavefood.AuthService.VerifyUserToken:input_type -> ihavefood.VerifyUserTokenRequest
 	7,  // 8: ihavefood.AuthService.VerifyAdminToken:input_type -> ihavefood.VerifyAdminTokenRequest
-	11, // 9: ihavefood.AuthService.CreateAdmin:input_type -> ihavefood.CreateAdminRequest
-	1,  // 10: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
-	4,  // 11: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
-	6,  // 12: ihavefood.AuthService.VerifyUserToken:output_type -> ihavefood.VerifyUserTokenResponse
-	8,  // 13: ihavefood.AuthService.VerifyAdminToken:output_type -> ihavefood.VerifyAdminTokenResponse
-	1,  // 14: ihavefood.AuthService.CreateAdmin:output_type -> ihavefood.UserCredentials
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
+	1,  // 9: ihavefood.AuthService.Register:output_type -> ihavefood.UserCredentials
+	4,  // 10: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
+	6,  // 11: ihavefood.AuthService.VerifyUserToken:output_type -> ihavefood.VerifyUserTokenResponse
+	8,  // 12: ihavefood.AuthService.VerifyAdminToken:output_type -> ihavefood.VerifyAdminTokenResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -830,7 +759,7 @@ func file_authservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_authservice_proto_rawDesc), len(file_authservice_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
