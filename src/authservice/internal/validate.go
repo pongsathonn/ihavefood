@@ -11,6 +11,25 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
+type myValidatorErrs []myValidatorErr
+
+func (m myValidatorErrs) Error() string {
+	var s []string
+	for _, err := range m {
+		s = append(s, err.Error())
+	}
+	return strings.Join(s, ", ")
+}
+
+type myValidatorErr struct {
+	Field string
+	Msg   string
+}
+
+func (m myValidatorErr) Error() string {
+	return fmt.Sprintf("%s %s", m.Field, m.Msg)
+}
+
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
 func SetupValidator() {
@@ -28,32 +47,42 @@ func SetupValidator() {
 	validate.RegisterValidation("vfphone", validatePhone)
 }
 
-func validateUser(in any) error {
+func ValidateStruct(in any) error {
 	if err := validate.Struct(in); err != nil {
-		var errs []string
-		for _, v := range err.(validator.ValidationErrors) {
-			var e error
-			switch v.Tag() {
-			case "required":
-				e = fmt.Errorf("%s must be provided", v.Field())
-			case "email":
-				e = errors.New("invalid email")
-			case "vfpass":
-				e = errors.New("password must contain lowercase,uppercase and special character")
-			case "vfphone":
-				e = errors.New("invalid phone number format")
-			case "min":
-				e = fmt.Errorf("%s must be at least %s", v.Field(), v.Param())
-			case "max":
-				e = fmt.Errorf("%s must be at most %s", v.Field(), v.Param())
-			case "lowercase":
-				e = fmt.Errorf("%s must be lowercase only", v.Field())
-			}
-			errs = append(errs, e.Error())
+
+		var valErrs validator.ValidationErrors
+		if !errors.As(err, &valErrs) {
+			return err
 		}
-		return errors.New(strings.Join(errs, ", "))
+
+		var errs myValidatorErrs
+		for _, valErr := range valErrs {
+			errs = append(errs, buildMyValidatorErr(valErr))
+		}
+		return errs
 	}
 	return nil
+}
+
+func buildMyValidatorErr(f validator.FieldError) myValidatorErr {
+	switch f.Tag() {
+	case "required":
+		return myValidatorErr{Field: f.Field(), Msg: "is required"}
+	case "email":
+		return myValidatorErr{Field: f.Field(), Msg: "must be a valid email address"}
+	case "vfpass":
+		return myValidatorErr{Field: f.Field(), Msg: "must contain lowercase,uppercase and special character"}
+	case "vfphone":
+		return myValidatorErr{Field: f.Field(), Msg: "must be a valid phone number format"}
+	case "min":
+		return myValidatorErr{Field: f.Field(), Msg: fmt.Sprintf("must be at least %s", f.Param())}
+	case "max":
+		return myValidatorErr{Field: f.Field(), Msg: fmt.Sprintf("must be at most %s", f.Param())}
+	case "lowercase":
+		return myValidatorErr{Field: f.Field(), Msg: "must be lowercase only"}
+	default:
+		return myValidatorErr{Field: f.Field(), Msg: fmt.Sprintf("invalid value tag %s", f.Tag())}
+	}
 }
 
 func validatePassword(fl validator.FieldLevel) bool {

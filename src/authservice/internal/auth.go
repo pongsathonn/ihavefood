@@ -22,8 +22,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-var ()
-
 type AuthStorer interface {
 	Begin() (*sql.Tx, error)
 	ListUsers(context.Context) ([]*dbUserCredentials, error)
@@ -62,9 +60,13 @@ func NewAuthService(cfg *AuthCfg) *AuthService {
 // Register handles user registration by creating a new user credentials
 func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
 
-	if err := validateUser(in); err != nil {
-		slog.Error("validate new user", "err", err)
-		return nil, status.Errorf(codes.InvalidArgument, "register validation failed")
+	if err := ValidateStruct(in); err != nil {
+		var ve myValidatorErrs
+		if errors.As(err, &ve) {
+			return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("failed to register: %s", ve.Error()))
+		}
+		slog.Error("validate struct", "err", err)
+		return nil, status.Errorf(codes.Internal, "register validation failed")
 	}
 
 	hashPass, err := hashPassword(in.Password)
@@ -135,16 +137,17 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	user, err := x.store.GetUserByIdentifier(ctx, in.Identifier)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
+			slog.Error("storage get user by identifier not found")
+			return nil, status.Error(codes.Unauthenticated, "username or password incorrect")
 		}
 		slog.Error("storage get user by identifier", "err", err)
-		return nil, status.Error(codes.Internal, "failed to get user by identifier")
+		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPass), []byte(in.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			slog.Error("bcrypt error mismatch", "err", err)
-			return nil, status.Error(codes.InvalidArgument, "username or password incorrect")
+			slog.Error("bcrypt error mismatch")
+			return nil, status.Error(codes.Unauthenticated, "username or password incorrect")
 		}
 		slog.Error("bcrypt verification failed unexpectedly", "err", err)
 		return nil, status.Error(codes.Internal, "authentication failed")
