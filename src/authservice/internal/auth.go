@@ -92,7 +92,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return nil, errors.New("user already exists")
+			return nil, status.Error(codes.AlreadyExists, "user already exists")
 		}
 
 		slog.Error("storage create new user", "err", err)
