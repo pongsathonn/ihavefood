@@ -84,7 +84,7 @@ service AuthService {
 
 message UserCredentials {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"username\": \"anurak\", \"email\": \"anurak@example.co.th\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\", \"create_time\": \"2025-08-26T14:00:00Z\", \"update_time\": \"2025-08-26T14:00:00Z\"}"
+      example: "{\"id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"username\": \"anurak\", \"email\": \"anurak@example.com\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\", \"create_time\": \"2025-08-26T14:00:00Z\", \"update_time\": \"2025-08-26T14:00:00Z\"}"
     };
 
     string id = 1;
