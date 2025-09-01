@@ -116,6 +116,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		PhoneNumber: user.PhoneNumber,
 		Role:        pb.Roles(user.Role),
 		CreateTime:  timestamppb.New(user.CreateTime),
+		UpdateTime:  timestamppb.New(user.UpdateTime),
 	}, nil
 }
 
