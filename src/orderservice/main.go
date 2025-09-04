@@ -14,7 +14,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/pongsathonn/ihavefood/src/orderservice/internal"
 
@@ -27,7 +29,6 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-
 			if a.Key == slog.SourceKey {
 				source := a.Value.Any().(*slog.Source)
 				source.File = filepath.Base(source.File)
@@ -40,11 +41,32 @@ func main() {
 	s := internal.NewOrderService(
 		internal.NewOrderStorage(initMongoClient()),
 		internal.NewRabbitMQ(initRabbitMQ()),
+		initServiceClients(),
 	)
 
 	go s.StartConsume()
-
 	startGRPCServer(s)
+}
+
+func initServiceClients() internal.ServiceClients {
+
+	// TODO: impl healthcheck
+
+	newGRPCConn := func(env string) *grpc.ClientConn {
+		opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+		conn, err := grpc.NewClient(os.Getenv(env), opt)
+		if err != nil {
+			log.Fatalf("failed to create new grpc channel for %s: %v", env, err)
+		}
+		return conn
+	}
+
+	return internal.ServiceClients{
+		Coupon:   pb.NewCouponServiceClient(newGRPCConn("COUPON_URI")),
+		Customer: pb.NewCustomerServiceClient(newGRPCConn("CUSTOMER_URI")),
+		Delivery: pb.NewDeliveryServiceClient(newGRPCConn("DELIVERY_URI")),
+		Merchant: pb.NewMerchantServiceClient(newGRPCConn("MERCHANT_URI")),
+	}
 }
 
 func initRabbitMQ() *amqp.Connection {
