@@ -45,3 +45,21 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
 
 
 
+### Data replication
+Keeping the same data synchronized across multiple services
+key = sync.<data>.<verb> e.g, sync.customer.email.updated, sync.rider.phone.deleted
+
+
+ | Publisher  |       Routing Key                | Subscriber       |
+ |------------|----------------------------------|------------------|
+ | Auth       | sync.customer.username           |     Customer     |
+ | Auth       | sync.customer.email              |     Customer     |
+ | Auth       | sync.customer.phone_number       |     Customer     |
+ | Auth       | sync.rider.username              |     Delivery     |
+ | Auth       | sync.rider.email                 |     Delivery     |
+ | Auth       | sync.rider.phone_number          |     Delivery     |
+ | Auth       | sync.merchant.email              |     Merchant     |
+ | Auth       | sync.merchant.phone_number       |     Merchant     |
+
+Auth act as a source of truth
+
