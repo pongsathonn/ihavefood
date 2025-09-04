@@ -212,13 +212,19 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 	return messages
 }
 
-// TODO:
-// - check merchant and customer exists
 // - add context
 func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*newPlaceOrder, error) {
 	ctx := context.TODO()
 
 	if err := validatePlaceOrderRequest(newOrder); err != nil {
+		return nil, err
+	}
+
+	// TODO: call check customer exists instead
+	_, err := x.clients.Customer.GetCustomer(ctx, &pb.GetCustomerRequest{
+		CustomerId: newOrder.CustomerId,
+	})
+	if err != nil {
 		return nil, err
 	}
 
