@@ -147,9 +147,9 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	user, err := x.store.GetUserByIdentifier(ctx, in.Identifier)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			slog.Error("storage get user by identifier not found")
 			return nil, status.Error(codes.Unauthenticated, "username or password incorrect")
 		}
+
 		slog.Error("storage get user by identifier", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
