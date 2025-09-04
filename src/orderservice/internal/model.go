@@ -2,13 +2,17 @@ package internal
 
 import (
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
 type newPlaceOrder struct {
 	RequestID       string
 	CustomerID      string
 	MerchantID      string
-	Menu            []*dbMenuItem
+	Items           []*dbOrderItem
 	CouponCode      string
 	CouponDiscount  int32
 	DeliveryFee     int32
@@ -26,7 +30,7 @@ type dbPlaceOrder struct {
 	RequestID       string           `bson:"requestId"`
 	CustomerID      string           `bson:"customerId"`
 	MerchantID      string           `bson:"merchantId"`
-	Menu            []*dbMenuItem    `bson:"menus"`
+	Items           []*dbOrderItem   `bson:"menus"`
 	CouponCode      string           `bson:"couponCode"`
 	CouponDiscount  int32            `bson:"couponDiscount"`
 	DeliveryFee     int32            `bson:"deliveryFee"`
@@ -40,9 +44,10 @@ type dbPlaceOrder struct {
 	Timestamps      *dbTimestamps    `bson:"timestamps"`
 }
 
-type dbMenuItem struct {
-	FoodName string `bson:"foodName"`
-	Price    int32  `bson:"price"`
+type dbOrderItem struct {
+	ItemID   string `bson:"item_id"`
+	Quantity int32  `bson:"quantity"`
+	Note     string `bson:"note"`
 }
 
 type dbAddress struct {
@@ -87,4 +92,83 @@ type dbTimestamps struct {
 	CreateTime   time.Time `bson:"createTime"`
 	UpdateTime   time.Time `bson:"updateTime"`
 	CompleteTime time.Time `bson:"completeTime"`
+}
+
+func toDbContactInfo(ct *pb.ContactInfo) *dbContactInfo {
+	if ct == nil {
+		return nil
+	}
+	return &dbContactInfo{
+		PhoneNumber: ct.PhoneNumber,
+		Email:       ct.Email,
+	}
+}
+func toProtoContactInfo(ct *dbContactInfo) *pb.ContactInfo {
+	if ct == nil {
+		return nil
+	}
+	return &pb.ContactInfo{
+		PhoneNumber: ct.PhoneNumber,
+		Email:       ct.Email,
+	}
+}
+
+func toDbAddress(addr *pb.Address) *dbAddress {
+	if addr == nil {
+		return nil
+	}
+	return &dbAddress{
+		AddressName: addr.AddressName,
+		SubDistrict: addr.SubDistrict,
+		District:    addr.District,
+		Province:    addr.Province,
+		PostalCode:  addr.PostalCode,
+	}
+}
+
+func toProtoAddress(addr *dbAddress) *pb.Address {
+	if addr == nil {
+		return nil
+	}
+	return &pb.Address{
+		AddressName: addr.AddressName,
+		SubDistrict: addr.SubDistrict,
+		District:    addr.District,
+		Province:    addr.Province,
+		PostalCode:  addr.PostalCode,
+	}
+}
+
+func toProtoPlaceOrder(order *dbPlaceOrder) *pb.PlaceOrder {
+
+	var items []*pb.OrderItem
+	for _, item := range order.Items {
+		items = append(items, &pb.OrderItem{
+			ItemId:   item.ItemID,
+			Quantity: item.Quantity,
+			Note:     item.Note,
+		})
+	}
+
+	return &pb.PlaceOrder{
+		OrderId:         order.OrderID,
+		RequestId:       order.RequestID,
+		CustomerId:      order.CustomerID,
+		MerchantId:      order.MerchantID,
+		Items:           items,
+		CouponDiscount:  order.CouponDiscount,
+		DeliveryFee:     order.DeliveryFee,
+		Total:           order.Total,
+		CustomerAddress: toProtoAddress(order.CustomerAddress),
+		MerchantAddress: toProtoAddress(order.MerchantAddress),
+		CustomerContact: toProtoContactInfo(order.CustomerContact),
+		PaymentMethods:  pb.PaymentMethods(order.PaymentMethods),
+		PaymentStatus:   pb.PaymentStatus(order.PaymentStatus),
+		OrderStatus:     pb.OrderStatus(order.OrderStatus),
+		OrderTimestamps: &pb.OrderTimestamps{
+			CreateTime:   timestamppb.New(order.Timestamps.CreateTime),
+			UpdateTime:   timestamppb.New(order.Timestamps.UpdateTime),
+			CompleteTime: timestamppb.New(order.Timestamps.CompleteTime),
+		},
+	}
 }

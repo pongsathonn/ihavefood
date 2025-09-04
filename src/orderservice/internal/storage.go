@@ -19,7 +19,7 @@ type OrderStorage interface {
 	GetPlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error)
 
 	// Create inserts new place order into database and returns the order number.
-	Create(ctx context.Context, in *dbPlaceOrder) (string, error)
+	Create(ctx context.Context, newOrder *newPlaceOrder) (string, error)
 
 	UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (string, error)
 
@@ -36,11 +36,11 @@ func NewOrderStorage(client *mongo.Client) OrderStorage {
 	return &orderStorage{client: client}
 }
 
-func (s *orderStorage) Create(ctx context.Context, in *dbPlaceOrder) (string, error) {
+func (s *orderStorage) Create(ctx context.Context, newOrder *newPlaceOrder) (string, error) {
 
 	coll := s.client.Database("db", nil).Collection("orders")
 
-	res, err := coll.InsertOne(ctx, in)
+	res, err := coll.InsertOne(ctx, newOrder)
 	if err != nil {
 		return "", err
 	}

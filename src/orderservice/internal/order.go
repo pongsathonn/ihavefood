@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/mail"
 	"regexp"
@@ -13,7 +12,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -24,13 +22,19 @@ type OrderService struct {
 
 	storage  OrderStorage
 	rabbitmq RabbitMQ
+	clients  ServiceClients
 }
 
-func NewOrderService(storage OrderStorage, rabbitmq RabbitMQ) *OrderService {
-	return &OrderService{
-		storage:  storage,
-		rabbitmq: rabbitmq,
-	}
+// external service clients
+type ServiceClients struct {
+	Coupon   pb.CouponServiceClient
+	Customer pb.CustomerServiceClient
+	Delivery pb.DeliveryServiceClient
+	Merchant pb.MerchantServiceClient
+}
+
+func NewOrderService(s OrderStorage, rb RabbitMQ, cl ServiceClients) *OrderService {
+	return &OrderService{storage: s, rabbitmq: rb, clients: cl}
 }
 
 func (x *OrderService) ListOrderHistory(ctx context.Context,
@@ -48,28 +52,22 @@ func (x *OrderService) ListOrderHistory(ctx context.Context,
 
 	var placeOrders []*pb.PlaceOrder
 	for _, dbOrder := range dbOrders {
-		placeOrder := dbToProto(dbOrder)
+		placeOrder := toProtoPlaceOrder(dbOrder)
 		placeOrders = append(placeOrders, placeOrder)
 	}
 
 	return &pb.ListOrderHistoryResponse{PlaceOrders: placeOrders}, nil
 }
 
-// HandlePlaceOrder processes an incoming order placement request from the client.
-//
-// This function validates the place order request, saves the order details to the database,
-// and publishes an "order.placed.event" to other services for further processing.
-func (x *OrderService) HandlePlaceOrder(ctx context.Context,
-	in *pb.HandlePlaceOrderRequest) (*pb.PlaceOrder, error) {
+func (x *OrderService) CreatePlaceOrder(ctx context.Context, in *pb.CreatePlaceOrderRequest) (*pb.PlaceOrder, error) {
 
-	if err := validatePlaceOrderRequest(in); err != nil {
-		slog.Error("validate place order request failed", "err", err)
-		return nil, status.Error(codes.InvalidArgument, "failed to validate place order request")
+	newOrder, err := x.prepareNewOrder(in)
+	if err != nil {
+		// TODO: include prepare error in response(customer errors).
+		return nil, status.Error(codes.FailedPrecondition, "failed to prepare new order")
 	}
 
-	// TODO validate place order fields valid such as customerID , restuarntName already exists
-
-	orderID, err := x.storage.Create(ctx, prepareNewOrder(in))
+	orderID, err := x.storage.Create(ctx, newOrder)
 	if err != nil {
 		slog.Error("storage create new order", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -81,7 +79,7 @@ func (x *OrderService) HandlePlaceOrder(ctx context.Context,
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	order := dbToProto(dbOrder)
+	order := toProtoPlaceOrder(dbOrder)
 
 	body, err := proto.Marshal(order)
 	if err != nil {
@@ -214,131 +212,112 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 	return messages
 }
 
-func prepareNewOrder(in *pb.HandlePlaceOrderRequest) *dbPlaceOrder {
+// TODO:
+// - check merchant and customer exists
+// - add context
+func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*newPlaceOrder, error) {
+	ctx := context.TODO()
 
-	var menu []*dbMenuItem
-	for _, m := range in.Menu {
-		menu = append(menu, &dbMenuItem{
-			FoodName: m.FoodName,
-			Price:    m.Price,
+	if err := validatePlaceOrderRequest(newOrder); err != nil {
+		return nil, err
+	}
+
+	deliveryFee, err := x.clients.Delivery.GetDeliveryFee(ctx, &pb.GetDeliveryFeeRequest{
+		CustomerId:        newOrder.CustomerId,
+		CustomerAddressId: newOrder.CustomerAddress.AddressId,
+		MerchantId:        newOrder.MerchantId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	merchant, err := x.clients.Merchant.GetMerchant(ctx, &pb.GetMerchantRequest{MerchantId: newOrder.MerchantId})
+	if err != nil {
+		return nil, err
+	}
+
+	foodCost := calcFoodCost(merchant.Menu, newOrder.Items)
+
+	coupon, err := x.clients.Coupon.GetCoupon(ctx, &pb.GetCouponRequest{Code: newOrder.CouponCode})
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Now().After(time.Unix(coupon.ExpiresIn, 0)) || coupon.QuantityCount <= 0 {
+		return nil, errors.New("coupon is expired or has no remaining uses")
+	}
+
+	total := (deliveryFee.Fee + foodCost) - coupon.Discount
+
+	var items []*dbOrderItem
+	for _, item := range newOrder.Items {
+		items = append(items, &dbOrderItem{
+			ItemID:   item.ItemId,
+			Quantity: item.Quantity,
+			Note:     item.Note,
 		})
 	}
 
-	createTime := time.Now()
-
-	return &dbPlaceOrder{
-		//OrderID:  - ,
-		RequestID:      in.RequestId,
-		CustomerID:     in.CustomerId,
-		MerchantID:     in.MerchantId,
-		Menu:           menu,
-		CouponCode:     in.CouponCode,
-		CouponDiscount: in.CouponDiscount,
-		DeliveryFee:    in.DeliveryFee,
-		Total:          in.Total,
-		CustomerAddress: &dbAddress{
-			AddressName: in.CustomerAddress.AddressName,
-			SubDistrict: in.CustomerAddress.SubDistrict,
-			District:    in.CustomerAddress.District,
-			Province:    in.CustomerAddress.Province,
-			PostalCode:  in.CustomerAddress.Province,
-		},
-		MerchantAddress: &dbAddress{
-			AddressName: in.CustomerAddress.AddressName,
-			SubDistrict: in.CustomerAddress.SubDistrict,
-			District:    in.CustomerAddress.District,
-			Province:    in.CustomerAddress.Province,
-			PostalCode:  in.CustomerAddress.Province,
-		},
-		CustomerContact: &dbContactInfo{
-			PhoneNumber: in.CustomerContact.PhoneNumber,
-			Email:       in.CustomerContact.Email,
-		},
-		PaymentMethods: dbPaymentMethods(in.PaymentMethods),
-		PaymentStatus:  PaymentStatus_UNPAID, //DEFAULT
-		OrderStatus:    OrderStatus_PENDING,  //DEFAULT
-		Timestamps: &dbTimestamps{
-			CreateTime:   createTime,
-			UpdateTime:   time.Time{},
-			CompleteTime: time.Time{},
-		}}
+	return &newPlaceOrder{
+		RequestID:       newOrder.RequestId,
+		CustomerID:      newOrder.CustomerId,
+		MerchantID:      newOrder.MerchantId,
+		Items:           items,
+		CouponCode:      newOrder.CouponCode,
+		CouponDiscount:  coupon.Discount,
+		DeliveryFee:     deliveryFee.Fee,
+		Total:           total,
+		CustomerAddress: toDbAddress(newOrder.CustomerAddress),
+		MerchantAddress: toDbAddress(merchant.Address),
+		CustomerContact: toDbContactInfo(newOrder.CustomerContact),
+		PaymentMethods:  dbPaymentMethods(newOrder.PaymentMethods),
+	}, nil
 }
 
-func dbToProto(order *dbPlaceOrder) *pb.PlaceOrder {
-
-	var menu []*pb.MenuItem
-	for _, m := range order.Menu {
-		menu = append(menu, &pb.MenuItem{
-			FoodName: m.FoodName,
-			Price:    m.Price,
-		})
-
+func calcFoodCost(menu []*pb.MenuItem, orderItems []*pb.OrderItem) int32 {
+	menuPrices := make(map[string]int32)
+	for _, menuItem := range menu {
+		menuPrices[menuItem.ItemId] = menuItem.Price
 	}
 
-	return &pb.PlaceOrder{
-		OrderId:        order.OrderID,
-		RequestId:      order.RequestID,
-		CustomerId:     order.CustomerID,
-		MerchantId:     order.MerchantID,
-		Menu:           menu,
-		CouponCode:     order.CouponCode,
-		CouponDiscount: order.CouponDiscount,
-		DeliveryFee:    order.DeliveryFee,
-		Total:          order.Total,
-		CustomerAddress: &pb.Address{
-			AddressName: order.CustomerAddress.AddressName,
-			SubDistrict: order.CustomerAddress.SubDistrict,
-			District:    order.CustomerAddress.District,
-			Province:    order.CustomerAddress.Province,
-			PostalCode:  order.CustomerAddress.PostalCode,
-		},
-		MerchantAddress: &pb.Address{
-			AddressName: order.MerchantAddress.AddressName,
-			SubDistrict: order.MerchantAddress.SubDistrict,
-			District:    order.MerchantAddress.District,
-			Province:    order.MerchantAddress.Province,
-			PostalCode:  order.MerchantAddress.PostalCode,
-		},
-		CustomerContact: &pb.ContactInfo{
-			PhoneNumber: order.CustomerContact.PhoneNumber,
-			Email:       order.CustomerContact.Email,
-		},
-		PaymentMethods: pb.PaymentMethods(order.PaymentMethods),
-		PaymentStatus:  pb.PaymentStatus(order.PaymentStatus),
-		OrderStatus:    pb.OrderStatus(order.OrderStatus),
-		OrderTimestamps: &pb.OrderTimestamps{
-			CreateTime:   timestamppb.New(order.Timestamps.CreateTime),
-			UpdateTime:   timestamppb.New(order.Timestamps.UpdateTime),
-			CompleteTime: timestamppb.New(order.Timestamps.CompleteTime),
-		},
+	var foodCost int32
+	for _, newItem := range orderItems {
+		if price, ok := menuPrices[newItem.ItemId]; ok {
+			foodCost += price * newItem.Quantity
+		}
 	}
-
+	return foodCost
 }
 
-// TODO implement other validation technique
-func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
+// TODO: use validator lib
+func validatePlaceOrderRequest(in *pb.CreatePlaceOrderRequest) error {
 
-	switch {
-	case in.RequestId == "":
+	if in.RequestId == "" {
 		return errors.New("request ID must be provided")
-	case in.CustomerId == "":
+	}
+	if in.CustomerId == "" {
 		return errors.New("customer ID must be provided")
-	case in.MerchantId == "":
+	}
+	if in.MerchantId == "" {
 		return errors.New("merchant ID must be provided")
-	case len(in.Menu) == 0:
-		return errors.New("menu should be at least one")
-	case in.CouponCode == "":
+	}
+	if len(in.Items) == 0 {
+		return errors.New("items should be at least one")
+	}
+	if in.CouponCode == "" {
 		return errors.New("coupon code must be provided")
-	case in.DeliveryFee == 0:
-		return errors.New("delivery fee should not be zero")
-	case in.Total == 0:
-		return errors.New("total should not be zero")
-	case in.CustomerAddress == nil:
+	}
+	if in.CustomerAddress == nil {
 		return errors.New("customer address must be provided")
-	case in.MerchantAddress == nil:
-		return errors.New("merchant address must be provided")
-	case in.CustomerContact == nil:
-		return errors.New("customer contact infomation must be provided")
+	}
+	if in.CustomerContact == nil {
+		return errors.New("customer contact information must be provided")
+	}
+	if in.PaymentMethods == pb.PaymentMethods_PAYMENT_METHOD_UNSPECIFIED {
+		return errors.New("payment method must be provided")
+	}
+	if _, ok := pb.PaymentStatus_name[int32(in.PaymentMethods)]; !ok {
+		return errors.New("invalid payment method")
 	}
 
 	if err := validateEmail(in.CustomerContact.Email); err != nil {
@@ -347,23 +326,6 @@ func validatePlaceOrderRequest(in *pb.HandlePlaceOrderRequest) error {
 
 	if err := validatePhoneNumber(in.CustomerContact.PhoneNumber); err != nil {
 		return err
-	}
-
-	var sumMenus int32
-	for _, menu := range in.Menu {
-		sumMenus += menu.Price
-	}
-	sum := ((sumMenus + in.DeliveryFee) - in.CouponDiscount)
-
-	if in.Total != sum {
-		return fmt.Errorf("total mismatch: calculated %d but got %d", sum, in.Total)
-	}
-
-	switch in.PaymentMethods {
-	case pb.PaymentMethods_PAYMENT_METHOD_CASH,
-		pb.PaymentMethods_PAYMENT_METHOD_CREDIT_CARD:
-	default:
-		return errors.New("invalid payment methods")
 	}
 
 	return nil
