@@ -23,7 +23,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
-use tonic::transport::Server;
+use tonic::transport::{Server, Uri};
 
 pub mod ihavefood {
     // tonic::include_proto!("ihavefood");
@@ -79,15 +79,24 @@ async fn main() -> Result<()> {
         .format_target(false)
         .init();
 
-    let customer_client = CustomerServiceClient::connect("customer:3333").await?;
-    let merchant_client = MerchantServiceClient::connect("merchant:5555").await?;
+    let customer_uri = Uri::builder()
+        .scheme("http")
+        .authority(dotenv::var("CUSTOMER_URI")?)
+        .path_and_query("/")
+        .build()?;
+
+    let merchant_uri = Uri::builder()
+        .scheme("http")
+        .authority(dotenv::var("MERCHANT_URI")?)
+        .path_and_query("/")
+        .build()?;
 
     let app = MyDelivery {
         db: Arc::new(Db::new(init_sqlite_pool().await)),
         broker: Arc::new(RabbitMQ::new(init_amqp_conn().await)),
         task_limiter: Arc::new(Semaphore::new(100)),
-        customercl: customer_client,
-        merchantcl: merchant_client,
+        customercl: CustomerServiceClient::connect(customer_uri).await?,
+        merchantcl: MerchantServiceClient::connect(merchant_uri).await?,
     };
 
     let socket = SocketAddr::new(
