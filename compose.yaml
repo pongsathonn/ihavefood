@@ -12,7 +12,6 @@ services:
       - "4041:4041" 
     env_file:
       - path: .env
-      - path: ./api-gateway/.env
     networks:
       - mynetwork
     depends_on:
