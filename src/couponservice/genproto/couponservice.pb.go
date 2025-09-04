@@ -7,6 +7,7 @@
 package genproto
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -80,7 +81,7 @@ type Coupon struct {
 	// The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.
 	// The server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY.
 	Discount int32 `protobuf:"varint,3,opt,name=discount,proto3" json:"discount,omitempty"`
-	// Number of seconds until the coupon expires.
+	// Number of seconds until the coupon expires(UNIX).
 	ExpiresIn     int64 `protobuf:"varint,4,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
 	QuantityCount int32 `protobuf:"varint,5,opt,name=quantity_count,json=quantityCount,proto3" json:"quantity_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -403,21 +404,21 @@ var File_couponservice_proto protoreflect.FileDescriptor
 
 const file_couponservice_proto_rawDesc = "" +
 	"\n" +
-	"\x13couponservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xac\x01\n" +
+	"\x13couponservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xac\x01\n" +
 	"\x06Coupon\x12,\n" +
 	"\x05types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\x05types\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1a\n" +
 	"\bdiscount\x18\x03 \x01(\x05R\bdiscount\x12\x1d\n" +
 	"\n" +
 	"expires_in\x18\x04 \x01(\x03R\texpiresIn\x12%\n" +
-	"\x0equantity_count\x18\x05 \x01(\x05R\rquantityCount\"\xab\x01\n" +
+	"\x0equantity_count\x18\x05 \x01(\x05R\rquantityCount\"\x90\x02\n" +
 	"\x10AddCouponRequest\x129\n" +
 	"\fcoupon_types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\vcouponTypes\x12\x1a\n" +
 	"\bdiscount\x18\x02 \x01(\x05R\bdiscount\x12$\n" +
 	"\x0eexpire_in_hour\x18\x03 \x01(\x05R\fexpireInHour\x12\x1a\n" +
-	"\bquantity\x18\x04 \x01(\x05R\bquantity\"&\n" +
+	"\bquantity\x18\x04 \x01(\x05R\bquantity:c\x92A`2^{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}\"E\n" +
 	"\x10GetCouponRequest\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\"B\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code:\x1d\x92A\x1a2\x18{\"code\": \"SAVE20FORYOU\"}\"B\n" +
 	"\x13ListCouponsResponse\x12+\n" +
 	"\acoupons\x18\x01 \x03(\v2\x11.ihavefood.CouponR\acoupons\")\n" +
 	"\x13RedeemCouponRequest\x12\x12\n" +

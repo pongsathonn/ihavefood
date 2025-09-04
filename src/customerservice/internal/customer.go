@@ -84,21 +84,20 @@ func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCusto
 	return dbToProto(customer), nil
 }
 
-func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddressRequest) (*pb.Customer, error) {
+func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddressRequest) (*pb.Address, error) {
 
-	// TODO validate input
-
-	numAddr, err := x.store.countAddress(ctx, in.CustomerId)
+	customer, err := x.store.getCustomer(ctx, in.CustomerId)
 	if err != nil {
-		slog.Error("store count user customer address", "err", err)
+		slog.Error("store get customer", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	if numAddr >= 5 {
-		return nil, status.Error(codes.ResourceExhausted, "user has reached the limit of five addresses")
+	maxAddr := 5
+	if len(customer.Addresses) >= maxAddr {
+		return nil, status.Errorf(codes.ResourceExhausted, "customer has reached the limit of %d addresses", maxAddr)
 	}
 
-	customerID, err := x.store.createAddress(ctx, in.CustomerId, &dbAddress{
+	addressID, err := x.store.createAddress(ctx, in.CustomerId, &dbAddress{
 		AddressName: sql.NullString{String: in.Address.AddressName},
 		SubDistrict: sql.NullString{String: in.Address.SubDistrict},
 		District:    sql.NullString{String: in.Address.District},
@@ -110,19 +109,24 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	// FIX: if customerID not exists it will return nil customer as nil
-	customer, err := x.store.getCustomer(ctx, customerID)
+	addr, err := x.store.getAddress(ctx, in.CustomerId, addressID)
 	if err != nil {
-		slog.Error("store get customer", "err", err)
+		slog.Error("store get address", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return dbToProto(customer), nil
+	return &pb.Address{
+		AddressId:   addr.AddressID,
+		AddressName: addr.AddressName.String,
+		SubDistrict: addr.SubDistrict.String,
+		District:    addr.District.String,
+		Province:    addr.Province.String,
+		PostalCode:  addr.PostalCode.String,
+	}, nil
+
 }
 
 func (x *CustomerService) UpdateCustomer(ctx context.Context, in *pb.UpdateCustomerRequest) (*pb.Customer, error) {
-
-	// TODO validate input
 
 	update := &dbCustomer{
 		Username: in.NewUsername,
@@ -168,6 +172,7 @@ func protoToDb(customer *pb.Customer) *dbCustomer {
 	var addresses []*dbAddress
 	for _, a := range customer.Addresses {
 		addresses = append(addresses, &dbAddress{
+			AddressID:   a.AddressId,
 			AddressName: sql.NullString{String: a.AddressName},
 			SubDistrict: sql.NullString{String: a.SubDistrict},
 			District:    sql.NullString{String: a.District},
@@ -196,6 +201,7 @@ func dbToProto(customer *dbCustomer) *pb.Customer {
 	var addresses []*pb.Address
 	for _, a := range customer.Addresses {
 		addresses = append(addresses, &pb.Address{
+			AddressId:   a.AddressID,
 			AddressName: a.AddressName.String,
 			SubDistrict: a.SubDistrict.String,
 			District:    a.District.String,

@@ -316,13 +316,12 @@ func (x *GetOrderTrackingResponse) GetUpdateTime() *timestamppb.Timestamp {
 }
 
 type GetDeliveryFeeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MerchantLat   float64                `protobuf:"fixed64,1,opt,name=merchant_lat,json=merchantLat,proto3" json:"merchant_lat,omitempty"`
-	MerchantLong  float64                `protobuf:"fixed64,2,opt,name=merchant_long,json=merchantLong,proto3" json:"merchant_long,omitempty"`
-	CustomerLat   float64                `protobuf:"fixed64,3,opt,name=customer_lat,json=customerLat,proto3" json:"customer_lat,omitempty"`
-	CustomerLong  float64                `protobuf:"fixed64,4,opt,name=customer_long,json=customerLong,proto3" json:"customer_long,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	CustomerId        string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	CustomerAddressId string                 `protobuf:"bytes,2,opt,name=customer_address_id,json=customerAddressId,proto3" json:"customer_address_id,omitempty"`
+	MerchantId        string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *GetDeliveryFeeRequest) Reset() {
@@ -355,37 +354,30 @@ func (*GetDeliveryFeeRequest) Descriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetDeliveryFeeRequest) GetMerchantLat() float64 {
+func (x *GetDeliveryFeeRequest) GetCustomerId() string {
 	if x != nil {
-		return x.MerchantLat
+		return x.CustomerId
 	}
-	return 0
+	return ""
 }
 
-func (x *GetDeliveryFeeRequest) GetMerchantLong() float64 {
+func (x *GetDeliveryFeeRequest) GetCustomerAddressId() string {
 	if x != nil {
-		return x.MerchantLong
+		return x.CustomerAddressId
 	}
-	return 0
+	return ""
 }
 
-func (x *GetDeliveryFeeRequest) GetCustomerLat() float64 {
+func (x *GetDeliveryFeeRequest) GetMerchantId() string {
 	if x != nil {
-		return x.CustomerLat
+		return x.MerchantId
 	}
-	return 0
-}
-
-func (x *GetDeliveryFeeRequest) GetCustomerLong() float64 {
-	if x != nil {
-		return x.CustomerLong
-	}
-	return 0
+	return ""
 }
 
 type GetDeliveryFeeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeliveryFee   int32                  `protobuf:"varint,1,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
+	Fee           int32                  `protobuf:"varint,1,opt,name=fee,proto3" json:"fee,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -420,9 +412,9 @@ func (*GetDeliveryFeeResponse) Descriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *GetDeliveryFeeResponse) GetDeliveryFee() int32 {
+func (x *GetDeliveryFeeResponse) GetFee() int32 {
 	if x != nil {
-		return x.DeliveryFee
+		return x.Fee
 	}
 	return 0
 }
@@ -608,14 +600,15 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\x127\n" +
 	"\x0erider_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\rriderLocation\x12;\n" +
 	"\vupdate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\xa7\x01\n" +
-	"\x15GetDeliveryFeeRequest\x12!\n" +
-	"\fmerchant_lat\x18\x01 \x01(\x01R\vmerchantLat\x12#\n" +
-	"\rmerchant_long\x18\x02 \x01(\x01R\fmerchantLong\x12!\n" +
-	"\fcustomer_lat\x18\x03 \x01(\x01R\vcustomerLat\x12#\n" +
-	"\rcustomer_long\x18\x04 \x01(\x01R\fcustomerLong\";\n" +
-	"\x16GetDeliveryFeeResponse\x12!\n" +
-	"\fdelivery_fee\x18\x01 \x01(\x05R\vdeliveryFee\"Q\n" +
+	"updateTime\"\x89\x01\n" +
+	"\x15GetDeliveryFeeRequest\x12\x1f\n" +
+	"\vcustomer_id\x18\x01 \x01(\tR\n" +
+	"customerId\x12.\n" +
+	"\x13customer_address_id\x18\x02 \x01(\tR\x11customerAddressId\x12\x1f\n" +
+	"\vmerchant_id\x18\x03 \x01(\tR\n" +
+	"merchantId\"*\n" +
+	"\x16GetDeliveryFeeResponse\x12\x10\n" +
+	"\x03fee\x18\x01 \x01(\x05R\x03fee\"Q\n" +
 	"\x19ConfirmRiderAcceptRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\"7\n" +

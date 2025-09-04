@@ -3,14 +3,16 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Address {
     #[prost(string, tag = "1")]
-    pub address_name: ::prost::alloc::string::String,
+    pub address_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub sub_district: ::prost::alloc::string::String,
+    pub address_name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub district: ::prost::alloc::string::String,
+    pub sub_district: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
-    pub province: ::prost::alloc::string::String,
+    pub district: ::prost::alloc::string::String,
     #[prost(string, tag = "5")]
+    pub province: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
     pub postal_code: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -22,6 +24,1325 @@ pub struct Social {
     pub instagram: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub line: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PlaceOrder {
+    /// request_id for idempotency.
+    #[prost(string, tag = "1")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub order_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub customer_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub merchant_id: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "5")]
+    pub items: ::prost::alloc::vec::Vec<OrderItem>,
+    #[prost(string, tag = "6")]
+    pub coupon_code: ::prost::alloc::string::String,
+    #[prost(int32, tag = "7")]
+    pub coupon_discount: i32,
+    #[prost(int32, tag = "8")]
+    pub delivery_fee: i32,
+    #[prost(int32, tag = "9")]
+    pub total: i32,
+    #[prost(message, optional, tag = "10")]
+    pub customer_address: ::core::option::Option<Address>,
+    #[prost(message, optional, tag = "11")]
+    pub merchant_address: ::core::option::Option<Address>,
+    #[prost(message, optional, tag = "12")]
+    pub customer_contact: ::core::option::Option<ContactInfo>,
+    #[prost(enumeration = "PaymentMethods", tag = "13")]
+    pub payment_methods: i32,
+    #[prost(enumeration = "PaymentStatus", tag = "14")]
+    pub payment_status: i32,
+    #[prost(enumeration = "OrderStatus", tag = "15")]
+    pub order_status: i32,
+    #[prost(message, optional, tag = "16")]
+    pub order_timestamps: ::core::option::Option<OrderTimestamps>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OrderItem {
+    #[prost(string, tag = "1")]
+    pub item_id: ::prost::alloc::string::String,
+    #[prost(int32, tag = "2")]
+    pub quantity: i32,
+    #[prost(string, tag = "3")]
+    pub note: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ContactInfo {
+    #[prost(string, tag = "1")]
+    pub phone_number: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub email: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct OrderTimestamps {
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
+    #[prost(message, optional, tag = "3")]
+    pub complete_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListOrderHistoryRequest {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListOrderHistoryResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub place_orders: ::prost::alloc::vec::Vec<PlaceOrder>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreatePlaceOrderRequest {
+    #[prost(string, tag = "1")]
+    pub request_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub customer_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub merchant_id: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "4")]
+    pub items: ::prost::alloc::vec::Vec<OrderItem>,
+    #[prost(string, tag = "5")]
+    pub coupon_code: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "6")]
+    pub customer_address: ::core::option::Option<Address>,
+    #[prost(message, optional, tag = "7")]
+    pub customer_contact: ::core::option::Option<ContactInfo>,
+    #[prost(enumeration = "PaymentMethods", tag = "8")]
+    pub payment_methods: i32,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum PaymentMethods {
+    PaymentMethodUnspecified = 0,
+    PaymentMethodCash = 1,
+    PaymentMethodCreditCard = 2,
+    PaymentMethodPromptPay = 3,
+}
+impl PaymentMethods {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::PaymentMethodUnspecified => "PAYMENT_METHOD_UNSPECIFIED",
+            Self::PaymentMethodCash => "PAYMENT_METHOD_CASH",
+            Self::PaymentMethodCreditCard => "PAYMENT_METHOD_CREDIT_CARD",
+            Self::PaymentMethodPromptPay => "PAYMENT_METHOD_PROMPT_PAY",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "PAYMENT_METHOD_UNSPECIFIED" => Some(Self::PaymentMethodUnspecified),
+            "PAYMENT_METHOD_CASH" => Some(Self::PaymentMethodCash),
+            "PAYMENT_METHOD_CREDIT_CARD" => Some(Self::PaymentMethodCreditCard),
+            "PAYMENT_METHOD_PROMPT_PAY" => Some(Self::PaymentMethodPromptPay),
+            _ => None,
+        }
+    }
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum PaymentStatus {
+    Unpaid = 0,
+    Paid = 1,
+}
+impl PaymentStatus {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unpaid => "UNPAID",
+            Self::Paid => "PAID",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "UNPAID" => Some(Self::Unpaid),
+            "PAID" => Some(Self::Paid),
+            _ => None,
+        }
+    }
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum OrderStatus {
+    Pending = 0,
+    PreparingOrder = 1,
+    FindingRider = 2,
+    WaitForPickup = 3,
+    Ongoing = 4,
+    Delivered = 5,
+    Cancelled = 6,
+}
+impl OrderStatus {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Pending => "PENDING",
+            Self::PreparingOrder => "PREPARING_ORDER",
+            Self::FindingRider => "FINDING_RIDER",
+            Self::WaitForPickup => "WAIT_FOR_PICKUP",
+            Self::Ongoing => "ONGOING",
+            Self::Delivered => "DELIVERED",
+            Self::Cancelled => "CANCELLED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "PENDING" => Some(Self::Pending),
+            "PREPARING_ORDER" => Some(Self::PreparingOrder),
+            "FINDING_RIDER" => Some(Self::FindingRider),
+            "WAIT_FOR_PICKUP" => Some(Self::WaitForPickup),
+            "ONGOING" => Some(Self::Ongoing),
+            "DELIVERED" => Some(Self::Delivered),
+            "CANCELLED" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+}
+/// Generated client implementations.
+pub mod order_service_client {
+    #![allow(
+        unused_variables,
+        dead_code,
+        missing_docs,
+        clippy::wildcard_imports,
+        clippy::let_unit_value,
+    )]
+    use tonic::codegen::*;
+    use tonic::codegen::http::Uri;
+    /// ---------------------ORDER SERVICE------------------------------
+    /// Manages place order process.
+    #[derive(Debug, Clone)]
+    pub struct OrderServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl OrderServiceClient<tonic::transport::Channel> {
+        /// Attempt to create a new client by connecting to a given endpoint.
+        pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
+        where
+            D: TryInto<tonic::transport::Endpoint>,
+            D::Error: Into<StdError>,
+        {
+            let conn = tonic::transport::Endpoint::new(dst)?.connect().await?;
+            Ok(Self::new(conn))
+        }
+    }
+    impl<T> OrderServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::Error: Into<StdError>,
+        T::ResponseBody: Body<Data = Bytes> + std::marker::Send + 'static,
+        <T::ResponseBody as Body>::Error: Into<StdError> + std::marker::Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_origin(inner: T, origin: Uri) -> Self {
+            let inner = tonic::client::Grpc::with_origin(inner, origin);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> OrderServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T::ResponseBody: Default,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+        {
+            OrderServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        /// Compress requests with the given encoding.
+        ///
+        /// This requires the server to support it otherwise it might respond with an
+        /// error.
+        #[must_use]
+        pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.inner = self.inner.send_compressed(encoding);
+            self
+        }
+        /// Enable decompressing responses.
+        #[must_use]
+        pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.inner = self.inner.accept_compressed(encoding);
+            self
+        }
+        /// Limits the maximum size of a decoded message.
+        ///
+        /// Default: `4MB`
+        #[must_use]
+        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_decoding_message_size(limit);
+            self
+        }
+        /// Limits the maximum size of an encoded message.
+        ///
+        /// Default: `usize::MAX`
+        #[must_use]
+        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_encoding_message_size(limit);
+            self
+        }
+        ///  ListOrderHistory retrives Customer's place order history by CustomerID
+        pub async fn list_order_history(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListOrderHistoryRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListOrderHistoryResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.OrderService/ListOrderHistory",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.OrderService", "ListOrderHistory"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn create_place_order(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreatePlaceOrderRequest>,
+        ) -> std::result::Result<tonic::Response<super::PlaceOrder>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.OrderService/CreatePlaceOrder",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.OrderService", "CreatePlaceOrder"));
+            self.inner.unary(req, path, codec).await
+        }
+    }
+}
+/// Generated server implementations.
+pub mod order_service_server {
+    #![allow(
+        unused_variables,
+        dead_code,
+        missing_docs,
+        clippy::wildcard_imports,
+        clippy::let_unit_value,
+    )]
+    use tonic::codegen::*;
+    /// Generated trait containing gRPC methods that should be implemented for use with OrderServiceServer.
+    #[async_trait]
+    pub trait OrderService: std::marker::Send + std::marker::Sync + 'static {
+        ///  ListOrderHistory retrives Customer's place order history by CustomerID
+        async fn list_order_history(
+            &self,
+            request: tonic::Request<super::ListOrderHistoryRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListOrderHistoryResponse>,
+            tonic::Status,
+        >;
+        async fn create_place_order(
+            &self,
+            request: tonic::Request<super::CreatePlaceOrderRequest>,
+        ) -> std::result::Result<tonic::Response<super::PlaceOrder>, tonic::Status>;
+    }
+    /// ---------------------ORDER SERVICE------------------------------
+    /// Manages place order process.
+    #[derive(Debug)]
+    pub struct OrderServiceServer<T> {
+        inner: Arc<T>,
+        accept_compression_encodings: EnabledCompressionEncodings,
+        send_compression_encodings: EnabledCompressionEncodings,
+        max_decoding_message_size: Option<usize>,
+        max_encoding_message_size: Option<usize>,
+    }
+    impl<T> OrderServiceServer<T> {
+        pub fn new(inner: T) -> Self {
+            Self::from_arc(Arc::new(inner))
+        }
+        pub fn from_arc(inner: Arc<T>) -> Self {
+            Self {
+                inner,
+                accept_compression_encodings: Default::default(),
+                send_compression_encodings: Default::default(),
+                max_decoding_message_size: None,
+                max_encoding_message_size: None,
+            }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> InterceptedService<Self, F>
+        where
+            F: tonic::service::Interceptor,
+        {
+            InterceptedService::new(Self::new(inner), interceptor)
+        }
+        /// Enable decompressing requests with the given encoding.
+        #[must_use]
+        pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.accept_compression_encodings.enable(encoding);
+            self
+        }
+        /// Compress responses with the given encoding, if the client supports it.
+        #[must_use]
+        pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.send_compression_encodings.enable(encoding);
+            self
+        }
+        /// Limits the maximum size of a decoded message.
+        ///
+        /// Default: `4MB`
+        #[must_use]
+        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
+            self.max_decoding_message_size = Some(limit);
+            self
+        }
+        /// Limits the maximum size of an encoded message.
+        ///
+        /// Default: `usize::MAX`
+        #[must_use]
+        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
+            self.max_encoding_message_size = Some(limit);
+            self
+        }
+    }
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for OrderServiceServer<T>
+    where
+        T: OrderService,
+        B: Body + std::marker::Send + 'static,
+        B::Error: Into<StdError> + std::marker::Send + 'static,
+    {
+        type Response = http::Response<tonic::body::BoxBody>;
+        type Error = std::convert::Infallible;
+        type Future = BoxFuture<Self::Response, Self::Error>;
+        fn poll_ready(
+            &mut self,
+            _cx: &mut Context<'_>,
+        ) -> Poll<std::result::Result<(), Self::Error>> {
+            Poll::Ready(Ok(()))
+        }
+        fn call(&mut self, req: http::Request<B>) -> Self::Future {
+            match req.uri().path() {
+                "/ihavefood.OrderService/ListOrderHistory" => {
+                    #[allow(non_camel_case_types)]
+                    struct ListOrderHistorySvc<T: OrderService>(pub Arc<T>);
+                    impl<
+                        T: OrderService,
+                    > tonic::server::UnaryService<super::ListOrderHistoryRequest>
+                    for ListOrderHistorySvc<T> {
+                        type Response = super::ListOrderHistoryResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ListOrderHistoryRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as OrderService>::list_order_history(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = ListOrderHistorySvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.OrderService/CreatePlaceOrder" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreatePlaceOrderSvc<T: OrderService>(pub Arc<T>);
+                    impl<
+                        T: OrderService,
+                    > tonic::server::UnaryService<super::CreatePlaceOrderRequest>
+                    for CreatePlaceOrderSvc<T> {
+                        type Response = super::PlaceOrder;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreatePlaceOrderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as OrderService>::create_place_order(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CreatePlaceOrderSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                _ => {
+                    Box::pin(async move {
+                        let mut response = http::Response::new(empty_body());
+                        let headers = response.headers_mut();
+                        headers
+                            .insert(
+                                tonic::Status::GRPC_STATUS,
+                                (tonic::Code::Unimplemented as i32).into(),
+                            );
+                        headers
+                            .insert(
+                                http::header::CONTENT_TYPE,
+                                tonic::metadata::GRPC_CONTENT_TYPE,
+                            );
+                        Ok(response)
+                    })
+                }
+            }
+        }
+    }
+    impl<T> Clone for OrderServiceServer<T> {
+        fn clone(&self) -> Self {
+            let inner = self.inner.clone();
+            Self {
+                inner,
+                accept_compression_encodings: self.accept_compression_encodings,
+                send_compression_encodings: self.send_compression_encodings,
+                max_decoding_message_size: self.max_decoding_message_size,
+                max_encoding_message_size: self.max_encoding_message_size,
+            }
+        }
+    }
+    /// Generated gRPC service name
+    pub const SERVICE_NAME: &str = "ihavefood.OrderService";
+    impl<T> tonic::server::NamedService for OrderServiceServer<T> {
+        const NAME: &'static str = SERVICE_NAME;
+    }
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Customer {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub username: ::prost::alloc::string::String,
+    /// bytes picture = 3;
+    #[prost(string, tag = "4")]
+    pub bio: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "5")]
+    pub social: ::core::option::Option<Social>,
+    /// User can have many address
+    #[prost(message, repeated, tag = "6")]
+    pub addresses: ::prost::alloc::vec::Vec<Address>,
+    #[prost(message, optional, tag = "7")]
+    pub create_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
+    #[prost(message, optional, tag = "8")]
+    pub update_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
+}
+/// TODO filter here
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct ListCustomersRequest {}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListCustomersResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub customers: ::prost::alloc::vec::Vec<Customer>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetCustomerRequest {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateCustomerRequest {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub username: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAddressRequest {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub address: ::core::option::Option<Address>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateCustomerRequest {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// username must has constraint for update
+    /// such as update every XX months.
+    #[prost(string, tag = "2")]
+    pub new_username: ::prost::alloc::string::String,
+    /// bytes new_picture = 3;
+    #[prost(string, tag = "4")]
+    pub new_bio: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "5")]
+    pub new_social: ::core::option::Option<Social>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteCustomerRequest {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+}
+/// Generated client implementations.
+pub mod customer_service_client {
+    #![allow(
+        unused_variables,
+        dead_code,
+        missing_docs,
+        clippy::wildcard_imports,
+        clippy::let_unit_value,
+    )]
+    use tonic::codegen::*;
+    use tonic::codegen::http::Uri;
+    /// ---------------------CUSTOMER SERVICE------------------------------
+    #[derive(Debug, Clone)]
+    pub struct CustomerServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl CustomerServiceClient<tonic::transport::Channel> {
+        /// Attempt to create a new client by connecting to a given endpoint.
+        pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
+        where
+            D: TryInto<tonic::transport::Endpoint>,
+            D::Error: Into<StdError>,
+        {
+            let conn = tonic::transport::Endpoint::new(dst)?.connect().await?;
+            Ok(Self::new(conn))
+        }
+    }
+    impl<T> CustomerServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::Error: Into<StdError>,
+        T::ResponseBody: Body<Data = Bytes> + std::marker::Send + 'static,
+        <T::ResponseBody as Body>::Error: Into<StdError> + std::marker::Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_origin(inner: T, origin: Uri) -> Self {
+            let inner = tonic::client::Grpc::with_origin(inner, origin);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> CustomerServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T::ResponseBody: Default,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+        {
+            CustomerServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        /// Compress requests with the given encoding.
+        ///
+        /// This requires the server to support it otherwise it might respond with an
+        /// error.
+        #[must_use]
+        pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.inner = self.inner.send_compressed(encoding);
+            self
+        }
+        /// Enable decompressing responses.
+        #[must_use]
+        pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.inner = self.inner.accept_compressed(encoding);
+            self
+        }
+        /// Limits the maximum size of a decoded message.
+        ///
+        /// Default: `4MB`
+        #[must_use]
+        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_decoding_message_size(limit);
+            self
+        }
+        /// Limits the maximum size of an encoded message.
+        ///
+        /// Default: `usize::MAX`
+        #[must_use]
+        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_encoding_message_size(limit);
+            self
+        }
+        pub async fn list_customers(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListCustomersRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListCustomersResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.CustomerService/ListCustomers",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.CustomerService", "ListCustomers"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn get_customer(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetCustomerRequest>,
+        ) -> std::result::Result<tonic::Response<super::Customer>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.CustomerService/GetCustomer",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.CustomerService", "GetCustomer"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// CreateCustomer creates new user customer
+        ///
+        /// The user customer must be created after the AuthService successfully
+        /// creates the new user credentials to ensure that the CustomerID and
+        /// Username are synchronized.
+        pub async fn create_customer(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateCustomerRequest>,
+        ) -> std::result::Result<tonic::Response<super::Customer>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.CustomerService/CreateCustomer",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.CustomerService", "CreateCustomer"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// CreateAddress creates new address to exists uer customer.
+        pub async fn create_address(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateAddressRequest>,
+        ) -> std::result::Result<tonic::Response<super::Address>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.CustomerService/CreateAddress",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.CustomerService", "CreateAddress"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn update_customer(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateCustomerRequest>,
+        ) -> std::result::Result<tonic::Response<super::Customer>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.CustomerService/UpdateCustomer",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.CustomerService", "UpdateCustomer"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn delete_customer(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteCustomerRequest>,
+        ) -> std::result::Result<
+            tonic::Response<::prost_wkt_types::Empty>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.CustomerService/DeleteCustomer",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.CustomerService", "DeleteCustomer"));
+            self.inner.unary(req, path, codec).await
+        }
+    }
+}
+/// Generated server implementations.
+pub mod customer_service_server {
+    #![allow(
+        unused_variables,
+        dead_code,
+        missing_docs,
+        clippy::wildcard_imports,
+        clippy::let_unit_value,
+    )]
+    use tonic::codegen::*;
+    /// Generated trait containing gRPC methods that should be implemented for use with CustomerServiceServer.
+    #[async_trait]
+    pub trait CustomerService: std::marker::Send + std::marker::Sync + 'static {
+        async fn list_customers(
+            &self,
+            request: tonic::Request<super::ListCustomersRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListCustomersResponse>,
+            tonic::Status,
+        >;
+        async fn get_customer(
+            &self,
+            request: tonic::Request<super::GetCustomerRequest>,
+        ) -> std::result::Result<tonic::Response<super::Customer>, tonic::Status>;
+        /// CreateCustomer creates new user customer
+        ///
+        /// The user customer must be created after the AuthService successfully
+        /// creates the new user credentials to ensure that the CustomerID and
+        /// Username are synchronized.
+        async fn create_customer(
+            &self,
+            request: tonic::Request<super::CreateCustomerRequest>,
+        ) -> std::result::Result<tonic::Response<super::Customer>, tonic::Status>;
+        /// CreateAddress creates new address to exists uer customer.
+        async fn create_address(
+            &self,
+            request: tonic::Request<super::CreateAddressRequest>,
+        ) -> std::result::Result<tonic::Response<super::Address>, tonic::Status>;
+        async fn update_customer(
+            &self,
+            request: tonic::Request<super::UpdateCustomerRequest>,
+        ) -> std::result::Result<tonic::Response<super::Customer>, tonic::Status>;
+        async fn delete_customer(
+            &self,
+            request: tonic::Request<super::DeleteCustomerRequest>,
+        ) -> std::result::Result<
+            tonic::Response<::prost_wkt_types::Empty>,
+            tonic::Status,
+        >;
+    }
+    /// ---------------------CUSTOMER SERVICE------------------------------
+    #[derive(Debug)]
+    pub struct CustomerServiceServer<T> {
+        inner: Arc<T>,
+        accept_compression_encodings: EnabledCompressionEncodings,
+        send_compression_encodings: EnabledCompressionEncodings,
+        max_decoding_message_size: Option<usize>,
+        max_encoding_message_size: Option<usize>,
+    }
+    impl<T> CustomerServiceServer<T> {
+        pub fn new(inner: T) -> Self {
+            Self::from_arc(Arc::new(inner))
+        }
+        pub fn from_arc(inner: Arc<T>) -> Self {
+            Self {
+                inner,
+                accept_compression_encodings: Default::default(),
+                send_compression_encodings: Default::default(),
+                max_decoding_message_size: None,
+                max_encoding_message_size: None,
+            }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> InterceptedService<Self, F>
+        where
+            F: tonic::service::Interceptor,
+        {
+            InterceptedService::new(Self::new(inner), interceptor)
+        }
+        /// Enable decompressing requests with the given encoding.
+        #[must_use]
+        pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.accept_compression_encodings.enable(encoding);
+            self
+        }
+        /// Compress responses with the given encoding, if the client supports it.
+        #[must_use]
+        pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
+            self.send_compression_encodings.enable(encoding);
+            self
+        }
+        /// Limits the maximum size of a decoded message.
+        ///
+        /// Default: `4MB`
+        #[must_use]
+        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
+            self.max_decoding_message_size = Some(limit);
+            self
+        }
+        /// Limits the maximum size of an encoded message.
+        ///
+        /// Default: `usize::MAX`
+        #[must_use]
+        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
+            self.max_encoding_message_size = Some(limit);
+            self
+        }
+    }
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for CustomerServiceServer<T>
+    where
+        T: CustomerService,
+        B: Body + std::marker::Send + 'static,
+        B::Error: Into<StdError> + std::marker::Send + 'static,
+    {
+        type Response = http::Response<tonic::body::BoxBody>;
+        type Error = std::convert::Infallible;
+        type Future = BoxFuture<Self::Response, Self::Error>;
+        fn poll_ready(
+            &mut self,
+            _cx: &mut Context<'_>,
+        ) -> Poll<std::result::Result<(), Self::Error>> {
+            Poll::Ready(Ok(()))
+        }
+        fn call(&mut self, req: http::Request<B>) -> Self::Future {
+            match req.uri().path() {
+                "/ihavefood.CustomerService/ListCustomers" => {
+                    #[allow(non_camel_case_types)]
+                    struct ListCustomersSvc<T: CustomerService>(pub Arc<T>);
+                    impl<
+                        T: CustomerService,
+                    > tonic::server::UnaryService<super::ListCustomersRequest>
+                    for ListCustomersSvc<T> {
+                        type Response = super::ListCustomersResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ListCustomersRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CustomerService>::list_customers(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = ListCustomersSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.CustomerService/GetCustomer" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetCustomerSvc<T: CustomerService>(pub Arc<T>);
+                    impl<
+                        T: CustomerService,
+                    > tonic::server::UnaryService<super::GetCustomerRequest>
+                    for GetCustomerSvc<T> {
+                        type Response = super::Customer;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetCustomerRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CustomerService>::get_customer(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = GetCustomerSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.CustomerService/CreateCustomer" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreateCustomerSvc<T: CustomerService>(pub Arc<T>);
+                    impl<
+                        T: CustomerService,
+                    > tonic::server::UnaryService<super::CreateCustomerRequest>
+                    for CreateCustomerSvc<T> {
+                        type Response = super::Customer;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreateCustomerRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CustomerService>::create_customer(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CreateCustomerSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.CustomerService/CreateAddress" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreateAddressSvc<T: CustomerService>(pub Arc<T>);
+                    impl<
+                        T: CustomerService,
+                    > tonic::server::UnaryService<super::CreateAddressRequest>
+                    for CreateAddressSvc<T> {
+                        type Response = super::Address;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreateAddressRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CustomerService>::create_address(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CreateAddressSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.CustomerService/UpdateCustomer" => {
+                    #[allow(non_camel_case_types)]
+                    struct UpdateCustomerSvc<T: CustomerService>(pub Arc<T>);
+                    impl<
+                        T: CustomerService,
+                    > tonic::server::UnaryService<super::UpdateCustomerRequest>
+                    for UpdateCustomerSvc<T> {
+                        type Response = super::Customer;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::UpdateCustomerRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CustomerService>::update_customer(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = UpdateCustomerSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.CustomerService/DeleteCustomer" => {
+                    #[allow(non_camel_case_types)]
+                    struct DeleteCustomerSvc<T: CustomerService>(pub Arc<T>);
+                    impl<
+                        T: CustomerService,
+                    > tonic::server::UnaryService<super::DeleteCustomerRequest>
+                    for DeleteCustomerSvc<T> {
+                        type Response = ::prost_wkt_types::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DeleteCustomerRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CustomerService>::delete_customer(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = DeleteCustomerSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                _ => {
+                    Box::pin(async move {
+                        let mut response = http::Response::new(empty_body());
+                        let headers = response.headers_mut();
+                        headers
+                            .insert(
+                                tonic::Status::GRPC_STATUS,
+                                (tonic::Code::Unimplemented as i32).into(),
+                            );
+                        headers
+                            .insert(
+                                http::header::CONTENT_TYPE,
+                                tonic::metadata::GRPC_CONTENT_TYPE,
+                            );
+                        Ok(response)
+                    })
+                }
+            }
+        }
+    }
+    impl<T> Clone for CustomerServiceServer<T> {
+        fn clone(&self) -> Self {
+            let inner = self.inner.clone();
+            Self {
+                inner,
+                accept_compression_encodings: self.accept_compression_encodings,
+                send_compression_encodings: self.send_compression_encodings,
+                max_decoding_message_size: self.max_decoding_message_size,
+                max_encoding_message_size: self.max_encoding_message_size,
+            }
+        }
+    }
+    /// Generated gRPC service name
+    pub const SERVICE_NAME: &str = "ihavefood.CustomerService";
+    impl<T> tonic::server::NamedService for CustomerServiceServer<T> {
+        const NAME: &'static str = SERVICE_NAME;
+    }
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -55,6 +1376,16 @@ pub struct MenuItem {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NewMenuItem {
+    #[prost(string, tag = "1")]
+    pub food_name: ::prost::alloc::string::String,
+    #[prost(int32, tag = "2")]
+    pub price: i32,
+    #[prost(string, tag = "3")]
+    pub description: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetMerchantRequest {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
@@ -79,11 +1410,9 @@ pub struct UpdateMerchantRequest {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub merchant_name: ::prost::alloc::string::String,
-    #[prost(message, repeated, tag = "3")]
-    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
-    #[prost(message, optional, tag = "4")]
-    pub address: ::core::option::Option<Address>,
+    pub new_merchant_name: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "3")]
+    pub new_address: ::core::option::Option<Address>,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -91,7 +1420,7 @@ pub struct CreateMenuRequest {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "2")]
-    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
+    pub new_menu: ::prost::alloc::vec::Vec<NewMenuItem>,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -984,580 +2313,6 @@ pub mod merchant_service_server {
     }
 }
 #[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PlaceOrder {
-    /// A unique request ID for server to detect duplicated requests.
-    #[prost(string, tag = "1")]
-    pub request_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub order_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub customer_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub merchant_id: ::prost::alloc::string::String,
-    #[prost(message, repeated, tag = "5")]
-    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
-    #[prost(string, tag = "6")]
-    pub coupon_code: ::prost::alloc::string::String,
-    #[prost(int32, tag = "7")]
-    pub coupon_discount: i32,
-    #[prost(int32, tag = "8")]
-    pub delivery_fee: i32,
-    #[prost(int32, tag = "9")]
-    pub total: i32,
-    #[prost(message, optional, tag = "10")]
-    pub customer_address: ::core::option::Option<Address>,
-    #[prost(message, optional, tag = "11")]
-    pub merchant_address: ::core::option::Option<Address>,
-    #[prost(message, optional, tag = "12")]
-    pub customer_contact: ::core::option::Option<ContactInfo>,
-    #[prost(enumeration = "PaymentMethods", tag = "13")]
-    pub payment_methods: i32,
-    #[prost(enumeration = "PaymentStatus", tag = "14")]
-    pub payment_status: i32,
-    #[prost(enumeration = "OrderStatus", tag = "15")]
-    pub order_status: i32,
-    #[prost(message, optional, tag = "16")]
-    pub order_timestamps: ::core::option::Option<OrderTimestamps>,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ContactInfo {
-    #[prost(string, tag = "1")]
-    pub phone_number: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub email: ::prost::alloc::string::String,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct OrderTimestamps {
-    #[prost(message, optional, tag = "1")]
-    pub create_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
-    #[prost(message, optional, tag = "2")]
-    pub update_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
-    #[prost(message, optional, tag = "3")]
-    pub complete_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListOrderHistoryRequest {
-    #[prost(string, tag = "1")]
-    pub customer_id: ::prost::alloc::string::String,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListOrderHistoryResponse {
-    #[prost(message, repeated, tag = "1")]
-    pub place_orders: ::prost::alloc::vec::Vec<PlaceOrder>,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct HandlePlaceOrderRequest {
-    #[prost(string, tag = "12")]
-    pub request_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "1")]
-    pub customer_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub merchant_id: ::prost::alloc::string::String,
-    #[prost(message, repeated, tag = "3")]
-    pub menu: ::prost::alloc::vec::Vec<MenuItem>,
-    #[prost(string, tag = "4")]
-    pub coupon_code: ::prost::alloc::string::String,
-    #[prost(int32, tag = "5")]
-    pub coupon_discount: i32,
-    #[prost(int32, tag = "6")]
-    pub delivery_fee: i32,
-    #[prost(int32, tag = "7")]
-    pub total: i32,
-    #[prost(message, optional, tag = "8")]
-    pub customer_address: ::core::option::Option<Address>,
-    #[prost(message, optional, tag = "9")]
-    pub merchant_address: ::core::option::Option<Address>,
-    #[prost(message, optional, tag = "10")]
-    pub customer_contact: ::core::option::Option<ContactInfo>,
-    #[prost(enumeration = "PaymentMethods", tag = "11")]
-    pub payment_methods: i32,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum PaymentMethods {
-    PaymentMethodUnspecified = 0,
-    PaymentMethodCash = 1,
-    PaymentMethodCreditCard = 2,
-    PaymentMethodPromptPay = 3,
-}
-impl PaymentMethods {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::PaymentMethodUnspecified => "PAYMENT_METHOD_UNSPECIFIED",
-            Self::PaymentMethodCash => "PAYMENT_METHOD_CASH",
-            Self::PaymentMethodCreditCard => "PAYMENT_METHOD_CREDIT_CARD",
-            Self::PaymentMethodPromptPay => "PAYMENT_METHOD_PROMPT_PAY",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "PAYMENT_METHOD_UNSPECIFIED" => Some(Self::PaymentMethodUnspecified),
-            "PAYMENT_METHOD_CASH" => Some(Self::PaymentMethodCash),
-            "PAYMENT_METHOD_CREDIT_CARD" => Some(Self::PaymentMethodCreditCard),
-            "PAYMENT_METHOD_PROMPT_PAY" => Some(Self::PaymentMethodPromptPay),
-            _ => None,
-        }
-    }
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum PaymentStatus {
-    Unpaid = 0,
-    Paid = 1,
-}
-impl PaymentStatus {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Unpaid => "UNPAID",
-            Self::Paid => "PAID",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "UNPAID" => Some(Self::Unpaid),
-            "PAID" => Some(Self::Paid),
-            _ => None,
-        }
-    }
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum OrderStatus {
-    Pending = 0,
-    PreparingOrder = 1,
-    FindingRider = 2,
-    WaitForPickup = 3,
-    Ongoing = 4,
-    Delivered = 5,
-    Cancelled = 6,
-}
-impl OrderStatus {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Pending => "PENDING",
-            Self::PreparingOrder => "PREPARING_ORDER",
-            Self::FindingRider => "FINDING_RIDER",
-            Self::WaitForPickup => "WAIT_FOR_PICKUP",
-            Self::Ongoing => "ONGOING",
-            Self::Delivered => "DELIVERED",
-            Self::Cancelled => "CANCELLED",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "PENDING" => Some(Self::Pending),
-            "PREPARING_ORDER" => Some(Self::PreparingOrder),
-            "FINDING_RIDER" => Some(Self::FindingRider),
-            "WAIT_FOR_PICKUP" => Some(Self::WaitForPickup),
-            "ONGOING" => Some(Self::Ongoing),
-            "DELIVERED" => Some(Self::Delivered),
-            "CANCELLED" => Some(Self::Cancelled),
-            _ => None,
-        }
-    }
-}
-/// Generated client implementations.
-pub mod order_service_client {
-    #![allow(
-        unused_variables,
-        dead_code,
-        missing_docs,
-        clippy::wildcard_imports,
-        clippy::let_unit_value,
-    )]
-    use tonic::codegen::*;
-    use tonic::codegen::http::Uri;
-    /// ---------------------ORDER SERVICE------------------------------
-    /// Manages place order process.
-    #[derive(Debug, Clone)]
-    pub struct OrderServiceClient<T> {
-        inner: tonic::client::Grpc<T>,
-    }
-    impl OrderServiceClient<tonic::transport::Channel> {
-        /// Attempt to create a new client by connecting to a given endpoint.
-        pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
-        where
-            D: TryInto<tonic::transport::Endpoint>,
-            D::Error: Into<StdError>,
-        {
-            let conn = tonic::transport::Endpoint::new(dst)?.connect().await?;
-            Ok(Self::new(conn))
-        }
-    }
-    impl<T> OrderServiceClient<T>
-    where
-        T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::Error: Into<StdError>,
-        T::ResponseBody: Body<Data = Bytes> + std::marker::Send + 'static,
-        <T::ResponseBody as Body>::Error: Into<StdError> + std::marker::Send,
-    {
-        pub fn new(inner: T) -> Self {
-            let inner = tonic::client::Grpc::new(inner);
-            Self { inner }
-        }
-        pub fn with_origin(inner: T, origin: Uri) -> Self {
-            let inner = tonic::client::Grpc::with_origin(inner, origin);
-            Self { inner }
-        }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> OrderServiceClient<InterceptedService<T, F>>
-        where
-            F: tonic::service::Interceptor,
-            T::ResponseBody: Default,
-            T: tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
-                >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
-        {
-            OrderServiceClient::new(InterceptedService::new(inner, interceptor))
-        }
-        /// Compress requests with the given encoding.
-        ///
-        /// This requires the server to support it otherwise it might respond with an
-        /// error.
-        #[must_use]
-        pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
-            self.inner = self.inner.send_compressed(encoding);
-            self
-        }
-        /// Enable decompressing responses.
-        #[must_use]
-        pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
-            self.inner = self.inner.accept_compressed(encoding);
-            self
-        }
-        /// Limits the maximum size of a decoded message.
-        ///
-        /// Default: `4MB`
-        #[must_use]
-        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
-            self.inner = self.inner.max_decoding_message_size(limit);
-            self
-        }
-        /// Limits the maximum size of an encoded message.
-        ///
-        /// Default: `usize::MAX`
-        #[must_use]
-        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
-            self.inner = self.inner.max_encoding_message_size(limit);
-            self
-        }
-        ///  ListOrderHistory retrives Customer's place order history by CustomerID
-        pub async fn list_order_history(
-            &mut self,
-            request: impl tonic::IntoRequest<super::ListOrderHistoryRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListOrderHistoryResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.OrderService/ListOrderHistory",
-            );
-            let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("ihavefood.OrderService", "ListOrderHistory"));
-            self.inner.unary(req, path, codec).await
-        }
-        /// HandlePlaceOrder handle incoming order from client
-        pub async fn handle_place_order(
-            &mut self,
-            request: impl tonic::IntoRequest<super::HandlePlaceOrderRequest>,
-        ) -> std::result::Result<tonic::Response<super::PlaceOrder>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/ihavefood.OrderService/HandlePlaceOrder",
-            );
-            let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("ihavefood.OrderService", "HandlePlaceOrder"));
-            self.inner.unary(req, path, codec).await
-        }
-    }
-}
-/// Generated server implementations.
-pub mod order_service_server {
-    #![allow(
-        unused_variables,
-        dead_code,
-        missing_docs,
-        clippy::wildcard_imports,
-        clippy::let_unit_value,
-    )]
-    use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with OrderServiceServer.
-    #[async_trait]
-    pub trait OrderService: std::marker::Send + std::marker::Sync + 'static {
-        ///  ListOrderHistory retrives Customer's place order history by CustomerID
-        async fn list_order_history(
-            &self,
-            request: tonic::Request<super::ListOrderHistoryRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListOrderHistoryResponse>,
-            tonic::Status,
-        >;
-        /// HandlePlaceOrder handle incoming order from client
-        async fn handle_place_order(
-            &self,
-            request: tonic::Request<super::HandlePlaceOrderRequest>,
-        ) -> std::result::Result<tonic::Response<super::PlaceOrder>, tonic::Status>;
-    }
-    /// ---------------------ORDER SERVICE------------------------------
-    /// Manages place order process.
-    #[derive(Debug)]
-    pub struct OrderServiceServer<T> {
-        inner: Arc<T>,
-        accept_compression_encodings: EnabledCompressionEncodings,
-        send_compression_encodings: EnabledCompressionEncodings,
-        max_decoding_message_size: Option<usize>,
-        max_encoding_message_size: Option<usize>,
-    }
-    impl<T> OrderServiceServer<T> {
-        pub fn new(inner: T) -> Self {
-            Self::from_arc(Arc::new(inner))
-        }
-        pub fn from_arc(inner: Arc<T>) -> Self {
-            Self {
-                inner,
-                accept_compression_encodings: Default::default(),
-                send_compression_encodings: Default::default(),
-                max_decoding_message_size: None,
-                max_encoding_message_size: None,
-            }
-        }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
-        where
-            F: tonic::service::Interceptor,
-        {
-            InterceptedService::new(Self::new(inner), interceptor)
-        }
-        /// Enable decompressing requests with the given encoding.
-        #[must_use]
-        pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
-            self.accept_compression_encodings.enable(encoding);
-            self
-        }
-        /// Compress responses with the given encoding, if the client supports it.
-        #[must_use]
-        pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
-            self.send_compression_encodings.enable(encoding);
-            self
-        }
-        /// Limits the maximum size of a decoded message.
-        ///
-        /// Default: `4MB`
-        #[must_use]
-        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
-            self.max_decoding_message_size = Some(limit);
-            self
-        }
-        /// Limits the maximum size of an encoded message.
-        ///
-        /// Default: `usize::MAX`
-        #[must_use]
-        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
-            self.max_encoding_message_size = Some(limit);
-            self
-        }
-    }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for OrderServiceServer<T>
-    where
-        T: OrderService,
-        B: Body + std::marker::Send + 'static,
-        B::Error: Into<StdError> + std::marker::Send + 'static,
-    {
-        type Response = http::Response<tonic::body::BoxBody>;
-        type Error = std::convert::Infallible;
-        type Future = BoxFuture<Self::Response, Self::Error>;
-        fn poll_ready(
-            &mut self,
-            _cx: &mut Context<'_>,
-        ) -> Poll<std::result::Result<(), Self::Error>> {
-            Poll::Ready(Ok(()))
-        }
-        fn call(&mut self, req: http::Request<B>) -> Self::Future {
-            match req.uri().path() {
-                "/ihavefood.OrderService/ListOrderHistory" => {
-                    #[allow(non_camel_case_types)]
-                    struct ListOrderHistorySvc<T: OrderService>(pub Arc<T>);
-                    impl<
-                        T: OrderService,
-                    > tonic::server::UnaryService<super::ListOrderHistoryRequest>
-                    for ListOrderHistorySvc<T> {
-                        type Response = super::ListOrderHistoryResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::ListOrderHistoryRequest>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as OrderService>::list_order_history(&inner, request)
-                                    .await
-                            };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let method = ListOrderHistorySvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
-                            );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
-                "/ihavefood.OrderService/HandlePlaceOrder" => {
-                    #[allow(non_camel_case_types)]
-                    struct HandlePlaceOrderSvc<T: OrderService>(pub Arc<T>);
-                    impl<
-                        T: OrderService,
-                    > tonic::server::UnaryService<super::HandlePlaceOrderRequest>
-                    for HandlePlaceOrderSvc<T> {
-                        type Response = super::PlaceOrder;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::HandlePlaceOrderRequest>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as OrderService>::handle_place_order(&inner, request)
-                                    .await
-                            };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let method = HandlePlaceOrderSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
-                            );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(empty_body());
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
-            }
-        }
-    }
-    impl<T> Clone for OrderServiceServer<T> {
-        fn clone(&self) -> Self {
-            let inner = self.inner.clone();
-            Self {
-                inner,
-                accept_compression_encodings: self.accept_compression_encodings,
-                send_compression_encodings: self.send_compression_encodings,
-                max_decoding_message_size: self.max_decoding_message_size,
-                max_encoding_message_size: self.max_encoding_message_size,
-            }
-        }
-    }
-    /// Generated gRPC service name
-    pub const SERVICE_NAME: &str = "ihavefood.OrderService";
-    impl<T> tonic::server::NamedService for OrderServiceServer<T> {
-        const NAME: &'static str = SERVICE_NAME;
-    }
-}
-#[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct Point {
     /// The latitude in degrees. It must be in the range \[-90.0, +90.0\].
@@ -1611,22 +2366,20 @@ pub struct GetOrderTrackingResponse {
     pub update_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetDeliveryFeeRequest {
-    #[prost(double, tag = "1")]
-    pub merchant_lat: f64,
-    #[prost(double, tag = "2")]
-    pub merchant_long: f64,
-    #[prost(double, tag = "3")]
-    pub customer_lat: f64,
-    #[prost(double, tag = "4")]
-    pub customer_long: f64,
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub customer_address_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub merchant_id: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GetDeliveryFeeResponse {
     #[prost(int32, tag = "1")]
-    pub delivery_fee: i32,
+    pub fee: i32,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1776,8 +2529,11 @@ pub mod delivery_service_client {
                 );
             self.inner.server_streaming(req, path, codec).await
         }
-        /// GetDeliveryFee calculates and returns the delivery fee based on the distance
-        /// between the customer's location and the merchant's location.
+        /// GetDeliveryFee calculates the delivery fee from merchant to customer
+        /// using merchant ID and customer address ID.
+        ///
+        /// Example:
+        ///      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
         pub async fn get_delivery_fee(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDeliveryFeeRequest>,
@@ -1912,8 +2668,11 @@ pub mod delivery_service_server {
             tonic::Response<Self::GetOrderTrackingStream>,
             tonic::Status,
         >;
-        /// GetDeliveryFee calculates and returns the delivery fee based on the distance
-        /// between the customer's location and the merchant's location.
+        /// GetDeliveryFee calculates the delivery fee from merchant to customer
+        /// using merchant ID and customer address ID.
+        ///
+        /// Example:
+        ///      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
         async fn get_delivery_fee(
             &self,
             request: tonic::Request<super::GetDeliveryFeeRequest>,

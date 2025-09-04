@@ -633,7 +633,7 @@ var File_authservice_proto protoreflect.FileDescriptor
 
 const file_authservice_proto_rawDesc = "" +
 	"\n" +
-	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x83\x04\n" +
+	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x96\x02\n" +
 	"\x0fUserCredentials\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
@@ -643,7 +643,7 @@ const file_authservice_proto_rawDesc = "" +
 	"\vcreate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime:\xea\x01\x92A\xe6\x012\xe3\x01{\"id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"username\": \"anurak\", \"email\": \"anurak@example.com\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\", \"create_time\": \"2025-08-26T14:00:00Z\", \"update_time\": \"2025-08-26T14:00:00Z\"}\"\xb7\x02\n" +
+	"updateTime\"\xb7\x02\n" +
 	"\x0fRegisterRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
@@ -678,24 +678,10 @@ const file_authservice_proto_rawDesc = "" +
 	"\bMERCHANT\x10\x02\x12\t\n" +
 	"\x05RIDER\x10\x03\x12\x0f\n" +
 	"\vSUPER_ADMIN\x10\x14\x12\t\n" +
-	"\x05ADMIN\x10\x152\xf6\x04\n" +
-	"\vAuthService\x12\xed\x01\n" +
-	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\xa8\x01\x92A\x8b\x01J\x1c\n" +
-	"\x03200\x12\x15\n" +
-	"\x13register successfulJ+\n" +
-	"\x03400\x12$\n" +
-	"\"invalid input or validation failedJ\x1c\n" +
-	"\x03409\x12\x15\n" +
-	"\x13user already existsJ\x1e\n" +
-	"\x03500\x12\x17\n" +
-	"\x15internal server errorb\x00\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12\xbb\x01\n" +
-	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x7f\x92AfJ\x19\n" +
-	"\x03200\x12\x12\n" +
-	"\x10login successfulJ'\n" +
-	"\x03401\x12 \n" +
-	"\x1eusername or password incorrectJ\x1e\n" +
-	"\x03500\x12\x17\n" +
-	"\x15internal server errorb\x00\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12Z\n" +
+	"\x05ADMIN\x10\x152\x85\x03\n" +
+	"\vAuthService\x12b\n" +
+	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.UserCredentials\"\x1e\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12W\n" +
+	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x1b\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12Z\n" +
 	"\x0fVerifyUserToken\x12!.ihavefood.VerifyUserTokenRequest\x1a\".ihavefood.VerifyUserTokenResponse\"\x00\x12]\n" +
 	"\x10VerifyAdminToken\x12\".ihavefood.VerifyAdminTokenRequest\x1a#.ihavefood.VerifyAdminTokenResponse\"\x00B\vZ\t/genprotob\x06proto3"
 

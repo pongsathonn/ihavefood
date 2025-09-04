@@ -22,6 +22,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             .compile_protos(
                 &[
                     "../../protos/orderservice.proto",
+                    "../../protos/customerservice.proto",
+                    "../../protos/merchantservice.proto",
                     "../../protos/deliveryservice.proto",
                 ],
                 &["../../protos"],

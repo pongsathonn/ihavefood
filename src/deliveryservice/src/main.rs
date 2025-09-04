@@ -9,7 +9,10 @@ use anyhow::Result;
 use broker::RabbitMQ;
 use database::Db;
 use delivery::MyDelivery;
-use ihavefood::delivery_service_server::DeliveryServiceServer;
+use ihavefood::{
+    customer_service_client::CustomerServiceClient, delivery_service_server::DeliveryServiceServer,
+    merchant_service_client::MerchantServiceClient,
+};
 use lapin::{Connection, ConnectionProperties};
 use log::info;
 use sqlx::{
@@ -76,10 +79,15 @@ async fn main() -> Result<()> {
         .format_target(false)
         .init();
 
+    let customer_client = CustomerServiceClient::connect("customer:3333").await?;
+    let merchant_client = MerchantServiceClient::connect("merchant:5555").await?;
+
     let app = MyDelivery {
         db: Arc::new(Db::new(init_sqlite_pool().await)),
         broker: Arc::new(RabbitMQ::new(init_amqp_conn().await)),
         task_limiter: Arc::new(Semaphore::new(100)),
+        customercl: customer_client,
+        merchantcl: merchant_client,
     };
 
     let socket = SocketAddr::new(

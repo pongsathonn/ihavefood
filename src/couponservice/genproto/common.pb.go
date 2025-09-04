@@ -24,11 +24,12 @@ const (
 
 type Address struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AddressName   string                 `protobuf:"bytes,1,opt,name=address_name,json=addressName,proto3" json:"address_name,omitempty"`
-	SubDistrict   string                 `protobuf:"bytes,2,opt,name=sub_district,json=subDistrict,proto3" json:"sub_district,omitempty"`
-	District      string                 `protobuf:"bytes,3,opt,name=district,proto3" json:"district,omitempty"`
-	Province      string                 `protobuf:"bytes,4,opt,name=province,proto3" json:"province,omitempty"`
-	PostalCode    string                 `protobuf:"bytes,5,opt,name=postal_code,json=postalCode,proto3" json:"postal_code,omitempty"`
+	AddressId     string                 `protobuf:"bytes,1,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
+	AddressName   string                 `protobuf:"bytes,2,opt,name=address_name,json=addressName,proto3" json:"address_name,omitempty"`
+	SubDistrict   string                 `protobuf:"bytes,3,opt,name=sub_district,json=subDistrict,proto3" json:"sub_district,omitempty"`
+	District      string                 `protobuf:"bytes,4,opt,name=district,proto3" json:"district,omitempty"`
+	Province      string                 `protobuf:"bytes,5,opt,name=province,proto3" json:"province,omitempty"`
+	PostalCode    string                 `protobuf:"bytes,6,opt,name=postal_code,json=postalCode,proto3" json:"postal_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,6 +62,13 @@ func (x *Address) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Address.ProtoReflect.Descriptor instead.
 func (*Address) Descriptor() ([]byte, []int) {
 	return file_common_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Address) GetAddressId() string {
+	if x != nil {
+		return x.AddressId
+	}
+	return ""
 }
 
 func (x *Address) GetAddressName() string {
@@ -162,13 +170,15 @@ var File_common_proto protoreflect.FileDescriptor
 
 const file_common_proto_rawDesc = "" +
 	"\n" +
-	"\fcommon.proto\x12\tihavefood\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xa8\x01\n" +
-	"\aAddress\x12!\n" +
-	"\faddress_name\x18\x01 \x01(\tR\vaddressName\x12!\n" +
-	"\fsub_district\x18\x02 \x01(\tR\vsubDistrict\x12\x1a\n" +
-	"\bdistrict\x18\x03 \x01(\tR\bdistrict\x12\x1a\n" +
-	"\bprovince\x18\x04 \x01(\tR\bprovince\x12\x1f\n" +
-	"\vpostal_code\x18\x05 \x01(\tR\n" +
+	"\fcommon.proto\x12\tihavefood\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xc7\x01\n" +
+	"\aAddress\x12\x1d\n" +
+	"\n" +
+	"address_id\x18\x01 \x01(\tR\taddressId\x12!\n" +
+	"\faddress_name\x18\x02 \x01(\tR\vaddressName\x12!\n" +
+	"\fsub_district\x18\x03 \x01(\tR\vsubDistrict\x12\x1a\n" +
+	"\bdistrict\x18\x04 \x01(\tR\bdistrict\x12\x1a\n" +
+	"\bprovince\x18\x05 \x01(\tR\bprovince\x12\x1f\n" +
+	"\vpostal_code\x18\x06 \x01(\tR\n" +
 	"postalCode\"V\n" +
 	"\x06Social\x12\x1a\n" +
 	"\bfacebook\x18\x01 \x01(\tR\bfacebook\x12\x1c\n" +

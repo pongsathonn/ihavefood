@@ -1,6 +1,5 @@
 use crate::models::*;
 use anyhow::Result;
-use log::info;
 use sqlx::sqlite::SqlitePool;
 
 #[derive(Debug)]

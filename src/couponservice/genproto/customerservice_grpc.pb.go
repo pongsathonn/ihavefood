@@ -43,7 +43,7 @@ type CustomerServiceClient interface {
 	// Username are synchronized.
 	CreateCustomer(ctx context.Context, in *CreateCustomerRequest, opts ...grpc.CallOption) (*Customer, error)
 	// CreateAddress creates new address to exists uer customer.
-	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Customer, error)
+	CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Address, error)
 	UpdateCustomer(ctx context.Context, in *UpdateCustomerRequest, opts ...grpc.CallOption) (*Customer, error)
 	DeleteCustomer(ctx context.Context, in *DeleteCustomerRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -86,9 +86,9 @@ func (c *customerServiceClient) CreateCustomer(ctx context.Context, in *CreateCu
 	return out, nil
 }
 
-func (c *customerServiceClient) CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Customer, error) {
+func (c *customerServiceClient) CreateAddress(ctx context.Context, in *CreateAddressRequest, opts ...grpc.CallOption) (*Address, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Customer)
+	out := new(Address)
 	err := c.cc.Invoke(ctx, CustomerService_CreateAddress_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ type CustomerServiceServer interface {
 	// Username are synchronized.
 	CreateCustomer(context.Context, *CreateCustomerRequest) (*Customer, error)
 	// CreateAddress creates new address to exists uer customer.
-	CreateAddress(context.Context, *CreateAddressRequest) (*Customer, error)
+	CreateAddress(context.Context, *CreateAddressRequest) (*Address, error)
 	UpdateCustomer(context.Context, *UpdateCustomerRequest) (*Customer, error)
 	DeleteCustomer(context.Context, *DeleteCustomerRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedCustomerServiceServer()
@@ -153,7 +153,7 @@ func (UnimplementedCustomerServiceServer) GetCustomer(context.Context, *GetCusto
 func (UnimplementedCustomerServiceServer) CreateCustomer(context.Context, *CreateCustomerRequest) (*Customer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCustomer not implemented")
 }
-func (UnimplementedCustomerServiceServer) CreateAddress(context.Context, *CreateAddressRequest) (*Customer, error) {
+func (UnimplementedCustomerServiceServer) CreateAddress(context.Context, *CreateAddressRequest) (*Address, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAddress not implemented")
 }
 func (UnimplementedCustomerServiceServer) UpdateCustomer(context.Context, *UpdateCustomerRequest) (*Customer, error) {

@@ -7,6 +7,7 @@
 package genproto
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -465,7 +466,7 @@ var File_customerservice_proto protoreflect.FileDescriptor
 
 const file_customerservice_proto_rawDesc = "" +
 	"\n" +
-	"\x15customerservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\"\xb0\x02\n" +
+	"\x15customerservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xb0\x02\n" +
 	"\bCustomer\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12\x1a\n" +
@@ -479,33 +480,33 @@ const file_customerservice_proto_rawDesc = "" +
 	"updateTime\"\x16\n" +
 	"\x14ListCustomersRequest\"J\n" +
 	"\x15ListCustomersResponse\x121\n" +
-	"\tcustomers\x18\x01 \x03(\v2\x13.ihavefood.CustomerR\tcustomers\"5\n" +
+	"\tcustomers\x18\x01 \x03(\v2\x13.ihavefood.CustomerR\tcustomers\"t\n" +
 	"\x12GetCustomerRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\"T\n" +
+	"customerId:=\x92A:28{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\" }\"T\n" +
 	"\x15CreateCustomerRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\"e\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"\xbe\x02\n" +
 	"\x14CreateAddressRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12,\n" +
-	"\aaddress\x18\x02 \x01(\v2\x12.ihavefood.AddressR\aaddress\"\xa6\x01\n" +
+	"\aaddress\x18\x02 \x01(\v2\x12.ihavefood.AddressR\aaddress:\xd6\x01\x92A\xd2\x012\xcf\x01{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"address\": {\"address_name\": \"Arun House\", \"sub_district\": \"Suthep\", \"district\": \"Mueang Chiang Mai\", \"province\": \"Chiang Mai\", \"postal_code\": \"50200\"}}\"\x8d\x03\n" +
 	"\x15UpdateCustomerRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12!\n" +
 	"\fnew_username\x18\x02 \x01(\tR\vnewUsername\x12\x17\n" +
 	"\anew_bio\x18\x04 \x01(\tR\x06newBio\x120\n" +
 	"\n" +
-	"new_social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\tnewSocial\"8\n" +
+	"new_social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\tnewSocial:\xe4\x01\x92A\xe0\x012\xdd\x01{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"new_username\": \"anurak_new\", \"new_bio\": \"Loves coffee and coding.\", \"new_social\": {\"facebook\": \"anurak.chiangmai\", \"instagram\": \"@anurak_insta\", \"line\": \"@anurak\"}}\"v\n" +
 	"\x15DeleteCustomerRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId2\x8d\x05\n" +
+	"customerId:<\x92A927{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\"}2\x8c\x05\n" +
 	"\x0fCustomerService\x12j\n" +
 	"\rListCustomers\x12\x1f.ihavefood.ListCustomersRequest\x1a .ihavefood.ListCustomersResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/api/customers\x12g\n" +
 	"\vGetCustomer\x12\x1d.ihavefood.GetCustomerRequest\x1a\x13.ihavefood.Customer\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/customers/{customer_id}\x12I\n" +
-	"\x0eCreateCustomer\x12 .ihavefood.CreateCustomerRequest\x1a\x13.ihavefood.Customer\"\x00\x12v\n" +
-	"\rCreateAddress\x12\x1f.ihavefood.CreateAddressRequest\x1a\x13.ihavefood.Customer\"/\x82\xd3\xe4\x93\x02):\x01*\"$/api/customers/{customer_id}/address\x12p\n" +
+	"\x0eCreateCustomer\x12 .ihavefood.CreateCustomerRequest\x1a\x13.ihavefood.Customer\"\x00\x12u\n" +
+	"\rCreateAddress\x12\x1f.ihavefood.CreateAddressRequest\x1a\x12.ihavefood.Address\"/\x82\xd3\xe4\x93\x02):\x01*\"$/api/customers/{customer_id}/address\x12p\n" +
 	"\x0eUpdateCustomer\x12 .ihavefood.UpdateCustomerRequest\x1a\x13.ihavefood.Customer\"'\x82\xd3\xe4\x93\x02!:\x01*2\x1c/api/customers/{customer_id}\x12p\n" +
 	"\x0eDeleteCustomer\x12 .ihavefood.DeleteCustomerRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e*\x1c/api/customers/{customer_id}B\vZ\t/genprotob\x06proto3"
 
@@ -553,7 +554,7 @@ var file_customerservice_proto_depIdxs = []int32{
 	2,  // 13: ihavefood.CustomerService.ListCustomers:output_type -> ihavefood.ListCustomersResponse
 	0,  // 14: ihavefood.CustomerService.GetCustomer:output_type -> ihavefood.Customer
 	0,  // 15: ihavefood.CustomerService.CreateCustomer:output_type -> ihavefood.Customer
-	0,  // 16: ihavefood.CustomerService.CreateAddress:output_type -> ihavefood.Customer
+	9,  // 16: ihavefood.CustomerService.CreateAddress:output_type -> ihavefood.Address
 	0,  // 17: ihavefood.CustomerService.UpdateCustomer:output_type -> ihavefood.Customer
 	11, // 18: ihavefood.CustomerService.DeleteCustomer:output_type -> google.protobuf.Empty
 	13, // [13:19] is the sub-list for method output_type

@@ -163,6 +163,34 @@ func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*
 	return &customer, nil
 }
 
+func (s *customerStorage) getAddress(ctx context.Context, customerID, addressID string) (*dbAddress, error) {
+	var addr dbAddress
+	row := s.db.QueryRowContext(ctx, `
+        SELECT 
+            address_id,
+            address_name,
+            sub_district,
+            district,
+            province,
+            postal_code
+        FROM addresses
+        WHERE customer_id = $1 AND address_id = $2
+    `, customerID, addressID)
+
+	if err := row.Scan(
+		&addr.AddressID,
+		&addr.AddressName,
+		&addr.SubDistrict,
+		&addr.District,
+		&addr.Province,
+		&addr.PostalCode,
+	); err != nil {
+		return nil, err
+	}
+
+	return &addr, nil
+}
+
 func (s *customerStorage) create(ctx context.Context, newCustomer *newCustomer) (string, error) {
 
 	res := s.db.QueryRowContext(ctx, `
@@ -185,20 +213,19 @@ func (s *customerStorage) create(ctx context.Context, newCustomer *newCustomer) 
 	return customerID, nil
 }
 
-// CreateAddress inserts new address to customer and return customerID
 func (s *customerStorage) createAddress(ctx context.Context, customerID string, newAddress *dbAddress) (string, error) {
 
 	row := s.db.QueryRowContext(ctx, `
-		INSERT INTO addresses(
-			customer_id,
-			address_name,
-			sub_district,
-			district,
-			province,
-			postal_code
-		)
-		VALUES($1,$2,$3,$4,$5,$6)
-		RETURNING customer_id
+    INSERT INTO addresses (
+        customer_id,
+        address_name,
+        sub_district,
+        district,
+        province,
+        postal_code
+    )
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING address_id
 	`,
 		customerID,
 		newAddress.AddressName.String,
@@ -208,13 +235,12 @@ func (s *customerStorage) createAddress(ctx context.Context, customerID string, 
 		newAddress.PostalCode.String,
 	)
 
-	var ID string
-	if err := row.Scan(&ID); err != nil {
+	var addressID string
+	if err := row.Scan(&addressID); err != nil {
 		return "", err
 	}
 
-	return ID, nil
-
+	return addressID, nil
 }
 
 // Update updates the specified fields in a customer. Only non-empty fields
@@ -267,22 +293,8 @@ func (s *customerStorage) update(ctx context.Context, customerID string, update 
 }
 
 func (s *customerStorage) remove(ctx context.Context, customerID string) error {
-
 	if _, err := s.db.ExecContext(ctx, `DELETE FROM customers WHERE customer_id=$1`, customerID); err != nil {
 		return err
 	}
 	return nil
-
-}
-
-func (s *customerStorage) countAddress(ctx context.Context, customerID string) (int, error) {
-
-	row := s.db.QueryRowContext(ctx, `SELECT COUNT(customer_id) FROM addresses WHERE customer_id=$1`, customerID)
-
-	var n int
-	if err := row.Scan(&n); err != nil {
-		return 0, err
-	}
-
-	return n, nil
 }

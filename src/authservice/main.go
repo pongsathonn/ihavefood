@@ -119,17 +119,17 @@ func main() {
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	customers, err := grpc.NewClient(os.Getenv("CUSTOMER_URI"), opt)
 	if err != nil {
-		log.Fatalf("Failed to initialize CustomerService connection: %v", err)
+		log.Fatalf("failed to create grpc customer channel: %v", err)
 	}
 
 	deliv, err := grpc.NewClient(os.Getenv("DELIVERY_URI"), opt)
 	if err != nil {
-		log.Fatalf("Failed to initialize DeliveryService connection: %v", err)
+		log.Fatalf("failed to create grpc delivery channel: %v", err)
 	}
 
 	merchant, err := grpc.NewClient(os.Getenv("MERCHANT_URI"), opt)
 	if err != nil {
-		log.Fatalf("Failed to initialize MerchantService connection: %v", err)
+		log.Fatalf("failed to create grpc merchant channel: %v", err)
 	}
 	slog.Info("Downstream gRPC channels created successfully")
 

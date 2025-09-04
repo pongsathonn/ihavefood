@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	OrderService_ListOrderHistory_FullMethodName = "/ihavefood.OrderService/ListOrderHistory"
-	OrderService_HandlePlaceOrder_FullMethodName = "/ihavefood.OrderService/HandlePlaceOrder"
+	OrderService_CreatePlaceOrder_FullMethodName = "/ihavefood.OrderService/CreatePlaceOrder"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -32,8 +32,7 @@ const (
 type OrderServiceClient interface {
 	// ListOrderHistory retrives Customer's place order history by CustomerID
 	ListOrderHistory(ctx context.Context, in *ListOrderHistoryRequest, opts ...grpc.CallOption) (*ListOrderHistoryResponse, error)
-	// HandlePlaceOrder handle incoming order from client
-	HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrder, error)
+	CreatePlaceOrder(ctx context.Context, in *CreatePlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrder, error)
 }
 
 type orderServiceClient struct {
@@ -54,10 +53,10 @@ func (c *orderServiceClient) ListOrderHistory(ctx context.Context, in *ListOrder
 	return out, nil
 }
 
-func (c *orderServiceClient) HandlePlaceOrder(ctx context.Context, in *HandlePlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrder, error) {
+func (c *orderServiceClient) CreatePlaceOrder(ctx context.Context, in *CreatePlaceOrderRequest, opts ...grpc.CallOption) (*PlaceOrder, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PlaceOrder)
-	err := c.cc.Invoke(ctx, OrderService_HandlePlaceOrder_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, OrderService_CreatePlaceOrder_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +72,7 @@ func (c *orderServiceClient) HandlePlaceOrder(ctx context.Context, in *HandlePla
 type OrderServiceServer interface {
 	// ListOrderHistory retrives Customer's place order history by CustomerID
 	ListOrderHistory(context.Context, *ListOrderHistoryRequest) (*ListOrderHistoryResponse, error)
-	// HandlePlaceOrder handle incoming order from client
-	HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*PlaceOrder, error)
+	CreatePlaceOrder(context.Context, *CreatePlaceOrderRequest) (*PlaceOrder, error)
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -88,8 +86,8 @@ type UnimplementedOrderServiceServer struct{}
 func (UnimplementedOrderServiceServer) ListOrderHistory(context.Context, *ListOrderHistoryRequest) (*ListOrderHistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListOrderHistory not implemented")
 }
-func (UnimplementedOrderServiceServer) HandlePlaceOrder(context.Context, *HandlePlaceOrderRequest) (*PlaceOrder, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HandlePlaceOrder not implemented")
+func (UnimplementedOrderServiceServer) CreatePlaceOrder(context.Context, *CreatePlaceOrderRequest) (*PlaceOrder, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePlaceOrder not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 func (UnimplementedOrderServiceServer) testEmbeddedByValue()                      {}
@@ -130,20 +128,20 @@ func _OrderService_ListOrderHistory_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrderService_HandlePlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HandlePlaceOrderRequest)
+func _OrderService_CreatePlaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePlaceOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, in)
+		return srv.(OrderServiceServer).CreatePlaceOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrderService_HandlePlaceOrder_FullMethodName,
+		FullMethod: OrderService_CreatePlaceOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).HandlePlaceOrder(ctx, req.(*HandlePlaceOrderRequest))
+		return srv.(OrderServiceServer).CreatePlaceOrder(ctx, req.(*CreatePlaceOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -160,8 +158,8 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrderService_ListOrderHistory_Handler,
 		},
 		{
-			MethodName: "HandlePlaceOrder",
-			Handler:    _OrderService_HandlePlaceOrder_Handler,
+			MethodName: "CreatePlaceOrder",
+			Handler:    _OrderService_CreatePlaceOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

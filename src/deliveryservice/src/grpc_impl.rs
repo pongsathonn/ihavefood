@@ -3,16 +3,12 @@ use crate::ihavefood::delivery_service_server::DeliveryService;
 use crate::ihavefood::*;
 use crate::models::{DbDeliveryStatus, NewRider};
 
-use log::{error, info};
+use log::error;
+use rand::Rng;
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Code, Request, Response, Status};
-
-// fn customErr() {
-//     let st = Status::new(Code::Unimplemented, "TODO");
-//     Status::with_details(…)
-// }
 
 #[tonic::async_trait]
 impl DeliveryService for MyDelivery {
@@ -50,23 +46,42 @@ impl DeliveryService for MyDelivery {
         &self,
         request: Request<GetDeliveryFeeRequest>,
     ) -> Result<Response<GetDeliveryFeeResponse>, Status> {
-        let merchant_point = Point {
-            latitude: request.get_ref().merchant_lat,
-            longitude: request.get_ref().merchant_long,
-        };
+        let customer = self
+            .customercl
+            .clone()
+            .get_customer(GetCustomerRequest {
+                customer_id: request.get_ref().customer_id.clone(),
+            })
+            .await?;
+        let customer_addr = customer
+            .get_ref()
+            .addresses
+            .iter()
+            .find(|&addr| addr.address_id == request.get_ref().customer_address_id)
+            .ok_or(Status::new(Code::Internal, "internal server error"))?;
 
-        let customer_point = Point {
-            latitude: request.get_ref().customer_lat,
-            longitude: request.get_ref().customer_long,
-        };
+        let merchant = self
+            .merchantcl
+            .clone()
+            .get_merchant(GetMerchantRequest {
+                merchant_id: request.get_ref().merchant_id.clone(),
+            })
+            .await?;
 
-        let delivery_fee =
-            Self::calc_delivery_fee(&customer_point, &merchant_point).map_err(|err| {
-                error!("calculate delivery fee: {err}");
-                Status::new(Code::Internal, "failed to calculate delivery fee")
-            })?;
+        let merchant_addr = merchant
+            .get_ref()
+            .address
+            .as_ref()
+            .ok_or(Status::new(Code::Internal, "internal server error"))?;
 
-        Ok(Response::new(GetDeliveryFeeResponse { delivery_fee }))
+        let customer_point = fake_geocode(customer_addr);
+        let merchant_point = fake_geocode(merchant_addr);
+        let fee = Self::calc_delivery_fee(&customer_point, &merchant_point).map_err(|err| {
+            error!("calculate delivery fee: {err}");
+            Status::new(Code::Internal, "failed to calculate delivery fee")
+        })?;
+
+        Ok(Response::new(GetDeliveryFeeResponse { fee }))
     }
 
     async fn confirm_rider_accept(
@@ -159,5 +174,19 @@ impl DeliveryService for MyDelivery {
             username: rider.username,
             phone_number: rider.phone_number,
         }))
+    }
+}
+
+// fake_geocode from ChatGPT
+pub fn fake_geocode(_addr: &Address) -> Point {
+    let mut rng = rand::rng();
+
+    // arbitrary “center” at 0,0 and offset within ~25 km (~0.225 lat, ~0.25 lng)
+    let max_lat_offset = 0.225;
+    let max_lng_offset = 0.25;
+
+    Point {
+        latitude: rng.random_range(-max_lat_offset..=max_lat_offset),
+        longitude: rng.random_range(-max_lng_offset..=max_lng_offset),
     }
 }

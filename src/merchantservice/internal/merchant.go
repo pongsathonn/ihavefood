@@ -106,12 +106,11 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 	}
 
 	var newMenu []*dbMenuItem
-	for _, m := range in.GetMenu() {
+	for _, m := range in.GetNewMenu() {
 		newMenu = append(newMenu, &dbMenuItem{
 			FoodName:    m.FoodName,
 			Price:       m.Price,
 			Description: m.Description,
-			IsAvailable: m.IsAvailable,
 		})
 	}
 

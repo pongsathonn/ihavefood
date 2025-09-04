@@ -3,6 +3,9 @@ use crate::database::Db;
 use crate::ihavefood::*;
 use crate::models::*;
 
+use self::{
+    customer_service_client::CustomerServiceClient, merchant_service_client::MerchantServiceClient,
+};
 use anyhow::{anyhow, bail, ensure, Result};
 use futures::StreamExt;
 use lapin::options::BasicAckOptions;
@@ -12,12 +15,16 @@ use rand::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
+use tonic::transport::Channel;
 
 #[derive(Debug, Clone)]
 pub struct MyDelivery {
     pub db: Arc<Db>,
     pub broker: Arc<RabbitMQ>,
     pub task_limiter: Arc<Semaphore>,
+
+    pub customercl: CustomerServiceClient<Channel>,
+    pub merchantcl: MerchantServiceClient<Channel>,
 }
 
 impl MyDelivery {
@@ -153,6 +160,7 @@ impl MyDelivery {
     pub fn prepare_order_delivery(order: &PlaceOrder) -> Result<(Vec<Rider>, PickupInfo)> {
         let riders = Self::calc_nearest_riders();
         let pickup_info = Self::generate_order_pickup(order)?;
+
         Ok((riders, pickup_info))
     }
 

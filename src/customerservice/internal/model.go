@@ -30,6 +30,7 @@ type dbSocial struct {
 }
 
 type dbAddress struct {
+	AddressID   string
 	AddressName sql.NullString
 	SubDistrict sql.NullString
 	District    sql.NullString
