@@ -101,7 +101,7 @@ func (s *storage) GetUserByIdentifier(ctx context.Context, iden string) (*dbUser
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
-			user_id,
+			id,
 			username, 
 			email,
 			password,
