@@ -1,0 +1,49 @@
+This is exmaple environment variable for my application
+
+######################################################
+# rabbitmq
+AMQP_SERVER_URI=rabbitmqx:5672
+
+# theses users can connect to every rabbitmq protocols
+RABBITMQ_DEFAULT_USER=super_rabbitmq
+RABBITMQ_DEFAULT_PASS=bar
+
+RBMQ_ORDER_USER=order
+RBMQ_ORDER_PASS=bar
+RBMQ_MERCHANT_USER=merchant
+RBMQ_MERCHANT_PASS=bar
+RBMQ_CUSTOMER_USER=customer
+RBMQ_CUSTOMER_PASS=bar
+RBMQ_DELIVERY_USER=delivery
+RBMQ_DELIVERY_PASS=bar
+RBMQ_COUPON_USER=coupon
+RBMQ_COUPON_PASS=bar
+
+######################################################
+# postgres (must set)
+POSTGRES_PASSWORD=foo
+
+######################################################
+# entry port (api-gateway)
+SERVER_PORT=9999
+
+######################################################
+# Server port for each service
+AUTH_SERVER_PORT=1111
+COUPON_SERVER_PORT=2222
+CUSTOMER_SERVER_PORT=3333
+DELIVERY_SERVER_PORT=4444
+MERCHANT_SERVER_PORT=5555
+ORDER_SERVER_PORT=6666
+
+######################################################
+# GRPC URIs for client-side communication (container name + port)
+AUTH_URI=auth:${AUTH_SERVER_PORT}
+COUPON_URI=coupon:${COUPON_SERVER_PORT}
+CUSTOMER_URI=customer:${CUSTOMER_SERVER_PORT}
+DELIVERY_URI=delivery:${DELIVERY_SERVER_PORT}
+MERCHANT_URI=merchant:${MERCHANT_SERVER_PORT}
+ORDER_URI=order:${ORDER_SERVER_PORT}
+
+######################################################
+
