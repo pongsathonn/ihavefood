@@ -27,8 +27,8 @@ type CouponService struct {
 	storage  CouponStorage
 }
 
-func NewCouponService(rb *amqp.Connection, rp CouponStorage) *CouponService {
-	return &CouponService{rabbitmq: rb, storage: rp}
+func NewCouponService(con *amqp.Connection, rp CouponStorage) *CouponService {
+	return &CouponService{rabbitmq: con, storage: rp}
 }
 
 func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) (*pb.Coupon, error) {

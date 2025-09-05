@@ -21,11 +21,11 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func initRabbitMQ() *amqp.Connection {
+func initAMQPCon() *amqp.Connection {
 	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("COUPON_AMQP_USER"),
-		os.Getenv("COUPON_AMQP_PASS"),
-		os.Getenv("COUPON_AMQP_HOST"),
+		os.Getenv("RBMQ_COUPON_USER"),
+		os.Getenv("RBMQ_COUPON_PASS"),
+		os.Getenv("AMQP_SERVER_URI"),
 	)
 	maxRetries := 5
 	var conn *amqp.Connection
@@ -34,11 +34,11 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			slog.Info("Successfully connected to RabbitMQ")
+			slog.Info("Successfully connected to AMQP server")
 			return conn
 		}
 		if i == maxRetries {
-			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+			log.Fatalf("Could not establish AMQP connection after %d attempts: %v", maxRetries, err)
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -152,7 +152,7 @@ func main() {
 	go cleanUpCoupons(ctx, mongo)
 
 	startGRPCServer(internal.NewCouponService(
-		initRabbitMQ(),
+		initAMQPCon(),
 		internal.NewCouponStorage(mongo),
 	))
 }
