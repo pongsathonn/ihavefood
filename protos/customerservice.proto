@@ -21,7 +21,6 @@ service CustomerService {
     rpc GetCustomer(GetCustomerRequest) returns(Customer){
         option (google.api.http) = {get: "/api/customers/{customer_id}"};
     }
-
     
     // CreateCustomer creates new user customer 
     //
@@ -31,7 +30,7 @@ service CustomerService {
     rpc CreateCustomer(CreateCustomerRequest) returns(Customer){}
 
     // CreateAddress creates new address to exists uer customer.
-    rpc CreateAddress(CreateAddressRequest) returns(Customer){
+    rpc CreateAddress(CreateAddressRequest) returns(Address){
         option (google.api.http) = {
             post: "/api/customers/{customer_id}/address"
             body: "*"
@@ -62,10 +61,15 @@ message Customer {
     // bytes picture = 3;
     string bio = 4;
     Social social = 5;
-    // User can have many address
     repeated Address addresses = 6;
-    google.protobuf.Timestamp create_time = 7;
-    google.protobuf.Timestamp update_time = 8;
+    ContactInfo contact = 7;
+    google.protobuf.Timestamp create_time = 8;
+    google.protobuf.Timestamp update_time = 9;
+}
+
+message ContactInfo {
+    string phone_number = 1;
+    string email = 2;
 }
 
 message ListCustomersRequest {
@@ -82,6 +86,7 @@ message GetCustomerRequest{
     };
     string customer_id = 1;
 }
+
 
 message CreateCustomerRequest {
     string customer_id = 1; 
