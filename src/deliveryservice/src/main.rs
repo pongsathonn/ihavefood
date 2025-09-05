@@ -34,15 +34,15 @@ async fn init_amqp_conn() -> Connection {
     let conn = Connection::connect(
         format!(
             "amqp://{}:{}@{}",
-            dotenv::var("DELIVERY_AMQP_USER").expect("DELIVERY_AMQP_USER must be set"),
-            dotenv::var("DELIVERY_AMQP_PASS").expect("DELIVERY_AMQP_PASS must be set"),
-            dotenv::var("DELIVERY_AMQP_HOST").expect("DELIVERY_AMQP_HOST must be set"),
+            dotenv::var("RBMQ_DELIVERY_USER").expect("RBMQ_DELIVERY_USER must be set"),
+            dotenv::var("RBMQ_DELIVERY_PASS").expect("RBMQ_DELIVERY_PASS must be set"),
+            dotenv::var("AMQP_SERVER_URI").expect("AMQP_SERVER_URI must be set"),
         )
         .as_str(),
         ConnectionProperties::default(),
     )
     .await
-    .expect("Failed to connect AMQP");
+    .expect("Failed to connect AMQP server");
 
     info!("AMQP connection established successfully");
     conn
@@ -71,7 +71,9 @@ async fn init_sqlite_pool() -> Pool<Sqlite> {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
-    std::env::set_var("RUST_LOG", "debug,lapin=warn");
+
+    // >> Error,Warn,Info,Debug,Trace
+    std::env::set_var("RUST_LOG", "info,lapin=warn");
 
     env_logger::builder()
         .format_file(true)
@@ -79,24 +81,20 @@ async fn main() -> Result<()> {
         .format_target(false)
         .init();
 
-    let customer_uri = Uri::builder()
-        .scheme("http")
-        .authority(dotenv::var("CUSTOMER_URI")?)
-        .path_and_query("/")
-        .build()?;
-
-    let merchant_uri = Uri::builder()
-        .scheme("http")
-        .authority(dotenv::var("MERCHANT_URI")?)
-        .path_and_query("/")
-        .build()?;
-
     let app = MyDelivery {
         db: Arc::new(Db::new(init_sqlite_pool().await)),
         broker: Arc::new(RabbitMQ::new(init_amqp_conn().await)),
         task_limiter: Arc::new(Semaphore::new(100)),
-        customercl: CustomerServiceClient::connect(customer_uri).await?,
-        merchantcl: MerchantServiceClient::connect(merchant_uri).await?,
+        customercl: CustomerServiceClient::connect(format!(
+            "http://{}",
+            dotenv::var("CUSTOMER_URI")?
+        ))
+        .await?,
+        merchantcl: MerchantServiceClient::connect(format!(
+            "http://{}",
+            dotenv::var("MERCHANT_URI")?
+        ))
+        .await?,
     };
 
     let socket = SocketAddr::new(
