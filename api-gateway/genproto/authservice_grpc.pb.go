@@ -23,7 +23,6 @@ const (
 	AuthService_Login_FullMethodName            = "/ihavefood.AuthService/Login"
 	AuthService_VerifyUserToken_FullMethodName  = "/ihavefood.AuthService/VerifyUserToken"
 	AuthService_VerifyAdminToken_FullMethodName = "/ihavefood.AuthService/VerifyAdminToken"
-	AuthService_CreateAdmin_FullMethodName      = "/ihavefood.AuthService/CreateAdmin"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -39,8 +38,6 @@ type AuthServiceClient interface {
 	VerifyUserToken(ctx context.Context, in *VerifyUserTokenRequest, opts ...grpc.CallOption) (*VerifyUserTokenResponse, error)
 	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
 	VerifyAdminToken(ctx context.Context, in *VerifyAdminTokenRequest, opts ...grpc.CallOption) (*VerifyAdminTokenResponse, error)
-	// only superadmin role can call this.
-	CreateAdmin(ctx context.Context, in *CreateAdminRequest, opts ...grpc.CallOption) (*UserCredentials, error)
 }
 
 type authServiceClient struct {
@@ -91,16 +88,6 @@ func (c *authServiceClient) VerifyAdminToken(ctx context.Context, in *VerifyAdmi
 	return out, nil
 }
 
-func (c *authServiceClient) CreateAdmin(ctx context.Context, in *CreateAdminRequest, opts ...grpc.CallOption) (*UserCredentials, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserCredentials)
-	err := c.cc.Invoke(ctx, AuthService_CreateAdmin_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -114,8 +101,6 @@ type AuthServiceServer interface {
 	VerifyUserToken(context.Context, *VerifyUserTokenRequest) (*VerifyUserTokenResponse, error)
 	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
 	VerifyAdminToken(context.Context, *VerifyAdminTokenRequest) (*VerifyAdminTokenResponse, error)
-	// only superadmin role can call this.
-	CreateAdmin(context.Context, *CreateAdminRequest) (*UserCredentials, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -137,9 +122,6 @@ func (UnimplementedAuthServiceServer) VerifyUserToken(context.Context, *VerifyUs
 }
 func (UnimplementedAuthServiceServer) VerifyAdminToken(context.Context, *VerifyAdminTokenRequest) (*VerifyAdminTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyAdminToken not implemented")
-}
-func (UnimplementedAuthServiceServer) CreateAdmin(context.Context, *CreateAdminRequest) (*UserCredentials, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAdmin not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -234,24 +216,6 @@ func _AuthService_VerifyAdminToken_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_CreateAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAdminRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).CreateAdmin(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_CreateAdmin_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).CreateAdmin(ctx, req.(*CreateAdminRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,10 +238,6 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyAdminToken",
 			Handler:    _AuthService_VerifyAdminToken_Handler,
-		},
-		{
-			MethodName: "CreateAdmin",
-			Handler:    _AuthService_CreateAdmin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -7,6 +7,7 @@
 package genproto
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -184,12 +185,12 @@ func (OrderStatus) EnumDescriptor() ([]byte, []int) {
 
 type PlaceOrder struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// A unique request ID for server to detect duplicated requests.
+	// request_id for idempotency.
 	RequestId       string           `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	OrderId         string           `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	CustomerId      string           `protobuf:"bytes,3,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
 	MerchantId      string           `protobuf:"bytes,4,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
-	Menu            []*MenuItem      `protobuf:"bytes,5,rep,name=menu,proto3" json:"menu,omitempty"`
+	Items           []*OrderItem     `protobuf:"bytes,5,rep,name=items,proto3" json:"items,omitempty"`
 	CouponCode      string           `protobuf:"bytes,6,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
 	CouponDiscount  int32            `protobuf:"varint,7,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
 	DeliveryFee     int32            `protobuf:"varint,8,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
@@ -263,9 +264,9 @@ func (x *PlaceOrder) GetMerchantId() string {
 	return ""
 }
 
-func (x *PlaceOrder) GetMenu() []*MenuItem {
+func (x *PlaceOrder) GetItems() []*OrderItem {
 	if x != nil {
-		return x.Menu
+		return x.Items
 	}
 	return nil
 }
@@ -347,28 +348,29 @@ func (x *PlaceOrder) GetOrderTimestamps() *OrderTimestamps {
 	return nil
 }
 
-type ContactInfo struct {
+type OrderItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PhoneNumber   string                 `protobuf:"bytes,1,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	ItemId        string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	Note          string                 `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ContactInfo) Reset() {
-	*x = ContactInfo{}
+func (x *OrderItem) Reset() {
+	*x = OrderItem{}
 	mi := &file_orderservice_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ContactInfo) String() string {
+func (x *OrderItem) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ContactInfo) ProtoMessage() {}
+func (*OrderItem) ProtoMessage() {}
 
-func (x *ContactInfo) ProtoReflect() protoreflect.Message {
+func (x *OrderItem) ProtoReflect() protoreflect.Message {
 	mi := &file_orderservice_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -380,21 +382,28 @@ func (x *ContactInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ContactInfo.ProtoReflect.Descriptor instead.
-func (*ContactInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use OrderItem.ProtoReflect.Descriptor instead.
+func (*OrderItem) Descriptor() ([]byte, []int) {
 	return file_orderservice_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ContactInfo) GetPhoneNumber() string {
+func (x *OrderItem) GetItemId() string {
 	if x != nil {
-		return x.PhoneNumber
+		return x.ItemId
 	}
 	return ""
 }
 
-func (x *ContactInfo) GetEmail() string {
+func (x *OrderItem) GetQuantity() int32 {
 	if x != nil {
-		return x.Email
+		return x.Quantity
+	}
+	return 0
+}
+
+func (x *OrderItem) GetNote() string {
+	if x != nil {
+		return x.Note
 	}
 	return ""
 }
@@ -547,38 +556,33 @@ func (x *ListOrderHistoryResponse) GetPlaceOrders() []*PlaceOrder {
 	return nil
 }
 
-type HandlePlaceOrderRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	RequestId       string                 `protobuf:"bytes,12,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	CustomerId      string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	MerchantId      string                 `protobuf:"bytes,2,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
-	Menu            []*MenuItem            `protobuf:"bytes,3,rep,name=menu,proto3" json:"menu,omitempty"`
-	CouponCode      string                 `protobuf:"bytes,4,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
-	CouponDiscount  int32                  `protobuf:"varint,5,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
-	DeliveryFee     int32                  `protobuf:"varint,6,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
-	Total           int32                  `protobuf:"varint,7,opt,name=total,proto3" json:"total,omitempty"`
-	CustomerAddress *Address               `protobuf:"bytes,8,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
-	MerchantAddress *Address               `protobuf:"bytes,9,opt,name=merchant_address,json=merchantAddress,proto3" json:"merchant_address,omitempty"`
-	CustomerContact *ContactInfo           `protobuf:"bytes,10,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
-	PaymentMethods  PaymentMethods         `protobuf:"varint,11,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+type CreatePlaceOrderRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	RequestId         string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	MerchantId        string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	Items             []*OrderItem           `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
+	CouponCode        string                 `protobuf:"bytes,5,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
+	CustomerAddressId string                 `protobuf:"bytes,6,opt,name=customer_address_id,json=customerAddressId,proto3" json:"customer_address_id,omitempty"`
+	PaymentMethods    PaymentMethods         `protobuf:"varint,7,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
-func (x *HandlePlaceOrderRequest) Reset() {
-	*x = HandlePlaceOrderRequest{}
+func (x *CreatePlaceOrderRequest) Reset() {
+	*x = CreatePlaceOrderRequest{}
 	mi := &file_orderservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *HandlePlaceOrderRequest) String() string {
+func (x *CreatePlaceOrderRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HandlePlaceOrderRequest) ProtoMessage() {}
+func (*CreatePlaceOrderRequest) ProtoMessage() {}
 
-func (x *HandlePlaceOrderRequest) ProtoReflect() protoreflect.Message {
+func (x *CreatePlaceOrderRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_orderservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -590,89 +594,54 @@ func (x *HandlePlaceOrderRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HandlePlaceOrderRequest.ProtoReflect.Descriptor instead.
-func (*HandlePlaceOrderRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreatePlaceOrderRequest.ProtoReflect.Descriptor instead.
+func (*CreatePlaceOrderRequest) Descriptor() ([]byte, []int) {
 	return file_orderservice_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *HandlePlaceOrderRequest) GetRequestId() string {
+func (x *CreatePlaceOrderRequest) GetRequestId() string {
 	if x != nil {
 		return x.RequestId
 	}
 	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetCustomerId() string {
+func (x *CreatePlaceOrderRequest) GetCustomerId() string {
 	if x != nil {
 		return x.CustomerId
 	}
 	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetMerchantId() string {
+func (x *CreatePlaceOrderRequest) GetMerchantId() string {
 	if x != nil {
 		return x.MerchantId
 	}
 	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetMenu() []*MenuItem {
+func (x *CreatePlaceOrderRequest) GetItems() []*OrderItem {
 	if x != nil {
-		return x.Menu
+		return x.Items
 	}
 	return nil
 }
 
-func (x *HandlePlaceOrderRequest) GetCouponCode() string {
+func (x *CreatePlaceOrderRequest) GetCouponCode() string {
 	if x != nil {
 		return x.CouponCode
 	}
 	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetCouponDiscount() int32 {
+func (x *CreatePlaceOrderRequest) GetCustomerAddressId() string {
 	if x != nil {
-		return x.CouponDiscount
+		return x.CustomerAddressId
 	}
-	return 0
+	return ""
 }
 
-func (x *HandlePlaceOrderRequest) GetDeliveryFee() int32 {
-	if x != nil {
-		return x.DeliveryFee
-	}
-	return 0
-}
-
-func (x *HandlePlaceOrderRequest) GetTotal() int32 {
-	if x != nil {
-		return x.Total
-	}
-	return 0
-}
-
-func (x *HandlePlaceOrderRequest) GetCustomerAddress() *Address {
-	if x != nil {
-		return x.CustomerAddress
-	}
-	return nil
-}
-
-func (x *HandlePlaceOrderRequest) GetMerchantAddress() *Address {
-	if x != nil {
-		return x.MerchantAddress
-	}
-	return nil
-}
-
-func (x *HandlePlaceOrderRequest) GetCustomerContact() *ContactInfo {
-	if x != nil {
-		return x.CustomerContact
-	}
-	return nil
-}
-
-func (x *HandlePlaceOrderRequest) GetPaymentMethods() PaymentMethods {
+func (x *CreatePlaceOrderRequest) GetPaymentMethods() PaymentMethods {
 	if x != nil {
 		return x.PaymentMethods
 	}
@@ -683,7 +652,7 @@ var File_orderservice_proto protoreflect.FileDescriptor
 
 const file_orderservice_proto_rawDesc = "" +
 	"\n" +
-	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15merchantservice.proto\x1a\fcommon.proto\"\xfc\x05\n" +
+	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\fcommon.proto\x1a\x15customerservice.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xff\x05\n" +
 	"\n" +
 	"PlaceOrder\x12\x1d\n" +
 	"\n" +
@@ -692,8 +661,8 @@ const file_orderservice_proto_rawDesc = "" +
 	"\vcustomer_id\x18\x03 \x01(\tR\n" +
 	"customerId\x12\x1f\n" +
 	"\vmerchant_id\x18\x04 \x01(\tR\n" +
-	"merchantId\x12'\n" +
-	"\x04menu\x18\x05 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
+	"merchantId\x12*\n" +
+	"\x05items\x18\x05 \x03(\v2\x14.ihavefood.OrderItemR\x05items\x12\x1f\n" +
 	"\vcoupon_code\x18\x06 \x01(\tR\n" +
 	"couponCode\x12'\n" +
 	"\x0fcoupon_discount\x18\a \x01(\x05R\x0ecouponDiscount\x12!\n" +
@@ -706,39 +675,34 @@ const file_orderservice_proto_rawDesc = "" +
 	"\x0fpayment_methods\x18\r \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods\x12?\n" +
 	"\x0epayment_status\x18\x0e \x01(\x0e2\x18.ihavefood.PaymentStatusR\rpaymentStatus\x129\n" +
 	"\forder_status\x18\x0f \x01(\x0e2\x16.ihavefood.OrderStatusR\vorderStatus\x12E\n" +
-	"\x10order_timestamps\x18\x10 \x01(\v2\x1a.ihavefood.OrderTimestampsR\x0forderTimestamps\"F\n" +
-	"\vContactInfo\x12!\n" +
-	"\fphone_number\x18\x01 \x01(\tR\vphoneNumber\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\"\xcc\x01\n" +
+	"\x10order_timestamps\x18\x10 \x01(\v2\x1a.ihavefood.OrderTimestampsR\x0forderTimestamps\"T\n" +
+	"\tOrderItem\x12\x17\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x1a\n" +
+	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x12\n" +
+	"\x04note\x18\x03 \x01(\tR\x04note\"\xcc\x01\n" +
 	"\x0fOrderTimestamps\x12;\n" +
 	"\vcreate_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"updateTime\x12?\n" +
-	"\rcomplete_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\fcompleteTime\":\n" +
+	"\rcomplete_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\fcompleteTime\"w\n" +
 	"\x17ListOrderHistoryRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\"T\n" +
+	"customerId:;\x92A826{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\"}\"T\n" +
 	"\x18ListOrderHistoryResponse\x128\n" +
-	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xab\x04\n" +
-	"\x17HandlePlaceOrderRequest\x12\x1d\n" +
+	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xbb\x02\n" +
+	"\x17CreatePlaceOrderRequest\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\f \x01(\tR\trequestId\x12\x1f\n" +
-	"\vcustomer_id\x18\x01 \x01(\tR\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1f\n" +
+	"\vcustomer_id\x18\x02 \x01(\tR\n" +
 	"customerId\x12\x1f\n" +
-	"\vmerchant_id\x18\x02 \x01(\tR\n" +
-	"merchantId\x12'\n" +
-	"\x04menu\x18\x03 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12\x1f\n" +
-	"\vcoupon_code\x18\x04 \x01(\tR\n" +
-	"couponCode\x12'\n" +
-	"\x0fcoupon_discount\x18\x05 \x01(\x05R\x0ecouponDiscount\x12!\n" +
-	"\fdelivery_fee\x18\x06 \x01(\x05R\vdeliveryFee\x12\x14\n" +
-	"\x05total\x18\a \x01(\x05R\x05total\x12=\n" +
-	"\x10customer_address\x18\b \x01(\v2\x12.ihavefood.AddressR\x0fcustomerAddress\x12=\n" +
-	"\x10merchant_address\x18\t \x01(\v2\x12.ihavefood.AddressR\x0fmerchantAddress\x12A\n" +
-	"\x10customer_contact\x18\n" +
-	" \x01(\v2\x16.ihavefood.ContactInfoR\x0fcustomerContact\x12B\n" +
-	"\x0fpayment_methods\x18\v \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods*\x88\x01\n" +
+	"\vmerchant_id\x18\x03 \x01(\tR\n" +
+	"merchantId\x12*\n" +
+	"\x05items\x18\x04 \x03(\v2\x14.ihavefood.OrderItemR\x05items\x12\x1f\n" +
+	"\vcoupon_code\x18\x05 \x01(\tR\n" +
+	"couponCode\x12.\n" +
+	"\x13customer_address_id\x18\x06 \x01(\tR\x11customerAddressId\x12B\n" +
+	"\x0fpayment_methods\x18\a \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods*\x88\x01\n" +
 	"\x0ePaymentMethods\x12\x1e\n" +
 	"\x1aPAYMENT_METHOD_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PAYMENT_METHOD_CASH\x10\x01\x12\x1e\n" +
@@ -758,7 +722,7 @@ const file_orderservice_proto_rawDesc = "" +
 	"\tCANCELLED\x10\x062\x81\x02\n" +
 	"\fOrderService\x12~\n" +
 	"\x10ListOrderHistory\x12\".ihavefood.ListOrderHistoryRequest\x1a#.ihavefood.ListOrderHistoryResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/api/orders/{customer_id}\x12q\n" +
-	"\x10HandlePlaceOrder\x12\".ihavefood.HandlePlaceOrderRequest\x1a\x15.ihavefood.PlaceOrder\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/orders/place_orderB\vZ\t/genprotob\x06proto3"
+	"\x10CreatePlaceOrder\x12\".ihavefood.CreatePlaceOrderRequest\x1a\x15.ihavefood.PlaceOrder\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/orders/place_orderB\vZ\t/genprotob\x06proto3"
 
 var (
 	file_orderservice_proto_rawDescOnce sync.Once
@@ -779,20 +743,20 @@ var file_orderservice_proto_goTypes = []any{
 	(PaymentStatus)(0),               // 1: ihavefood.PaymentStatus
 	(OrderStatus)(0),                 // 2: ihavefood.OrderStatus
 	(*PlaceOrder)(nil),               // 3: ihavefood.PlaceOrder
-	(*ContactInfo)(nil),              // 4: ihavefood.ContactInfo
+	(*OrderItem)(nil),                // 4: ihavefood.OrderItem
 	(*OrderTimestamps)(nil),          // 5: ihavefood.OrderTimestamps
 	(*ListOrderHistoryRequest)(nil),  // 6: ihavefood.ListOrderHistoryRequest
 	(*ListOrderHistoryResponse)(nil), // 7: ihavefood.ListOrderHistoryResponse
-	(*HandlePlaceOrderRequest)(nil),  // 8: ihavefood.HandlePlaceOrderRequest
-	(*MenuItem)(nil),                 // 9: ihavefood.MenuItem
-	(*Address)(nil),                  // 10: ihavefood.Address
+	(*CreatePlaceOrderRequest)(nil),  // 8: ihavefood.CreatePlaceOrderRequest
+	(*Address)(nil),                  // 9: ihavefood.Address
+	(*ContactInfo)(nil),              // 10: ihavefood.ContactInfo
 	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
 }
 var file_orderservice_proto_depIdxs = []int32{
-	9,  // 0: ihavefood.PlaceOrder.menu:type_name -> ihavefood.MenuItem
-	10, // 1: ihavefood.PlaceOrder.customer_address:type_name -> ihavefood.Address
-	10, // 2: ihavefood.PlaceOrder.merchant_address:type_name -> ihavefood.Address
-	4,  // 3: ihavefood.PlaceOrder.customer_contact:type_name -> ihavefood.ContactInfo
+	4,  // 0: ihavefood.PlaceOrder.items:type_name -> ihavefood.OrderItem
+	9,  // 1: ihavefood.PlaceOrder.customer_address:type_name -> ihavefood.Address
+	9,  // 2: ihavefood.PlaceOrder.merchant_address:type_name -> ihavefood.Address
+	10, // 3: ihavefood.PlaceOrder.customer_contact:type_name -> ihavefood.ContactInfo
 	0,  // 4: ihavefood.PlaceOrder.payment_methods:type_name -> ihavefood.PaymentMethods
 	1,  // 5: ihavefood.PlaceOrder.payment_status:type_name -> ihavefood.PaymentStatus
 	2,  // 6: ihavefood.PlaceOrder.order_status:type_name -> ihavefood.OrderStatus
@@ -801,20 +765,17 @@ var file_orderservice_proto_depIdxs = []int32{
 	11, // 9: ihavefood.OrderTimestamps.update_time:type_name -> google.protobuf.Timestamp
 	11, // 10: ihavefood.OrderTimestamps.complete_time:type_name -> google.protobuf.Timestamp
 	3,  // 11: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
-	9,  // 12: ihavefood.HandlePlaceOrderRequest.menu:type_name -> ihavefood.MenuItem
-	10, // 13: ihavefood.HandlePlaceOrderRequest.customer_address:type_name -> ihavefood.Address
-	10, // 14: ihavefood.HandlePlaceOrderRequest.merchant_address:type_name -> ihavefood.Address
-	4,  // 15: ihavefood.HandlePlaceOrderRequest.customer_contact:type_name -> ihavefood.ContactInfo
-	0,  // 16: ihavefood.HandlePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
-	6,  // 17: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
-	8,  // 18: ihavefood.OrderService.HandlePlaceOrder:input_type -> ihavefood.HandlePlaceOrderRequest
-	7,  // 19: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
-	3,  // 20: ihavefood.OrderService.HandlePlaceOrder:output_type -> ihavefood.PlaceOrder
-	19, // [19:21] is the sub-list for method output_type
-	17, // [17:19] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	4,  // 12: ihavefood.CreatePlaceOrderRequest.items:type_name -> ihavefood.OrderItem
+	0,  // 13: ihavefood.CreatePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
+	6,  // 14: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
+	8,  // 15: ihavefood.OrderService.CreatePlaceOrder:input_type -> ihavefood.CreatePlaceOrderRequest
+	7,  // 16: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
+	3,  // 17: ihavefood.OrderService.CreatePlaceOrder:output_type -> ihavefood.PlaceOrder
+	16, // [16:18] is the sub-list for method output_type
+	14, // [14:16] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_orderservice_proto_init() }
@@ -822,8 +783,8 @@ func file_orderservice_proto_init() {
 	if File_orderservice_proto != nil {
 		return
 	}
-	file_merchantservice_proto_init()
 	file_common_proto_init()
+	file_customerservice_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
