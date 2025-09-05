@@ -643,9 +643,9 @@ const file_authservice_proto_rawDesc = "" +
 	"\vcreate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\xb7\x02\n" +
-	"\x0fRegisterRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
+	"updateTime\"\xe4\x02\n" +
+	"\x0fRegisterRequest\x12G\n" +
+	"\busername\x18\x01 \x01(\tB+\x92A(2&Ignored when registering as a MerchantR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x12!\n" +
 	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12$\n" +

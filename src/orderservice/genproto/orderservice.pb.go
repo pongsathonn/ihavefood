@@ -408,58 +408,6 @@ func (x *OrderItem) GetNote() string {
 	return ""
 }
 
-type ContactInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PhoneNumber   string                 `protobuf:"bytes,1,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ContactInfo) Reset() {
-	*x = ContactInfo{}
-	mi := &file_orderservice_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ContactInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ContactInfo) ProtoMessage() {}
-
-func (x *ContactInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_orderservice_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ContactInfo.ProtoReflect.Descriptor instead.
-func (*ContactInfo) Descriptor() ([]byte, []int) {
-	return file_orderservice_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *ContactInfo) GetPhoneNumber() string {
-	if x != nil {
-		return x.PhoneNumber
-	}
-	return ""
-}
-
-func (x *ContactInfo) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
 type OrderTimestamps struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
@@ -471,7 +419,7 @@ type OrderTimestamps struct {
 
 func (x *OrderTimestamps) Reset() {
 	*x = OrderTimestamps{}
-	mi := &file_orderservice_proto_msgTypes[3]
+	mi := &file_orderservice_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -483,7 +431,7 @@ func (x *OrderTimestamps) String() string {
 func (*OrderTimestamps) ProtoMessage() {}
 
 func (x *OrderTimestamps) ProtoReflect() protoreflect.Message {
-	mi := &file_orderservice_proto_msgTypes[3]
+	mi := &file_orderservice_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -496,7 +444,7 @@ func (x *OrderTimestamps) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OrderTimestamps.ProtoReflect.Descriptor instead.
 func (*OrderTimestamps) Descriptor() ([]byte, []int) {
-	return file_orderservice_proto_rawDescGZIP(), []int{3}
+	return file_orderservice_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *OrderTimestamps) GetCreateTime() *timestamppb.Timestamp {
@@ -529,7 +477,7 @@ type ListOrderHistoryRequest struct {
 
 func (x *ListOrderHistoryRequest) Reset() {
 	*x = ListOrderHistoryRequest{}
-	mi := &file_orderservice_proto_msgTypes[4]
+	mi := &file_orderservice_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -541,7 +489,7 @@ func (x *ListOrderHistoryRequest) String() string {
 func (*ListOrderHistoryRequest) ProtoMessage() {}
 
 func (x *ListOrderHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_orderservice_proto_msgTypes[4]
+	mi := &file_orderservice_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -554,7 +502,7 @@ func (x *ListOrderHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrderHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListOrderHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_orderservice_proto_rawDescGZIP(), []int{4}
+	return file_orderservice_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListOrderHistoryRequest) GetCustomerId() string {
@@ -573,7 +521,7 @@ type ListOrderHistoryResponse struct {
 
 func (x *ListOrderHistoryResponse) Reset() {
 	*x = ListOrderHistoryResponse{}
-	mi := &file_orderservice_proto_msgTypes[5]
+	mi := &file_orderservice_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -585,7 +533,7 @@ func (x *ListOrderHistoryResponse) String() string {
 func (*ListOrderHistoryResponse) ProtoMessage() {}
 
 func (x *ListOrderHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_orderservice_proto_msgTypes[5]
+	mi := &file_orderservice_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -598,7 +546,7 @@ func (x *ListOrderHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrderHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListOrderHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_orderservice_proto_rawDescGZIP(), []int{5}
+	return file_orderservice_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListOrderHistoryResponse) GetPlaceOrders() []*PlaceOrder {
@@ -609,22 +557,21 @@ func (x *ListOrderHistoryResponse) GetPlaceOrders() []*PlaceOrder {
 }
 
 type CreatePlaceOrderRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	RequestId       string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	CustomerId      string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	MerchantId      string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
-	Items           []*OrderItem           `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
-	CouponCode      string                 `protobuf:"bytes,5,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
-	CustomerAddress *Address               `protobuf:"bytes,6,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
-	CustomerContact *ContactInfo           `protobuf:"bytes,7,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
-	PaymentMethods  PaymentMethods         `protobuf:"varint,8,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	RequestId         string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	MerchantId        string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	Items             []*OrderItem           `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
+	CouponCode        string                 `protobuf:"bytes,5,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
+	CustomerAddressId string                 `protobuf:"bytes,6,opt,name=customer_address_id,json=customerAddressId,proto3" json:"customer_address_id,omitempty"`
+	PaymentMethods    PaymentMethods         `protobuf:"varint,7,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *CreatePlaceOrderRequest) Reset() {
 	*x = CreatePlaceOrderRequest{}
-	mi := &file_orderservice_proto_msgTypes[6]
+	mi := &file_orderservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -636,7 +583,7 @@ func (x *CreatePlaceOrderRequest) String() string {
 func (*CreatePlaceOrderRequest) ProtoMessage() {}
 
 func (x *CreatePlaceOrderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_orderservice_proto_msgTypes[6]
+	mi := &file_orderservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -649,7 +596,7 @@ func (x *CreatePlaceOrderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePlaceOrderRequest.ProtoReflect.Descriptor instead.
 func (*CreatePlaceOrderRequest) Descriptor() ([]byte, []int) {
-	return file_orderservice_proto_rawDescGZIP(), []int{6}
+	return file_orderservice_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreatePlaceOrderRequest) GetRequestId() string {
@@ -687,18 +634,11 @@ func (x *CreatePlaceOrderRequest) GetCouponCode() string {
 	return ""
 }
 
-func (x *CreatePlaceOrderRequest) GetCustomerAddress() *Address {
+func (x *CreatePlaceOrderRequest) GetCustomerAddressId() string {
 	if x != nil {
-		return x.CustomerAddress
+		return x.CustomerAddressId
 	}
-	return nil
-}
-
-func (x *CreatePlaceOrderRequest) GetCustomerContact() *ContactInfo {
-	if x != nil {
-		return x.CustomerContact
-	}
-	return nil
+	return ""
 }
 
 func (x *CreatePlaceOrderRequest) GetPaymentMethods() PaymentMethods {
@@ -712,7 +652,7 @@ var File_orderservice_proto protoreflect.FileDescriptor
 
 const file_orderservice_proto_rawDesc = "" +
 	"\n" +
-	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\fcommon.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xff\x05\n" +
+	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\fcommon.proto\x1a\x15customerservice.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xff\x05\n" +
 	"\n" +
 	"PlaceOrder\x12\x1d\n" +
 	"\n" +
@@ -739,10 +679,7 @@ const file_orderservice_proto_rawDesc = "" +
 	"\tOrderItem\x12\x17\n" +
 	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x12\n" +
-	"\x04note\x18\x03 \x01(\tR\x04note\"F\n" +
-	"\vContactInfo\x12!\n" +
-	"\fphone_number\x18\x01 \x01(\tR\vphoneNumber\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\"\xcc\x01\n" +
+	"\x04note\x18\x03 \x01(\tR\x04note\"\xcc\x01\n" +
 	"\x0fOrderTimestamps\x12;\n" +
 	"\vcreate_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
@@ -753,7 +690,7 @@ const file_orderservice_proto_rawDesc = "" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId:;\x92A826{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\"}\"T\n" +
 	"\x18ListOrderHistoryResponse\x128\n" +
-	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\x8d\x03\n" +
+	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xbb\x02\n" +
 	"\x17CreatePlaceOrderRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1f\n" +
@@ -763,10 +700,9 @@ const file_orderservice_proto_rawDesc = "" +
 	"merchantId\x12*\n" +
 	"\x05items\x18\x04 \x03(\v2\x14.ihavefood.OrderItemR\x05items\x12\x1f\n" +
 	"\vcoupon_code\x18\x05 \x01(\tR\n" +
-	"couponCode\x12=\n" +
-	"\x10customer_address\x18\x06 \x01(\v2\x12.ihavefood.AddressR\x0fcustomerAddress\x12A\n" +
-	"\x10customer_contact\x18\a \x01(\v2\x16.ihavefood.ContactInfoR\x0fcustomerContact\x12B\n" +
-	"\x0fpayment_methods\x18\b \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods*\x88\x01\n" +
+	"couponCode\x12.\n" +
+	"\x13customer_address_id\x18\x06 \x01(\tR\x11customerAddressId\x12B\n" +
+	"\x0fpayment_methods\x18\a \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods*\x88\x01\n" +
 	"\x0ePaymentMethods\x12\x1e\n" +
 	"\x1aPAYMENT_METHOD_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PAYMENT_METHOD_CASH\x10\x01\x12\x1e\n" +
@@ -801,47 +737,45 @@ func file_orderservice_proto_rawDescGZIP() []byte {
 }
 
 var file_orderservice_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_orderservice_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_orderservice_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_orderservice_proto_goTypes = []any{
 	(PaymentMethods)(0),              // 0: ihavefood.PaymentMethods
 	(PaymentStatus)(0),               // 1: ihavefood.PaymentStatus
 	(OrderStatus)(0),                 // 2: ihavefood.OrderStatus
 	(*PlaceOrder)(nil),               // 3: ihavefood.PlaceOrder
 	(*OrderItem)(nil),                // 4: ihavefood.OrderItem
-	(*ContactInfo)(nil),              // 5: ihavefood.ContactInfo
-	(*OrderTimestamps)(nil),          // 6: ihavefood.OrderTimestamps
-	(*ListOrderHistoryRequest)(nil),  // 7: ihavefood.ListOrderHistoryRequest
-	(*ListOrderHistoryResponse)(nil), // 8: ihavefood.ListOrderHistoryResponse
-	(*CreatePlaceOrderRequest)(nil),  // 9: ihavefood.CreatePlaceOrderRequest
-	(*Address)(nil),                  // 10: ihavefood.Address
+	(*OrderTimestamps)(nil),          // 5: ihavefood.OrderTimestamps
+	(*ListOrderHistoryRequest)(nil),  // 6: ihavefood.ListOrderHistoryRequest
+	(*ListOrderHistoryResponse)(nil), // 7: ihavefood.ListOrderHistoryResponse
+	(*CreatePlaceOrderRequest)(nil),  // 8: ihavefood.CreatePlaceOrderRequest
+	(*Address)(nil),                  // 9: ihavefood.Address
+	(*ContactInfo)(nil),              // 10: ihavefood.ContactInfo
 	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
 }
 var file_orderservice_proto_depIdxs = []int32{
 	4,  // 0: ihavefood.PlaceOrder.items:type_name -> ihavefood.OrderItem
-	10, // 1: ihavefood.PlaceOrder.customer_address:type_name -> ihavefood.Address
-	10, // 2: ihavefood.PlaceOrder.merchant_address:type_name -> ihavefood.Address
-	5,  // 3: ihavefood.PlaceOrder.customer_contact:type_name -> ihavefood.ContactInfo
+	9,  // 1: ihavefood.PlaceOrder.customer_address:type_name -> ihavefood.Address
+	9,  // 2: ihavefood.PlaceOrder.merchant_address:type_name -> ihavefood.Address
+	10, // 3: ihavefood.PlaceOrder.customer_contact:type_name -> ihavefood.ContactInfo
 	0,  // 4: ihavefood.PlaceOrder.payment_methods:type_name -> ihavefood.PaymentMethods
 	1,  // 5: ihavefood.PlaceOrder.payment_status:type_name -> ihavefood.PaymentStatus
 	2,  // 6: ihavefood.PlaceOrder.order_status:type_name -> ihavefood.OrderStatus
-	6,  // 7: ihavefood.PlaceOrder.order_timestamps:type_name -> ihavefood.OrderTimestamps
+	5,  // 7: ihavefood.PlaceOrder.order_timestamps:type_name -> ihavefood.OrderTimestamps
 	11, // 8: ihavefood.OrderTimestamps.create_time:type_name -> google.protobuf.Timestamp
 	11, // 9: ihavefood.OrderTimestamps.update_time:type_name -> google.protobuf.Timestamp
 	11, // 10: ihavefood.OrderTimestamps.complete_time:type_name -> google.protobuf.Timestamp
 	3,  // 11: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
 	4,  // 12: ihavefood.CreatePlaceOrderRequest.items:type_name -> ihavefood.OrderItem
-	10, // 13: ihavefood.CreatePlaceOrderRequest.customer_address:type_name -> ihavefood.Address
-	5,  // 14: ihavefood.CreatePlaceOrderRequest.customer_contact:type_name -> ihavefood.ContactInfo
-	0,  // 15: ihavefood.CreatePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
-	7,  // 16: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
-	9,  // 17: ihavefood.OrderService.CreatePlaceOrder:input_type -> ihavefood.CreatePlaceOrderRequest
-	8,  // 18: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
-	3,  // 19: ihavefood.OrderService.CreatePlaceOrder:output_type -> ihavefood.PlaceOrder
-	18, // [18:20] is the sub-list for method output_type
-	16, // [16:18] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	0,  // 13: ihavefood.CreatePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
+	6,  // 14: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
+	8,  // 15: ihavefood.OrderService.CreatePlaceOrder:input_type -> ihavefood.CreatePlaceOrderRequest
+	7,  // 16: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
+	3,  // 17: ihavefood.OrderService.CreatePlaceOrder:output_type -> ihavefood.PlaceOrder
+	16, // [16:18] is the sub-list for method output_type
+	14, // [14:16] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_orderservice_proto_init() }
@@ -850,13 +784,14 @@ func file_orderservice_proto_init() {
 		return
 	}
 	file_common_proto_init()
+	file_customerservice_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_orderservice_proto_rawDesc), len(file_orderservice_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   7,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
