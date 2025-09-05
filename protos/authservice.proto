@@ -77,11 +77,15 @@ enum Roles {
 
 
 message RegisterRequest {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        example: "{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
-    };
+   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+       example: "{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
+   };
 
-   string username = 1;
+   string username = 1 [
+       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+           description: "Ignored when registering as a Merchant"
+       }
+   ];
    string email = 2;
    string password = 3;
    string phone_number = 4;
