@@ -57,7 +57,7 @@ message Coupon {
     // The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.
     // The server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY.
     int32 discount = 3;
-    // Number of seconds until the coupon expires.
+    // Number of seconds until the coupon expires(UNIX).
     int64 expires_in = 4;
 
     int32 quantity_count = 5; 
