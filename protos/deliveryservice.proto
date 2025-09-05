@@ -20,12 +20,13 @@ service DeliveryService {
     // This function should be called from OrderService to track
     rpc GetOrderTracking(GetOrderTrackingRequest) returns(stream GetOrderTrackingResponse){}
 
-    // GetDeliveryFee calculates and returns the delivery fee based on the distance
-    // between the customer's location and the merchant's location.
+    // GetDeliveryFee calculates the delivery fee from merchant to customer
+    // using merchant ID and customer address ID.
+    // 
+    // Example:
+    //      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
     rpc GetDeliveryFee(GetDeliveryFeeRequest) returns(GetDeliveryFeeResponse) {
         option (google.api.http) = { 
-            // Example query:
-            //  ?merchant_lat=111&merchant_long222&customer_lat=333&customer_long444
             get: "/api/deliveries/fee"
         };
     }
@@ -87,14 +88,13 @@ message GetOrderTrackingResponse {
 }
 
 message GetDeliveryFeeRequest {
-    double merchant_lat = 1;
-    double merchant_long = 2;
-    double customer_lat = 3;
-    double customer_long = 4;
+    string customer_id = 1;
+    string customer_address_id = 2;
+    string merchant_id = 3;
 }
 
 message GetDeliveryFeeResponse {
-    int32 delivery_fee =1;
+    int32 fee =1;
 }
 
 message ConfirmRiderAcceptRequest {
