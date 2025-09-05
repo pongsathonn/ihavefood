@@ -6,8 +6,10 @@ option go_package =  "/genproto";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
-import "merchantservice.proto";
 import "common.proto";
+import "customerservice.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
 
 // ---------------------ORDER SERVICE------------------------------
 // Manages place order process.
@@ -20,8 +22,7 @@ service OrderService {
 
     // rpc GetPlaceOrder(id) returns(order){}
 
-    // HandlePlaceOrder handle incoming order from client
-    rpc HandlePlaceOrder(HandlePlaceOrderRequest) returns(PlaceOrder){
+    rpc CreatePlaceOrder(CreatePlaceOrderRequest) returns(PlaceOrder){
         option (google.api.http) = {
             post: "/api/orders/place_order" 
             body: "*"
@@ -31,12 +32,12 @@ service OrderService {
 }
 
 message PlaceOrder {
-    // A unique request ID for server to detect duplicated requests.
+    // request_id for idempotency.
     string request_id = 1;
     string order_id = 2 ;
     string customer_id = 3;
     string merchant_id = 4;
-    repeated MenuItem menu = 5;
+    repeated OrderItem items = 5;
     string coupon_code = 6;
     int32 coupon_discount =7;
     int32 delivery_fee = 8;
@@ -50,9 +51,10 @@ message PlaceOrder {
     OrderTimestamps order_timestamps = 16;
 }
 
-message ContactInfo {
-    string phone_number = 1;
-    string email = 2;
+message OrderItem {
+    string item_id = 1;
+    int32 quantity = 2;
+    string note = 3;
 }
 
 enum PaymentMethods {
@@ -84,6 +86,10 @@ message OrderTimestamps {
 }
 
 message ListOrderHistoryRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\"}"
+    };
+
     string customer_id = 1;
 }
 
@@ -91,18 +97,13 @@ message ListOrderHistoryResponse {
     repeated PlaceOrder place_orders = 1;
 }
 
-message HandlePlaceOrderRequest {
-    string request_id = 12;
-    string customer_id = 1;
-    string merchant_id = 2;
-    repeated MenuItem menu = 3;
-    string coupon_code = 4;
-    int32 coupon_discount =5;
-    int32 delivery_fee = 6;
-    int32 total = 7;
-    Address customer_address = 8;
-    Address merchant_address = 9;
-    ContactInfo customer_contact = 10;
-    PaymentMethods payment_methods = 11;
+message CreatePlaceOrderRequest {
+    string request_id = 1;
+    string customer_id = 2;
+    string merchant_id = 3;
+    repeated OrderItem items = 4;
+    string coupon_code = 5;
+    string customer_address_id = 6;
+    PaymentMethods payment_methods = 7;
 }
 
