@@ -20,13 +20,26 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+
+			if a.Key == slog.SourceKey {
+				source := a.Value.Any().(*slog.Source)
+				source.File = filepath.Base(source.File)
+			}
+			return a
+		},
+	}))
+
+	slog.SetDefault(logger)
 	db, err := initPostgres()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	customerService := internal.NewCustomerService(
-		internal.NewRabbitMQ(initRabbitMQ()),
+		internal.NewRabbitMQ(initAMQPCon()),
 		internal.NewCustomerStorage(db),
 	)
 
@@ -34,11 +47,11 @@ func main() {
 
 }
 
-func initRabbitMQ() *amqp.Connection {
+func initAMQPCon() *amqp.Connection {
 	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("CUSTOMER_AMQP_USER"),
-		os.Getenv("CUSTOMER_AMQP_PASS"),
-		os.Getenv("CUSTOMER_AMQP_HOST"),
+		os.Getenv("RBMQ_CUSTOMER_USER"),
+		os.Getenv("RBMQ_CUSTOMER_PASS"),
+		os.Getenv("AMQP_SERVER_URI"),
 	)
 	maxRetries := 5
 	var conn *amqp.Connection
@@ -47,12 +60,12 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			slog.Info("Successfully connected to RabbitMQ")
+			slog.Info("Successfully connected to AMQP")
 			return conn
 		}
 
 		if i == maxRetries {
-			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+			log.Fatalf("Could not establish AMQP connection after %d attempts: %v", maxRetries, err)
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -85,21 +98,9 @@ func initPostgres() (*sql.DB, error) {
 }
 
 func startGRPCServer(s *internal.CustomerService) {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-
-			if a.Key == slog.SourceKey {
-				source := a.Value.Any().(*slog.Source)
-				source.File = filepath.Base(source.File)
-			}
-			return a
-		},
-	}))
-	slog.SetDefault(logger)
 
 	if s == nil {
-		log.Fatal("profile service instance is nil")
+		log.Fatal("customer service instance is nil")
 	}
 
 	uri := fmt.Sprintf(":%s", os.Getenv("CUSTOMER_SERVER_PORT"))
@@ -111,7 +112,7 @@ func startGRPCServer(s *internal.CustomerService) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterCustomerServiceServer(grpcServer, s)
 
-	slog.Info("profile service is running", "port", os.Getenv("CUSTOMER_SERVER_PORT"))
+	slog.Info("customer service is running", "port", os.Getenv("CUSTOMER_SERVER_PORT"))
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
