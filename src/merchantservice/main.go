@@ -42,7 +42,7 @@ func main() {
 
 	s := internal.NewMerchantService(
 		internal.NewMerchantStorage(mongo),
-		internal.NewRabbitMQ(initRabbitMQ()),
+		internal.NewRabbitMQ(initAMQPCon()),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -85,11 +85,11 @@ func initMongoClient() (*mongo.Client, error) {
 	return client, nil
 }
 
-func initRabbitMQ() *amqp.Connection {
+func initAMQPCon() *amqp.Connection {
 	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("MERCHANT_AMQP_USER"),
-		os.Getenv("MERCHANT_AMQP_PASS"),
-		os.Getenv("MERCHANT_AMQP_HOST"),
+		os.Getenv("RBMQ_MERCHANT_USER"),
+		os.Getenv("RBMQ_MERCHANT_PASS"),
+		os.Getenv("AMQP_SERVER_URI"),
 	)
 	maxRetries := 5
 	var conn *amqp.Connection
@@ -98,11 +98,11 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			slog.Info("Successfully connected to RabbitMQ")
+			slog.Info("Successfully connected to AMQP Server")
 			return conn
 		}
 		if i == maxRetries {
-			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+			log.Fatalf("Could not establish AMQP connection after %d attempts: %v", maxRetries, err)
 		}
 		time.Sleep(5 * time.Second)
 	}
