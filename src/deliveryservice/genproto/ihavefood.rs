@@ -115,8 +115,8 @@ pub struct CreatePlaceOrderRequest {
     pub items: ::prost::alloc::vec::Vec<OrderItem>,
     #[prost(string, tag = "5")]
     pub coupon_code: ::prost::alloc::string::String,
-    #[prost(message, optional, tag = "6")]
-    pub customer_address: ::core::option::Option<Address>,
+    #[prost(string, tag = "6")]
+    pub customer_address_id: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "7")]
     pub customer_contact: ::core::option::Option<ContactInfo>,
     #[prost(enumeration = "PaymentMethods", tag = "8")]
