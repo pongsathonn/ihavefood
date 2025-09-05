@@ -42,8 +42,8 @@ func SetupValidator() {
 	}, pb.RegisterRequest{})
 
 	validate.RegisterStructValidationMapRules(map[string]string{
-		"Username": "required",
-		"Password": "required",
+		"Identifier": "required",
+		"Password":   "required",
 	}, pb.LoginRequest{})
 
 	// validate.RegisterStructValidationMapRules(rule2, nil)
