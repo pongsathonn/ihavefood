@@ -24,8 +24,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func main() {
-
+func init() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
@@ -38,14 +37,33 @@ func main() {
 		},
 	}))
 	slog.SetDefault(logger)
+}
+
+func main() {
+
 	internal.SetupValidator()
 
 	s := internal.NewOrderService(
 		internal.NewOrderStorage(initMongoClient()),
+		internal.NewRabbitMQ(initAMQPCon()),
 		initServiceClients(),
 	)
 	go s.StartConsume()
 
+	uri := fmt.Sprintf(":%s", os.Getenv("ORDER_SERVER_PORT"))
+	lis, err := net.Listen("tcp", uri)
+	if err != nil {
+		log.Fatal("Failed to listen:", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterOrderServiceServer(grpcServer, s)
+
+	slog.Info("Order service started", "port", os.Getenv("ORDER_SERVER_PORT"))
+
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatal("Failed to serve:", err)
+	}
 }
 
 func initServiceClients() internal.ServiceClients {
@@ -69,11 +87,11 @@ func initServiceClients() internal.ServiceClients {
 	}
 }
 
-func initRabbitMQ() *amqp.Connection {
+func initAMQPCon() *amqp.Connection {
 	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("ORDER_AMQP_USER"),
-		os.Getenv("ORDER_AMQP_PASS"),
-		os.Getenv("ORDER_AMQP_HOST"),
+		os.Getenv("RBMQ_ORDER_USER"),
+		os.Getenv("RBMQ_ORDER_PASS"),
+		os.Getenv("AMQP_SERVER_URI"),
 	)
 	maxRetries := 5
 	var conn *amqp.Connection
@@ -82,11 +100,11 @@ func initRabbitMQ() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			slog.Info("Successfully connected to RabbitMQ")
+			slog.Info("AMQP connection established")
 			return conn
 		}
 		if i == maxRetries {
-			log.Fatalf("Could not establish RabbitMQ connection after %d attempts: %v", maxRetries, err)
+			log.Fatalf("Could not establish AMQP connection after %d attempts: %v", maxRetries, err)
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -107,7 +125,8 @@ func initMongoClient() *mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	slog.Info("Successfully connected to MongoDB")
+
+	slog.Info("MongoDB connection established")
 
 	db := client.Database("db")
 
@@ -129,7 +148,7 @@ func initMongoClient() *mongo.Client {
 		log.Fatal("Failed to create index:", err)
 	}
 
-	slog.Info("created new mongo index", "name", newIndex)
+	slog.Info("MongoDB index created", "index", newIndex)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -140,24 +159,4 @@ func initMongoClient() *mongo.Client {
 
 	return client
 
-}
-
-// startGRPCServer sets up and starts the gRPC server
-func startGRPCServer(s *internal.OrderService) {
-
-	// Set up the server port from environment variable
-	uri := fmt.Sprintf(":%s", os.Getenv("ORDER_SERVER_PORT"))
-	lis, err := net.Listen("tcp", uri)
-	if err != nil {
-		log.Fatal("Failed to listen:", err)
-	}
-
-	grpcServer := grpc.NewServer()
-	pb.RegisterOrderServiceServer(grpcServer, s)
-
-	slog.Info("order service is running", "port", os.Getenv("ORDER_SERVER_PORT"))
-
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatal("Failed to serve:", err)
-	}
 }
