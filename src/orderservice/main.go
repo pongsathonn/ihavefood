@@ -33,19 +33,19 @@ func main() {
 				source := a.Value.Any().(*slog.Source)
 				source.File = filepath.Base(source.File)
 			}
+
 			return a
 		},
 	}))
 	slog.SetDefault(logger)
+	internal.SetupValidator()
 
 	s := internal.NewOrderService(
 		internal.NewOrderStorage(initMongoClient()),
-		internal.NewRabbitMQ(initRabbitMQ()),
 		initServiceClients(),
 	)
-
 	go s.StartConsume()
-	startGRPCServer(s)
+
 }
 
 func initServiceClients() internal.ServiceClients {

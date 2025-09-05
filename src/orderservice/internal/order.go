@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"net/mail"
-	"regexp"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -60,6 +58,15 @@ func (x *OrderService) ListOrderHistory(ctx context.Context,
 }
 
 func (x *OrderService) CreatePlaceOrder(ctx context.Context, in *pb.CreatePlaceOrderRequest) (*pb.PlaceOrder, error) {
+
+	if err := ValidateStruct(in); err != nil {
+		var ve myValidatorErrs
+		if errors.As(err, &ve) {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to create place order: %s", ve.Error())
+		}
+		slog.Error("validate struct", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
 
 	newOrder, err := x.prepareNewOrder(in)
 	if err != nil {
@@ -212,32 +219,31 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 	return messages
 }
 
-// - add context
+// prepareNewOrder validates order dependencies and calculates totals. then build the complete order
+// for database insertion.
+//
+// REFACTOR: make this function cleaner
 func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*newPlaceOrder, error) {
+
 	ctx := context.TODO()
 
-	if err := validatePlaceOrderRequest(newOrder); err != nil {
-		return nil, err
-	}
-
-	// TODO: call check customer exists instead
-	_, err := x.clients.Customer.GetCustomer(ctx, &pb.GetCustomerRequest{
+	customer, err := x.clients.Customer.GetCustomer(ctx, &pb.GetCustomerRequest{
 		CustomerId: newOrder.CustomerId,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	deliveryFee, err := x.clients.Delivery.GetDeliveryFee(ctx, &pb.GetDeliveryFeeRequest{
-		CustomerId:        newOrder.CustomerId,
-		CustomerAddressId: newOrder.CustomerAddress.AddressId,
-		MerchantId:        newOrder.MerchantId,
-	})
+	merchant, err := x.clients.Merchant.GetMerchant(ctx, &pb.GetMerchantRequest{MerchantId: newOrder.MerchantId})
 	if err != nil {
 		return nil, err
 	}
 
-	merchant, err := x.clients.Merchant.GetMerchant(ctx, &pb.GetMerchantRequest{MerchantId: newOrder.MerchantId})
+	deliveryFee, err := x.clients.Delivery.GetDeliveryFee(ctx, &pb.GetDeliveryFeeRequest{
+		CustomerId:        newOrder.CustomerId,
+		CustomerAddressId: newOrder.CustomerAddressId,
+		MerchantId:        newOrder.MerchantId,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -264,6 +270,13 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 		})
 	}
 
+	var selectedAddr *pb.Address
+	for _, addr := range customer.Addresses {
+		if addr.AddressId == newOrder.CustomerAddressId {
+			selectedAddr = addr
+		}
+	}
+
 	return &newPlaceOrder{
 		RequestID:       newOrder.RequestId,
 		CustomerID:      newOrder.CustomerId,
@@ -273,9 +286,9 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 		CouponDiscount:  coupon.Discount,
 		DeliveryFee:     deliveryFee.Fee,
 		Total:           total,
-		CustomerAddress: toDbAddress(newOrder.CustomerAddress),
+		CustomerAddress: toDbAddress(selectedAddr),
 		MerchantAddress: toDbAddress(merchant.Address),
-		CustomerContact: toDbContactInfo(newOrder.CustomerContact),
+		CustomerContact: toDbContactInfo(customer.Contact),
 		PaymentMethods:  dbPaymentMethods(newOrder.PaymentMethods),
 	}, nil
 }
@@ -293,66 +306,4 @@ func calcFoodCost(menu []*pb.MenuItem, orderItems []*pb.OrderItem) int32 {
 		}
 	}
 	return foodCost
-}
-
-// TODO: use validator lib
-func validatePlaceOrderRequest(in *pb.CreatePlaceOrderRequest) error {
-
-	if in.RequestId == "" {
-		return errors.New("request ID must be provided")
-	}
-	if in.CustomerId == "" {
-		return errors.New("customer ID must be provided")
-	}
-	if in.MerchantId == "" {
-		return errors.New("merchant ID must be provided")
-	}
-	if len(in.Items) == 0 {
-		return errors.New("items should be at least one")
-	}
-	if in.CouponCode == "" {
-		return errors.New("coupon code must be provided")
-	}
-	if in.CustomerAddress == nil {
-		return errors.New("customer address must be provided")
-	}
-	if in.CustomerContact == nil {
-		return errors.New("customer contact information must be provided")
-	}
-	if in.PaymentMethods == pb.PaymentMethods_PAYMENT_METHOD_UNSPECIFIED {
-		return errors.New("payment method must be provided")
-	}
-	if _, ok := pb.PaymentStatus_name[int32(in.PaymentMethods)]; !ok {
-		return errors.New("invalid payment method")
-	}
-
-	if err := validateEmail(in.CustomerContact.Email); err != nil {
-		return err
-	}
-
-	if err := validatePhoneNumber(in.CustomerContact.PhoneNumber); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// validatePhoneNumber validates a customer's phone number according to the Thailand
-// phone number format (e.g., 06XXXXXXXX, 08XXXXXXXX, 09XXXXXXXX).
-// Any format outside of this is considered invalid, and the function returns an error.
-func validatePhoneNumber(phoneNumber string) error {
-	if !regexp.MustCompile(`^(06|08|09)\d{8}$`).MatchString(phoneNumber) {
-		return errors.New("invalid phone number format")
-	}
-	return nil
-}
-
-// validateEmail validates the customer's email address to ensure it follows
-// the standard email format. It uses mail.ParseAddress to parse the email.
-// If the email is invalid, it returns an error.
-func validateEmail(email string) error {
-	if _, err := mail.ParseAddress(email); err != nil {
-		return err
-	}
-	return nil
 }
