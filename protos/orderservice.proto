@@ -10,7 +10,6 @@ import "common.proto";
 import "customerservice.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-
 // ---------------------ORDER SERVICE------------------------------
 // Manages place order process.
 service OrderService {
@@ -48,7 +47,7 @@ message PlaceOrder {
     PaymentMethods payment_methods = 13;
     PaymentStatus payment_status = 14;
     OrderStatus order_status = 15;
-    OrderTimestamps order_timestamps = 16;
+    OrderEventTimestamps timestamps = 16;
 }
 
 message OrderItem {
@@ -79,10 +78,15 @@ enum OrderStatus {
     CANCELLED =6;
 }
 
-message OrderTimestamps {
-    google.protobuf.Timestamp create_time = 1;
-    google.protobuf.Timestamp update_time = 2;
-    google.protobuf.Timestamp complete_time = 3;
+message OrderEventTimestamps {
+    google.protobuf.Timestamp order_placed_time = 1;
+    google.protobuf.Timestamp merchant_accept_time = 2;
+    google.protobuf.Timestamp rider_notified_time = 3;
+    google.protobuf.Timestamp rider_assigned_time = 4;
+    google.protobuf.Timestamp rider_picked_up_time = 5;
+    google.protobuf.Timestamp delivered_time = 6;
+    google.protobuf.Timestamp cancelled_time = 7;
+
 }
 
 message ListOrderHistoryRequest {
