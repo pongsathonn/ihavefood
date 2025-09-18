@@ -7,6 +7,7 @@
 package genproto
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,58 +25,60 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Point struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The latitude in degrees. It must be in the range [-90.0, +90.0].
-	Latitude float64 `protobuf:"fixed64,1,opt,name=latitude,proto3" json:"latitude,omitempty"`
-	// The longitude in degrees. It must be in the range [-180.0, +180.0].
-	Longitude     float64 `protobuf:"fixed64,2,opt,name=longitude,proto3" json:"longitude,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
+type DeliveryStatus int32
 
-func (x *Point) Reset() {
-	*x = Point{}
-	mi := &file_deliveryservice_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
+const (
+	// indicates the rider has not yet accepted the order.
+	DeliveryStatus_RIDER_UNACCEPT DeliveryStatus = 0
+	// indicates the rider has accepted the order.
+	DeliveryStatus_RIDER_ACCEPTED DeliveryStatus = 1
+	// indicates the rider has picked up the order.
+	DeliveryStatus_RIDER_PICKED_UP DeliveryStatus = 2
+	// indicates the order has been delivered by the rider.
+	DeliveryStatus_RIDER_DELIVERED DeliveryStatus = 3
+)
 
-func (x *Point) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Point) ProtoMessage() {}
-
-func (x *Point) ProtoReflect() protoreflect.Message {
-	mi := &file_deliveryservice_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+// Enum value maps for DeliveryStatus.
+var (
+	DeliveryStatus_name = map[int32]string{
+		0: "RIDER_UNACCEPT",
+		1: "RIDER_ACCEPTED",
+		2: "RIDER_PICKED_UP",
+		3: "RIDER_DELIVERED",
 	}
-	return mi.MessageOf(x)
+	DeliveryStatus_value = map[string]int32{
+		"RIDER_UNACCEPT":  0,
+		"RIDER_ACCEPTED":  1,
+		"RIDER_PICKED_UP": 2,
+		"RIDER_DELIVERED": 3,
+	}
+)
+
+func (x DeliveryStatus) Enum() *DeliveryStatus {
+	p := new(DeliveryStatus)
+	*p = x
+	return p
 }
 
-// Deprecated: Use Point.ProtoReflect.Descriptor instead.
-func (*Point) Descriptor() ([]byte, []int) {
+func (x DeliveryStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DeliveryStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_deliveryservice_proto_enumTypes[0].Descriptor()
+}
+
+func (DeliveryStatus) Type() protoreflect.EnumType {
+	return &file_deliveryservice_proto_enumTypes[0]
+}
+
+func (x DeliveryStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DeliveryStatus.Descriptor instead.
+func (DeliveryStatus) EnumDescriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Point) GetLatitude() float64 {
-	if x != nil {
-		return x.Latitude
-	}
-	return 0
-}
-
-func (x *Point) GetLongitude() float64 {
-	if x != nil {
-		return x.Longitude
-	}
-	return 0
 }
 
 type PickupInfo struct {
@@ -93,7 +96,7 @@ type PickupInfo struct {
 
 func (x *PickupInfo) Reset() {
 	*x = PickupInfo{}
-	mi := &file_deliveryservice_proto_msgTypes[1]
+	mi := &file_deliveryservice_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -105,7 +108,7 @@ func (x *PickupInfo) String() string {
 func (*PickupInfo) ProtoMessage() {}
 
 func (x *PickupInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_deliveryservice_proto_msgTypes[1]
+	mi := &file_deliveryservice_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -118,7 +121,7 @@ func (x *PickupInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PickupInfo.ProtoReflect.Descriptor instead.
 func (*PickupInfo) Descriptor() ([]byte, []int) {
-	return file_deliveryservice_proto_rawDescGZIP(), []int{1}
+	return file_deliveryservice_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PickupInfo) GetPickupCode() string {
@@ -140,6 +143,60 @@ func (x *PickupInfo) GetDropOffLocation() *Point {
 		return x.DropOffLocation
 	}
 	return nil
+}
+
+type Point struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The latitude in degrees. It must be in the range [-90.0, +90.0].
+	Latitude float64 `protobuf:"fixed64,1,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	// The longitude in degrees. It must be in the range [-180.0, +180.0].
+	Longitude     float64 `protobuf:"fixed64,2,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Point) Reset() {
+	*x = Point{}
+	mi := &file_deliveryservice_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Point) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Point) ProtoMessage() {}
+
+func (x *Point) ProtoReflect() protoreflect.Message {
+	mi := &file_deliveryservice_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Point.ProtoReflect.Descriptor instead.
+func (*Point) Descriptor() ([]byte, []int) {
+	return file_deliveryservice_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Point) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *Point) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
 }
 
 type Rider struct {
@@ -202,27 +259,27 @@ func (x *Rider) GetPhoneNumber() string {
 	return ""
 }
 
-type GetOrderTrackingRequest struct {
+type TrackingRiderRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetOrderTrackingRequest) Reset() {
-	*x = GetOrderTrackingRequest{}
+func (x *TrackingRiderRequest) Reset() {
+	*x = TrackingRiderRequest{}
 	mi := &file_deliveryservice_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetOrderTrackingRequest) String() string {
+func (x *TrackingRiderRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetOrderTrackingRequest) ProtoMessage() {}
+func (*TrackingRiderRequest) ProtoMessage() {}
 
-func (x *GetOrderTrackingRequest) ProtoReflect() protoreflect.Message {
+func (x *TrackingRiderRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_deliveryservice_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -234,81 +291,73 @@ func (x *GetOrderTrackingRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetOrderTrackingRequest.ProtoReflect.Descriptor instead.
-func (*GetOrderTrackingRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use TrackingRiderRequest.ProtoReflect.Descriptor instead.
+func (*TrackingRiderRequest) Descriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetOrderTrackingRequest) GetOrderId() string {
-	if x != nil {
-		return x.OrderId
-	}
-	return ""
-}
-
-type GetOrderTrackingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	RiderId       string                 `protobuf:"bytes,2,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
-	RiderLocation *Point                 `protobuf:"bytes,3,opt,name=rider_location,json=riderLocation,proto3" json:"rider_location,omitempty"`
-	// The timestamp of the most recent update to the rider's location.
-	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetOrderTrackingResponse) Reset() {
-	*x = GetOrderTrackingResponse{}
-	mi := &file_deliveryservice_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetOrderTrackingResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetOrderTrackingResponse) ProtoMessage() {}
-
-func (x *GetOrderTrackingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_deliveryservice_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetOrderTrackingResponse.ProtoReflect.Descriptor instead.
-func (*GetOrderTrackingResponse) Descriptor() ([]byte, []int) {
-	return file_deliveryservice_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *GetOrderTrackingResponse) GetOrderId() string {
-	if x != nil {
-		return x.OrderId
-	}
-	return ""
-}
-
-func (x *GetOrderTrackingResponse) GetRiderId() string {
+func (x *TrackingRiderRequest) GetRiderId() string {
 	if x != nil {
 		return x.RiderId
 	}
 	return ""
 }
 
-func (x *GetOrderTrackingResponse) GetRiderLocation() *Point {
+type TrackingRiderResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
+	RiderLocation *Point                 `protobuf:"bytes,2,opt,name=rider_location,json=riderLocation,proto3" json:"rider_location,omitempty"`
+	// The timestamp of the most recent update to the rider's location.
+	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrackingRiderResponse) Reset() {
+	*x = TrackingRiderResponse{}
+	mi := &file_deliveryservice_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrackingRiderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrackingRiderResponse) ProtoMessage() {}
+
+func (x *TrackingRiderResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_deliveryservice_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrackingRiderResponse.ProtoReflect.Descriptor instead.
+func (*TrackingRiderResponse) Descriptor() ([]byte, []int) {
+	return file_deliveryservice_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *TrackingRiderResponse) GetRiderId() string {
+	if x != nil {
+		return x.RiderId
+	}
+	return ""
+}
+
+func (x *TrackingRiderResponse) GetRiderLocation() *Point {
 	if x != nil {
 		return x.RiderLocation
 	}
 	return nil
 }
 
-func (x *GetOrderTrackingResponse) GetUpdateTime() *timestamppb.Timestamp {
+func (x *TrackingRiderResponse) GetUpdateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdateTime
 	}
@@ -419,28 +468,30 @@ func (x *GetDeliveryFeeResponse) GetFee() int32 {
 	return 0
 }
 
-type ConfirmRiderAcceptRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	RiderId       string                 `protobuf:"bytes,2,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
+type ReportDeliveryStatusRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// example: 1783de85-456a-4cca-8f7a-489750e21aa4
+	OrderId       string         `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	RiderId       string         `protobuf:"bytes,2,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
+	Status        DeliveryStatus `protobuf:"varint,3,opt,name=status,proto3,enum=ihavefood.DeliveryStatus" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ConfirmRiderAcceptRequest) Reset() {
-	*x = ConfirmRiderAcceptRequest{}
+func (x *ReportDeliveryStatusRequest) Reset() {
+	*x = ReportDeliveryStatusRequest{}
 	mi := &file_deliveryservice_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ConfirmRiderAcceptRequest) String() string {
+func (x *ReportDeliveryStatusRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ConfirmRiderAcceptRequest) ProtoMessage() {}
+func (*ReportDeliveryStatusRequest) ProtoMessage() {}
 
-func (x *ConfirmRiderAcceptRequest) ProtoReflect() protoreflect.Message {
+func (x *ReportDeliveryStatusRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_deliveryservice_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -452,154 +503,56 @@ func (x *ConfirmRiderAcceptRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ConfirmRiderAcceptRequest.ProtoReflect.Descriptor instead.
-func (*ConfirmRiderAcceptRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReportDeliveryStatusRequest.ProtoReflect.Descriptor instead.
+func (*ReportDeliveryStatusRequest) Descriptor() ([]byte, []int) {
 	return file_deliveryservice_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ConfirmRiderAcceptRequest) GetOrderId() string {
+func (x *ReportDeliveryStatusRequest) GetOrderId() string {
 	if x != nil {
 		return x.OrderId
 	}
 	return ""
 }
 
-func (x *ConfirmRiderAcceptRequest) GetRiderId() string {
+func (x *ReportDeliveryStatusRequest) GetRiderId() string {
 	if x != nil {
 		return x.RiderId
 	}
 	return ""
 }
 
-type ConfirmOrderDeliverRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ConfirmOrderDeliverRequest) Reset() {
-	*x = ConfirmOrderDeliverRequest{}
-	mi := &file_deliveryservice_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ConfirmOrderDeliverRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ConfirmOrderDeliverRequest) ProtoMessage() {}
-
-func (x *ConfirmOrderDeliverRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_deliveryservice_proto_msgTypes[8]
+func (x *ReportDeliveryStatusRequest) GetStatus() DeliveryStatus {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+		return x.Status
 	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ConfirmOrderDeliverRequest.ProtoReflect.Descriptor instead.
-func (*ConfirmOrderDeliverRequest) Descriptor() ([]byte, []int) {
-	return file_deliveryservice_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *ConfirmOrderDeliverRequest) GetOrderId() string {
-	if x != nil {
-		return x.OrderId
-	}
-	return ""
-}
-
-type CreateRiderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateRiderRequest) Reset() {
-	*x = CreateRiderRequest{}
-	mi := &file_deliveryservice_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateRiderRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateRiderRequest) ProtoMessage() {}
-
-func (x *CreateRiderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_deliveryservice_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateRiderRequest.ProtoReflect.Descriptor instead.
-func (*CreateRiderRequest) Descriptor() ([]byte, []int) {
-	return file_deliveryservice_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *CreateRiderRequest) GetRiderId() string {
-	if x != nil {
-		return x.RiderId
-	}
-	return ""
-}
-
-func (x *CreateRiderRequest) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *CreateRiderRequest) GetPhoneNumber() string {
-	if x != nil {
-		return x.PhoneNumber
-	}
-	return ""
+	return DeliveryStatus_RIDER_UNACCEPT
 }
 
 var File_deliveryservice_proto protoreflect.FileDescriptor
 
 const file_deliveryservice_proto_rawDesc = "" +
 	"\n" +
-	"\x15deliveryservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"A\n" +
-	"\x05Point\x12\x1a\n" +
-	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\"\xa6\x01\n" +
+	"\x15deliveryservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xa6\x01\n" +
 	"\n" +
 	"PickupInfo\x12\x1f\n" +
 	"\vpickup_code\x18\x01 \x01(\tR\n" +
 	"pickupCode\x129\n" +
 	"\x0fpickup_location\x18\x02 \x01(\v2\x10.ihavefood.PointR\x0epickupLocation\x12<\n" +
-	"\x11drop_off_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\x0fdropOffLocation\"a\n" +
+	"\x11drop_off_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\x0fdropOffLocation\"A\n" +
+	"\x05Point\x12\x1a\n" +
+	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
+	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\"a\n" +
 	"\x05Rider\x12\x19\n" +
 	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\"4\n" +
-	"\x17GetOrderTrackingRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\"\xc6\x01\n" +
-	"\x18GetOrderTrackingResponse\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
-	"\brider_id\x18\x02 \x01(\tR\ariderId\x127\n" +
-	"\x0erider_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\rriderLocation\x12;\n" +
-	"\vupdate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\"1\n" +
+	"\x14TrackingRiderRequest\x12\x19\n" +
+	"\brider_id\x18\x01 \x01(\tR\ariderId\"\xa8\x01\n" +
+	"\x15TrackingRiderResponse\x12\x19\n" +
+	"\brider_id\x18\x01 \x01(\tR\ariderId\x127\n" +
+	"\x0erider_location\x18\x02 \x01(\v2\x10.ihavefood.PointR\rriderLocation\x12;\n" +
+	"\vupdate_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"updateTime\"\x89\x01\n" +
 	"\x15GetDeliveryFeeRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
@@ -608,22 +561,20 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\vmerchant_id\x18\x03 \x01(\tR\n" +
 	"merchantId\"*\n" +
 	"\x16GetDeliveryFeeResponse\x12\x10\n" +
-	"\x03fee\x18\x01 \x01(\x05R\x03fee\"Q\n" +
-	"\x19ConfirmRiderAcceptRequest\x12\x19\n" +
+	"\x03fee\x18\x01 \x01(\x05R\x03fee\"\xdc\x01\n" +
+	"\x1bReportDeliveryStatusRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
-	"\brider_id\x18\x02 \x01(\tR\ariderId\"7\n" +
-	"\x1aConfirmOrderDeliverRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\"n\n" +
-	"\x12CreateRiderRequest\x12\x19\n" +
-	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber2\xb4\x04\n" +
-	"\x0fDeliveryService\x12_\n" +
-	"\x10GetOrderTracking\x12\".ihavefood.GetOrderTrackingRequest\x1a#.ihavefood.GetOrderTrackingResponse\"\x000\x01\x12r\n" +
-	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x86\x01\n" +
-	"\x12ConfirmRiderAccept\x12$.ihavefood.ConfirmRiderAcceptRequest\x1a\x15.ihavefood.PickupInfo\"3\x82\xd3\xe4\x93\x02-:\brider_id2!/api/deliveries/{order_id}/accept\x12\x80\x01\n" +
-	"\x13ConfirmOrderDeliver\x12%.ihavefood.ConfirmOrderDeliverRequest\x1a\x16.google.protobuf.Empty\"*\x82\xd3\xe4\x93\x02$2\"/api/deliveries/{order_id}/deliver\x12@\n" +
-	"\vCreateRider\x12\x1d.ihavefood.CreateRiderRequest\x1a\x10.ihavefood.Rider\"\x00B\vZ\t/genprotob\x06proto3"
+	"\brider_id\x18\x02 \x01(\tR\ariderId\x121\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x19.ihavefood.DeliveryStatusR\x06status:T\x92AQ2O{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}*b\n" +
+	"\x0eDeliveryStatus\x12\x12\n" +
+	"\x0eRIDER_UNACCEPT\x10\x00\x12\x12\n" +
+	"\x0eRIDER_ACCEPTED\x10\x01\x12\x13\n" +
+	"\x0fRIDER_PICKED_UP\x10\x02\x12\x13\n" +
+	"\x0fRIDER_DELIVERED\x10\x032\xe4\x02\n" +
+	"\x0fDeliveryService\x12V\n" +
+	"\rTrackingRider\x12\x1f.ihavefood.TrackingRiderRequest\x1a .ihavefood.TrackingRiderResponse\"\x000\x01\x12r\n" +
+	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x84\x01\n" +
+	"\x14ReportDeliveryStatus\x12&.ihavefood.ReportDeliveryStatusRequest\x1a\x16.google.protobuf.Empty\",\x82\xd3\xe4\x93\x02&:\x01*2!/api/deliveries/{order_id}/statusB\vZ\t/genprotob\x06proto3"
 
 var (
 	file_deliveryservice_proto_rawDescOnce sync.Once
@@ -637,41 +588,38 @@ func file_deliveryservice_proto_rawDescGZIP() []byte {
 	return file_deliveryservice_proto_rawDescData
 }
 
-var file_deliveryservice_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_deliveryservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_deliveryservice_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_deliveryservice_proto_goTypes = []any{
-	(*Point)(nil),                      // 0: ihavefood.Point
-	(*PickupInfo)(nil),                 // 1: ihavefood.PickupInfo
-	(*Rider)(nil),                      // 2: ihavefood.Rider
-	(*GetOrderTrackingRequest)(nil),    // 3: ihavefood.GetOrderTrackingRequest
-	(*GetOrderTrackingResponse)(nil),   // 4: ihavefood.GetOrderTrackingResponse
-	(*GetDeliveryFeeRequest)(nil),      // 5: ihavefood.GetDeliveryFeeRequest
-	(*GetDeliveryFeeResponse)(nil),     // 6: ihavefood.GetDeliveryFeeResponse
-	(*ConfirmRiderAcceptRequest)(nil),  // 7: ihavefood.ConfirmRiderAcceptRequest
-	(*ConfirmOrderDeliverRequest)(nil), // 8: ihavefood.ConfirmOrderDeliverRequest
-	(*CreateRiderRequest)(nil),         // 9: ihavefood.CreateRiderRequest
-	(*timestamppb.Timestamp)(nil),      // 10: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),              // 11: google.protobuf.Empty
+	(DeliveryStatus)(0),                 // 0: ihavefood.DeliveryStatus
+	(*PickupInfo)(nil),                  // 1: ihavefood.PickupInfo
+	(*Point)(nil),                       // 2: ihavefood.Point
+	(*Rider)(nil),                       // 3: ihavefood.Rider
+	(*TrackingRiderRequest)(nil),        // 4: ihavefood.TrackingRiderRequest
+	(*TrackingRiderResponse)(nil),       // 5: ihavefood.TrackingRiderResponse
+	(*GetDeliveryFeeRequest)(nil),       // 6: ihavefood.GetDeliveryFeeRequest
+	(*GetDeliveryFeeResponse)(nil),      // 7: ihavefood.GetDeliveryFeeResponse
+	(*ReportDeliveryStatusRequest)(nil), // 8: ihavefood.ReportDeliveryStatusRequest
+	(*timestamppb.Timestamp)(nil),       // 9: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),               // 10: google.protobuf.Empty
 }
 var file_deliveryservice_proto_depIdxs = []int32{
-	0,  // 0: ihavefood.PickupInfo.pickup_location:type_name -> ihavefood.Point
-	0,  // 1: ihavefood.PickupInfo.drop_off_location:type_name -> ihavefood.Point
-	0,  // 2: ihavefood.GetOrderTrackingResponse.rider_location:type_name -> ihavefood.Point
-	10, // 3: ihavefood.GetOrderTrackingResponse.update_time:type_name -> google.protobuf.Timestamp
-	3,  // 4: ihavefood.DeliveryService.GetOrderTracking:input_type -> ihavefood.GetOrderTrackingRequest
-	5,  // 5: ihavefood.DeliveryService.GetDeliveryFee:input_type -> ihavefood.GetDeliveryFeeRequest
-	7,  // 6: ihavefood.DeliveryService.ConfirmRiderAccept:input_type -> ihavefood.ConfirmRiderAcceptRequest
-	8,  // 7: ihavefood.DeliveryService.ConfirmOrderDeliver:input_type -> ihavefood.ConfirmOrderDeliverRequest
-	9,  // 8: ihavefood.DeliveryService.CreateRider:input_type -> ihavefood.CreateRiderRequest
-	4,  // 9: ihavefood.DeliveryService.GetOrderTracking:output_type -> ihavefood.GetOrderTrackingResponse
-	6,  // 10: ihavefood.DeliveryService.GetDeliveryFee:output_type -> ihavefood.GetDeliveryFeeResponse
-	1,  // 11: ihavefood.DeliveryService.ConfirmRiderAccept:output_type -> ihavefood.PickupInfo
-	11, // 12: ihavefood.DeliveryService.ConfirmOrderDeliver:output_type -> google.protobuf.Empty
-	2,  // 13: ihavefood.DeliveryService.CreateRider:output_type -> ihavefood.Rider
-	9,  // [9:14] is the sub-list for method output_type
-	4,  // [4:9] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	2,  // 0: ihavefood.PickupInfo.pickup_location:type_name -> ihavefood.Point
+	2,  // 1: ihavefood.PickupInfo.drop_off_location:type_name -> ihavefood.Point
+	2,  // 2: ihavefood.TrackingRiderResponse.rider_location:type_name -> ihavefood.Point
+	9,  // 3: ihavefood.TrackingRiderResponse.update_time:type_name -> google.protobuf.Timestamp
+	0,  // 4: ihavefood.ReportDeliveryStatusRequest.status:type_name -> ihavefood.DeliveryStatus
+	4,  // 5: ihavefood.DeliveryService.TrackingRider:input_type -> ihavefood.TrackingRiderRequest
+	6,  // 6: ihavefood.DeliveryService.GetDeliveryFee:input_type -> ihavefood.GetDeliveryFeeRequest
+	8,  // 7: ihavefood.DeliveryService.ReportDeliveryStatus:input_type -> ihavefood.ReportDeliveryStatusRequest
+	5,  // 8: ihavefood.DeliveryService.TrackingRider:output_type -> ihavefood.TrackingRiderResponse
+	7,  // 9: ihavefood.DeliveryService.GetDeliveryFee:output_type -> ihavefood.GetDeliveryFeeResponse
+	10, // 10: ihavefood.DeliveryService.ReportDeliveryStatus:output_type -> google.protobuf.Empty
+	8,  // [8:11] is the sub-list for method output_type
+	5,  // [5:8] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_deliveryservice_proto_init() }
@@ -684,13 +632,14 @@ func file_deliveryservice_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_deliveryservice_proto_rawDesc), len(file_deliveryservice_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   10,
+			NumEnums:      1,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_deliveryservice_proto_goTypes,
 		DependencyIndexes: file_deliveryservice_proto_depIdxs,
+		EnumInfos:         file_deliveryservice_proto_enumTypes,
 		MessageInfos:      file_deliveryservice_proto_msgTypes,
 	}.Build()
 	File_deliveryservice_proto = out.File

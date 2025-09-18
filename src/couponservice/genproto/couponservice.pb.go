@@ -411,12 +411,13 @@ const file_couponservice_proto_rawDesc = "" +
 	"\bdiscount\x18\x03 \x01(\x05R\bdiscount\x12\x1d\n" +
 	"\n" +
 	"expires_in\x18\x04 \x01(\x03R\texpiresIn\x12%\n" +
-	"\x0equantity_count\x18\x05 \x01(\x05R\rquantityCount\"\x90\x02\n" +
+	"\x0equantity_count\x18\x05 \x01(\x05R\rquantityCount\"\xce\x02\n" +
 	"\x10AddCouponRequest\x129\n" +
 	"\fcoupon_types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\vcouponTypes\x12\x1a\n" +
 	"\bdiscount\x18\x02 \x01(\x05R\bdiscount\x12$\n" +
 	"\x0eexpire_in_hour\x18\x03 \x01(\x05R\fexpireInHour\x12\x1a\n" +
-	"\bquantity\x18\x04 \x01(\x05R\bquantity:c\x92A`2^{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}\"E\n" +
+	"\bquantity\x18\x04 \x01(\x05R\bquantity:\xa0\x01\x92A\x9c\x01\n" +
+	":28NOTE: if type is FREE_DELIVERY, discount will be ignored2^{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}\"E\n" +
 	"\x10GetCouponRequest\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code:\x1d\x92A\x1a2\x18{\"code\": \"SAVE20FORYOU\"}\"B\n" +
 	"\x13ListCouponsResponse\x12+\n" +

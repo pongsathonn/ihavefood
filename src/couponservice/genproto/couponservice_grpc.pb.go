@@ -33,22 +33,13 @@ const (
 // ---------------------COUPON SERVICE-----------------------------
 // Manages coupons.
 type CouponServiceClient interface {
-	// ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
-	// This method is intended to be used by the frontend to display a list of all coupons to customers,
-	// regardless of their validity or availability.
-	//
-	// TODO: In the future, this method might be updated to list coupons by other condition,
-	// but currently, it responds with all coupons.
+	// ListCoupons shows all coupons.
 	ListCoupons(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListCouponsResponse, error)
-	// GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and
-	// has sufficient quantity.
+	// GetCoupon shows a valid coupon by code.
 	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
-	// AddCoupon creates a new coupon with the specified details. There are two types of coupons:
-	// Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
-	// If the coupon type is Free, the discount field is ignored and automatically set to zero.
+	// AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).
 	AddCoupon(ctx context.Context, in *AddCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
-	// RedeemCoupon is called when an order payment is success. This method
-	// updates the quantity of the coupon.
+	// RedeemCoupon updates coupon quantity after an order is paid.
 	RedeemCoupon(ctx context.Context, in *RedeemCouponRequest, opts ...grpc.CallOption) (*RedeemCouponResponse, error)
 }
 
@@ -107,22 +98,13 @@ func (c *couponServiceClient) RedeemCoupon(ctx context.Context, in *RedeemCoupon
 // ---------------------COUPON SERVICE-----------------------------
 // Manages coupons.
 type CouponServiceServer interface {
-	// ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
-	// This method is intended to be used by the frontend to display a list of all coupons to customers,
-	// regardless of their validity or availability.
-	//
-	// TODO: In the future, this method might be updated to list coupons by other condition,
-	// but currently, it responds with all coupons.
+	// ListCoupons shows all coupons.
 	ListCoupons(context.Context, *emptypb.Empty) (*ListCouponsResponse, error)
-	// GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and
-	// has sufficient quantity.
+	// GetCoupon shows a valid coupon by code.
 	GetCoupon(context.Context, *GetCouponRequest) (*Coupon, error)
-	// AddCoupon creates a new coupon with the specified details. There are two types of coupons:
-	// Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
-	// If the coupon type is Free, the discount field is ignored and automatically set to zero.
+	// AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).
 	AddCoupon(context.Context, *AddCouponRequest) (*Coupon, error)
-	// RedeemCoupon is called when an order payment is success. This method
-	// updates the quantity of the coupon.
+	// RedeemCoupon updates coupon quantity after an order is paid.
 	RedeemCoupon(context.Context, *RedeemCouponRequest) (*RedeemCouponResponse, error)
 	mustEmbedUnimplementedCouponServiceServer()
 }

@@ -643,13 +643,14 @@ const file_authservice_proto_rawDesc = "" +
 	"\vcreate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\xb7\x02\n" +
+	"updateTime\"\xf3\x02\n" +
 	"\x0fRegisterRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x12!\n" +
 	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12$\n" +
-	"\x04role\x18\x05 \x01(\x0e2\x10.ihavefood.RolesR\x04role:\x8c\x01\x92A\x88\x012\x85\x01{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}\"\xc0\x01\n" +
+	"\x04role\x18\x05 \x01(\x0e2\x10.ihavefood.RolesR\x04role:\xc8\x01\x92A\xc4\x01\n" +
+	":28NOTE: username is ignored when registering as a Merchant2\x85\x01{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}\"\xc0\x01\n" +
 	"\fLoginRequest\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x01 \x01(\tR\n" +

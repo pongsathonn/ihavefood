@@ -20,11 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DeliveryService_GetOrderTracking_FullMethodName    = "/ihavefood.DeliveryService/GetOrderTracking"
-	DeliveryService_GetDeliveryFee_FullMethodName      = "/ihavefood.DeliveryService/GetDeliveryFee"
-	DeliveryService_ConfirmRiderAccept_FullMethodName  = "/ihavefood.DeliveryService/ConfirmRiderAccept"
-	DeliveryService_ConfirmOrderDeliver_FullMethodName = "/ihavefood.DeliveryService/ConfirmOrderDeliver"
-	DeliveryService_CreateRider_FullMethodName         = "/ihavefood.DeliveryService/CreateRider"
+	DeliveryService_TrackingRider_FullMethodName        = "/ihavefood.DeliveryService/TrackingRider"
+	DeliveryService_GetDeliveryFee_FullMethodName       = "/ihavefood.DeliveryService/GetDeliveryFee"
+	DeliveryService_ReportDeliveryStatus_FullMethodName = "/ihavefood.DeliveryService/ReportDeliveryStatus"
 )
 
 // DeliveryServiceClient is the client API for DeliveryService service.
@@ -34,22 +32,16 @@ const (
 // ---------------------DELIVERY SERVICE---------------------------
 // Manages riders and delivery process.
 type DeliveryServiceClient interface {
-	// GetOrderTracking provides real-time updates on the current status and location of
-	// an order. It tracks the progress of the order from preparation to delivery,
-	// giving the customer real-time status updates.
+	// TrackingRider provides real-time updates on the current rider location.
+	TrackingRider(ctx context.Context, in *TrackingRiderRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrackingRiderResponse], error)
+	// GetDeliveryFee calculates the delivery fee from merchant to customer
+	// using merchant ID and customer address ID.
 	//
-	// This function should be called from OrderService to track
-	GetOrderTracking(ctx context.Context, in *GetOrderTrackingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetOrderTrackingResponse], error)
-	// GetDeliveryFee calculates and returns the delivery fee based on the distance
-	// between the customer's location and the merchant's location.
+	// Example:
+	//
+	//	GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
 	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
-	// ConfirmRiderAccept updates the order with the rider who accepted it and returns
-	// the pickup information.
-	ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*PickupInfo, error)
-	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
-	ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Rider management
-	CreateRider(ctx context.Context, in *CreateRiderRequest, opts ...grpc.CallOption) (*Rider, error)
+	ReportDeliveryStatus(ctx context.Context, in *ReportDeliveryStatusRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type deliveryServiceClient struct {
@@ -60,13 +52,13 @@ func NewDeliveryServiceClient(cc grpc.ClientConnInterface) DeliveryServiceClient
 	return &deliveryServiceClient{cc}
 }
 
-func (c *deliveryServiceClient) GetOrderTracking(ctx context.Context, in *GetOrderTrackingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetOrderTrackingResponse], error) {
+func (c *deliveryServiceClient) TrackingRider(ctx context.Context, in *TrackingRiderRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrackingRiderResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &DeliveryService_ServiceDesc.Streams[0], DeliveryService_GetOrderTracking_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &DeliveryService_ServiceDesc.Streams[0], DeliveryService_TrackingRider_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[GetOrderTrackingRequest, GetOrderTrackingResponse]{ClientStream: stream}
+	x := &grpc.GenericClientStream[TrackingRiderRequest, TrackingRiderResponse]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -77,7 +69,7 @@ func (c *deliveryServiceClient) GetOrderTracking(ctx context.Context, in *GetOrd
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type DeliveryService_GetOrderTrackingClient = grpc.ServerStreamingClient[GetOrderTrackingResponse]
+type DeliveryService_TrackingRiderClient = grpc.ServerStreamingClient[TrackingRiderResponse]
 
 func (c *deliveryServiceClient) GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -89,30 +81,10 @@ func (c *deliveryServiceClient) GetDeliveryFee(ctx context.Context, in *GetDeliv
 	return out, nil
 }
 
-func (c *deliveryServiceClient) ConfirmRiderAccept(ctx context.Context, in *ConfirmRiderAcceptRequest, opts ...grpc.CallOption) (*PickupInfo, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PickupInfo)
-	err := c.cc.Invoke(ctx, DeliveryService_ConfirmRiderAccept_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deliveryServiceClient) ConfirmOrderDeliver(ctx context.Context, in *ConfirmOrderDeliverRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *deliveryServiceClient) ReportDeliveryStatus(ctx context.Context, in *ReportDeliveryStatusRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, DeliveryService_ConfirmOrderDeliver_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deliveryServiceClient) CreateRider(ctx context.Context, in *CreateRiderRequest, opts ...grpc.CallOption) (*Rider, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Rider)
-	err := c.cc.Invoke(ctx, DeliveryService_CreateRider_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DeliveryService_ReportDeliveryStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,22 +98,16 @@ func (c *deliveryServiceClient) CreateRider(ctx context.Context, in *CreateRider
 // ---------------------DELIVERY SERVICE---------------------------
 // Manages riders and delivery process.
 type DeliveryServiceServer interface {
-	// GetOrderTracking provides real-time updates on the current status and location of
-	// an order. It tracks the progress of the order from preparation to delivery,
-	// giving the customer real-time status updates.
+	// TrackingRider provides real-time updates on the current rider location.
+	TrackingRider(*TrackingRiderRequest, grpc.ServerStreamingServer[TrackingRiderResponse]) error
+	// GetDeliveryFee calculates the delivery fee from merchant to customer
+	// using merchant ID and customer address ID.
 	//
-	// This function should be called from OrderService to track
-	GetOrderTracking(*GetOrderTrackingRequest, grpc.ServerStreamingServer[GetOrderTrackingResponse]) error
-	// GetDeliveryFee calculates and returns the delivery fee based on the distance
-	// between the customer's location and the merchant's location.
+	// Example:
+	//
+	//	GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
 	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
-	// ConfirmRiderAccept updates the order with the rider who accepted it and returns
-	// the pickup information.
-	ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*PickupInfo, error)
-	// ConfirmOrderDeliver updates the delivery status after rider has delivered.
-	ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*emptypb.Empty, error)
-	// Rider management
-	CreateRider(context.Context, *CreateRiderRequest) (*Rider, error)
+	ReportDeliveryStatus(context.Context, *ReportDeliveryStatusRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
 
@@ -152,20 +118,14 @@ type DeliveryServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedDeliveryServiceServer struct{}
 
-func (UnimplementedDeliveryServiceServer) GetOrderTracking(*GetOrderTrackingRequest, grpc.ServerStreamingServer[GetOrderTrackingResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method GetOrderTracking not implemented")
+func (UnimplementedDeliveryServiceServer) TrackingRider(*TrackingRiderRequest, grpc.ServerStreamingServer[TrackingRiderResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method TrackingRider not implemented")
 }
 func (UnimplementedDeliveryServiceServer) GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeliveryFee not implemented")
 }
-func (UnimplementedDeliveryServiceServer) ConfirmRiderAccept(context.Context, *ConfirmRiderAcceptRequest) (*PickupInfo, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ConfirmRiderAccept not implemented")
-}
-func (UnimplementedDeliveryServiceServer) ConfirmOrderDeliver(context.Context, *ConfirmOrderDeliverRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ConfirmOrderDeliver not implemented")
-}
-func (UnimplementedDeliveryServiceServer) CreateRider(context.Context, *CreateRiderRequest) (*Rider, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateRider not implemented")
+func (UnimplementedDeliveryServiceServer) ReportDeliveryStatus(context.Context, *ReportDeliveryStatusRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportDeliveryStatus not implemented")
 }
 func (UnimplementedDeliveryServiceServer) mustEmbedUnimplementedDeliveryServiceServer() {}
 func (UnimplementedDeliveryServiceServer) testEmbeddedByValue()                         {}
@@ -188,16 +148,16 @@ func RegisterDeliveryServiceServer(s grpc.ServiceRegistrar, srv DeliveryServiceS
 	s.RegisterService(&DeliveryService_ServiceDesc, srv)
 }
 
-func _DeliveryService_GetOrderTracking_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetOrderTrackingRequest)
+func _DeliveryService_TrackingRider_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(TrackingRiderRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(DeliveryServiceServer).GetOrderTracking(m, &grpc.GenericServerStream[GetOrderTrackingRequest, GetOrderTrackingResponse]{ServerStream: stream})
+	return srv.(DeliveryServiceServer).TrackingRider(m, &grpc.GenericServerStream[TrackingRiderRequest, TrackingRiderResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type DeliveryService_GetOrderTrackingServer = grpc.ServerStreamingServer[GetOrderTrackingResponse]
+type DeliveryService_TrackingRiderServer = grpc.ServerStreamingServer[TrackingRiderResponse]
 
 func _DeliveryService_GetDeliveryFee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetDeliveryFeeRequest)
@@ -217,56 +177,20 @@ func _DeliveryService_GetDeliveryFee_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeliveryService_ConfirmRiderAccept_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ConfirmRiderAcceptRequest)
+func _DeliveryService_ReportDeliveryStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportDeliveryStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeliveryServiceServer).ConfirmRiderAccept(ctx, in)
+		return srv.(DeliveryServiceServer).ReportDeliveryStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DeliveryService_ConfirmRiderAccept_FullMethodName,
+		FullMethod: DeliveryService_ReportDeliveryStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).ConfirmRiderAccept(ctx, req.(*ConfirmRiderAcceptRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeliveryService_ConfirmOrderDeliver_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ConfirmOrderDeliverRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeliveryServiceServer).ConfirmOrderDeliver(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeliveryService_ConfirmOrderDeliver_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).ConfirmOrderDeliver(ctx, req.(*ConfirmOrderDeliverRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeliveryService_CreateRider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateRiderRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeliveryServiceServer).CreateRider(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeliveryService_CreateRider_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeliveryServiceServer).CreateRider(ctx, req.(*CreateRiderRequest))
+		return srv.(DeliveryServiceServer).ReportDeliveryStatus(ctx, req.(*ReportDeliveryStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -283,22 +207,14 @@ var DeliveryService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DeliveryService_GetDeliveryFee_Handler,
 		},
 		{
-			MethodName: "ConfirmRiderAccept",
-			Handler:    _DeliveryService_ConfirmRiderAccept_Handler,
-		},
-		{
-			MethodName: "ConfirmOrderDeliver",
-			Handler:    _DeliveryService_ConfirmOrderDeliver_Handler,
-		},
-		{
-			MethodName: "CreateRider",
-			Handler:    _DeliveryService_CreateRider_Handler,
+			MethodName: "ReportDeliveryStatus",
+			Handler:    _DeliveryService_ReportDeliveryStatus_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetOrderTracking",
-			Handler:       _DeliveryService_GetOrderTracking_Handler,
+			StreamName:    "TrackingRider",
+			Handler:       _DeliveryService_TrackingRider_Handler,
 			ServerStreams: true,
 		},
 	},
