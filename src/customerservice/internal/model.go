@@ -7,9 +7,10 @@ import (
 	"time"
 )
 
-type newCustomer struct {
+type dbNewCustomer struct {
 	CustomerID string
 	Username   string
+	CreateTime time.Time
 }
 
 type dbCustomer struct {

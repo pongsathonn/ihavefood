@@ -14,21 +14,16 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 // ---------------------CUSTOMER SERVICE------------------------------
 service CustomerService {
 
+    // ListCustomers shows all customers profile.
     rpc ListCustomers(ListCustomersRequest) returns(ListCustomersResponse){
         option (google.api.http) = {get: "/api/customers"};
     }
 
+    // GetCustomer shows a customer profile.
     rpc GetCustomer(GetCustomerRequest) returns(Customer){
         option (google.api.http) = {get: "/api/customers/{customer_id}"};
     }
     
-    // CreateCustomer creates new user customer 
-    //
-    // The user customer must be created after the AuthService successfully 
-    // creates the new user credentials to ensure that the CustomerID and 
-    // Username are synchronized.
-    rpc CreateCustomer(CreateCustomerRequest) returns(Customer){}
-
     // CreateAddress creates new address to exists uer customer.
     rpc CreateAddress(CreateAddressRequest) returns(Address){
         option (google.api.http) = {
@@ -85,12 +80,6 @@ message GetCustomerRequest{
       example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\" }"
     };
     string customer_id = 1;
-}
-
-
-message CreateCustomerRequest {
-    string customer_id = 1; 
-    string username = 2;
 }
 
 message CreateAddressRequest {

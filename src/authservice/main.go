@@ -12,12 +12,11 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/pongsathonn/ihavefood/src/authservice/internal"
 
 	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
+	"github.com/pongsathonn/ihavefood/src/authservice/internal"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func initPostgres() (*sql.DB, error) {
@@ -81,6 +80,34 @@ func initTimeZone() error {
 	return nil
 }
 
+func initAMQPCon() *amqp.Connection {
+	uri := fmt.Sprintf("amqp://%s:%s@%s",
+		os.Getenv("RBMQ_AUTH_USER"),
+		os.Getenv("RBMQ_AUTH_PASS"),
+		os.Getenv("AMQP_SERVER_URI"),
+	)
+	maxRetries := 5
+	var conn *amqp.Connection
+	var err error
+
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(uri)
+		if err == nil {
+			slog.Info("Successfully connected to AMQP")
+			return conn
+		}
+
+		if i == maxRetries {
+			log.Fatalf("Could not establish AMQP connection after %d attempts: %v", maxRetries, err)
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+	log.Fatalf("Unexpected")
+	return nil
+
+}
+
 func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -110,33 +137,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
 	}
-	storage := internal.NewStorage(db)
 
+	storage := internal.NewStorage(db)
 	if err := internal.CreateSuperAdmin(storage); err != nil {
 		slog.Error("Failed to create admin user", "err", err)
 	}
 
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	customers, err := grpc.NewClient(os.Getenv("CUSTOMER_URI"), opt)
-	if err != nil {
-		log.Fatalf("failed to create grpc customer channel: %v", err)
-	}
-
-	deliv, err := grpc.NewClient(os.Getenv("DELIVERY_URI"), opt)
-	if err != nil {
-		log.Fatalf("failed to create grpc delivery channel: %v", err)
-	}
-
-	merchant, err := grpc.NewClient(os.Getenv("MERCHANT_URI"), opt)
-	if err != nil {
-		log.Fatalf("failed to create grpc merchant channel: %v", err)
-	}
-	slog.Info("Downstream gRPC channels created successfully")
-
-	startGRPCServer(internal.NewAuthService(&internal.AuthCfg{
-		Store:          storage,
-		CustomerClient: pb.NewCustomerServiceClient(customers),
-		DeliveryClient: pb.NewDeliveryServiceClient(deliv),
-		MerchantClient: pb.NewMerchantServiceClient(merchant),
-	}))
+	startGRPCServer(internal.NewAuthService(
+		storage,
+		internal.NewRabbitMQ(initAMQPCon()),
+	))
 }

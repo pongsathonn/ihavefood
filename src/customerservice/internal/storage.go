@@ -191,7 +191,7 @@ func (s *customerStorage) getAddress(ctx context.Context, customerID, addressID 
 	return &addr, nil
 }
 
-func (s *customerStorage) create(ctx context.Context, newCustomer *newCustomer) (string, error) {
+func (s *customerStorage) create(ctx context.Context, newCustomer *dbNewCustomer) (string, error) {
 
 	res := s.db.QueryRowContext(ctx, `
 		INSERT INTO customers(
