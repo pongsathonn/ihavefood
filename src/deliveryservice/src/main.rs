@@ -1,14 +1,13 @@
-mod broker;
-mod database;
-mod delivery;
-mod grpc_impl;
+mod database_impl;
+mod delivery_impl;
+mod event_impl;
 mod models;
 
 use anyhow::Result;
 
-use broker::RabbitMQ;
-use database::Db;
-use delivery::MyDelivery;
+use database_impl::Db;
+use delivery_impl::MyDelivery;
+use event_impl::*;
 use ihavefood::{
     customer_service_client::CustomerServiceClient, delivery_service_server::DeliveryServiceServer,
     merchant_service_client::MerchantServiceClient,
@@ -17,17 +16,24 @@ use lapin::{Connection, ConnectionProperties};
 use log::info;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePool},
-    Pool, Sqlite,
+    Sqlite,
 };
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::str::FromStr;
 use std::sync::Arc;
-use tokio::sync::Semaphore;
-use tonic::transport::{Server, Uri};
+// use tokio::sync::Semaphore;
+use tokio::time::Duration;
+use tonic::transport::{Channel, Server};
 
 pub mod ihavefood {
     // tonic::include_proto!("ihavefood");
     include!("../genproto/ihavefood.rs");
+}
+
+fn init_redis_pool() -> redis::Client {
+    let client = redis::Client::open("redis://redisx:6379/").expect("Invalid Redis URL");
+    let _ = client.get_connection();
+    client
 }
 
 async fn init_amqp_conn() -> Connection {
@@ -48,7 +54,7 @@ async fn init_amqp_conn() -> Connection {
     conn
 }
 
-async fn init_sqlite_pool() -> Pool<Sqlite> {
+async fn init_sqlite_pool() -> sqlx::Pool<Sqlite> {
     let url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let opts = SqliteConnectOptions::from_str(url.as_str())
@@ -68,11 +74,42 @@ async fn init_sqlite_pool() -> Pool<Sqlite> {
     pool
 }
 
+async fn init_customer_client() -> Result<CustomerServiceClient<Channel>> {
+    for _ in 0..5 {
+        match CustomerServiceClient::connect(format!("http://{}", dotenv::var("CUSTOMER_URI")?))
+            .await
+        {
+            Ok(conn) => return Ok(conn),
+            Err(_) => {
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                continue;
+            }
+        };
+    }
+
+    panic!("could not established customer client")
+}
+
+async fn init_merchant_client() -> Result<MerchantServiceClient<Channel>> {
+    for _ in 0..5 {
+        match MerchantServiceClient::connect(format!("http://{}", dotenv::var("MERCHANT_URI")?))
+            .await
+        {
+            Ok(conn) => return Ok(conn),
+            Err(_) => {
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                continue;
+            }
+        };
+    }
+
+    panic!("could not established merchant client")
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    // >> Error,Warn,Info,Debug,Trace
     std::env::set_var("RUST_LOG", "info,lapin=warn");
 
     env_logger::builder()
@@ -81,20 +118,16 @@ async fn main() -> Result<()> {
         .format_target(false)
         .init();
 
-    let app = MyDelivery {
-        db: Arc::new(Db::new(init_sqlite_pool().await)),
-        broker: Arc::new(RabbitMQ::new(init_amqp_conn().await)),
-        task_limiter: Arc::new(Semaphore::new(100)),
-        customercl: CustomerServiceClient::connect(format!(
-            "http://{}",
-            dotenv::var("CUSTOMER_URI")?
-        ))
-        .await?,
-        merchantcl: MerchantServiceClient::connect(format!(
-            "http://{}",
-            dotenv::var("MERCHANT_URI")?
-        ))
-        .await?,
+    let event_bus = Arc::new(EventBus::new(init_amqp_conn().await));
+    let db = Arc::new(Db::new(init_sqlite_pool().await));
+    let redis_cl = init_redis_pool();
+
+    let my_delivery = MyDelivery {
+        db: db.clone(),
+        event_bus: event_bus.clone(),
+        redis_cl: redis_cl.clone(),
+        customercl: init_customer_client().await?,
+        merchantcl: init_merchant_client().await?,
     };
 
     let socket = SocketAddr::new(
@@ -103,11 +136,24 @@ async fn main() -> Result<()> {
     );
 
     let server = Server::builder()
-        .add_service(DeliveryServiceServer::new(app.clone()))
+        .add_service(DeliveryServiceServer::new(my_delivery.clone()))
         .serve(socket);
 
-    tokio::spawn(async move {
-        app.clone().start_services().await.unwrap();
+    let event_bus_cloned = Arc::clone(&event_bus);
+    let db_cloned = Arc::clone(&db);
+
+    tokio::spawn(async {
+        EventDispatcher::new(event_bus_cloned, db_cloned, redis_cl)
+            .add_event(EventHandler {
+                queue: String::from(""),
+                key: String::from("order.placed.event"),
+            })
+            .add_event(EventHandler {
+                queue: String::from(""),
+                key: String::from("sync.rider.created"),
+            })
+            .run()
+            .await
     });
 
     info!(
