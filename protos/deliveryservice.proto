@@ -7,18 +7,14 @@ option go_package =  "/genproto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 // ---------------------DELIVERY SERVICE---------------------------
 // Manages riders and delivery process.
 service DeliveryService {
 
-    // GetOrderTracking provides real-time updates on the current status and location of 
-    // an order. It tracks the progress of the order from preparation to delivery, 
-    // giving the customer real-time status updates.
-    //
-    // This function should be called from OrderService to track
-    rpc GetOrderTracking(GetOrderTrackingRequest) returns(stream GetOrderTrackingResponse){}
+    // TrackingRider provides real-time updates on the current rider location. 
+    rpc TrackingRider(TrackingRiderRequest) returns(stream TrackingRiderResponse){}
 
     // GetDeliveryFee calculates the delivery fee from merchant to customer
     // using merchant ID and customer address ID.
@@ -31,33 +27,14 @@ service DeliveryService {
         };
     }
 
-    // ConfirmRiderAccept updates the order with the rider who accepted it and returns 
-    // the pickup information.
-    rpc ConfirmRiderAccept(ConfirmRiderAcceptRequest) returns(PickupInfo){
+    rpc ReportDeliveryStatus(ReportDeliveryStatusRequest)returns(google.protobuf.Empty){
         option (google.api.http) = {
-            patch: "/api/deliveries/{order_id}/accept" 
-            body: "rider_id"
+            patch: "/api/deliveries/{order_id}/status" 
+            body: "*"
         };
     }
-
-    // ConfirmOrderDeliver updates the delivery status after rider has delivered.
-    rpc ConfirmOrderDeliver(ConfirmOrderDeliverRequest) returns(google.protobuf.Empty){
-        option (google.api.http) = {
-            patch: "/api/deliveries/{order_id}/deliver" 
-        };
-    }
-
-    // Rider management 
-    rpc CreateRider(CreateRiderRequest) returns(Rider){}
 }
 
-
-message Point {
-    // The latitude in degrees. It must be in the range [-90.0, +90.0].
-    double latitude = 1;
-    // The longitude in degrees. It must be in the range [-180.0, +180.0].
-    double longitude = 2;
-}
 
 message PickupInfo {
     // pickup_code is a simplified code used for identifying an order 
@@ -69,22 +46,39 @@ message PickupInfo {
     Point drop_off_location = 3;
 }
 
+enum DeliveryStatus {
+    // indicates the rider has not yet accepted the order.
+    RIDER_UNACCEPT = 0;
+    // indicates the rider has accepted the order.
+    RIDER_ACCEPTED = 1;
+    // indicates the rider has picked up the order.
+    RIDER_PICKED_UP = 2;
+    // indicates the order has been delivered by the rider.
+    RIDER_DELIVERED = 3;
+}
+
+message Point {
+    // The latitude in degrees. It must be in the range [-90.0, +90.0].
+    double latitude = 1;
+    // The longitude in degrees. It must be in the range [-180.0, +180.0].
+    double longitude = 2;
+}
+
 message Rider {
     string rider_id = 1;
     string username = 2;
     string phone_number = 3;
 }
 
-message GetOrderTrackingRequest {
-    string order_id = 1;
+message TrackingRiderRequest {
+    string rider_id = 1;
 }
 
-message GetOrderTrackingResponse {
-    string order_id = 1;
-    string rider_id = 2;
-    Point rider_location = 3;
+message TrackingRiderResponse {
+    string rider_id = 1;
+    Point rider_location = 2;
     // The timestamp of the most recent update to the rider's location.
-    google.protobuf.Timestamp update_time = 4;
+    google.protobuf.Timestamp update_time = 3;
 }
 
 message GetDeliveryFeeRequest {
@@ -97,17 +91,13 @@ message GetDeliveryFeeResponse {
     int32 fee =1;
 }
 
-message ConfirmRiderAcceptRequest {
-    string order_id = 1;
-    string rider_id = 2;
-}
+message ReportDeliveryStatusRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}"
+  };
 
-message ConfirmOrderDeliverRequest {
-    string order_id = 1;
-}
-
-message CreateRiderRequest {
-  string rider_id = 1;
-  string username = 2;
-  string phone_number = 3;
+  // example: 1783de85-456a-4cca-8f7a-489750e21aa4
+  string order_id = 1;
+  string rider_id = 2;
+  DeliveryStatus status = 3;
 }
