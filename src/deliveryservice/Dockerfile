@@ -30,3 +30,4 @@ RUN apt-get update && \
 COPY --from=build /bin/deliveryservice /bin/
 
 CMD ["/bin/deliveryservice"]
+

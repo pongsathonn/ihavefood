@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS deliveries(
     status         INTEGER NOT NULL
                    DEFAULT 0
                    CHECK(status IN (0,1,2)),
-    create_time    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_time    DATETIME,
     accept_time    DATETIME,
     deliver_time   DATETIME,
 

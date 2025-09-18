@@ -4,6 +4,7 @@ INSERT INTO deliveries (
     pickup_lat,
     pickup_lng,
     drop_off_lat,
-    drop_off_lng
+    drop_off_lng,
+    create_time
 )
-VALUES(?,?,?,?,?,?);
+VALUES(?,?,?,?,?,?,?);

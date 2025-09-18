@@ -21,10 +21,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             .extern_path(".google.protobuf.Empty", "::prost_wkt_types::Empty")
             .compile_protos(
                 &[
-                    "../../protos/orderservice.proto",
-                    "../../protos/customerservice.proto",
-                    "../../protos/merchantservice.proto",
                     "../../protos/deliveryservice.proto",
+                    "../../protos/merchantservice.proto",
+                    "../../protos/customerservice.proto",
+                    "../../protos/events.proto",
                 ],
                 &["../../protos"],
             )?;
