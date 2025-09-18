@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package ihavefood;
+option go_package =  "/genproto";
+
+import "orderservice.proto";
+import "google/protobuf/timestamp.proto";
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+// ### Event Routing Table (Order processing)
+// OrderService act as a source of truth
+//
+//  | Publisher    |     Routing Key           |           Queue              | Subscriber |  ORDER STATUS  |   
+//  |--------------|---------------------------|------------------------------|------------|----------------|
+//  |              |                           |                              |            |  PENDING       |
+//  | Order        | order.placed.event        | merchant_assign_queue        | Merchant   |                | 
+//  | Order        | order.placed.event        | rider_assign_queue           | Delivery   |                | 
+//  | Merchant     | merchant.accepted.event   | merchant_accept_queue        | Delivery   |                | 
+//  |              |                           |                              |            |  PREPARING     |
+//  | Delivery     | rider.notified.event      | order_status_update_queue    | Order      |                | 
+//  |              |                           |                              |            |  FINDING_RIDER |
+//  | Delivery     | rider.assigned.event      | order_status_update_queue    | Order      |                |
+//  |              |                           |                              |            |  WAIT_PICKUP   |
+//  | Delivery     | rider.picked_up.event     | order_status_update_queue    | Order      |                | 
+//  |              |                           |                              |            |  ONGOING       |
+//  | Delivery     | rider.delivered.event     | order_status_update_queue    | Order      |                |
+//  |              |                           |                              |            |  DELIVERED     |
+//  |              |                           |                              |            |                |
+//
+// # payment
+//
+//  | Publisher            |     Routing Key           |           Queue              | Subscriber |  PAYMENT STATUS  |   
+//  |----------------------|---------------------------|------------------------------|------------|------------------|
+//  |                      |                           |                              |            |  WAIT_PAY        |
+//  | Delivery             | order.paid.event          | order_paid__queue            | Order      |                  | 
+//  | Payment    TODO      | order.paid.event          | order_paid_queue             | Delivery   |                  | 
+//  |                      |                           |                              |            |  PAID            |
+//  | Delivery             | order.paid.event          | coupon_update_queue          | Coupon     |                  |
+//
+//
+// ### Canceling Order 
+// # proceed to refund
+//
+//  | Publisher  |       Routing Key                | Subscriber |  STATUS   |
+//  |------------|----------------------------------|------------|-----------|
+//  | Payment    | error.payment.failed.event       |     *      | CANCELLED | 
+//  | Delivery   | error.rider.unaccepted.event     |     *      | CANCELLED | 
+//  | Merchant | error.merchant.cancelled.event |     *      | CANCELLED | 
+//
+//
+//
+// ### Data replication
+// Keeping the same data synchronized across multiple services
+// key = sync.<data>.<verb> e.g, sync.customer.email.updated, sync.rider.phone.deleted
+//
+//
+//  | Publisher  |       Routing Key                      | Subscriber       |
+//  |------------|----------------------------------------|------------------|
+//  | Auth       | sync.customer.created                  |     Customer     |
+//  | Auth       | sync.rider.created                     |     Delivery     |
+//  | Auth       | sync.merchant.created                  |     Merchant     |
+//  | Auth       | sync.customer.username.updated         |     Customer     |
+//  | Auth       | sync.customer.email.updated            |     Customer     |
+//  | Auth       | sync.customer.phone_number.updated     |     Customer     |
+//  | Auth       | sync.rider.username.updated            |     Delivery     |
+//  | Auth       | sync.rider.email.updated               |     Delivery     |
+//  | Auth       | sync.rider.phone_number.updated        |     Delivery     |
+//  | Auth       | sync.merchant.email.updated            |     Merchant     |
+//  | Auth       | sync.merchant.phone_number.updated     |     Merchant     |
+//
+// Auth act as a source of truth
+//
+////////////////////////////////////////////////////////////////////////
+
+
+
+//========================= ORDER EVENT ========================
+
+enum OrderEvent {
+    UNSPECIFIED = 0;
+    ORDER_PLACED_EVENT = 1;
+    MERCHANT_ACCEPTED_EVENT = 2;
+    RIDER_NOTIFIED_EVENT = 3;
+    RIDER_ASSIGNED_EVENT = 4;
+    RIDER_PICKED_UP_EVENT = 5;
+    RIDER_DELIVERED_EVENT = 6;
+    ORDER_CANCELLED_EVENT = 7;
+}
+
+message OrderPlacedEvent{
+    PlaceOrder order = 1;
+}
+
+message MerchantAcceptedEvent {
+    string order_id = 1;
+    string merchant_id = 2;
+    google.protobuf.Timestamp accept_time = 3;
+}
+
+message RiderNotifiedEvent {
+    string order_id = 1;
+    google.protobuf.Timestamp notify_time = 2;
+}
+
+message RiderAssignedEvent {
+    string order_id = 1;
+    string rider_id = 2;
+    google.protobuf.Timestamp assign_time = 3;
+}
+
+message RiderPickedUpEvent {
+    string order_id = 1;
+    string rider_id = 2;
+    google.protobuf.Timestamp pickup_time = 3;
+}
+
+message RiderDeliveredEvent {
+    string order_id = 1;
+    string rider_id = 2;
+    google.protobuf.Timestamp deliver_time = 3;
+}
+
+
+//============================ SYNC ========================
+message SyncCustomerCreated {
+    string customer_id = 1;
+    string username = 2;
+    string phone_number = 3;
+    google.protobuf.Timestamp create_time = 4;
+}
+
+message SyncRiderCreated {
+    string rider_id = 1;
+    string username = 2;
+    string phone_number = 3;
+    google.protobuf.Timestamp create_time = 4;
+}
+
+message SyncMerchantCreated {
+    string merchant_id = 1;
+    // Email is used to set the default merchant name (from the local part).
+    // Example: foo555@mail.com → Merchant Name: foo555
+    string email = 2;
+    string phone_number = 3;
+    google.protobuf.Timestamp create_time = 4;
+}
