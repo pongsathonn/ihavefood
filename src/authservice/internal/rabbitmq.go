@@ -2,47 +2,19 @@ package internal
 
 import (
 	"context"
-	"log/slog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type EventHandler struct {
-	Queue, Key string
-	Handler    func() chan<- amqp.Delivery
-}
-
-type RabbitMQ struct {
+type rabbitMQ struct {
 	conn *amqp.Connection
 }
 
-func NewRabbitMQ(conn *amqp.Connection) *RabbitMQ {
-	return &RabbitMQ{conn: conn}
+func NewRabbitMQ(conn *amqp.Connection) *rabbitMQ {
+	return &rabbitMQ{conn: conn}
 }
 
-func (r *RabbitMQ) Start(handlers []*EventHandler) {
-	for _, h := range handlers {
-		go func(h *EventHandler) {
-			deliveries, err := r.Subscribe(context.TODO(), h.Queue, h.Key)
-			if err != nil {
-				slog.Error(
-					"failed to subscribe an event",
-					"queue", h.Queue,
-					"key", h.Key,
-					"err", err,
-				)
-			}
-
-			for delivery := range deliveries {
-				h.Handler() <- delivery
-			}
-		}(h)
-	}
-
-	select {}
-}
-
-func (r *RabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
+func (r *rabbitMQ) publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return err
@@ -77,7 +49,7 @@ func (r *RabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publ
 	return nil
 }
 
-func (r *RabbitMQ) Subscribe(ctx context.Context, queue, routingKey string) (<-chan amqp.Delivery, error) {
+func (r *rabbitMQ) subscribe(ctx context.Context, queue, routingKey string) (<-chan amqp.Delivery, error) {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return nil, err
@@ -121,13 +93,13 @@ func (r *RabbitMQ) Subscribe(ctx context.Context, queue, routingKey string) (<-c
 
 	deliveries, err := ch.ConsumeWithContext(
 		ctx,
-		q.Name,             // queue
-		"customer_service", // consumer
-		true,               // auto-ack
-		false,              // exclusive
-		false,              // no-local
-		false,              // no-wait
-		nil,                // arguments
+		q.Name,         // queue
+		"auth_service", // consumer
+		true,           // auto-ack
+		false,          // exclusive
+		false,          // no-local
+		false,          // no-wait
+		nil,            // arguments
 	)
 	if err != nil {
 		return nil, err
@@ -135,3 +107,4 @@ func (r *RabbitMQ) Subscribe(ctx context.Context, queue, routingKey string) (<-c
 
 	return deliveries, nil
 }
+

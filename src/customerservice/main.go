@@ -38,12 +38,35 @@ func main() {
 		log.Fatal(err)
 	}
 
-	customerService := internal.NewCustomerService(
-		internal.NewRabbitMQ(initAMQPCon()),
+	rabbitmq := internal.NewRabbitMQ(initAMQPCon())
+	s := internal.NewCustomerService(rabbitmq,
 		internal.NewCustomerStorage(db),
 	)
 
-	startGRPCServer(customerService)
+	go rabbitmq.Start([]*internal.EventHandler{
+		&internal.EventHandler{Queue: "", Key: "sync.customer.created", Handler: s.HandleCustomerCreation},
+		// &EventHandler{queue: "", key: "", fn: nil},
+		// &EventHandler{queue: "", key: "", fn: nil},
+	})
+
+	if s == nil {
+		log.Fatal("customer service instance is nil")
+	}
+
+	uri := fmt.Sprintf(":%s", os.Getenv("CUSTOMER_SERVER_PORT"))
+	lis, err := net.Listen("tcp", uri)
+	if err != nil {
+		log.Fatal("Failed to listen:", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterCustomerServiceServer(grpcServer, s)
+
+	slog.Info("customer service is running", "port", os.Getenv("CUSTOMER_SERVER_PORT"))
+
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatal("Failed to serve:", err)
+	}
 
 }
 
@@ -95,26 +118,4 @@ func initPostgres() (*sql.DB, error) {
 
 	return db, nil
 
-}
-
-func startGRPCServer(s *internal.CustomerService) {
-
-	if s == nil {
-		log.Fatal("customer service instance is nil")
-	}
-
-	uri := fmt.Sprintf(":%s", os.Getenv("CUSTOMER_SERVER_PORT"))
-	lis, err := net.Listen("tcp", uri)
-	if err != nil {
-		log.Fatal("Failed to listen:", err)
-	}
-
-	grpcServer := grpc.NewServer()
-	pb.RegisterCustomerServiceServer(grpcServer, s)
-
-	slog.Info("customer service is running", "port", os.Getenv("CUSTOMER_SERVER_PORT"))
-
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatal("Failed to serve:", err)
-	}
 }

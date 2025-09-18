@@ -12,6 +12,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 // Manages user credentials
 service AuthService {
 
+    // Create a new user (customer, merchant, rider) using one endpoint.
     rpc Register(RegisterRequest) returns(UserCredentials) {
         option (google.api.http) = {
             post: "/auth/register" 
@@ -22,6 +23,7 @@ service AuthService {
         };
     }
 
+    // Login sign in as any user (customer, merchant, rider).
     rpc Login(LoginRequest) returns(LoginResponse){
         option (google.api.http) = {
             post: "/auth/login" 
@@ -77,22 +79,22 @@ enum Roles {
 
 
 message RegisterRequest {
-   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-       example: "{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
-   };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  json_schema: {
+    description: "NOTE: username is ignored when registering as a Merchant"
+  }
+  example: "{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
+  };
 
-   string username = 1 [
-       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-           description: "Ignored when registering as a Merchant"
-       }
-   ];
-   string email = 2;
-   string password = 3;
-   string phone_number = 4;
-   Roles role = 5;
+
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  string phone_number = 4;
+  Roles role = 5;
 }
 
-// uncomment this if gateway want to  config code response 
+// use this if config gateway resopnse code.
 // such as change success code from 200 to 201.
 //
 // message RegisterResponse {

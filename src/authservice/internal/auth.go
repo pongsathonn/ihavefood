@@ -17,9 +17,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type AuthStorer interface {
@@ -35,26 +37,12 @@ type AuthStorer interface {
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
-	store          AuthStorer
-	customerClient pb.CustomerServiceClient
-	deliveryClient pb.DeliveryServiceClient
-	merchantClient pb.MerchantServiceClient
+	store    AuthStorer
+	rabbitmq *rabbitMQ
 }
 
-type AuthCfg struct {
-	Store          AuthStorer
-	CustomerClient pb.CustomerServiceClient
-	DeliveryClient pb.DeliveryServiceClient
-	MerchantClient pb.MerchantServiceClient
-}
-
-func NewAuthService(cfg *AuthCfg) *AuthService {
-	return &AuthService{
-		store:          cfg.Store,
-		customerClient: cfg.CustomerClient,
-		deliveryClient: cfg.DeliveryClient,
-		merchantClient: cfg.MerchantClient,
-	}
+func NewAuthService(store AuthStorer, rabbitmq *rabbitMQ) *AuthService {
+	return &AuthService{store: store, rabbitmq: rabbitmq}
 }
 
 // Register handles user registration by creating a new user credentials
@@ -205,73 +193,64 @@ func (x *AuthService) VerifyAdminToken(ctx context.Context, in *pb.VerifyAdminTo
 func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user *dbUserCredentials) error {
 	switch role {
 	case pb.Roles_CUSTOMER:
-		if err := x.createCustomer(ctx, user); err != nil {
+		body, err := proto.Marshal(&pb.SyncCustomerCreated{
+			CustomerId:  user.ID,
+			Username:    user.Username,
+			PhoneNumber: user.PhoneNumber,
+			CreateTime:  timestamppb.New(time.Now()),
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := x.rabbitmq.publish(ctx, "sync.customer.created", amqp.Publishing{
+			Body: body,
+		}); err != nil {
 			return fmt.Errorf("failed to create customer: %v", err)
 		}
+
 	case pb.Roles_RIDER:
-		if err := x.createRider(ctx, user); err != nil {
+		body, err := proto.Marshal(&pb.SyncRiderCreated{
+			RiderId:     user.ID,
+			Username:    user.Username,
+			PhoneNumber: user.PhoneNumber,
+			CreateTime:  timestamppb.New(time.Now()),
+		})
+		if err != nil {
+			return err
+		}
+
+		err = x.rabbitmq.publish(ctx, "sync.rider.created", amqp.Publishing{
+			Type: "ihavefood.SyncRiderCreated",
+			Body: body,
+		})
+		if err != nil {
 			return fmt.Errorf("failed to create rider: %v", err)
 		}
+
 	case pb.Roles_MERCHANT:
-		if err := x.createMerchant(ctx, user); err != nil {
+
+		body, err := proto.Marshal(&pb.SyncMerchantCreated{
+			MerchantId:  user.ID,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			CreateTime:  timestamppb.New(time.Now()),
+		})
+		if err != nil {
+			return err
+		}
+
+		err = x.rabbitmq.publish(ctx, "sync.merchant.created", amqp.Publishing{
+			Type: "ihavefood.SyncMerchantCreated",
+			Body: body,
+		})
+		if err != nil {
 			return fmt.Errorf("failed to create merchant: %v", err)
 		}
 	default:
 		return errors.New("invalid role")
 	}
 
-	return nil
-}
-
-func (x *AuthService) createCustomer(ctx context.Context, user *dbUserCredentials) error {
-
-	customer, err := x.customerClient.CreateCustomer(ctx, &pb.CreateCustomerRequest{
-		CustomerId: user.ID,
-		Username:   user.Username,
-	})
-	if err != nil {
-		return err
-	}
-
-	if user.ID != customer.CustomerId || user.Username != customer.Username {
-		return errors.New("ID or Username in AuthService and CustomerService are inconsistent")
-	}
-
-	return nil
-}
-
-func (x *AuthService) createMerchant(ctx context.Context, user *dbUserCredentials) error {
-
-	defaultMerchantName, _, found := strings.Cut(user.Email, "@")
-	if !found {
-		return errors.New("invalid email format: missing '@'")
-	}
-
-	merchant, err := x.merchantClient.CreateMerchant(ctx, &pb.CreateMerchantRequest{
-		MerchantId:   user.ID,
-		MerchantName: defaultMerchantName,
-	})
-	if err != nil {
-		return err
-	}
-	if merchant.MerchantId != user.ID {
-		return errors.New("ID in AuthService and MerchantService are inconsistent")
-	}
-	return nil
-}
-
-func (x *AuthService) createRider(ctx context.Context, user *dbUserCredentials) error {
-	rider, err := x.deliveryClient.CreateRider(ctx, &pb.CreateRiderRequest{
-		RiderId:     user.ID,
-		Username:    user.Username,
-		PhoneNumber: user.PhoneNumber,
-	})
-	if err != nil {
-		return err
-	}
-	if rider.RiderId != user.ID || rider.Username != user.Username {
-		return errors.New("ID or Username in AuthService and DeliveryService are inconsistent")
-	}
 	return nil
 }
 

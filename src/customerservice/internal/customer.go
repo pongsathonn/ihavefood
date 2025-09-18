@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"log/slog"
 
@@ -13,17 +14,18 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/customerservice/genproto"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // CustomerService manages user customer.
 type CustomerService struct {
 	pb.UnimplementedCustomerServiceServer
 
-	rabbitmq *rabbitMQ
+	rabbitmq *RabbitMQ
 	store    *customerStorage
 }
 
-func NewCustomerService(rabbitmq *rabbitMQ, store *customerStorage) *CustomerService {
+func NewCustomerService(rabbitmq *RabbitMQ, store *customerStorage) *CustomerService {
 	return &CustomerService{
 		rabbitmq: rabbitmq,
 		store:    store,
@@ -53,31 +55,6 @@ func (x *CustomerService) GetCustomer(ctx context.Context, in *pb.GetCustomerReq
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "customer not found")
 		}
-		slog.Error("store get customer", "err", err)
-		return nil, status.Error(codes.Internal, "internal server error")
-	}
-	return dbToProto(customer), nil
-}
-
-func (x *CustomerService) CreateCustomer(ctx context.Context, in *pb.CreateCustomerRequest) (*pb.Customer, error) {
-
-	uuid, err := uuid.Parse(in.CustomerId)
-	if err != nil {
-		slog.Error("invalid uuid", "err", err)
-		return nil, status.Error(codes.InvalidArgument, "invalid uuid customer id")
-	}
-
-	customerID, err := x.store.create(ctx, &newCustomer{
-		CustomerID: uuid.String(),
-		Username:   in.Username,
-	})
-	if err != nil {
-		slog.Error("storage create customer", "err", err)
-		return nil, status.Error(codes.Internal, "internal server error")
-	}
-
-	customer, err := x.store.getCustomer(ctx, customerID)
-	if err != nil {
 		slog.Error("store get customer", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
@@ -165,6 +142,48 @@ func (x *CustomerService) DeleteCustomer(ctx context.Context, in *pb.DeleteCusto
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func (x *CustomerService) HandleCustomerCreation() chan<- amqp.Delivery {
+
+	messages := make(chan amqp.Delivery)
+
+	go func() {
+		for msg := range messages {
+
+			var newCustomer pb.SyncCustomerCreated
+			if err := json.Unmarshal(msg.Body, &newCustomer); err != nil {
+				slog.Error("unmarshal failed", "err", err)
+				continue
+			}
+
+			_, err := uuid.Parse(newCustomer.CustomerId)
+			if err != nil {
+				slog.Error("invalid uuid", "err", err)
+				continue
+			}
+
+			customerID, err := x.store.create(context.TODO(), &dbNewCustomer{
+				CustomerID: newCustomer.CustomerId,
+				Username:   newCustomer.Username,
+				CreateTime: newCustomer.CreateTime.AsTime(),
+			})
+			if err != nil {
+				slog.Error("storage create customer", "err", err)
+				continue
+			}
+
+			if newCustomer.CustomerId != customerID {
+				slog.Error(
+					"customerID mismatch",
+					"expected", newCustomer.CustomerId,
+					"found", customerID,
+				)
+				continue
+			}
+		}
+	}()
+	return messages
 }
 
 func protoToDb(customer *pb.Customer) *dbCustomer {
