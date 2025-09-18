@@ -137,6 +137,9 @@ services:
       authdb:
         condition: service_healthy
         restart: true
+      rabbitmqx: 
+        condition: service_healthy
+        restart: true
   authdb:
     container_name: authdb
     image: postgres
@@ -174,6 +177,19 @@ services:
       rabbitmqx: 
         condition: service_healthy
         restart: true
+      redisx: 
+        condition: service_healthy
+        restart: true
+  redisx:
+    container_name: redisx
+    image: redis:latest
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    networks:
+      - mynetwork
         
   coupon:
     container_name: coupon
