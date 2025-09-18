@@ -2,7 +2,7 @@
 
 # # TODO add deps for each services
 
-SERVICES=('customerservice' 'authservice' 'merchantservice' 'orderservice' 'couponservice')
+SERVICES=('customerservice' 'authservice' 'merchantservice' 'orderservice' 'couponservice' 'deliveryservice')
 
 service_path=../src/
 gateway_path=../api-gateway/
@@ -13,7 +13,7 @@ for i in "${!SERVICES[@]}"; do
         out="$gateway_path"
     fi
 
-    protos=("common.proto" "${SERVICES[@]/%/.proto}")
+    protos=("common.proto" "events.proto" "${SERVICES[@]/%/.proto}")
     protoc -I "." \
         --go_out="$out" \
         --go-grpc_out="$out" \

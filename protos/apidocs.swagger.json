@@ -20,6 +20,9 @@
     },
     {
       "name": "CouponService"
+    },
+    {
+      "name": "DeliveryService"
     }
   ],
   "host": "localhost:9999",
@@ -36,8 +39,7 @@
   "paths": {
     "/api/coupons": {
       "get": {
-        "summary": "ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.\nThis method is intended to be used by the frontend to display a list of all coupons to customers, \nregardless of their validity or availability.",
-        "description": "TODO: In the future, this method might be updated to list coupons by other condition,\nbut currently, it responds with all coupons.",
+        "summary": "ListCoupons shows all coupons.",
         "operationId": "CouponService_ListCoupons",
         "responses": {
           "200": {
@@ -52,7 +54,7 @@
         ]
       },
       "post": {
-        "summary": "AddCoupon creates a new coupon with the specified details. There are two types of coupons:\nDiscount and Free. The discount value for Discount type coupons must be between 1 and 99.\nIf the coupon type is Free, the discount field is ignored and automatically set to zero.",
+        "summary": "AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).",
         "operationId": "CouponService_AddCoupon",
         "responses": {
           "200": {
@@ -65,6 +67,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "NOTE: if type is FREE_DELIVERY, discount will be ignored",
             "in": "body",
             "required": true,
             "schema": {
@@ -79,7 +82,7 @@
     },
     "/api/coupons/{code}": {
       "get": {
-        "summary": "GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and \nhas sufficient quantity.",
+        "summary": "GetCoupon shows a valid coupon by code.",
         "operationId": "CouponService_GetCoupon",
         "responses": {
           "200": {
@@ -104,6 +107,7 @@
     },
     "/api/customers": {
       "get": {
+        "summary": "ListCustomers shows all customers profile.",
         "operationId": "CustomerService_ListCustomers",
         "responses": {
           "200": {
@@ -120,6 +124,7 @@
     },
     "/api/customers/{customerId}": {
       "get": {
+        "summary": "GetCustomer shows a customer profile.",
         "operationId": "CustomerService_GetCustomer",
         "responses": {
           "200": {
@@ -225,6 +230,78 @@
         ],
         "tags": [
           "CustomerService"
+        ]
+      }
+    },
+    "/api/deliveries/fee": {
+      "get": {
+        "summary": "GetDeliveryFee calculates the delivery fee from merchant to customer\nusing merchant ID and customer address ID.",
+        "description": "Example:\n     GET /api/deliveries/fee?customer_id=1111\u0026customer_address_id=2222\u0026merchant_id=5555",
+        "operationId": "DeliveryService_GetDeliveryFee",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/GetDeliveryFeeResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "customerAddressId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DeliveryService"
+        ]
+      }
+    },
+    "/api/deliveries/{orderId}/status": {
+      "patch": {
+        "operationId": "DeliveryService_ReportDeliveryStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "orderId",
+            "description": "example: 1783de85-456a-4cca-8f7a-489750e21aa4",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportDeliveryStatusBody"
+            }
+          }
+        ],
+        "tags": [
+          "DeliveryService"
         ]
       }
     },
@@ -422,6 +499,7 @@
     },
     "/auth/login": {
       "post": {
+        "summary": "Login sign in as any user (customer, merchant, rider).",
         "operationId": "AuthService_Login",
         "responses": {
           "200": {
@@ -449,6 +527,7 @@
     },
     "/auth/register": {
       "post": {
+        "summary": "Create a new user (customer, merchant, rider) using one endpoint.",
         "operationId": "AuthService_Register",
         "responses": {
           "200": {
@@ -461,6 +540,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "NOTE: username is ignored when registering as a Merchant",
             "in": "body",
             "required": true,
             "schema": {
@@ -501,7 +581,8 @@
           "type": "integer",
           "format": "int32"
         }
-      }
+      },
+      "description": "NOTE: if type is FREE_DELIVERY, discount will be ignored"
     },
     "Address": {
       "type": "object",
@@ -705,6 +786,26 @@
         }
       }
     },
+    "DeliveryStatus": {
+      "type": "string",
+      "enum": [
+        "RIDER_UNACCEPT",
+        "RIDER_ACCEPTED",
+        "RIDER_PICKED_UP",
+        "RIDER_DELIVERED"
+      ],
+      "default": "RIDER_UNACCEPT",
+      "description": " - RIDER_UNACCEPT: indicates the rider has not yet accepted the order.\n - RIDER_ACCEPTED: indicates the rider has accepted the order.\n - RIDER_PICKED_UP: indicates the rider has picked up the order.\n - RIDER_DELIVERED: indicates the order has been delivered by the rider."
+    },
+    "GetDeliveryFeeResponse": {
+      "type": "object",
+      "properties": {
+        "fee": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "ListCouponsResponse": {
       "type": "object",
       "properties": {
@@ -850,6 +951,39 @@
         }
       }
     },
+    "OrderEventTimestamps": {
+      "type": "object",
+      "properties": {
+        "orderPlacedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "merchantAcceptTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "riderNotifiedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "riderAssignedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "riderPickedUpTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deliveredTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cancelledTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "OrderItem": {
       "type": "object",
       "properties": {
@@ -877,23 +1011,6 @@
         "CANCELLED"
       ],
       "default": "PENDING"
-    },
-    "OrderTimestamps": {
-      "type": "object",
-      "properties": {
-        "createTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updateTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "completeTime": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
     },
     "PaymentMethods": {
       "type": "string",
@@ -969,8 +1086,23 @@
         "orderStatus": {
           "$ref": "#/definitions/OrderStatus"
         },
-        "orderTimestamps": {
-          "$ref": "#/definitions/OrderTimestamps"
+        "timestamps": {
+          "$ref": "#/definitions/OrderEventTimestamps"
+        }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "double",
+          "description": "The latitude in degrees. It must be in the range [-90.0, +90.0]."
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double",
+          "description": "The longitude in degrees. It must be in the range [-180.0, +180.0]."
         }
       }
     },
@@ -993,8 +1125,7 @@
       },
       "properties": {
         "username": {
-          "type": "string",
-          "description": "Ignored when registering as a Merchant"
+          "type": "string"
         },
         "email": {
           "type": "string"
@@ -1007,6 +1138,22 @@
         },
         "role": {
           "$ref": "#/definitions/Roles"
+        }
+      },
+      "description": "NOTE: username is ignored when registering as a Merchant"
+    },
+    "ReportDeliveryStatusBody": {
+      "type": "object",
+      "example": {
+        "rider_id": "388b9219-8fd5-4164-a0ba-ed7ddf411966",
+        "status": "RIDER_ACCEPTED"
+      },
+      "properties": {
+        "riderId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/DeliveryStatus"
         }
       }
     },
@@ -1053,6 +1200,22 @@
         },
         "status": {
           "$ref": "#/definitions/StoreStatus"
+        }
+      }
+    },
+    "TrackingRiderResponse": {
+      "type": "object",
+      "properties": {
+        "riderId": {
+          "type": "string"
+        },
+        "riderLocation": {
+          "$ref": "#/definitions/Point"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the most recent update to the rider's location."
         }
       }
     },
