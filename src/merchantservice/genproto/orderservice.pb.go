@@ -186,22 +186,22 @@ func (OrderStatus) EnumDescriptor() ([]byte, []int) {
 type PlaceOrder struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// request_id for idempotency.
-	RequestId       string           `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	OrderId         string           `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
-	CustomerId      string           `protobuf:"bytes,3,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	MerchantId      string           `protobuf:"bytes,4,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
-	Items           []*OrderItem     `protobuf:"bytes,5,rep,name=items,proto3" json:"items,omitempty"`
-	CouponCode      string           `protobuf:"bytes,6,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
-	CouponDiscount  int32            `protobuf:"varint,7,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
-	DeliveryFee     int32            `protobuf:"varint,8,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
-	Total           int32            `protobuf:"varint,9,opt,name=total,proto3" json:"total,omitempty"`
-	CustomerAddress *Address         `protobuf:"bytes,10,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
-	MerchantAddress *Address         `protobuf:"bytes,11,opt,name=merchant_address,json=merchantAddress,proto3" json:"merchant_address,omitempty"`
-	CustomerContact *ContactInfo     `protobuf:"bytes,12,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
-	PaymentMethods  PaymentMethods   `protobuf:"varint,13,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
-	PaymentStatus   PaymentStatus    `protobuf:"varint,14,opt,name=payment_status,json=paymentStatus,proto3,enum=ihavefood.PaymentStatus" json:"payment_status,omitempty"`
-	OrderStatus     OrderStatus      `protobuf:"varint,15,opt,name=order_status,json=orderStatus,proto3,enum=ihavefood.OrderStatus" json:"order_status,omitempty"`
-	OrderTimestamps *OrderTimestamps `protobuf:"bytes,16,opt,name=order_timestamps,json=orderTimestamps,proto3" json:"order_timestamps,omitempty"`
+	RequestId       string                `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	OrderId         string                `protobuf:"bytes,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	CustomerId      string                `protobuf:"bytes,3,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	MerchantId      string                `protobuf:"bytes,4,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	Items           []*OrderItem          `protobuf:"bytes,5,rep,name=items,proto3" json:"items,omitempty"`
+	CouponCode      string                `protobuf:"bytes,6,opt,name=coupon_code,json=couponCode,proto3" json:"coupon_code,omitempty"`
+	CouponDiscount  int32                 `protobuf:"varint,7,opt,name=coupon_discount,json=couponDiscount,proto3" json:"coupon_discount,omitempty"`
+	DeliveryFee     int32                 `protobuf:"varint,8,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
+	Total           int32                 `protobuf:"varint,9,opt,name=total,proto3" json:"total,omitempty"`
+	CustomerAddress *Address              `protobuf:"bytes,10,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
+	MerchantAddress *Address              `protobuf:"bytes,11,opt,name=merchant_address,json=merchantAddress,proto3" json:"merchant_address,omitempty"`
+	CustomerContact *ContactInfo          `protobuf:"bytes,12,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
+	PaymentMethods  PaymentMethods        `protobuf:"varint,13,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
+	PaymentStatus   PaymentStatus         `protobuf:"varint,14,opt,name=payment_status,json=paymentStatus,proto3,enum=ihavefood.PaymentStatus" json:"payment_status,omitempty"`
+	OrderStatus     OrderStatus           `protobuf:"varint,15,opt,name=order_status,json=orderStatus,proto3,enum=ihavefood.OrderStatus" json:"order_status,omitempty"`
+	Timestamps      *OrderEventTimestamps `protobuf:"bytes,16,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -341,9 +341,9 @@ func (x *PlaceOrder) GetOrderStatus() OrderStatus {
 	return OrderStatus_PENDING
 }
 
-func (x *PlaceOrder) GetOrderTimestamps() *OrderTimestamps {
+func (x *PlaceOrder) GetTimestamps() *OrderEventTimestamps {
 	if x != nil {
-		return x.OrderTimestamps
+		return x.Timestamps
 	}
 	return nil
 }
@@ -408,29 +408,33 @@ func (x *OrderItem) GetNote() string {
 	return ""
 }
 
-type OrderTimestamps struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	CompleteTime  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=complete_time,json=completeTime,proto3" json:"complete_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type OrderEventTimestamps struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	OrderPlacedTime    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=order_placed_time,json=orderPlacedTime,proto3" json:"order_placed_time,omitempty"`
+	MerchantAcceptTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=merchant_accept_time,json=merchantAcceptTime,proto3" json:"merchant_accept_time,omitempty"`
+	RiderNotifiedTime  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=rider_notified_time,json=riderNotifiedTime,proto3" json:"rider_notified_time,omitempty"`
+	RiderAssignedTime  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=rider_assigned_time,json=riderAssignedTime,proto3" json:"rider_assigned_time,omitempty"`
+	RiderPickedUpTime  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=rider_picked_up_time,json=riderPickedUpTime,proto3" json:"rider_picked_up_time,omitempty"`
+	DeliveredTime      *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=delivered_time,json=deliveredTime,proto3" json:"delivered_time,omitempty"`
+	CancelledTime      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=cancelled_time,json=cancelledTime,proto3" json:"cancelled_time,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
-func (x *OrderTimestamps) Reset() {
-	*x = OrderTimestamps{}
+func (x *OrderEventTimestamps) Reset() {
+	*x = OrderEventTimestamps{}
 	mi := &file_orderservice_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *OrderTimestamps) String() string {
+func (x *OrderEventTimestamps) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OrderTimestamps) ProtoMessage() {}
+func (*OrderEventTimestamps) ProtoMessage() {}
 
-func (x *OrderTimestamps) ProtoReflect() protoreflect.Message {
+func (x *OrderEventTimestamps) ProtoReflect() protoreflect.Message {
 	mi := &file_orderservice_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -442,28 +446,56 @@ func (x *OrderTimestamps) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OrderTimestamps.ProtoReflect.Descriptor instead.
-func (*OrderTimestamps) Descriptor() ([]byte, []int) {
+// Deprecated: Use OrderEventTimestamps.ProtoReflect.Descriptor instead.
+func (*OrderEventTimestamps) Descriptor() ([]byte, []int) {
 	return file_orderservice_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *OrderTimestamps) GetCreateTime() *timestamppb.Timestamp {
+func (x *OrderEventTimestamps) GetOrderPlacedTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.CreateTime
+		return x.OrderPlacedTime
 	}
 	return nil
 }
 
-func (x *OrderTimestamps) GetUpdateTime() *timestamppb.Timestamp {
+func (x *OrderEventTimestamps) GetMerchantAcceptTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.UpdateTime
+		return x.MerchantAcceptTime
 	}
 	return nil
 }
 
-func (x *OrderTimestamps) GetCompleteTime() *timestamppb.Timestamp {
+func (x *OrderEventTimestamps) GetRiderNotifiedTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.CompleteTime
+		return x.RiderNotifiedTime
+	}
+	return nil
+}
+
+func (x *OrderEventTimestamps) GetRiderAssignedTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RiderAssignedTime
+	}
+	return nil
+}
+
+func (x *OrderEventTimestamps) GetRiderPickedUpTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RiderPickedUpTime
+	}
+	return nil
+}
+
+func (x *OrderEventTimestamps) GetDeliveredTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeliveredTime
+	}
+	return nil
+}
+
+func (x *OrderEventTimestamps) GetCancelledTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CancelledTime
 	}
 	return nil
 }
@@ -652,7 +684,7 @@ var File_orderservice_proto protoreflect.FileDescriptor
 
 const file_orderservice_proto_rawDesc = "" +
 	"\n" +
-	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\fcommon.proto\x1a\x15customerservice.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xff\x05\n" +
+	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\fcommon.proto\x1a\x15customerservice.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xf9\x05\n" +
 	"\n" +
 	"PlaceOrder\x12\x1d\n" +
 	"\n" +
@@ -674,18 +706,22 @@ const file_orderservice_proto_rawDesc = "" +
 	"\x10customer_contact\x18\f \x01(\v2\x16.ihavefood.ContactInfoR\x0fcustomerContact\x12B\n" +
 	"\x0fpayment_methods\x18\r \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods\x12?\n" +
 	"\x0epayment_status\x18\x0e \x01(\x0e2\x18.ihavefood.PaymentStatusR\rpaymentStatus\x129\n" +
-	"\forder_status\x18\x0f \x01(\x0e2\x16.ihavefood.OrderStatusR\vorderStatus\x12E\n" +
-	"\x10order_timestamps\x18\x10 \x01(\v2\x1a.ihavefood.OrderTimestampsR\x0forderTimestamps\"T\n" +
+	"\forder_status\x18\x0f \x01(\x0e2\x16.ihavefood.OrderStatusR\vorderStatus\x12?\n" +
+	"\n" +
+	"timestamps\x18\x10 \x01(\v2\x1f.ihavefood.OrderEventTimestampsR\n" +
+	"timestamps\"T\n" +
 	"\tOrderItem\x12\x17\n" +
 	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x12\n" +
-	"\x04note\x18\x03 \x01(\tR\x04note\"\xcc\x01\n" +
-	"\x0fOrderTimestamps\x12;\n" +
-	"\vcreate_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\x12;\n" +
-	"\vupdate_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\x12?\n" +
-	"\rcomplete_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\fcompleteTime\"w\n" +
+	"\x04note\x18\x03 \x01(\tR\x04note\"\x97\x04\n" +
+	"\x14OrderEventTimestamps\x12F\n" +
+	"\x11order_placed_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0forderPlacedTime\x12L\n" +
+	"\x14merchant_accept_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x12merchantAcceptTime\x12J\n" +
+	"\x13rider_notified_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x11riderNotifiedTime\x12J\n" +
+	"\x13rider_assigned_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x11riderAssignedTime\x12K\n" +
+	"\x14rider_picked_up_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x11riderPickedUpTime\x12A\n" +
+	"\x0edelivered_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\rdeliveredTime\x12A\n" +
+	"\x0ecancelled_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\rcancelledTime\"w\n" +
 	"\x17ListOrderHistoryRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId:;\x92A826{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\"}\"T\n" +
@@ -744,7 +780,7 @@ var file_orderservice_proto_goTypes = []any{
 	(OrderStatus)(0),                 // 2: ihavefood.OrderStatus
 	(*PlaceOrder)(nil),               // 3: ihavefood.PlaceOrder
 	(*OrderItem)(nil),                // 4: ihavefood.OrderItem
-	(*OrderTimestamps)(nil),          // 5: ihavefood.OrderTimestamps
+	(*OrderEventTimestamps)(nil),     // 5: ihavefood.OrderEventTimestamps
 	(*ListOrderHistoryRequest)(nil),  // 6: ihavefood.ListOrderHistoryRequest
 	(*ListOrderHistoryResponse)(nil), // 7: ihavefood.ListOrderHistoryResponse
 	(*CreatePlaceOrderRequest)(nil),  // 8: ihavefood.CreatePlaceOrderRequest
@@ -760,22 +796,26 @@ var file_orderservice_proto_depIdxs = []int32{
 	0,  // 4: ihavefood.PlaceOrder.payment_methods:type_name -> ihavefood.PaymentMethods
 	1,  // 5: ihavefood.PlaceOrder.payment_status:type_name -> ihavefood.PaymentStatus
 	2,  // 6: ihavefood.PlaceOrder.order_status:type_name -> ihavefood.OrderStatus
-	5,  // 7: ihavefood.PlaceOrder.order_timestamps:type_name -> ihavefood.OrderTimestamps
-	11, // 8: ihavefood.OrderTimestamps.create_time:type_name -> google.protobuf.Timestamp
-	11, // 9: ihavefood.OrderTimestamps.update_time:type_name -> google.protobuf.Timestamp
-	11, // 10: ihavefood.OrderTimestamps.complete_time:type_name -> google.protobuf.Timestamp
-	3,  // 11: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
-	4,  // 12: ihavefood.CreatePlaceOrderRequest.items:type_name -> ihavefood.OrderItem
-	0,  // 13: ihavefood.CreatePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
-	6,  // 14: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
-	8,  // 15: ihavefood.OrderService.CreatePlaceOrder:input_type -> ihavefood.CreatePlaceOrderRequest
-	7,  // 16: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
-	3,  // 17: ihavefood.OrderService.CreatePlaceOrder:output_type -> ihavefood.PlaceOrder
-	16, // [16:18] is the sub-list for method output_type
-	14, // [14:16] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	5,  // 7: ihavefood.PlaceOrder.timestamps:type_name -> ihavefood.OrderEventTimestamps
+	11, // 8: ihavefood.OrderEventTimestamps.order_placed_time:type_name -> google.protobuf.Timestamp
+	11, // 9: ihavefood.OrderEventTimestamps.merchant_accept_time:type_name -> google.protobuf.Timestamp
+	11, // 10: ihavefood.OrderEventTimestamps.rider_notified_time:type_name -> google.protobuf.Timestamp
+	11, // 11: ihavefood.OrderEventTimestamps.rider_assigned_time:type_name -> google.protobuf.Timestamp
+	11, // 12: ihavefood.OrderEventTimestamps.rider_picked_up_time:type_name -> google.protobuf.Timestamp
+	11, // 13: ihavefood.OrderEventTimestamps.delivered_time:type_name -> google.protobuf.Timestamp
+	11, // 14: ihavefood.OrderEventTimestamps.cancelled_time:type_name -> google.protobuf.Timestamp
+	3,  // 15: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
+	4,  // 16: ihavefood.CreatePlaceOrderRequest.items:type_name -> ihavefood.OrderItem
+	0,  // 17: ihavefood.CreatePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
+	6,  // 18: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
+	8,  // 19: ihavefood.OrderService.CreatePlaceOrder:input_type -> ihavefood.CreatePlaceOrderRequest
+	7,  // 20: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
+	3,  // 21: ihavefood.OrderService.CreatePlaceOrder:output_type -> ihavefood.PlaceOrder
+	20, // [20:22] is the sub-list for method output_type
+	18, // [18:20] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_orderservice_proto_init() }
