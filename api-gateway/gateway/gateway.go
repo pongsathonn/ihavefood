@@ -45,8 +45,10 @@ func (g *gateway) SetupMux() *runtime.ServeMux {
 		runtime.WithHealthzEndpoint(grpc_health_v1.NewHealthClient(cl)),
 	)
 
-	// BUG: if does not panick when uri incorrect.
-	// because it only register not call. TODO: impl healthcheck
+	// BUG: it does not panick when uri incorrect.
+	// because it only register not call.
+	//
+	// TODO: impl healthcheck
 	for env, f := range map[string]func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error{
 		"CUSTOMER_URI": pb.RegisterCustomerServiceHandlerFromEndpoint,
 		"COUPON_URI":   pb.RegisterCouponServiceHandlerFromEndpoint,
