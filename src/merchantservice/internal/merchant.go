@@ -76,22 +76,22 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 	return dbToProto(merchant), nil
 }
 
-func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerchantRequest) (*pb.Merchant, error) {
-
-	uuid, err := uuid.Parse(in.MerchantId)
-	if err != nil {
-		slog.Error("invalid uuid", "err", err)
-		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
-	}
-
-	merchant, err := x.storage.SaveMerchant(ctx, uuid.String(), in.MerchantName)
-	if err != nil {
-		slog.Error("storage save merchant", "err", err)
-		return nil, status.Error(codes.Internal, "internal server error")
-	}
-
-	return dbToProto(merchant), nil
-}
+// func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerchantRequest) (*pb.Merchant, error) {
+//
+// 	uuid, err := uuid.Parse(in.MerchantId)
+// 	if err != nil {
+// 		slog.Error("invalid uuid", "err", err)
+// 		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
+// 	}
+//
+// 	merchant, err := x.storage.SaveMerchant(ctx, uuid.String(), in.MerchantName)
+// 	if err != nil {
+// 		slog.Error("storage save merchant", "err", err)
+// 		return nil, status.Error(codes.Internal, "internal server error")
+// 	}
+//
+// 	return dbToProto(merchant), nil
+// }
 
 func (x *MerchantService) UpdateMerchant(ctx context.Context, in *pb.UpdateMerchantRequest) (*pb.Merchant, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateMerchant not implemented")
