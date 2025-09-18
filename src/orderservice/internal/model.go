@@ -3,7 +3,7 @@ package internal
 import (
 	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
+	// "google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
@@ -94,6 +94,17 @@ type dbTimestamps struct {
 	CompleteTime time.Time `bson:"completeTime"`
 }
 
+// EventToStatus maps event to status after an event.
+var EventToStatus = map[any]pb.OrderStatus{
+	pb.OrderEvent_ORDER_PLACED_EVENT:      pb.OrderStatus_PENDING,
+	pb.OrderEvent_MERCHANT_ACCEPTED_EVENT: pb.OrderStatus_PREPARING_ORDER,
+	pb.OrderEvent_RIDER_NOTIFIED_EVENT:    pb.OrderStatus_FINDING_RIDER,
+	pb.OrderEvent_RIDER_ASSIGNED_EVENT:    pb.OrderStatus_WAIT_FOR_PICKUP,
+	pb.OrderEvent_RIDER_PICKED_UP_EVENT:   pb.OrderStatus_ONGOING,
+	pb.OrderEvent_RIDER_DELIVERED_EVENT:   pb.OrderStatus_DELIVERED,
+	pb.OrderEvent_ORDER_CANCELLED_EVENT:   pb.OrderStatus_CANCELLED,
+}
+
 func toDbContactInfo(ct *pb.ContactInfo) *dbContactInfo {
 	if ct == nil {
 		return nil
@@ -151,8 +162,8 @@ func toProtoPlaceOrder(order *dbPlaceOrder) *pb.PlaceOrder {
 	}
 
 	return &pb.PlaceOrder{
-		OrderId:         order.OrderID,
 		RequestId:       order.RequestID,
+		OrderId:         order.OrderID,
 		CustomerId:      order.CustomerID,
 		MerchantId:      order.MerchantID,
 		Items:           items,
@@ -165,10 +176,9 @@ func toProtoPlaceOrder(order *dbPlaceOrder) *pb.PlaceOrder {
 		PaymentMethods:  pb.PaymentMethods(order.PaymentMethods),
 		PaymentStatus:   pb.PaymentStatus(order.PaymentStatus),
 		OrderStatus:     pb.OrderStatus(order.OrderStatus),
-		OrderTimestamps: &pb.OrderTimestamps{
-			CreateTime:   timestamppb.New(order.Timestamps.CreateTime),
-			UpdateTime:   timestamppb.New(order.Timestamps.UpdateTime),
-			CompleteTime: timestamppb.New(order.Timestamps.CompleteTime),
-		},
+		// Timestamps: &pb.OrderEventTimestamps{
+		// 	OrderPlacedTime: timestamppb.New(order.Timestamps.TODO)
+		// 	// TODO: ...other fields.
+		// },
 	}
 }
