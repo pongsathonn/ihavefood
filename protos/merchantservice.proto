@@ -23,7 +23,6 @@ service MerchantService {
         };
     }
 
-    rpc CreateMerchant(CreateMerchantRequest) returns(Merchant){}
     rpc UpdateMerchant(UpdateMerchantRequest) returns(Merchant) {
         option (google.api.http) = {
             patch: "/api/merchants/{merchant_id}"
@@ -88,11 +87,6 @@ message GetMerchantRequest{
 
 message ListMerchantsResponse{
     repeated Merchant merchants = 1;
-}
-
-message CreateMerchantRequest {
-    string merchant_id = 1;
-    string merchant_name = 2;
 }
 
 message UpdateMerchantRequest {
