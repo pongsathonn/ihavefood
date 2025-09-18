@@ -1,22 +1,6 @@
 use chrono::{DateTime, Utc};
 use sqlx::{sqlite::SqliteRow, FromRow, Row};
 
-// DbDelivery represent delivery record information for an order
-pub struct DbDelivery {
-    pub order_id: String,
-    // rider who accept the order
-    pub rider: Option<DbRider>,
-    // PickupCode is code 3 digit for rider pickup
-    pub pickup_code: String,
-    // pickup_location is Merchant address
-    pub pickup_location: DbPoint,
-    // drop_off_location is User address
-    pub drop_off_location: DbPoint,
-    // Delivery status
-    pub status: DbDeliveryStatus,
-    pub timestamp: DbTimestamp,
-}
-
 #[derive(Debug, FromRow)]
 pub struct DbRider {
     pub id: String,
@@ -24,15 +8,9 @@ pub struct DbRider {
     pub phone_number: String,
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
-#[repr(i32)]
-pub enum DbDeliveryStatus {
-    // UNACCEPTED indicates the rider has not yet accepted the order.
-    Unaccept,
-    // ACCEPTED indicates the rider has accepted the order.
-    Accepted,
-    // DELIVERED indicates the order has been delivered by the rider.
-    Delivered,
+pub struct DbPoint {
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 pub struct DbTimestamp {
@@ -45,19 +23,34 @@ pub struct DbTimestamp {
     pub deliver_time: Option<DateTime<Utc>>,
 }
 
-// use this if want to query only point
-pub struct DbPoint {
-    pub latitude: f64,
-    pub longitude: f64,
-}
-
 // NewOrder instead ?
-pub struct NewDelivery {
+// pub struct NewDelivery {
+//     pub order_id: String,
+//     pub pickup_code: String,
+//     pub pickup_location: DbPoint,
+//     pub drop_off_location: DbPoint,
+//     pub create_time: DateTime<Utc>,
+// }
+
+// DbDelivery represent delivery record information for an order
+//
+// We might not need Delivery table
+// think about this
+// - it should only have riders table
+// - pickup info ? nah we can store it in orderservice
+// - delivery status ? just tracking from orderservice.
+pub struct DbDelivery {
     pub order_id: String,
+    // rider who accept the order
+    pub rider: Option<DbRider>,
+    // PickupCode is code 3 digit for rider pickup
     pub pickup_code: String,
+    // pickup_location is Merchant address
     pub pickup_location: DbPoint,
+    // drop_off_location is User address
     pub drop_off_location: DbPoint,
-    pub create_time: DateTime<Utc>,
+    // pub status: DeliveryStatus,
+    pub timestamp: DbTimestamp,
 }
 
 pub struct NewRider {
@@ -69,6 +62,16 @@ pub struct NewRider {
 //==============================
 //            impl
 //==============================
+
+// impl DeliveryStatus {
+//     pub fn as_str(&self) -> &'static str {
+//         match self {
+//             Self::Unaccept => "unaccept",
+//             Self::Accepted => "accepted",
+//             Self::Delivered => "delivered",
+//         }
+//     }
+// }
 
 impl FromRow<'_, SqliteRow> for DbDelivery {
     fn from_row(row: &SqliteRow) -> sqlx::Result<Self> {
@@ -88,7 +91,7 @@ impl FromRow<'_, SqliteRow> for DbDelivery {
                 latitude: row.try_get("drop_off_lat")?,
                 longitude: row.try_get("drop_off_lng")?,
             },
-            status: row.try_get("status")?,
+            // status: row.try_get("status")?,
             timestamp: DbTimestamp {
                 create_time: row.try_get("create_time")?,
                 accept_time: row.try_get("accept_time")?,
