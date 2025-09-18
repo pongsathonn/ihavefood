@@ -14,30 +14,21 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 // Manages coupons.
 service CouponService {
 
-    // ListCoupons retrieves all coupons from the database without filtering for expiration or quantity.
-    // This method is intended to be used by the frontend to display a list of all coupons to customers, 
-    // regardless of their validity or availability.
-    //
-    // TODO: In the future, this method might be updated to list coupons by other condition,
-    // but currently, it responds with all coupons.
+    //ListCoupons shows all coupons.
     rpc ListCoupons(google.protobuf.Empty) returns(ListCouponsResponse){
         option (google.api.http) = {
             get: "/api/coupons" 
         };
     }
 
-    // GetCoupon retrieves a coupon by its code. The response is a coupon that has not expired and 
-    // has sufficient quantity.
+    // GetCoupon shows a valid coupon by code.
     rpc GetCoupon(GetCouponRequest) returns(Coupon) {
         option (google.api.http) = {
             get: "/api/coupons/{code}" 
         };
     }
 
-
-    // AddCoupon creates a new coupon with the specified details. There are two types of coupons:
-    // Discount and Free. The discount value for Discount type coupons must be between 1 and 99.
-    // If the coupon type is Free, the discount field is ignored and automatically set to zero.
+    // AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).
     rpc AddCoupon(AddCouponRequest) returns(Coupon){
         option (google.api.http) = {
             post: "/api/coupons"
@@ -45,8 +36,7 @@ service CouponService {
         };
     }
 
-    // RedeemCoupon is called when an order payment is success. This method 
-    // updates the quantity of the coupon.
+    // RedeemCoupon updates coupon quantity after an order is paid.
     rpc RedeemCoupon(RedeemCouponRequest) returns (RedeemCouponResponse){}
 }
 
@@ -77,6 +67,9 @@ enum CouponTypes{
 message AddCouponRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
       example: "{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}"
+      json_schema: {
+        description: "NOTE: if type is FREE_DELIVERY, discount will be ignored"
+      }
     };
 
     CouponTypes coupon_types = 1;
