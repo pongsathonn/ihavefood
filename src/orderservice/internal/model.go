@@ -152,6 +152,10 @@ func toProtoAddress(addr *dbAddress) *pb.Address {
 
 func toProtoPlaceOrder(order *dbPlaceOrder) *pb.PlaceOrder {
 
+	if order == nil {
+		return nil
+	}
+
 	var items []*pb.OrderItem
 	for _, item := range order.Items {
 		items = append(items, &pb.OrderItem{

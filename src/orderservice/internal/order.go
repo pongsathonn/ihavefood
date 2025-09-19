@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -70,8 +69,8 @@ func (x *OrderService) CreatePlaceOrder(ctx context.Context, in *pb.CreatePlaceO
 
 	newOrder, err := x.prepareNewOrder(in)
 	if err != nil {
-		// TODO: include prepare error in response(customer errors).
-		return nil, status.Error(codes.FailedPrecondition, "failed to prepare new order")
+		slog.Error("Failed to prepare new order", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	orderID, err := x.storage.Create(ctx, newOrder)
@@ -253,10 +252,6 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 	coupon, err := x.clients.Coupon.GetCoupon(ctx, &pb.GetCouponRequest{Code: newOrder.CouponCode})
 	if err != nil {
 		return nil, err
-	}
-
-	if time.Now().After(time.Unix(coupon.ExpiresIn, 0)) || coupon.QuantityCount <= 0 {
-		return nil, errors.New("coupon is expired or has no remaining uses")
 	}
 
 	total := (deliveryFee.Fee + foodCost) - coupon.Discount
