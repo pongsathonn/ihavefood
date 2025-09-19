@@ -187,68 +187,122 @@
             const couponStatus = document.getElementById('coupon-status');
 
             // --- Static Data (no backend calls) ---
+            // const hardcodedRestaurants = [ -->
+            //     { -->
+            //         merchantId: 'a1b2c3d4e5f6', -->
+            //         merchantName: 'อร่อยดีตามสั่ง', -->
+            //         image: './res1.png', -->
+            //         status: 'OPEN', -->
+            //         menu: [ -->
+            //             { itemId: '101', foodName: 'ข้าวผัดหมู', price: 50 }, -->
+            //             { itemId: '102', foodName: 'กระเพราะหมูสับ', price: 50 }, -->
+            //             { itemId: '103', foodName: 'สุกี้แห้ง', price: 60 } -->
+            //         ] -->
+            //     }, -->
+            //     { -->
+            //         merchantId: 'f7g8h9i0j1k2', -->
+            //         merchantName: 'ทองสมุต', -->
+            //         image: './res2.png', -->
+            //         status: 'OPEN', -->
+            //         menu: [ -->
+            //             { itemId: '201', foodName: 'เส้นเล็กน้ำใสหมู', price: 50 }, -->
+            //             { itemId: '202', foodName: 'หมี่เหลืองต้มยำทะเล', price:  80 }, -->
+            //             { itemId: '203', foodName: 'เส้นเล็กน้ำตกเนื้อ', price: 60 }, -->
+            //         ] -->
+            //     }, -->
+            //     { -->
+            //         merchantId: 'l3m4n5o6p7q8', -->
+            //         merchantName: 'เบ เบ เกอรี่', -->
+            //         image: './res3.png', -->
+            //         status: 'CLOSED', -->
+            //         menu: [ -->
+            //             { itemId: '301', foodName: 'Pad See Ew', price: 16000 }, -->
+            //             { itemId: '302', foodName: 'Drunken Noodles', price: 17000 }, -->
+            //             { itemId: '303', foodName: 'Spring Rolls', price: 8000 } -->
+            //         ] -->
+            //     }, -->
+            //     { -->
+            //         merchantId: 'l3m4n5o6p7q8', -->
+            //         merchantName:'ไก่จอมพลัง', -->
+            //         image: './res4.png', -->
+            //         status: 'OPEN', -->
+            //         menu: [ -->
+            //             { itemId: '301', foodName: 'Pad See Ew', price: 16000 }, -->
+            //             { itemId: '302', foodName: 'Drunken Noodles', price: 17000 }, -->
+            //             { itemId: '303', foodName: 'Spring Rolls', price: 8000 } -->
+            //         ] -->
+            //     }, -->
+            // ]; -->
+
             const hardcodedRestaurants = [
                 {
                     merchantId: 'a1b2c3d4e5f6',
-                    merchantName: 'Amily Mheekhaicheek',
+                    merchantName: 'อร่อยดีตามสั่ง',
+                    image: './res1.png',
                     status: 'OPEN',
                     menu: [
-                        { itemId: '101', foodName: 'Pad Thai', price: 15000 },
-                        { itemId: '102', foodName: 'Green Curry', price: 18000 },
-                        { itemId: '103', foodName: 'Thai Iced Tea', price: 5000 }
+                        { itemId: '101', foodName: 'ข้าวผัดหมู', price: 50 },
+                        { itemId: '102', foodName: 'กระเพราไก่', price: 50 },
+                        { itemId: '103', foodName: 'สุกี้แห้ง', price: 60 }
                     ]
                 },
                 {
                     merchantId: 'f7g8h9i0j1k2',
-                    merchantName: 'Thongsmit (Noodle)',
+                    merchantName: 'ทองสมุต',
+                    image: './res2.png',
                     status: 'OPEN',
                     menu: [
-                        { itemId: '201', foodName: 'Tom Yum Soup', price: 20000 },
-                        { itemId: '202', foodName: 'Massaman Curry', price: 22000 },
-                        { itemId: '203', foodName: 'Sticky Rice with Mango', price: 10000 }
+                        { itemId: '201', foodName: 'ก๋วยเตี๋ยวหมูน้ำใส', price: 40 },
+                        { itemId: '202', foodName: 'ก๋วยเตี๋ยวต้มยำ', price: 45 },
+                        { itemId: '203', foodName: 'เส้นเล็กแห้งหมู', price: 45 }
                     ]
                 },
                 {
                     merchantId: 'l3m4n5o6p7q8',
-                    merchantName: 'Somtum',
+                    merchantName: 'ส้มตำอีสาน',
+                    image: './res3.png',
                     status: 'CLOSED',
                     menu: [
-                        { itemId: '301', foodName: 'Pad See Ew', price: 16000 },
-                        { itemId: '302', foodName: 'Drunken Noodles', price: 17000 },
-                        { itemId: '303', foodName: 'Spring Rolls', price: 8000 }
+                        { itemId: '301', foodName: 'ส้มตำไทย', price: 50 },
+                        { itemId: '302', foodName: 'ส้มตำปู', price: 55 },
+                        { itemId: '303', foodName: 'ไก่ย่าง', price: 60 }
                     ]
                 },
                 {
-                    merchantId: 'l3m4n5o6p7q8',
-                    merchantName: 'Somtum',
+                    merchantId: 'm9n0o1p2q3r4',
+                    merchantName:'ไก่จอมพลัง',
+                    image: './res4.png',
                     status: 'CLOSED',
                     menu: [
-                        { itemId: '301', foodName: 'Pad See Ew', price: 16000 },
-                        { itemId: '302', foodName: 'Drunken Noodles', price: 17000 },
-                        { itemId: '303', foodName: 'Spring Rolls', price: 8000 }
+                        { itemId: '401', foodName: 'ข้าวมันไก่ธรรมดา', price: 50 },
+                        { itemId: '402', foodName: 'ข้าวมันไก่พิเศษ', price: 60 },
+                        { itemId: '403', foodName: 'ไก่ทอดน้ำปลา', price: 65 }
                     ]
                 },
                 {
-                    merchantId: 'l3m4n5o6p7q8',
-                    merchantName: 'Somtum',
+                    merchantId: 'p5q6r7s8t9u0',
+                    merchantName:'ปั่น ปั่น สดชื่น',
+                    image: './res5.png',
                     status: 'CLOSED',
                     menu: [
-                        { itemId: '301', foodName: 'Pad See Ew', price: 16000 },
-                        { itemId: '302', foodName: 'Drunken Noodles', price: 17000 },
-                        { itemId: '303', foodName: 'Spring Rolls', price: 8000 }
+                        { itemId: '501', foodName: 'น้ำส้มปั่น', price: 35 },
+                        { itemId: '502', foodName: 'น้ำแตงโมปั่น', price: 35 },
+                        { itemId: '503', foodName: 'สมูทตี้สตรอว์เบอร์รี', price: 50 }
                     ]
                 },
                 {
-                    merchantId: 'l3m4n5o6p7q8',
-                    merchantName: 'Somtum',
+                    merchantId: 'v1w2x3y4z5a6',
+                    merchantName: 'ใจดีสเต็ก',
+                    image: './res6.png',
                     status: 'CLOSED',
                     menu: [
-                        { itemId: '301', foodName: 'Pad See Ew', price: 16000 },
-                        { itemId: '302', foodName: 'Drunken Noodles', price: 17000 },
-                        { itemId: '303', foodName: 'Spring Rolls', price: 8000 }
+                        { itemId: '601', foodName: 'สเต็กเนื้อ', price: 150 },
+                        { itemId: '602', foodName: 'สเต็กไก่', price: 120 },
+                        { itemId: '603', foodName: 'เฟรนช์ฟรายส์', price: 50 }
                     ]
                 }
             ];
+
 
             // --- UI Rendering Functions ---
             const showSection = (sectionId) => {
@@ -267,7 +321,8 @@
                 merchants.forEach(merchant => {
                     const card = document.createElement('div');
                     card.className = `restaurant-card bg-gray-50 rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-lg ${merchant.status === 'CLOSED' ? 'opacity-50 pointer-events-none' : ''}`;
-                    const imageUrl = `https://placehold.co/400x200/50c878/fff?text=${encodeURIComponent(merchant.merchantName.replace(/\s/g, '+'))}`;
+                    // const imageUrl = `https://placehold.co/400x200/50c878/fff?text=${encodeURIComponent(merchant.merchantName.replace(/\s/g, '+'))}`;
+                    const imageUrl = merchant.image;
                     card.innerHTML = `
                         <img src="${imageUrl}" alt="${merchant.merchantName}" class="w-full h-32 object-cover">
                         <div class="p-4">
@@ -297,7 +352,8 @@
                 menu.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'food-item-card bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between';
-                    const imageUrl = `https://placehold.co/150x150/f97316/fff?text=${encodeURIComponent(item.foodName.replace(/\s/g, '+'))}`;
+                    // const imageUrl = `https://placehold.co/150x150/f97316/fff?text=${encodeURIComponent(item.foodName.replace(/\s/g, '+'))}`;
+                    const imageUrl = item.image;
                     card.innerHTML = `
                         <div class="flex items-center space-x-4">
                             <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
