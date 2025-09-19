@@ -102,6 +102,9 @@ message ListOrderHistoryResponse {
 }
 
 message CreatePlaceOrderRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"request_id\":\"cee942b9-5ae7-4511-9717-5e6a9d10ece2\",\"customer_id\":\"f7407f59-3904-495b-b7d1-c15dbbb723e3\",\"merchant_id\":\"422fe523-b6a0-4ff0-8cb5-aa6c65c29285\",\"items\":[{\"item_id\":\"874ae56c-730a-43cd-a0d6-96e8f0ccdad7\",\"quantity\":2,\"note\":\"no spice\"},{\"item_id\":\"28cf88d0-a31c-41b7-8c0e-e85e6344a99d\",\"quantity\":1,\"note\":\"extra egg\"}],\"coupon_code\":\"DISCOUNT10\",\"customer_address_id\":\"c912f252-4ceb-49e8-82eb-63ea6a61b8a2\",\"payment_methods\":\"PAYMENT_METHOD_CREDIT_CARD\"}"
+    };
     string request_id = 1;
     string customer_id = 2;
     string merchant_id = 3;

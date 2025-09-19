@@ -726,7 +726,7 @@ const file_orderservice_proto_rawDesc = "" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId:;\x92A826{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\"}\"T\n" +
 	"\x18ListOrderHistoryResponse\x128\n" +
-	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\xbb\x02\n" +
+	"\fplace_orders\x18\x01 \x03(\v2\x15.ihavefood.PlaceOrderR\vplaceOrders\"\x9a\x06\n" +
 	"\x17CreatePlaceOrderRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1f\n" +
@@ -738,7 +738,7 @@ const file_orderservice_proto_rawDesc = "" +
 	"\vcoupon_code\x18\x05 \x01(\tR\n" +
 	"couponCode\x12.\n" +
 	"\x13customer_address_id\x18\x06 \x01(\tR\x11customerAddressId\x12B\n" +
-	"\x0fpayment_methods\x18\a \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods*\x88\x01\n" +
+	"\x0fpayment_methods\x18\a \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods:\xdc\x03\x92A\xd8\x032\xd5\x03{\"request_id\":\"cee942b9-5ae7-4511-9717-5e6a9d10ece2\",\"customer_id\":\"f7407f59-3904-495b-b7d1-c15dbbb723e3\",\"merchant_id\":\"422fe523-b6a0-4ff0-8cb5-aa6c65c29285\",\"items\":[{\"item_id\":\"874ae56c-730a-43cd-a0d6-96e8f0ccdad7\",\"quantity\":2,\"note\":\"no spice\"},{\"item_id\":\"28cf88d0-a31c-41b7-8c0e-e85e6344a99d\",\"quantity\":1,\"note\":\"extra egg\"}],\"coupon_code\":\"DISCOUNT10\",\"customer_address_id\":\"c912f252-4ceb-49e8-82eb-63ea6a61b8a2\",\"payment_methods\":\"PAYMENT_METHOD_CREDIT_CARD\"}*\x88\x01\n" +
 	"\x0ePaymentMethods\x12\x1e\n" +
 	"\x1aPAYMENT_METHOD_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PAYMENT_METHOD_CASH\x10\x01\x12\x1e\n" +
