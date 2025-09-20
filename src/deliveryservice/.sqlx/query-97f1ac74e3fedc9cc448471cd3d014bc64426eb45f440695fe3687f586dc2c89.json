@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO riders( id, username) VALUES(?,?);\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "97f1ac74e3fedc9cc448471cd3d014bc64426eb45f440695fe3687f586dc2c89"
+}
