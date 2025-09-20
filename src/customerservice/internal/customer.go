@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strings"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -163,9 +164,11 @@ func (x *CustomerService) HandleCustomerCreation() chan<- amqp.Delivery {
 				continue
 			}
 
+			//
+
 			customerID, err := x.store.create(context.TODO(), &dbNewCustomer{
 				CustomerID: newCustomer.CustomerId,
-				Username:   newCustomer.Username,
+				Username:   strings.Split(newCustomer.Email, "@")[0],
 				CreateTime: newCustomer.CreateTime.AsTime(),
 			})
 			if err != nil {
