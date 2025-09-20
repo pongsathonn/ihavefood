@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName         = "/ihavefood.AuthService/Register"
-	AuthService_Login_FullMethodName            = "/ihavefood.AuthService/Login"
-	AuthService_VerifyUserToken_FullMethodName  = "/ihavefood.AuthService/VerifyUserToken"
-	AuthService_VerifyAdminToken_FullMethodName = "/ihavefood.AuthService/VerifyAdminToken"
+	AuthService_Register_FullMethodName          = "/ihavefood.AuthService/Register"
+	AuthService_Login_FullMethodName             = "/ihavefood.AuthService/Login"
+	AuthService_UpdatePhoneNumber_FullMethodName = "/ihavefood.AuthService/UpdatePhoneNumber"
+	AuthService_VerifyUserToken_FullMethodName   = "/ihavefood.AuthService/VerifyUserToken"
+	AuthService_VerifyAdminToken_FullMethodName  = "/ihavefood.AuthService/VerifyAdminToken"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -30,12 +31,13 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // ---------------------AUTH SERVICE------------------------------
-// Manages user credentials
+// Manages auth credentials
 type AuthServiceClient interface {
-	// Create a new user (customer, merchant, rider) using one endpoint.
-	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*UserCredentials, error)
-	// Login sign in as any user (customer, merchant, rider).
+	// Create a new auth credential (customer, merchant, rider) using one endpoint.
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthCredentials, error)
+	// Login sign in as any auth user (customer, merchant, rider).
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	UpdatePhoneNumber(ctx context.Context, in *UpdatePhoneNumberRequest, opts ...grpc.CallOption) (*UpdatePhoneNumberResponse, error)
 	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
 	VerifyUserToken(ctx context.Context, in *VerifyUserTokenRequest, opts ...grpc.CallOption) (*VerifyUserTokenResponse, error)
 	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
@@ -50,9 +52,9 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
 }
 
-func (c *authServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*UserCredentials, error) {
+func (c *authServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthCredentials, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserCredentials)
+	out := new(AuthCredentials)
 	err := c.cc.Invoke(ctx, AuthService_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -64,6 +66,16 @@ func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ..
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoginResponse)
 	err := c.cc.Invoke(ctx, AuthService_Login_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) UpdatePhoneNumber(ctx context.Context, in *UpdatePhoneNumberRequest, opts ...grpc.CallOption) (*UpdatePhoneNumberResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdatePhoneNumberResponse)
+	err := c.cc.Invoke(ctx, AuthService_UpdatePhoneNumber_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +107,13 @@ func (c *authServiceClient) VerifyAdminToken(ctx context.Context, in *VerifyAdmi
 // for forward compatibility.
 //
 // ---------------------AUTH SERVICE------------------------------
-// Manages user credentials
+// Manages auth credentials
 type AuthServiceServer interface {
-	// Create a new user (customer, merchant, rider) using one endpoint.
-	Register(context.Context, *RegisterRequest) (*UserCredentials, error)
-	// Login sign in as any user (customer, merchant, rider).
+	// Create a new auth credential (customer, merchant, rider) using one endpoint.
+	Register(context.Context, *RegisterRequest) (*AuthCredentials, error)
+	// Login sign in as any auth user (customer, merchant, rider).
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	UpdatePhoneNumber(context.Context, *UpdatePhoneNumberRequest) (*UpdatePhoneNumberResponse, error)
 	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
 	VerifyUserToken(context.Context, *VerifyUserTokenRequest) (*VerifyUserTokenResponse, error)
 	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
@@ -115,11 +128,14 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest) (*UserCredentials, error) {
+func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest) (*AuthCredentials, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
 func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthServiceServer) UpdatePhoneNumber(context.Context, *UpdatePhoneNumberRequest) (*UpdatePhoneNumberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePhoneNumber not implemented")
 }
 func (UnimplementedAuthServiceServer) VerifyUserToken(context.Context, *VerifyUserTokenRequest) (*VerifyUserTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyUserToken not implemented")
@@ -184,6 +200,24 @@ func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_UpdatePhoneNumber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePhoneNumberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).UpdatePhoneNumber(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_UpdatePhoneNumber_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).UpdatePhoneNumber(ctx, req.(*UpdatePhoneNumberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_VerifyUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(VerifyUserTokenRequest)
 	if err := dec(in); err != nil {
@@ -234,6 +268,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _AuthService_Login_Handler,
+		},
+		{
+			MethodName: "UpdatePhoneNumber",
+			Handler:    _AuthService_UpdatePhoneNumber_Handler,
 		},
 		{
 			MethodName: "VerifyUserToken",

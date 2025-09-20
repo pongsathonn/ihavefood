@@ -426,8 +426,7 @@ func (x *RiderDeliveredEvent) GetDeliverTime() *timestamppb.Timestamp {
 type SyncCustomerCreated struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -470,16 +469,9 @@ func (x *SyncCustomerCreated) GetCustomerId() string {
 	return ""
 }
 
-func (x *SyncCustomerCreated) GetUsername() string {
+func (x *SyncCustomerCreated) GetEmail() string {
 	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *SyncCustomerCreated) GetPhoneNumber() string {
-	if x != nil {
-		return x.PhoneNumber
+		return x.Email
 	}
 	return ""
 }
@@ -494,8 +486,7 @@ func (x *SyncCustomerCreated) GetCreateTime() *timestamppb.Timestamp {
 type SyncRiderCreated struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -538,16 +529,9 @@ func (x *SyncRiderCreated) GetRiderId() string {
 	return ""
 }
 
-func (x *SyncRiderCreated) GetUsername() string {
+func (x *SyncRiderCreated) GetEmail() string {
 	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *SyncRiderCreated) GetPhoneNumber() string {
-	if x != nil {
-		return x.PhoneNumber
+		return x.Email
 	}
 	return ""
 }
@@ -560,12 +544,9 @@ func (x *SyncRiderCreated) GetCreateTime() *timestamppb.Timestamp {
 }
 
 type SyncMerchantCreated struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	MerchantId string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
-	// Email is used to set the default merchant name (from the local part).
-	// Example: foo555@mail.com → Merchant Name: foo555
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MerchantId    string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -615,13 +596,6 @@ func (x *SyncMerchantCreated) GetEmail() string {
 	return ""
 }
 
-func (x *SyncMerchantCreated) GetPhoneNumber() string {
-	if x != nil {
-		return x.PhoneNumber
-	}
-	return ""
-}
-
 func (x *SyncMerchantCreated) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
@@ -659,25 +633,22 @@ const file_events_proto_rawDesc = "" +
 	"\x13RiderDeliveredEvent\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\x12=\n" +
-	"\fdeliver_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vdeliverTime\"\xb2\x01\n" +
+	"\fdeliver_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vdeliverTime\"\x89\x01\n" +
 	"\x13SyncCustomerCreated\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\x12;\n" +
+	"customerId\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12;\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\"\xa9\x01\n" +
+	"createTime\"\x80\x01\n" +
 	"\x10SyncRiderCreated\x12\x19\n" +
-	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\x12;\n" +
+	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12;\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\"\xac\x01\n" +
+	"createTime\"\x89\x01\n" +
 	"\x13SyncMerchantCreated\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
 	"merchantId\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x12!\n" +
-	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\x12;\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12;\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime*\xd7\x01\n" +
 	"\n" +

@@ -28,8 +28,6 @@ pub struct Point {
 pub struct Rider {
     #[prost(string, tag = "1")]
     pub rider_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub username: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub phone_number: ::prost::alloc::string::String,
 }
@@ -2811,9 +2809,7 @@ pub struct SyncCustomerCreated {
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub username: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub phone_number: ::prost::alloc::string::String,
+    pub email: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "4")]
     pub create_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
 }
@@ -2823,9 +2819,7 @@ pub struct SyncRiderCreated {
     #[prost(string, tag = "1")]
     pub rider_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub username: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub phone_number: ::prost::alloc::string::String,
+    pub email: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "4")]
     pub create_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
 }
@@ -2834,12 +2828,8 @@ pub struct SyncRiderCreated {
 pub struct SyncMerchantCreated {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
-    /// Email is used to set the default merchant name (from the local part).
-    /// Example: foo555@mail.com → Merchant Name: foo555
     #[prost(string, tag = "2")]
     pub email: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub phone_number: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "4")]
     pub create_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
 }
