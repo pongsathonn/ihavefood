@@ -1,1 +1,1 @@
-INSERT INTO riders( id, username, phone_number) VALUES(?,?,?);
+INSERT INTO riders( id, username) VALUES(?,?);
