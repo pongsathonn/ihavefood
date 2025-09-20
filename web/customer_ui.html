@@ -369,9 +369,9 @@
                 image: 'assets/res1.png',
                 status: 'OPEN',
                 menu: [
-                    { itemId: '101', foodName: 'ข้าวผัดหมู', price: 50 },
-                    { itemId: '102', foodName: 'กระเพราหมูไข่ดาว', price: 50 },
-                    { itemId: '103', foodName: 'สุกี้แห้งทะเล', price: 60 }
+                    { itemId: '101', foodName: 'ข้าวผัดหมู', price: 50, image: 'assets/khaopad_mu.png' },
+                    { itemId: '102', foodName: 'กระเพราหมูไข่ดาว', price: 50,image: 'assets/krapao_khaidaw.png' },
+                    { itemId: '103', foodName: 'สุกี้แห้งทะเล', price: 60 ,image: 'assets/sukiheng.png' }
                 ]
             },
             {
@@ -380,16 +380,16 @@
                 image: 'assets/res2.png',
                 status: 'OPEN',
                 menu: [
-                    { itemId: '201', foodName: 'ก๋วยเตี๋ยวหมูน้ำใส', price: 40 },
-                    { itemId: '202', foodName: 'ก๋วยเตี๋ยวต้มยำ', price: 45 },
-                    { itemId: '203', foodName: 'เส้นเล็กแห้งหมู', price: 45 }
+                    { itemId: '201', foodName: 'ก๋วยเตี๋ยวหมูน้ำใส', price: 40 , image: 'assets/namsai_noodle.png' },
+                    { itemId: '202', foodName: 'ก๋วยเตี๋ยวต้มยำ', price: 45 , image:'assets/bame_tomyum.png' },
+                    { itemId: '203', foodName: 'เส้นเล็กน้ำตก', price: 45, image: 'assets/noodle_namtuk.png' }
                 ]
             },
             {
                 merchantId: 'l3m4n5o6p7q8',
                 merchantName: 'ส้มตำอีสาน',
-                image: 'assets/res3.png',
-                status: 'OPEN',
+                image: 'assets/TODO_resize_res3.png',
+                status: 'CLOSED',
                 menu: [
                     { itemId: '301', foodName: 'ส้มตำไทย', price: 50 },
                     { itemId: '302', foodName: 'ส้มตำปู', price: 55 },
@@ -402,20 +402,18 @@
                 image: 'assets/res4.png',
                 status: 'OPEN',
                 menu: [
-                    { itemId: '401', foodName: 'ข้าวมันไก่ธรรมดา', price: 50 },
-                    { itemId: '402', foodName: 'ข้าวมันไก่พิเศษ', price: 60 },
-                    { itemId: '403', foodName: 'ไก่ทอดน้ำปลา', price: 65 }
+                    { itemId: '401', foodName: 'ข้าวมันไก่ต้ม', price: 50,image: 'assets/chickken_tom.png' },
+                    { itemId: '402', foodName: 'ข้าวมันไก่ทอด', price: 60 ,image:'assets/chicken_tod.png' },
                 ]
             },
             {
                 merchantId: 'p5q6r7s8t9u0',
                 merchantName:'ปั่น ปั่น สดชื่น',
                 image: 'assets/res5.png',
-                status: 'CLOSED',
+                status: 'OPEN',
                 menu: [
-                    { itemId: '501', foodName: 'น้ำส้มปั่น', price: 35 },
-                    { itemId: '502', foodName: 'น้ำแตงโมปั่น', price: 35 },
-                    { itemId: '503', foodName: 'สมูทตี้สตรอว์เบอร์รี', price: 50 }
+                    { itemId: '501', foodName: 'น้ำส้มปั่น', price: 35 , image:'assets/namsom.png'},
+                    { itemId: '502', foodName: 'น้ำแตงโมปั่น', price: 35 , image: 'assets/namtangmo.png'},
                 ]
             },
             {
@@ -424,8 +422,8 @@
                 image: 'assets/res6.png',
                 status: 'OPEN',
                 menu: [
-                    { itemId: '601', foodName: 'สเต็กเนื้อ', price: 150 },
-                    { itemId: '602', foodName: 'สเต็กไก่', price: 120 },
+                    { itemId: '601', foodName: 'สเต็กเนื้อ', price: 150 ,image:'assets/steak.png'},
+                    { itemId: '602', foodName: 'สเต็กปลา', price: 120, image:'assets/fish_steak.png' },
                     { itemId: '603', foodName: 'เฟรนช์ฟรายส์', price: 50 }
                 ]
             }
@@ -540,9 +538,9 @@
                 return;
             }
             menu.forEach(item => {
+                const imageUrl = item.image || `https://placehold.co/150x150/f97316/fff?text=${encodeURIComponent(item.foodName)}`;
                 const card = document.createElement('div');
-                card.className = 'food-item-card bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between';
-                const imageUrl = `https://placehold.co/150x150/f97316/fff?text=${encodeURIComponent(item.foodName.replace(/\s/g, '+'))}`;
+                card.className = 'food-item-card ...';
                 card.innerHTML = `
                     <div class="flex items-center space-x-4">
                         <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
@@ -551,12 +549,11 @@
                             <span class="text-sm text-gray-500">฿${(item.price).toFixed(2)}</span>
                         </div>
                     </div>
-                    <button class="add-to-cart-btn bg-pink-500 text-white text-xs font-bold py-2 px-4 rounded-full transition-colors hover:bg-pink-600" data-item='${JSON.stringify(item)}'>
-                        Add
-                    </button>
+                    <button class="add-to-cart-btn ..." data-item='${JSON.stringify(item)}'>Add</button>
                 `;
                 menuContainer.appendChild(card);
             });
+
         };
         
         const renderCart = () => {
