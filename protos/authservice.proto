@@ -9,11 +9,11 @@ import "google/protobuf/timestamp.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 // ---------------------AUTH SERVICE------------------------------
-// Manages user credentials
+// Manages auth credentials
 service AuthService {
 
-    // Create a new user (customer, merchant, rider) using one endpoint.
-    rpc Register(RegisterRequest) returns(UserCredentials) {
+    // Create a new auth credential (customer, merchant, rider) using one endpoint.
+    rpc Register(RegisterRequest) returns(AuthCredentials) {
         option (google.api.http) = {
             post: "/auth/register" 
             body: "*"
@@ -23,7 +23,7 @@ service AuthService {
         };
     }
 
-    // Login sign in as any user (customer, merchant, rider).
+    // Login sign in as any auth user (customer, merchant, rider).
     rpc Login(LoginRequest) returns(LoginResponse){
         option (google.api.http) = {
             post: "/auth/login" 
@@ -31,6 +31,13 @@ service AuthService {
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             security: { } // Disable security key
+        };
+    }
+
+    rpc UpdatePhoneNumber(UpdatePhoneNumberRequest) returns (UpdatePhoneNumberResponse){
+        option (google.api.http) = {
+            patch: "/auth/{auth_id}/phone-number" 
+            body: "*"
         };
     }
 
@@ -50,20 +57,16 @@ service AuthService {
 
     /*
         rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
-
-        // Retrieves user credentials by username, responding only "USER" role.
-        rpc GetUserCredentials() returns(){}   endpoint /auth/users
     */
 }
 
-message UserCredentials {
+message AuthCredentials {
     string id = 1;
-    string username = 2;
-    string email = 3;
-    string phone_number = 5;
-    Roles role = 6;
-    google.protobuf.Timestamp create_time = 7;
-    google.protobuf.Timestamp update_time = 8;
+    string email = 2;
+    string phone_number = 3;
+    Roles role = 4;
+    google.protobuf.Timestamp create_time = 5;
+    google.protobuf.Timestamp update_time = 6;
 }
 
 enum Roles {
@@ -80,33 +83,20 @@ enum Roles {
 
 message RegisterRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-  json_schema: {
-    description: "NOTE: username is ignored when registering as a Merchant"
-  }
-  example: "{\"username\": \"somsak22\", \"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"phone_number\": \"0812345678\", \"role\": \"CUSTOMER\"}"
+  example: "{\"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"role\": \"CUSTOMER\"}"
   };
-
-
-  string username = 1;
-  string email = 2;
-  string password = 3;
-  string phone_number = 4;
-  Roles role = 5;
+  string email = 1;
+  string password = 2;
+  Roles role = 3;
 }
-
-// use this if config gateway resopnse code.
-// such as change success code from 200 to 201.
-//
-// message RegisterResponse {
-//    UserCredentials user = 1;
-// }
 
 message LoginRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        example: "{\"identifier\": \"somsak22\", \"password\": \"Newpa$sword9\",\"role\": \"CUSTOMER\"}"
+        example: "{\"identifier\": \"somsak22@mail.com\", \"password\": \"Newpa$sword9\",\"role\": \"CUSTOMER\"}"
     };
 
-    string identifier = 1;  // username,email, or phone
+    // Email, or Phone number
+    string identifier = 1;  
     string password = 2;
     Roles role = 3;
 }
@@ -116,6 +106,14 @@ message LoginResponse {
     string access_token = 1;
     // Number of seconds until the access token expires.
     int64 expires_in = 2;
+}
+
+message UpdatePhoneNumberRequest {
+  string auth_id = 1;
+  string new_phone_number = 2;
+}
+message UpdatePhoneNumberResponse {
+  AuthCredentials auth = 1;
 }
 
 message VerifyUserTokenRequest {
@@ -134,16 +132,7 @@ message VerifyAdminTokenResponse {
     bool valid = 1;
 }
 
-message CheckUsernameExistsRequest{
-    string username = 1;
-}
-
-message CheckUsernameExistsResponse{
-    bool exists = 1;
-}
-
 // message CreateAdminRequest {
-//    string username = 1;
 //    string email = 2;
 //    string password = 3;
 //    string phone_number = 4;

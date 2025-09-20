@@ -26,12 +26,12 @@ import (
 
 type AuthStorer interface {
 	Begin() (*sql.Tx, error)
-	ListUsers(context.Context) ([]*dbUserCredentials, error)
-	GetUser(ctx context.Context, userID uuid.UUID) (*dbUserCredentials, error)
-	GetUserByIdentifier(ctx context.Context, iden string) (*dbUserCredentials, error)
-	Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
-	CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCredentials) (*dbUserCredentials, error)
-	Delete(ctx context.Context, userID uuid.UUID) error
+	ListAuths(context.Context) ([]*dbAuthCredentials, error)
+	GetAuth(ctx context.Context, authID uuid.UUID) (*dbAuthCredentials, error)
+	GetAuthByIdentifier(ctx context.Context, iden string) (*dbAuthCredentials, error)
+	Create(ctx context.Context, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error)
+	CreateTx(ctx context.Context, tx *sql.Tx, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error)
+	Delete(ctx context.Context, authID uuid.UUID) error
 }
 
 type AuthService struct {
@@ -45,8 +45,8 @@ func NewAuthService(store AuthStorer, rabbitmq *rabbitMQ) *AuthService {
 	return &AuthService{store: store, rabbitmq: rabbitmq}
 }
 
-// Register handles user registration by creating a new user credentials
-func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.UserCredentials, error) {
+// Register handles auth registration by creating a new auth credentials
+func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.AuthCredentials, error) {
 
 	if err := ValidateStruct(in); err != nil {
 		var ve myValidatorErrs
@@ -70,24 +70,22 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	}
 	defer tx.Rollback()
 
-	user, err := x.store.CreateTx(ctx, tx, &dbNewUserCredentials{
-		Username:    in.Username,
-		Email:       in.Email,
-		HashedPass:  string(hashPass),
-		PhoneNumber: in.PhoneNumber,
-		Role:        dbRoles(in.Role),
+	auth, err := x.store.CreateTx(ctx, tx, &dbNewAuthCredentials{
+		Email:      in.Email,
+		HashedPass: string(hashPass),
+		Role:       dbRoles(in.Role),
 	})
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return nil, status.Error(codes.AlreadyExists, "user already exists")
+			return nil, status.Error(codes.AlreadyExists, "auth already exists")
 		}
 
-		slog.Error("storage create new user", "err", err)
+		slog.Error("storage create new auth", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	if err := x.dispatchCreation(ctx, in.Role, user); err != nil {
+	if err := x.dispatchCreation(ctx, in.Role, auth); err != nil {
 		slog.Error("dispatch creation", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
@@ -97,18 +95,17 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return &pb.UserCredentials{
-		Id:          user.ID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		Role:        pb.Roles(user.Role),
-		CreateTime:  timestamppb.New(user.CreateTime),
-		UpdateTime:  timestamppb.New(user.UpdateTime),
+	return &pb.AuthCredentials{
+		Id:          auth.ID,
+		Email:       auth.Email,
+		PhoneNumber: auth.PhoneNumber,
+		Role:        pb.Roles(auth.Role),
+		CreateTime:  timestamppb.New(auth.CreateTime),
+		UpdateTime:  timestamppb.New(auth.UpdateTime),
 	}, nil
 }
 
-// Login handles user login. It verifies the provided credentials, generates a JWT token on success,
+// Login handles auth login. It verifies the provided credentials, generates a JWT token on success,
 // and returns it along with its expiration time. It returns an error if login fails or credentials are incorrect.
 func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 
@@ -117,7 +114,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	// if !ok {
 	// 	return nil, status.Error(codes.Unknown, "missing metadata")
 	// }
-	// username, password, err := extractBasicAuth(md["authorization"])
+	// iden, password, err := extractBasicAuth(md["authorization"])
 	// if err != nil {
 	// 	slog.Error("authorization", "err", err)
 	// 	return nil, status.Error(codes.Unauthenticated, "invalid authorization")
@@ -132,26 +129,26 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	user, err := x.store.GetUserByIdentifier(ctx, in.Identifier)
+	auth, err := x.store.GetAuthByIdentifier(ctx, in.Identifier)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.Unauthenticated, "username or password incorrect")
+			return nil, status.Error(codes.Unauthenticated, "authname or password incorrect")
 		}
 
-		slog.Error("storage get user by identifier", "err", err)
+		slog.Error("storage get auth by identifier", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPass), []byte(in.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(auth.HashedPass), []byte(in.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			slog.Error("bcrypt error mismatch")
-			return nil, status.Error(codes.Unauthenticated, "username or password incorrect")
+			return nil, status.Error(codes.Unauthenticated, "authname or password incorrect")
 		}
 		slog.Error("bcrypt verification failed unexpectedly", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	token, exp, err := createNewToken(user.ID, pb.Roles(user.Role))
+	token, exp, err := createNewToken(auth.ID, pb.Roles(auth.Role))
 	if err != nil {
 		slog.Error("create new token", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -170,8 +167,8 @@ func (x *AuthService) VerifyUserToken(ctx context.Context, in *pb.VerifyUserToke
 	}
 
 	if valid, err := verifyUserToken(in.AccessToken); !valid {
-		slog.Error("verify user token", "err", err)
-		return nil, status.Error(codes.Unauthenticated, "invalid user token")
+		slog.Error("verify auth token", "err", err)
+		return nil, status.Error(codes.Unauthenticated, "invalid auth token")
 	}
 
 	return &pb.VerifyUserTokenResponse{Valid: true}, nil
@@ -190,14 +187,13 @@ func (x *AuthService) VerifyAdminToken(ctx context.Context, in *pb.VerifyAdminTo
 	return &pb.VerifyAdminTokenResponse{Valid: true}, nil
 }
 
-func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user *dbUserCredentials) error {
+func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth *dbAuthCredentials) error {
 	switch role {
 	case pb.Roles_CUSTOMER:
 		body, err := proto.Marshal(&pb.SyncCustomerCreated{
-			CustomerId:  user.ID,
-			Username:    user.Username,
-			PhoneNumber: user.PhoneNumber,
-			CreateTime:  timestamppb.New(time.Now()),
+			CustomerId: auth.ID,
+			Email:      auth.Email,
+			CreateTime: timestamppb.New(time.Now()),
 		})
 		if err != nil {
 			return err
@@ -211,10 +207,9 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user 
 
 	case pb.Roles_RIDER:
 		body, err := proto.Marshal(&pb.SyncRiderCreated{
-			RiderId:     user.ID,
-			Username:    user.Username,
-			PhoneNumber: user.PhoneNumber,
-			CreateTime:  timestamppb.New(time.Now()),
+			RiderId:    auth.ID,
+			Email:      auth.Email,
+			CreateTime: timestamppb.New(time.Now()),
 		})
 		if err != nil {
 			return err
@@ -231,10 +226,9 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, user 
 	case pb.Roles_MERCHANT:
 
 		body, err := proto.Marshal(&pb.SyncMerchantCreated{
-			MerchantId:  user.ID,
-			Email:       user.Email,
-			PhoneNumber: user.PhoneNumber,
-			CreateTime:  timestamppb.New(time.Now()),
+			MerchantId: auth.ID,
+			Email:      auth.Email,
+			CreateTime: timestamppb.New(time.Now()),
 		})
 		if err != nil {
 			return err
@@ -277,8 +271,7 @@ func CreateSuperAdmin(store AuthStorer) error {
 		return errors.New("hashing password failed")
 	}
 
-	if _, err := store.Create(context.TODO(), &dbNewUserCredentials{
-		Username:   admin,
+	if _, err := store.Create(context.TODO(), &dbNewAuthCredentials{
 		Email:      email,
 		HashedPass: string(hashPass),
 		Role:       dbRoles(Roles_SUPER_ADMIN),
@@ -289,7 +282,7 @@ func CreateSuperAdmin(store AuthStorer) error {
 	return nil
 }
 
-func extractBasicAuth(authorization []string) (username, password string, err error) {
+func extractBasicAuth(authorization []string) (identifier, password string, err error) {
 
 	if len(authorization) < 1 {
 		return "", "", errors.New("missing authorization in metadata")

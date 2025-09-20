@@ -15,26 +15,24 @@ var signingKey []byte
 // AuthClaims is custom claims use when
 // register new jwt claims.
 type AuthClaims struct {
-	// ID is used as unique identifier for User
+	// ID is used as unique identifier for Auth
 	// or Admin depending on the Role.
 	ID   string
 	Role pb.Roles `json:"role"`
 	jwt.RegisteredClaims
 }
 
-// dbNewUserCredential contains information to create
+// dbNewAuthCredential contains information to create
 // both new user credential and admin
-type dbNewUserCredentials struct {
-	Username    string
+type dbNewAuthCredentials struct {
 	Email       string
 	HashedPass  string
 	PhoneNumber string
 	Role        dbRoles
 }
 
-type dbUserCredentials struct {
+type dbAuthCredentials struct {
 	ID          string
-	Username    string
 	Email       string
 	HashedPass  string
 	Role        dbRoles

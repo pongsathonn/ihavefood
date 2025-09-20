@@ -18,12 +18,11 @@ func (s *storage) Begin() (*sql.Tx, error) {
 	return s.db.Begin()
 }
 
-func (s *storage) ListUsers(ctx context.Context) ([]*dbUserCredentials, error) {
+func (s *storage) ListAuths(ctx context.Context) ([]*dbAuthCredentials, error) {
 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT 
-			user_id,
-			username, 
+			auth_id,
 			email,
 			role,
 			phone_number,
@@ -36,37 +35,35 @@ func (s *storage) ListUsers(ctx context.Context) ([]*dbUserCredentials, error) {
 		return nil, err
 	}
 
-	var users []*dbUserCredentials
+	var auths []*dbAuthCredentials
 	for rows.Next() {
-		var user dbUserCredentials
+		var auth dbAuthCredentials
 		err := rows.Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&user.Role,
-			&user.PhoneNumber,
-			&user.CreateTime,
-			&user.UpdateTime,
+			&auth.ID,
+			&auth.Email,
+			&auth.Role,
+			&auth.PhoneNumber,
+			&auth.CreateTime,
+			&auth.UpdateTime,
 		)
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, &user)
+		auths = append(auths, &auth)
 	}
 
 	if rows.Err() != nil {
 		return nil, rows.Err()
 	}
 
-	return users, nil
+	return auths, nil
 }
 
-func (s *storage) GetUser(ctx context.Context, userID uuid.UUID) (*dbUserCredentials, error) {
+func (s *storage) GetAuth(ctx context.Context, authID uuid.UUID) (*dbAuthCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
-			user_id,
-			username, 
+			auth_id,
 			email,
 			role,
 			phone_number,
@@ -75,34 +72,32 @@ func (s *storage) GetUser(ctx context.Context, userID uuid.UUID) (*dbUserCredent
 		FROM 
 			credentials
 		WHERE
-			user_id=$1
+			auth_id=$1
 	`,
-		userID)
+		authID)
 
-	var user dbUserCredentials
+	var auth dbAuthCredentials
 	err := row.Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
-		&user.Role,
-		&user.PhoneNumber,
-		&user.CreateTime,
-		&user.UpdateTime,
+		&auth.ID,
+		&auth.Email,
+		&auth.Role,
+		&auth.PhoneNumber,
+		&auth.CreateTime,
+		&auth.UpdateTime,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return &auth, nil
 
 }
 
-func (s *storage) GetUserByIdentifier(ctx context.Context, iden string) (*dbUserCredentials, error) {
+func (s *storage) GetAuthByIdentifier(ctx context.Context, iden string) (*dbAuthCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		SELECT 
 			id,
-			username, 
 			email,
 			password,
 			role,
@@ -112,114 +107,106 @@ func (s *storage) GetUserByIdentifier(ctx context.Context, iden string) (*dbUser
 		FROM 
 			credentials
 		WHERE
-			username=$1 OR
 			email=$1 OR
 			phone_number=$1 
 	`,
 		iden)
 
-	var user dbUserCredentials
+	var auth dbAuthCredentials
 	err := row.Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
-		&user.HashedPass,
-		&user.Role,
-		&user.PhoneNumber,
-		&user.CreateTime,
-		&user.UpdateTime,
+		&auth.ID,
+		&auth.Email,
+		&auth.HashedPass,
+		&auth.Role,
+		&auth.PhoneNumber,
+		&auth.CreateTime,
+		&auth.UpdateTime,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return &auth, nil
 
 }
 
-// Create creates new user credential and return its ID.
-func (s *storage) Create(ctx context.Context, newUser *dbNewUserCredentials) (*dbUserCredentials, error) {
+// Create creates new auth credential and return its ID.
+func (s *storage) Create(ctx context.Context, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error) {
 
 	row := s.db.QueryRowContext(ctx, `
 		INSERT INTO credentials(
-			username,
 			email,
 			password,
 			role,
 			phone_number
 		)VALUES(
-			$1,$2,$3,$4,$5
+			$1,$2,$3,$4
 		)RETURNING *;
 	`,
-		newUser.Username,
-		newUser.Email,
-		newUser.HashedPass,
-		newUser.Role,
-		newUser.PhoneNumber,
+		newAuth.Email,
+		newAuth.HashedPass,
+		newAuth.Role,
+		newAuth.PhoneNumber,
 	)
 
-	var user dbUserCredentials
+	var auth dbAuthCredentials
 	if err := row.Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
-		&user.HashedPass,
-		&user.Role,
-		&user.PhoneNumber,
-		&user.CreateTime,
-		&user.UpdateTime,
+		&auth.ID,
+		&auth.Email,
+		&auth.HashedPass,
+		&auth.Role,
+		&auth.PhoneNumber,
+		&auth.CreateTime,
+		&auth.UpdateTime,
 	); err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return &auth, nil
 }
 
-// Create creates new user credential and return its ID.
-func (s *storage) CreateTx(ctx context.Context, tx *sql.Tx, newUser *dbNewUserCredentials) (*dbUserCredentials, error) {
+// Create creates new auth credential and return its ID.
+func (s *storage) CreateTx(ctx context.Context, tx *sql.Tx, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error) {
 
 	row := tx.QueryRowContext(ctx, `
 		INSERT INTO credentials(
-			username,
 			email,
 			password,
 			role,
 			phone_number,
 			create_time
 		)VALUES(
-			$1,$2,$3,$4,$5,now()
+			$1,$2,$3,$4,now()
 		)RETURNING *;
 	`,
-		newUser.Username,
-		newUser.Email,
-		newUser.HashedPass,
-		newUser.Role,
-		newUser.PhoneNumber,
+		newAuth.Email,
+		newAuth.HashedPass,
+		newAuth.Role,
+		newAuth.PhoneNumber,
 	)
 
-	var user dbUserCredentials
+	var auth dbAuthCredentials
 	if err := row.Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
-		&user.HashedPass,
-		&user.Role,
-		&user.PhoneNumber,
-		&user.CreateTime,
-		&user.UpdateTime,
+		&auth.ID,
+		&auth.Email,
+		&auth.HashedPass,
+		&auth.Role,
+		&auth.PhoneNumber,
+		&auth.CreateTime,
+		&auth.UpdateTime,
 	); err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return &auth, nil
 }
 
-// Delete deletes the user credential.
-func (s *storage) Delete(ctx context.Context, userID uuid.UUID) error {
+// Delete deletes the auth credential.
+func (s *storage) Delete(ctx context.Context, authID uuid.UUID) error {
 
-	query := `DELETE FROM credentials WHERE user_id=$1`
+	query := `DELETE FROM credentials WHERE auth_id=$1`
 
-	if _, err := s.db.ExecContext(ctx, query, userID); err != nil {
+	if _, err := s.db.ExecContext(ctx, query, authID); err != nil {
 		return err
 	}
 
