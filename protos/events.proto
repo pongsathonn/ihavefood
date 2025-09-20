@@ -64,10 +64,8 @@ import "google/protobuf/timestamp.proto";
 //  | Auth       | sync.customer.created                  |     Customer     |
 //  | Auth       | sync.rider.created                     |     Delivery     |
 //  | Auth       | sync.merchant.created                  |     Merchant     |
-//  | Auth       | sync.customer.username.updated         |     Customer     |
 //  | Auth       | sync.customer.email.updated            |     Customer     |
 //  | Auth       | sync.customer.phone_number.updated     |     Customer     |
-//  | Auth       | sync.rider.username.updated            |     Delivery     |
 //  | Auth       | sync.rider.email.updated               |     Delivery     |
 //  | Auth       | sync.rider.phone_number.updated        |     Delivery     |
 //  | Auth       | sync.merchant.email.updated            |     Merchant     |
@@ -129,23 +127,18 @@ message RiderDeliveredEvent {
 //============================ SYNC ========================
 message SyncCustomerCreated {
     string customer_id = 1;
-    string username = 2;
-    string phone_number = 3;
+    string email = 2;
     google.protobuf.Timestamp create_time = 4;
 }
 
 message SyncRiderCreated {
     string rider_id = 1;
-    string username = 2;
-    string phone_number = 3;
+    string email = 2;
     google.protobuf.Timestamp create_time = 4;
 }
 
 message SyncMerchantCreated {
     string merchant_id = 1;
-    // Email is used to set the default merchant name (from the local part).
-    // Example: foo555@mail.com → Merchant Name: foo555
     string email = 2;
-    string phone_number = 3;
     google.protobuf.Timestamp create_time = 4;
 }

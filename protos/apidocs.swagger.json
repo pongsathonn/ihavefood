@@ -499,7 +499,7 @@
     },
     "/auth/login": {
       "post": {
-        "summary": "Login sign in as any user (customer, merchant, rider).",
+        "summary": "Login sign in as any auth user (customer, merchant, rider).",
         "operationId": "AuthService_Login",
         "responses": {
           "200": {
@@ -527,20 +527,19 @@
     },
     "/auth/register": {
       "post": {
-        "summary": "Create a new user (customer, merchant, rider) using one endpoint.",
+        "summary": "Create a new auth credential (customer, merchant, rider) using one endpoint.",
         "operationId": "AuthService_Register",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/UserCredentials"
+              "$ref": "#/definitions/AuthCredentials"
             }
           }
         },
         "parameters": [
           {
             "name": "body",
-            "description": "NOTE: username is ignored when registering as a Merchant",
             "in": "body",
             "required": true,
             "schema": {
@@ -552,6 +551,38 @@
           "AuthService"
         ],
         "security": []
+      }
+    },
+    "/auth/{authId}/phone-number": {
+      "patch": {
+        "operationId": "AuthService_UpdatePhoneNumber",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/UpdatePhoneNumberResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "authId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePhoneNumberBody"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
       }
     }
   },
@@ -604,6 +635,31 @@
         },
         "postalCode": {
           "type": "string"
+        }
+      }
+    },
+    "AuthCredentials": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/Roles"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -877,14 +933,14 @@
     "LoginRequest": {
       "type": "object",
       "example": {
-        "identifier": "somsak22",
+        "identifier": "somsak22@mail.com",
         "password": "Newpa$sword9",
         "role": "CUSTOMER"
       },
       "properties": {
         "identifier": {
           "type": "string",
-          "title": "username,email, or phone"
+          "title": "Email, or Phone number"
         },
         "password": {
           "type": "string"
@@ -1137,30 +1193,21 @@
     "RegisterRequest": {
       "type": "object",
       "example": {
-        "username": "somsak22",
         "email": "somsak@example.com",
         "password": "Newpa$sword9",
-        "phone_number": "0812345678",
         "role": "CUSTOMER"
       },
       "properties": {
-        "username": {
-          "type": "string"
-        },
         "email": {
           "type": "string"
         },
         "password": {
           "type": "string"
         },
-        "phoneNumber": {
-          "type": "string"
-        },
         "role": {
           "$ref": "#/definitions/Roles"
         }
-      },
-      "description": "NOTE: username is ignored when registering as a Merchant"
+      }
     },
     "ReportDeliveryStatusBody": {
       "type": "object",
@@ -1313,31 +1360,19 @@
         }
       }
     },
-    "UserCredentials": {
+    "UpdatePhoneNumberBody": {
       "type": "object",
       "properties": {
-        "id": {
+        "newPhoneNumber": {
           "type": "string"
-        },
-        "username": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "phoneNumber": {
-          "type": "string"
-        },
-        "role": {
-          "$ref": "#/definitions/Roles"
-        },
-        "createTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updateTime": {
-          "type": "string",
-          "format": "date-time"
+        }
+      }
+    },
+    "UpdatePhoneNumberResponse": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "$ref": "#/definitions/AuthCredentials"
         }
       }
     },
