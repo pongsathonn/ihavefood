@@ -225,11 +225,17 @@ impl EventDispatcher {
     async fn handle_rider_created(&self, buf: impl Buf) -> Result<()> {
         let new_rider = SyncRiderCreated::decode(buf)?;
 
+        let username = new_rider
+            .email
+            .split_once('@')
+            .ok_or(anyhow!("failed to split email to username"))?
+            .0
+            .to_string();
+
         self.db
             .create_rider(&NewRider {
                 rider_id: new_rider.rider_id,
-                username: new_rider.username,
-                phone_number: new_rider.phone_number,
+                username: username,
             })
             .await?;
 

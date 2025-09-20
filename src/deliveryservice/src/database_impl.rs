@@ -34,7 +34,6 @@ impl Db {
             "queries/create-rider.sql",
             new_rider.rider_id,
             new_rider.username,
-            new_rider.phone_number,
         )
         .execute(&self.pool)
         .await?;

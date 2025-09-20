@@ -56,7 +56,6 @@ pub struct DbDelivery {
 pub struct NewRider {
     pub rider_id: String,
     pub username: String,
-    pub phone_number: String,
 }
 
 //==============================
