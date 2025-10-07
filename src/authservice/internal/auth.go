@@ -71,14 +71,16 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	defer tx.Rollback()
 
 	auth, err := x.store.CreateTx(ctx, tx, &dbNewAuthCredentials{
-		Email:      in.Email,
-		HashedPass: string(hashPass),
-		Role:       dbRoles(in.Role),
+		Email:       in.Email,
+		HashedPass:  string(hashPass),
+		Role:        dbRoles(in.Role),
+		PhoneNumber: nil,
 	})
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return nil, status.Error(codes.AlreadyExists, "auth already exists")
+			slog.Error("database unique_violation:", "err", err)
+			return nil, status.Error(codes.AlreadyExists, "email or phone number already exists")
 		}
 
 		slog.Error("storage create new auth", "err", err)
@@ -93,15 +95,21 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 	if err := tx.Commit(); err != nil {
 		slog.Error("commit transaction", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
+
+	}
+
+	phone := ""
+	if auth.PhoneNumber != nil {
+		phone = *auth.PhoneNumber
 	}
 
 	return &pb.AuthCredentials{
-		Id:          auth.ID,
-		Email:       auth.Email,
-		PhoneNumber: auth.PhoneNumber,
-		Role:        pb.Roles(auth.Role),
-		CreateTime:  timestamppb.New(auth.CreateTime),
-		UpdateTime:  timestamppb.New(auth.UpdateTime),
+		Id:         auth.ID,
+		Email:      auth.Email,
+		Phone:      phone,
+		Role:       pb.Roles(auth.Role),
+		CreateTime: timestamppb.New(auth.CreateTime),
+		UpdateTime: timestamppb.New(auth.UpdateTime),
 	}, nil
 }
 
@@ -132,7 +140,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	auth, err := x.store.GetAuthByIdentifier(ctx, in.Identifier)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.Unauthenticated, "authname or password incorrect")
+			return nil, status.Error(codes.Unauthenticated, "incorrect credentials")
 		}
 
 		slog.Error("storage get auth by identifier", "err", err)
@@ -142,7 +150,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	if err := bcrypt.CompareHashAndPassword([]byte(auth.HashedPass), []byte(in.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			slog.Error("bcrypt error mismatch")
-			return nil, status.Error(codes.Unauthenticated, "authname or password incorrect")
+			return nil, status.Error(codes.Unauthenticated, "incorrect credentials")
 		}
 		slog.Error("bcrypt verification failed unexpectedly", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -187,6 +195,46 @@ func (x *AuthService) VerifyAdminToken(ctx context.Context, in *pb.VerifyAdminTo
 	return &pb.VerifyAdminTokenResponse{Valid: true}, nil
 }
 
+// create super admin and demo user
+func (x *AuthService) CreateDemoUsers() error {
+
+	ctx := context.TODO()
+
+	adminEmail := os.Getenv("SUPER_ADMIN_EMAIL")
+	adminPass := os.Getenv("SUPER_ADMIN_PASS")
+
+	if adminEmail == "" || adminPass == "" {
+		return errors.New("some super admin environment variables are not set")
+	}
+
+	adminHash, err := hashPassword(adminPass)
+	if err != nil {
+		return errors.New("hashing super admin password failed")
+	}
+
+	_, err = x.store.Create(ctx, &dbNewAuthCredentials{
+		Email:       adminEmail,
+		HashedPass:  string(adminHash),
+		Role:        dbRoles(Roles_SUPER_ADMIN),
+		PhoneNumber: nil,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Call Register to create a demo customer and send to CustomerService.
+	_, err = x.Register(ctx, &pb.RegisterRequest{
+		Email:    os.Getenv("DEMO_EMAIL"),
+		Password: os.Getenv("DEMO_PASS"),
+		Role:     pb.Roles_CUSTOMER,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth *dbAuthCredentials) error {
 	switch role {
 	case pb.Roles_CUSTOMER:
@@ -223,24 +271,6 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth 
 			return fmt.Errorf("failed to create rider: %v", err)
 		}
 
-	case pb.Roles_MERCHANT:
-
-		body, err := proto.Marshal(&pb.SyncMerchantCreated{
-			MerchantId: auth.ID,
-			Email:      auth.Email,
-			CreateTime: timestamppb.New(time.Now()),
-		})
-		if err != nil {
-			return err
-		}
-
-		err = x.rabbitmq.publish(ctx, "sync.merchant.created", amqp.Publishing{
-			Type: "ihavefood.SyncMerchantCreated",
-			Body: body,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create merchant: %v", err)
-		}
 	default:
 		return errors.New("invalid role")
 	}
@@ -254,32 +284,6 @@ func InitSigningKey() error {
 		return nil
 	}
 	return errors.New("JWT_SIGNING_KEY environment variable is empty")
-}
-
-func CreateSuperAdmin(store AuthStorer) error {
-
-	admin := os.Getenv("SUPER_ADMIN_USER")
-	email := os.Getenv("SUPER_ADMIN_EMAIL")
-	password := os.Getenv("SUPER_ADMIN_PASS")
-
-	if admin == "" || email == "" || password == "" {
-		return errors.New("some of super admin environment variables are not set")
-	}
-
-	hashPass, err := hashPassword(password)
-	if err != nil {
-		return errors.New("hashing password failed")
-	}
-
-	if _, err := store.Create(context.TODO(), &dbNewAuthCredentials{
-		Email:      email,
-		HashedPass: string(hashPass),
-		Role:       dbRoles(Roles_SUPER_ADMIN),
-	}); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func extractBasicAuth(authorization []string) (identifier, password string, err error) {

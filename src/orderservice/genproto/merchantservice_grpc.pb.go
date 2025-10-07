@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	MerchantService_ListMerchants_FullMethodName     = "/ihavefood.MerchantService/ListMerchants"
 	MerchantService_GetMerchant_FullMethodName       = "/ihavefood.MerchantService/GetMerchant"
+	MerchantService_CreateMerchant_FullMethodName    = "/ihavefood.MerchantService/CreateMerchant"
 	MerchantService_UpdateMerchant_FullMethodName    = "/ihavefood.MerchantService/UpdateMerchant"
 	MerchantService_CreateMenu_FullMethodName        = "/ihavefood.MerchantService/CreateMenu"
 	MerchantService_UpdateMenuItem_FullMethodName    = "/ihavefood.MerchantService/UpdateMenuItem"
@@ -37,8 +38,8 @@ const (
 type MerchantServiceClient interface {
 	ListMerchants(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMerchantsResponse, error)
 	GetMerchant(ctx context.Context, in *GetMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
+	CreateMerchant(ctx context.Context, in *CreateMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
 	UpdateMerchant(ctx context.Context, in *UpdateMerchantRequest, opts ...grpc.CallOption) (*Merchant, error)
-	// Menu management
 	CreateMenu(ctx context.Context, in *CreateMenuRequest, opts ...grpc.CallOption) (*CreateMenuResponse, error)
 	UpdateMenuItem(ctx context.Context, in *UpdateMenuItemRequest, opts ...grpc.CallOption) (*MenuItem, error)
 	// Store Management
@@ -68,6 +69,16 @@ func (c *merchantServiceClient) GetMerchant(ctx context.Context, in *GetMerchant
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Merchant)
 	err := c.cc.Invoke(ctx, MerchantService_GetMerchant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *merchantServiceClient) CreateMerchant(ctx context.Context, in *CreateMerchantRequest, opts ...grpc.CallOption) (*Merchant, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Merchant)
+	err := c.cc.Invoke(ctx, MerchantService_CreateMerchant_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +143,8 @@ func (c *merchantServiceClient) GetStoreStatus(ctx context.Context, in *GetStore
 type MerchantServiceServer interface {
 	ListMerchants(context.Context, *emptypb.Empty) (*ListMerchantsResponse, error)
 	GetMerchant(context.Context, *GetMerchantRequest) (*Merchant, error)
+	CreateMerchant(context.Context, *CreateMerchantRequest) (*Merchant, error)
 	UpdateMerchant(context.Context, *UpdateMerchantRequest) (*Merchant, error)
-	// Menu management
 	CreateMenu(context.Context, *CreateMenuRequest) (*CreateMenuResponse, error)
 	UpdateMenuItem(context.Context, *UpdateMenuItemRequest) (*MenuItem, error)
 	// Store Management
@@ -154,6 +165,9 @@ func (UnimplementedMerchantServiceServer) ListMerchants(context.Context, *emptyp
 }
 func (UnimplementedMerchantServiceServer) GetMerchant(context.Context, *GetMerchantRequest) (*Merchant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMerchant not implemented")
+}
+func (UnimplementedMerchantServiceServer) CreateMerchant(context.Context, *CreateMerchantRequest) (*Merchant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMerchant not implemented")
 }
 func (UnimplementedMerchantServiceServer) UpdateMerchant(context.Context, *UpdateMerchantRequest) (*Merchant, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMerchant not implemented")
@@ -223,6 +237,24 @@ func _MerchantService_GetMerchant_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MerchantServiceServer).GetMerchant(ctx, req.(*GetMerchantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MerchantService_CreateMerchant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateMerchantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MerchantServiceServer).CreateMerchant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MerchantService_CreateMerchant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MerchantServiceServer).CreateMerchant(ctx, req.(*CreateMerchantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -331,6 +363,10 @@ var MerchantService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMerchant",
 			Handler:    _MerchantService_GetMerchant_Handler,
+		},
+		{
+			MethodName: "CreateMerchant",
+			Handler:    _MerchantService_CreateMerchant_Handler,
 		},
 		{
 			MethodName: "UpdateMerchant",

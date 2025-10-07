@@ -202,7 +202,9 @@ func (x *Point) GetLongitude() float64 {
 type Rider struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RiderId       string                 `protobuf:"bytes,1,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Phone         string                 `protobuf:"bytes,4,opt,name=phone,proto3" json:"phone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -244,9 +246,23 @@ func (x *Rider) GetRiderId() string {
 	return ""
 }
 
-func (x *Rider) GetPhoneNumber() string {
+func (x *Rider) GetName() string {
 	if x != nil {
-		return x.PhoneNumber
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Rider) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *Rider) GetPhone() string {
+	if x != nil {
+		return x.Phone
 	}
 	return ""
 }
@@ -534,10 +550,12 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\x11drop_off_location\x18\x03 \x01(\v2\x10.ihavefood.PointR\x0fdropOffLocation\"A\n" +
 	"\x05Point\x12\x1a\n" +
 	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\"E\n" +
+	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\"b\n" +
 	"\x05Rider\x12\x19\n" +
-	"\brider_id\x18\x01 \x01(\tR\ariderId\x12!\n" +
-	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\"1\n" +
+	"\brider_id\x18\x01 \x01(\tR\ariderId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\x04 \x01(\tR\x05phone\"1\n" +
 	"\x14TrackingRiderRequest\x12\x19\n" +
 	"\brider_id\x18\x01 \x01(\tR\ariderId\"\xa8\x01\n" +
 	"\x15TrackingRiderResponse\x12\x19\n" +

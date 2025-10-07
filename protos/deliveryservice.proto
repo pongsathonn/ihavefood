@@ -66,7 +66,9 @@ message Point {
 
 message Rider {
     string rider_id = 1;
-    string phone_number = 3;
+    string name = 2;
+    string email = 3;
+    string phone = 4;
 }
 
 message TrackingRiderRequest {

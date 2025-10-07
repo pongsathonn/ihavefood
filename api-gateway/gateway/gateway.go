@@ -35,7 +35,7 @@ func (g *gateway) SetupMux() *runtime.ServeMux {
 	}
 
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	cl, err := grpc.NewClient(fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")), opt)
+	cl, err := grpc.NewClient(fmt.Sprintf(":%s", os.Getenv("GATEWAY_PORT")), opt)
 	if err != nil {
 		log.Fatalf("failed to create new client: %v", err)
 	}

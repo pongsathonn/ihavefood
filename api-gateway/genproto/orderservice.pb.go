@@ -197,7 +197,7 @@ type PlaceOrder struct {
 	Total           int32                 `protobuf:"varint,9,opt,name=total,proto3" json:"total,omitempty"`
 	CustomerAddress *Address              `protobuf:"bytes,10,opt,name=customer_address,json=customerAddress,proto3" json:"customer_address,omitempty"`
 	MerchantAddress *Address              `protobuf:"bytes,11,opt,name=merchant_address,json=merchantAddress,proto3" json:"merchant_address,omitempty"`
-	CustomerContact *ContactInfo          `protobuf:"bytes,12,opt,name=customer_contact,json=customerContact,proto3" json:"customer_contact,omitempty"`
+	CustomerPhone   string                `protobuf:"bytes,12,opt,name=customer_phone,json=customerPhone,proto3" json:"customer_phone,omitempty"`
 	PaymentMethods  PaymentMethods        `protobuf:"varint,13,opt,name=payment_methods,json=paymentMethods,proto3,enum=ihavefood.PaymentMethods" json:"payment_methods,omitempty"`
 	PaymentStatus   PaymentStatus         `protobuf:"varint,14,opt,name=payment_status,json=paymentStatus,proto3,enum=ihavefood.PaymentStatus" json:"payment_status,omitempty"`
 	OrderStatus     OrderStatus           `protobuf:"varint,15,opt,name=order_status,json=orderStatus,proto3,enum=ihavefood.OrderStatus" json:"order_status,omitempty"`
@@ -313,11 +313,11 @@ func (x *PlaceOrder) GetMerchantAddress() *Address {
 	return nil
 }
 
-func (x *PlaceOrder) GetCustomerContact() *ContactInfo {
+func (x *PlaceOrder) GetCustomerPhone() string {
 	if x != nil {
-		return x.CustomerContact
+		return x.CustomerPhone
 	}
-	return nil
+	return ""
 }
 
 func (x *PlaceOrder) GetPaymentMethods() PaymentMethods {
@@ -684,7 +684,7 @@ var File_orderservice_proto protoreflect.FileDescriptor
 
 const file_orderservice_proto_rawDesc = "" +
 	"\n" +
-	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\fcommon.proto\x1a\x15customerservice.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xf9\x05\n" +
+	"\x12orderservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\fcommon.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xdd\x05\n" +
 	"\n" +
 	"PlaceOrder\x12\x1d\n" +
 	"\n" +
@@ -702,8 +702,8 @@ const file_orderservice_proto_rawDesc = "" +
 	"\x05total\x18\t \x01(\x05R\x05total\x12=\n" +
 	"\x10customer_address\x18\n" +
 	" \x01(\v2\x12.ihavefood.AddressR\x0fcustomerAddress\x12=\n" +
-	"\x10merchant_address\x18\v \x01(\v2\x12.ihavefood.AddressR\x0fmerchantAddress\x12A\n" +
-	"\x10customer_contact\x18\f \x01(\v2\x16.ihavefood.ContactInfoR\x0fcustomerContact\x12B\n" +
+	"\x10merchant_address\x18\v \x01(\v2\x12.ihavefood.AddressR\x0fmerchantAddress\x12%\n" +
+	"\x0ecustomer_phone\x18\f \x01(\tR\rcustomerPhone\x12B\n" +
 	"\x0fpayment_methods\x18\r \x01(\x0e2\x19.ihavefood.PaymentMethodsR\x0epaymentMethods\x12?\n" +
 	"\x0epayment_status\x18\x0e \x01(\x0e2\x18.ihavefood.PaymentStatusR\rpaymentStatus\x129\n" +
 	"\forder_status\x18\x0f \x01(\x0e2\x16.ihavefood.OrderStatusR\vorderStatus\x12?\n" +
@@ -785,37 +785,35 @@ var file_orderservice_proto_goTypes = []any{
 	(*ListOrderHistoryResponse)(nil), // 7: ihavefood.ListOrderHistoryResponse
 	(*CreatePlaceOrderRequest)(nil),  // 8: ihavefood.CreatePlaceOrderRequest
 	(*Address)(nil),                  // 9: ihavefood.Address
-	(*ContactInfo)(nil),              // 10: ihavefood.ContactInfo
-	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),    // 10: google.protobuf.Timestamp
 }
 var file_orderservice_proto_depIdxs = []int32{
 	4,  // 0: ihavefood.PlaceOrder.items:type_name -> ihavefood.OrderItem
 	9,  // 1: ihavefood.PlaceOrder.customer_address:type_name -> ihavefood.Address
 	9,  // 2: ihavefood.PlaceOrder.merchant_address:type_name -> ihavefood.Address
-	10, // 3: ihavefood.PlaceOrder.customer_contact:type_name -> ihavefood.ContactInfo
-	0,  // 4: ihavefood.PlaceOrder.payment_methods:type_name -> ihavefood.PaymentMethods
-	1,  // 5: ihavefood.PlaceOrder.payment_status:type_name -> ihavefood.PaymentStatus
-	2,  // 6: ihavefood.PlaceOrder.order_status:type_name -> ihavefood.OrderStatus
-	5,  // 7: ihavefood.PlaceOrder.timestamps:type_name -> ihavefood.OrderEventTimestamps
-	11, // 8: ihavefood.OrderEventTimestamps.order_placed_time:type_name -> google.protobuf.Timestamp
-	11, // 9: ihavefood.OrderEventTimestamps.merchant_accept_time:type_name -> google.protobuf.Timestamp
-	11, // 10: ihavefood.OrderEventTimestamps.rider_notified_time:type_name -> google.protobuf.Timestamp
-	11, // 11: ihavefood.OrderEventTimestamps.rider_assigned_time:type_name -> google.protobuf.Timestamp
-	11, // 12: ihavefood.OrderEventTimestamps.rider_picked_up_time:type_name -> google.protobuf.Timestamp
-	11, // 13: ihavefood.OrderEventTimestamps.delivered_time:type_name -> google.protobuf.Timestamp
-	11, // 14: ihavefood.OrderEventTimestamps.cancelled_time:type_name -> google.protobuf.Timestamp
-	3,  // 15: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
-	4,  // 16: ihavefood.CreatePlaceOrderRequest.items:type_name -> ihavefood.OrderItem
-	0,  // 17: ihavefood.CreatePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
-	6,  // 18: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
-	8,  // 19: ihavefood.OrderService.CreatePlaceOrder:input_type -> ihavefood.CreatePlaceOrderRequest
-	7,  // 20: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
-	3,  // 21: ihavefood.OrderService.CreatePlaceOrder:output_type -> ihavefood.PlaceOrder
-	20, // [20:22] is the sub-list for method output_type
-	18, // [18:20] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	0,  // 3: ihavefood.PlaceOrder.payment_methods:type_name -> ihavefood.PaymentMethods
+	1,  // 4: ihavefood.PlaceOrder.payment_status:type_name -> ihavefood.PaymentStatus
+	2,  // 5: ihavefood.PlaceOrder.order_status:type_name -> ihavefood.OrderStatus
+	5,  // 6: ihavefood.PlaceOrder.timestamps:type_name -> ihavefood.OrderEventTimestamps
+	10, // 7: ihavefood.OrderEventTimestamps.order_placed_time:type_name -> google.protobuf.Timestamp
+	10, // 8: ihavefood.OrderEventTimestamps.merchant_accept_time:type_name -> google.protobuf.Timestamp
+	10, // 9: ihavefood.OrderEventTimestamps.rider_notified_time:type_name -> google.protobuf.Timestamp
+	10, // 10: ihavefood.OrderEventTimestamps.rider_assigned_time:type_name -> google.protobuf.Timestamp
+	10, // 11: ihavefood.OrderEventTimestamps.rider_picked_up_time:type_name -> google.protobuf.Timestamp
+	10, // 12: ihavefood.OrderEventTimestamps.delivered_time:type_name -> google.protobuf.Timestamp
+	10, // 13: ihavefood.OrderEventTimestamps.cancelled_time:type_name -> google.protobuf.Timestamp
+	3,  // 14: ihavefood.ListOrderHistoryResponse.place_orders:type_name -> ihavefood.PlaceOrder
+	4,  // 15: ihavefood.CreatePlaceOrderRequest.items:type_name -> ihavefood.OrderItem
+	0,  // 16: ihavefood.CreatePlaceOrderRequest.payment_methods:type_name -> ihavefood.PaymentMethods
+	6,  // 17: ihavefood.OrderService.ListOrderHistory:input_type -> ihavefood.ListOrderHistoryRequest
+	8,  // 18: ihavefood.OrderService.CreatePlaceOrder:input_type -> ihavefood.CreatePlaceOrderRequest
+	7,  // 19: ihavefood.OrderService.ListOrderHistory:output_type -> ihavefood.ListOrderHistoryResponse
+	3,  // 20: ihavefood.OrderService.CreatePlaceOrder:output_type -> ihavefood.PlaceOrder
+	19, // [19:21] is the sub-list for method output_type
+	17, // [17:19] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_orderservice_proto_init() }
@@ -824,7 +822,6 @@ func file_orderservice_proto_init() {
 		return
 	}
 	file_common_proto_init()
-	file_customerservice_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -51,25 +51,18 @@ service CustomerService {
 }
 
 message Customer {
-    string customer_id = 1; 
+    string customer_id = 1;
     string username = 2;
-    // bytes picture = 3;
-    string bio = 4;
-    Social social = 5;
-    repeated Address addresses = 6;
-    ContactInfo contact = 7;
+    string email = 3;
+    string phone = 4;
+    Social social = 6;
+    repeated Address addresses = 7;
     google.protobuf.Timestamp create_time = 8;
     google.protobuf.Timestamp update_time = 9;
+    // bytes picture = 10;
 }
 
-message ContactInfo {
-    string phone_number = 1;
-    string email = 2;
-}
-
-message ListCustomersRequest {
-    // TODO filter here
-}
+message ListCustomersRequest {}
 
 message ListCustomersResponse{
     repeated Customer customers = 1;
@@ -93,7 +86,7 @@ message CreateAddressRequest {
 
 message UpdateCustomerRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"new_username\": \"anurak_new\", \"new_bio\": \"Loves coffee and coding.\", \"new_social\": {\"facebook\": \"anurak.chiangmai\", \"instagram\": \"@anurak_insta\", \"line\": \"@anurak\"}}"
+      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"new_username\": \"anurak_new\", \"new_social\": {\"facebook\": \"anurak.chiangmai\", \"instagram\": \"@anurak_insta\", \"line\": \"@anurak\"}}"
     };
 
     string customer_id = 1;
@@ -101,7 +94,6 @@ message UpdateCustomerRequest {
     // such as update every XX months.
     string new_username = 2;
     //bytes new_picture = 3;
-    string new_bio = 4;
     Social new_social = 5;
 }
 

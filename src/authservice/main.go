@@ -138,13 +138,14 @@ func main() {
 		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
 	}
 
-	storage := internal.NewStorage(db)
-	if err := internal.CreateSuperAdmin(storage); err != nil {
-		slog.Error("Failed to create admin user", "err", err)
+	auth := internal.NewAuthService(
+		internal.NewStorage(db),
+		internal.NewRabbitMQ(initAMQPCon()),
+	)
+
+	if err := auth.CreateDemoUsers(); err != nil {
+		slog.Error("Failed to create Demo Users", "err", err)
 	}
 
-	startGRPCServer(internal.NewAuthService(
-		storage,
-		internal.NewRabbitMQ(initAMQPCon()),
-	))
+	startGRPCServer(auth)
 }

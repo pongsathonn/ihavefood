@@ -29,7 +29,6 @@ type Roles int32
 const (
 	Roles_UNKNOWN  Roles = 0
 	Roles_CUSTOMER Roles = 1
-	Roles_MERCHANT Roles = 2
 	Roles_RIDER    Roles = 3
 	// For simplicity, admin roles are included in this enum.
 	Roles_SUPER_ADMIN Roles = 20
@@ -41,7 +40,6 @@ var (
 	Roles_name = map[int32]string{
 		0:  "UNKNOWN",
 		1:  "CUSTOMER",
-		2:  "MERCHANT",
 		3:  "RIDER",
 		20: "SUPER_ADMIN",
 		21: "ADMIN",
@@ -49,7 +47,6 @@ var (
 	Roles_value = map[string]int32{
 		"UNKNOWN":     0,
 		"CUSTOMER":    1,
-		"MERCHANT":    2,
 		"RIDER":       3,
 		"SUPER_ADMIN": 20,
 		"ADMIN":       21,
@@ -87,7 +84,7 @@ type AuthCredentials struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,3,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
+	Phone         string                 `protobuf:"bytes,3,opt,name=phone,proto3" json:"phone,omitempty"`
 	Role          Roles                  `protobuf:"varint,4,opt,name=role,proto3,enum=ihavefood.Roles" json:"role,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
@@ -139,9 +136,9 @@ func (x *AuthCredentials) GetEmail() string {
 	return ""
 }
 
-func (x *AuthCredentials) GetPhoneNumber() string {
+func (x *AuthCredentials) GetPhone() string {
 	if x != nil {
-		return x.PhoneNumber
+		return x.Phone
 	}
 	return ""
 }
@@ -343,11 +340,11 @@ func (x *LoginResponse) GetExpiresIn() int64 {
 }
 
 type UpdatePhoneNumberRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	AuthId         string                 `protobuf:"bytes,1,opt,name=auth_id,json=authId,proto3" json:"auth_id,omitempty"`
-	NewPhoneNumber string                 `protobuf:"bytes,2,opt,name=new_phone_number,json=newPhoneNumber,proto3" json:"new_phone_number,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AuthId        string                 `protobuf:"bytes,1,opt,name=auth_id,json=authId,proto3" json:"auth_id,omitempty"`
+	NewPhone      string                 `protobuf:"bytes,2,opt,name=new_phone,json=newPhone,proto3" json:"new_phone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdatePhoneNumberRequest) Reset() {
@@ -387,9 +384,9 @@ func (x *UpdatePhoneNumberRequest) GetAuthId() string {
 	return ""
 }
 
-func (x *UpdatePhoneNumberRequest) GetNewPhoneNumber() string {
+func (x *UpdatePhoneNumberRequest) GetNewPhone() string {
 	if x != nil {
-		return x.NewPhoneNumber
+		return x.NewPhone
 	}
 	return ""
 }
@@ -618,11 +615,11 @@ var File_authservice_proto protoreflect.FileDescriptor
 
 const file_authservice_proto_rawDesc = "" +
 	"\n" +
-	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xfa\x01\n" +
+	"\x11authservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xed\x01\n" +
 	"\x0fAuthCredentials\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x12!\n" +
-	"\fphone_number\x18\x03 \x01(\tR\vphoneNumber\x12$\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\x03 \x01(\tR\x05phone\x12$\n" +
 	"\x04role\x18\x04 \x01(\x0e2\x10.ihavefood.RolesR\x04role\x12;\n" +
 	"\vcreate_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
@@ -641,10 +638,10 @@ const file_authservice_proto_rawDesc = "" +
 	"\rLoginResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
 	"\n" +
-	"expires_in\x18\x02 \x01(\x03R\texpiresIn\"]\n" +
+	"expires_in\x18\x02 \x01(\x03R\texpiresIn\"P\n" +
 	"\x18UpdatePhoneNumberRequest\x12\x17\n" +
-	"\aauth_id\x18\x01 \x01(\tR\x06authId\x12(\n" +
-	"\x10new_phone_number\x18\x02 \x01(\tR\x0enewPhoneNumber\"K\n" +
+	"\aauth_id\x18\x01 \x01(\tR\x06authId\x12\x1b\n" +
+	"\tnew_phone\x18\x02 \x01(\tR\bnewPhone\"K\n" +
 	"\x19UpdatePhoneNumberResponse\x12.\n" +
 	"\x04auth\x18\x01 \x01(\v2\x1a.ihavefood.AuthCredentialsR\x04auth\";\n" +
 	"\x16VerifyUserTokenRequest\x12!\n" +
@@ -654,11 +651,10 @@ const file_authservice_proto_rawDesc = "" +
 	"\x17VerifyAdminTokenRequest\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"0\n" +
 	"\x18VerifyAdminTokenResponse\x12\x14\n" +
-	"\x05valid\x18\x01 \x01(\bR\x05valid*W\n" +
+	"\x05valid\x18\x01 \x01(\bR\x05valid*I\n" +
 	"\x05Roles\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\f\n" +
-	"\bCUSTOMER\x10\x01\x12\f\n" +
-	"\bMERCHANT\x10\x02\x12\t\n" +
+	"\bCUSTOMER\x10\x01\x12\t\n" +
 	"\x05RIDER\x10\x03\x12\x0f\n" +
 	"\vSUPER_ADMIN\x10\x14\x12\t\n" +
 	"\x05ADMIN\x10\x152\x8f\x04\n" +

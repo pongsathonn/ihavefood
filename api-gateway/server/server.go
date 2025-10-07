@@ -36,8 +36,9 @@ func cors(h http.Handler) http.Handler {
 		w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
+		// prefight request check with OPTIONS
 		if r.Method == "OPTIONS" {
-			http.Error(w, "No Content", http.StatusNoContent)
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 
@@ -69,11 +70,10 @@ func Run(h http.Handler) error {
 	http.Handle("/api/*", auth.Authn(h))
 	http.Handle("/", h)
 
-	slog.Info(fmt.Sprintf("Gateway listening on port :%s", os.Getenv("SERVER_PORT")))
-	s := fmt.Sprintf(":%s", os.Getenv("SERVER_PORT"))
-	if err := http.ListenAndServe(s, prettierJSON(cors(h))); err != nil {
+	port := os.Getenv("GATEWAY_PORT")
+	slog.Info(fmt.Sprintf("Gateway listening on port :%s", port))
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), prettierJSON(cors(h))); err != nil {
 		return err
 	}
-
 	return nil
 }

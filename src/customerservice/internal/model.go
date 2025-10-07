@@ -3,21 +3,22 @@
 package internal
 
 import (
-	"database/sql"
 	"time"
 )
 
 type dbNewCustomer struct {
 	CustomerID string
 	Username   string
+	Email      string
 	CreateTime time.Time
 }
 
 type dbCustomer struct {
 	CustomerID string
 	Username   string
+	Email      string
+	Phone      string
 	//Picture    []byte
-	Bio        sql.NullString
 	Social     dbSocial
 	Addresses  []*dbAddress
 	CreateTime time.Time
@@ -25,16 +26,16 @@ type dbCustomer struct {
 }
 
 type dbSocial struct {
-	Facebook  sql.NullString
-	Instagram sql.NullString
-	Line      sql.NullString
+	Facebook  *string
+	Instagram *string
+	Line      *string
 }
 
 type dbAddress struct {
 	AddressID   string
-	AddressName sql.NullString
-	SubDistrict sql.NullString
-	District    sql.NullString
-	Province    sql.NullString
-	PostalCode  sql.NullString
+	AddressName *string
+	SubDistrict *string
+	District    *string
+	Province    *string
+	PostalCode  *string
 }

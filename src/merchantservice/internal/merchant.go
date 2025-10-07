@@ -19,30 +19,30 @@ import (
 )
 
 type MerchantStorage interface {
-	GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error)
-	ListMerchants(ctx context.Context) ([]*dbMerchant, error)
-	SaveMerchant(ctx context.Context, merchantID string, merchantName string) (*dbMerchant, error)
-	CreateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error)
-	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error)
+	GetMerchant(ctx context.Context, merchantID string) (*DbMerchant, error)
+	ListMerchants(ctx context.Context) ([]*DbMerchant, error)
+	CreateMerchant(ctx context.Context, newMerchant *NewMerchant) (string, error)
+	CreateMenu(ctx context.Context, merchantID string, menu []*DbMenuItem) ([]*DbMenuItem, error)
+	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *DbMenuItem) (*DbMenuItem, error)
 }
 
 type MerchantService struct {
 	pb.UnimplementedMerchantServiceServer
 
-	storage  MerchantStorage
+	Storage  MerchantStorage
 	rabbitmq RabbitMQ
 }
 
 func NewMerchantService(storage MerchantStorage, rabbitmq RabbitMQ) *MerchantService {
 	return &MerchantService{
-		storage:  storage,
+		Storage:  storage,
 		rabbitmq: rabbitmq,
 	}
 }
 
-func (x *MerchantService) ListMerchant(ctx context.Context, empty *emptypb.Empty) (*pb.ListMerchantsResponse, error) {
+func (x *MerchantService) ListMerchants(ctx context.Context, empty *emptypb.Empty) (*pb.ListMerchantsResponse, error) {
 
-	results, err := x.storage.ListMerchants(ctx)
+	results, err := x.Storage.ListMerchants(ctx)
 	if err != nil {
 		slog.Error("storage list merchants", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -50,7 +50,7 @@ func (x *MerchantService) ListMerchant(ctx context.Context, empty *emptypb.Empty
 
 	var merchants []*pb.Merchant
 	for _, result := range results {
-		merchant := dbToProto(result)
+		merchant := DbToProto(result)
 		merchants = append(merchants, merchant)
 	}
 
@@ -65,7 +65,7 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
-	merchant, err := x.storage.GetMerchant(ctx, uuid.String())
+	merchant, err := x.Storage.GetMerchant(ctx, uuid.String())
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, status.Error(codes.NotFound, "merchant not found")
@@ -73,25 +73,26 @@ func (x *MerchantService) GetMerchant(ctx context.Context, in *pb.GetMerchantReq
 		slog.Error("storage get merchant", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
-	return dbToProto(merchant), nil
+	return DbToProto(merchant), nil
 }
 
-// func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerchantRequest) (*pb.Merchant, error) {
-//
-// 	uuid, err := uuid.Parse(in.MerchantId)
-// 	if err != nil {
-// 		slog.Error("invalid uuid", "err", err)
-// 		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
-// 	}
-//
-// 	merchant, err := x.storage.SaveMerchant(ctx, uuid.String(), in.MerchantName)
-// 	if err != nil {
-// 		slog.Error("storage save merchant", "err", err)
-// 		return nil, status.Error(codes.Internal, "internal server error")
-// 	}
-//
-// 	return dbToProto(merchant), nil
-// }
+func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerchantRequest) (*pb.Merchant, error) {
+
+	var newMerchant *NewMerchant
+	id, err := x.Storage.CreateMerchant(ctx, newMerchant.FromProto(in))
+	if err != nil {
+		slog.Error("failed to create merchant", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	merchant, err := x.Storage.GetMerchant(ctx, id)
+	if err != nil {
+		slog.Error("failed to get merchant after creation", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return merchant.IntoProto(), nil
+}
 
 func (x *MerchantService) UpdateMerchant(ctx context.Context, in *pb.UpdateMerchantRequest) (*pb.Merchant, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateMerchant not implemented")
@@ -105,16 +106,15 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
-	var newMenu []*dbMenuItem
+	var newMenu []*DbMenuItem
 	for _, m := range in.GetNewMenu() {
-		newMenu = append(newMenu, &dbMenuItem{
-			FoodName:    m.FoodName,
-			Price:       m.Price,
-			Description: m.Description,
+		newMenu = append(newMenu, &DbMenuItem{
+			FoodName: m.FoodName,
+			Price:    m.Price,
 		})
 	}
 
-	createdMenu, err := x.storage.CreateMenu(ctx, uuid.String(), newMenu)
+	createdMenu, err := x.Storage.CreateMenu(ctx, uuid.String(), newMenu)
 	if err != nil {
 		slog.Error("storage create menu", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -123,11 +123,9 @@ func (x *MerchantService) CreateMenu(ctx context.Context, in *pb.CreateMenuReque
 	var menu []*pb.MenuItem
 	for _, v := range createdMenu {
 		menu = append(menu, &pb.MenuItem{
-			ItemId:      v.ItemID,
-			FoodName:    v.FoodName,
-			Price:       v.Price,
-			Description: v.Description,
-			IsAvailable: v.IsAvailable,
+			ItemId:   v.ItemID,
+			FoodName: v.FoodName,
+			Price:    v.Price,
 		})
 	}
 
@@ -142,11 +140,9 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 		return nil, status.Error(codes.InvalidArgument, "uuid invalid for merchant id")
 	}
 
-	updatedMenu, err := x.storage.UpdateMenuItem(ctx, uuid.String(), &dbMenuItem{
-		FoodName:    in.FoodName,
-		Price:       in.Price,
-		Description: in.Description,
-		IsAvailable: in.IsAvailable,
+	updatedMenu, err := x.Storage.UpdateMenuItem(ctx, uuid.String(), &DbMenuItem{
+		FoodName: in.FoodName,
+		Price:    in.Price,
 	})
 	if err != nil {
 		slog.Error("storage update menu item", "err", err)
@@ -154,11 +150,9 @@ func (x *MerchantService) UpdateMenuItem(ctx context.Context, in *pb.UpdateMenuI
 	}
 
 	return &pb.MenuItem{
-		ItemId:      updatedMenu.ItemID,
-		FoodName:    updatedMenu.FoodName,
-		Price:       updatedMenu.Price,
-		Description: updatedMenu.Description,
-		IsAvailable: updatedMenu.IsAvailable,
+		ItemId:   updatedMenu.ItemID,
+		FoodName: updatedMenu.FoodName,
+		Price:    updatedMenu.Price,
 	}, nil
 }
 
@@ -172,6 +166,7 @@ func (x *MerchantService) GetStoreStatus(context.Context, *pb.GetStoreStatusRequ
 
 // -------------------------------------------------------
 
+// TODO : create register for event handler
 func (x *MerchantService) RunMessageProcessing(ctx context.Context) {
 
 	deliveries, err := x.rabbitmq.Subscribe(
@@ -238,16 +233,18 @@ func (x *MerchantService) handlePlaceOrder() chan<- amqp.Delivery {
 	return messages
 }
 
-func dbToProto(merchant *dbMerchant) *pb.Merchant {
+func DbToProto(merchant *DbMerchant) *pb.Merchant {
 
 	var menu []*pb.MenuItem
-	for _, m := range merchant.Menu {
+	for _, dbItem := range merchant.Menu {
 		menu = append(menu, &pb.MenuItem{
-			ItemId:      m.ItemID,
-			FoodName:    m.FoodName,
-			Price:       m.Price,
-			Description: m.Description,
-			IsAvailable: m.IsAvailable,
+			ItemId:   dbItem.ItemID,
+			FoodName: dbItem.FoodName,
+			Price:    dbItem.Price,
+			Image: &pb.ImageInfo{
+				Url:  dbItem.ImageInfo.Url,
+				Type: dbItem.ImageInfo.Type,
+			},
 		})
 	}
 
@@ -262,11 +259,25 @@ func dbToProto(merchant *dbMerchant) *pb.Merchant {
 		}
 	}
 
+	var imageInfo *pb.ImageInfo
+	if merchant.ImageInfo != nil {
+		imageInfo = &pb.ImageInfo{
+			Url:  merchant.ImageInfo.Url,
+			Type: merchant.ImageInfo.Type,
+		}
+	}
+
+	var status pb.StoreStatus
+	if v, ok := pb.StoreStatus_value[merchant.Status]; ok {
+		status = pb.StoreStatus(v)
+	}
+
 	return &pb.Merchant{
 		MerchantId:   merchant.ID,
 		MerchantName: merchant.Name,
 		Menu:         menu,
 		Address:      address,
-		Status:       pb.StoreStatus(merchant.Status),
+		Image:        imageInfo,
+		Status:       status,
 	}
 }

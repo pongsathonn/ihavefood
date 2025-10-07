@@ -35,7 +35,7 @@ const (
 type AuthServiceClient interface {
 	// Create a new auth credential (customer, merchant, rider) using one endpoint.
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthCredentials, error)
-	// Login sign in as any auth user (customer, merchant, rider).
+	// Login sign in as customer, rider
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	UpdatePhoneNumber(ctx context.Context, in *UpdatePhoneNumberRequest, opts ...grpc.CallOption) (*UpdatePhoneNumberResponse, error)
 	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
@@ -111,7 +111,7 @@ func (c *authServiceClient) VerifyAdminToken(ctx context.Context, in *VerifyAdmi
 type AuthServiceServer interface {
 	// Create a new auth credential (customer, merchant, rider) using one endpoint.
 	Register(context.Context, *RegisterRequest) (*AuthCredentials, error)
-	// Login sign in as any auth user (customer, merchant, rider).
+	// Login sign in as customer, rider
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	UpdatePhoneNumber(context.Context, *UpdatePhoneNumberRequest) (*UpdatePhoneNumberResponse, error)
 	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.

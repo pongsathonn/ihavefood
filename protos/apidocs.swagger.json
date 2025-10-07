@@ -647,7 +647,7 @@
         "email": {
           "type": "string"
         },
-        "phoneNumber": {
+        "phone": {
           "type": "string"
         },
         "role": {
@@ -660,17 +660,6 @@
         "updateTime": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "ContactInfo": {
-      "type": "object",
-      "properties": {
-        "phoneNumber": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
         }
       }
     },
@@ -835,9 +824,11 @@
         "username": {
           "type": "string"
         },
-        "bio": {
-          "type": "string",
-          "title": "bytes picture = 3;"
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
         },
         "social": {
           "$ref": "#/definitions/Social"
@@ -849,16 +840,14 @@
             "$ref": "#/definitions/Address"
           }
         },
-        "contact": {
-          "$ref": "#/definitions/ContactInfo"
-        },
         "createTime": {
           "type": "string",
           "format": "date-time"
         },
         "updateTime": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "title": "bytes picture = 10;"
         }
       }
     },
@@ -1004,7 +993,10 @@
         "address": {
           "$ref": "#/definitions/Address"
         },
-        "phoneNumber": {
+        "phone": {
+          "type": "string"
+        },
+        "email": {
           "type": "string"
         },
         "status": {
@@ -1150,8 +1142,8 @@
         "merchantAddress": {
           "$ref": "#/definitions/Address"
         },
-        "customerContact": {
-          "$ref": "#/definitions/ContactInfo"
+        "customerPhone": {
+          "type": "string"
         },
         "paymentMethods": {
           "$ref": "#/definitions/PaymentMethods"
@@ -1291,7 +1283,6 @@
       "example": {
         "customer_id": "0cf361e1-4b44-483d-a159-54dabdf7e814",
         "new_username": "anurak_new",
-        "new_bio": "Loves coffee and coding.",
         "new_social": {
           "facebook": "anurak.chiangmai",
           "instagram": "@anurak_insta",
@@ -1303,12 +1294,9 @@
           "type": "string",
           "description": "username must has constraint for update\nsuch as update every XX months."
         },
-        "newBio": {
-          "type": "string",
-          "title": "bytes new_picture = 3;"
-        },
         "newSocial": {
-          "$ref": "#/definitions/Social"
+          "$ref": "#/definitions/Social",
+          "title": "bytes new_picture = 3;"
         }
       }
     },
@@ -1363,7 +1351,7 @@
     "UpdatePhoneNumberBody": {
       "type": "object",
       "properties": {
-        "newPhoneNumber": {
+        "newPhone": {
           "type": "string"
         }
       }

@@ -27,7 +27,7 @@ type AuthClaims struct {
 type dbNewAuthCredentials struct {
 	Email       string
 	HashedPass  string
-	PhoneNumber string
+	PhoneNumber *string
 	Role        dbRoles
 }
 
@@ -36,7 +36,7 @@ type dbAuthCredentials struct {
 	Email       string
 	HashedPass  string
 	Role        dbRoles
-	PhoneNumber string
+	PhoneNumber *string
 	CreateTime  time.Time
 	UpdateTime  time.Time
 }

@@ -17,6 +17,9 @@ RUN apk add --no-cache libc6-compat
 COPY --from=builder /merchant /merchant
 COPY --from=builder /go/bin/dlv /usr/local/bin/dlv
 
+COPY images /images
+COPY demo_merchants.json /demo_merchants.json
+
 CMD ["/merchant"]
 
 

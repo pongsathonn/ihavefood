@@ -3,14 +3,14 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -76,11 +76,11 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 	}
 
 	addressID, err := x.store.createAddress(ctx, in.CustomerId, &dbAddress{
-		AddressName: sql.NullString{String: in.Address.AddressName},
-		SubDistrict: sql.NullString{String: in.Address.SubDistrict},
-		District:    sql.NullString{String: in.Address.District},
-		Province:    sql.NullString{String: in.Address.Province},
-		PostalCode:  sql.NullString{String: in.Address.PostalCode},
+		AddressName: &in.Address.AddressName,
+		SubDistrict: &in.Address.SubDistrict,
+		District:    &in.Address.District,
+		Province:    &in.Address.Province,
+		PostalCode:  &in.Address.PostalCode,
 	})
 	if err != nil {
 		slog.Error("store create address", "err", err)
@@ -95,11 +95,11 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 
 	return &pb.Address{
 		AddressId:   addr.AddressID,
-		AddressName: addr.AddressName.String,
-		SubDistrict: addr.SubDistrict.String,
-		District:    addr.District.String,
-		Province:    addr.Province.String,
-		PostalCode:  addr.PostalCode.String,
+		AddressName: *addr.AddressName,
+		SubDistrict: *addr.SubDistrict,
+		District:    *addr.District,
+		Province:    *addr.Province,
+		PostalCode:  *addr.PostalCode,
 	}, nil
 
 }
@@ -108,11 +108,10 @@ func (x *CustomerService) UpdateCustomer(ctx context.Context, in *pb.UpdateCusto
 
 	update := &dbCustomer{
 		Username: in.NewUsername,
-		Bio:      sql.NullString{String: in.NewBio},
 		Social: dbSocial{
-			Facebook:  sql.NullString{String: in.NewSocial.Facebook},
-			Instagram: sql.NullString{String: in.NewSocial.Instagram},
-			Line:      sql.NullString{String: in.NewSocial.Line},
+			Facebook:  &in.NewSocial.Facebook,
+			Instagram: &in.NewSocial.Instagram,
+			Line:      &in.NewSocial.Line,
 		},
 	}
 
@@ -153,22 +152,24 @@ func (x *CustomerService) HandleCustomerCreation() chan<- amqp.Delivery {
 		for msg := range messages {
 
 			var newCustomer pb.SyncCustomerCreated
-			if err := json.Unmarshal(msg.Body, &newCustomer); err != nil {
-				slog.Error("unmarshal failed", "err", err)
+			if err := proto.Unmarshal(msg.Body, &newCustomer); err != nil {
+				slog.Error("failed to unmarshal new customer", "err", err)
 				continue
 			}
 
-			_, err := uuid.Parse(newCustomer.CustomerId)
+			parsed, err := uuid.Parse(newCustomer.CustomerId)
 			if err != nil {
 				slog.Error("invalid uuid", "err", err)
 				continue
 			}
 
-			//
+			customerId := parsed.String()
+			defaultUsername := fmt.Sprintf("customer%s", customerId[len(customerId)-4:])
 
 			customerID, err := x.store.create(context.TODO(), &dbNewCustomer{
-				CustomerID: newCustomer.CustomerId,
-				Username:   strings.Split(newCustomer.Email, "@")[0],
+				CustomerID: customerId,
+				Username:   defaultUsername,
+				Email:      newCustomer.Email,
 				CreateTime: newCustomer.CreateTime.AsTime(),
 			})
 			if err != nil {
@@ -195,25 +196,27 @@ func protoToDb(customer *pb.Customer) *dbCustomer {
 	for _, a := range customer.Addresses {
 		addresses = append(addresses, &dbAddress{
 			AddressID:   a.AddressId,
-			AddressName: sql.NullString{String: a.AddressName},
-			SubDistrict: sql.NullString{String: a.SubDistrict},
-			District:    sql.NullString{String: a.District},
-			Province:    sql.NullString{String: a.Province},
-			PostalCode:  sql.NullString{String: a.PostalCode},
+			AddressName: &a.AddressName,
+			SubDistrict: &a.SubDistrict,
+			District:    &a.District,
+			Province:    &a.Province,
+			PostalCode:  &a.PostalCode,
 		})
 	}
 
 	return &dbCustomer{
-		//UserID: "",
-		Username: customer.Username,
-		Bio:      sql.NullString{String: customer.Bio},
+		CustomerID: customer.CustomerId,
+		Username:   customer.Username,
+		Email:      customer.Email,
+		Phone:      customer.Phone,
 		Social: dbSocial{
-			Facebook:  sql.NullString{String: customer.Social.Facebook},
-			Instagram: sql.NullString{String: customer.Social.Instagram},
-			Line:      sql.NullString{String: customer.Social.Line},
+			Facebook:  &customer.Social.Facebook,
+			Instagram: &customer.Social.Instagram,
+			Line:      &customer.Social.Line,
 		},
-		Addresses: addresses,
-		// CreateTime: nil,
+		Addresses:  addresses,
+		CreateTime: customer.CreateTime.AsTime(),
+		UpdateTime: customer.UpdateTime.AsTime(),
 	}
 
 }
@@ -224,24 +227,32 @@ func dbToProto(customer *dbCustomer) *pb.Customer {
 	for _, a := range customer.Addresses {
 		addresses = append(addresses, &pb.Address{
 			AddressId:   a.AddressID,
-			AddressName: a.AddressName.String,
-			SubDistrict: a.SubDistrict.String,
-			District:    a.District.String,
-			Province:    a.Province.String,
-			PostalCode:  a.PostalCode.String,
+			AddressName: safeDeref(a.AddressName),
+			SubDistrict: safeDeref(a.SubDistrict),
+			District:    safeDeref(a.District),
+			Province:    safeDeref(a.Province),
+			PostalCode:  safeDeref(a.PostalCode),
 		})
 	}
 
 	return &pb.Customer{
 		CustomerId: customer.CustomerID,
 		Username:   customer.Username,
-		Bio:        customer.Bio.String,
-		Social: &pb.Social{
-			Facebook:  customer.Social.Facebook.String,
-			Instagram: customer.Social.Instagram.String,
-			Line:      customer.Social.Line.String,
-		},
+		Email:      customer.Email,
+		Phone:      customer.Phone,
 		Addresses:  addresses,
+		Social: &pb.Social{
+			Facebook:  safeDeref(customer.Social.Facebook),
+			Instagram: safeDeref(customer.Social.Instagram),
+			Line:      safeDeref(customer.Social.Line),
+		},
 		CreateTime: timestamppb.New(customer.CreateTime),
 	}
+}
+
+func safeDeref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

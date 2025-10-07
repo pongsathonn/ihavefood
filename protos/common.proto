@@ -38,6 +38,14 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 
 };
 
+message NewAddress {
+    string address_name = 2;
+    string sub_district = 3;
+    string district = 4;
+    string province = 5;
+    string postal_code = 6;
+}
+
 message Address {
     string address_id = 1;
     string address_name = 2;

@@ -283,7 +283,7 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 		Total:           total,
 		CustomerAddress: toDbAddress(selectedAddr),
 		MerchantAddress: toDbAddress(merchant.Address),
-		CustomerContact: toDbContactInfo(customer.Contact),
+		CustomerPhone:   customer.Phone,
 		PaymentMethods:  dbPaymentMethods(newOrder.PaymentMethods),
 	}, nil
 }

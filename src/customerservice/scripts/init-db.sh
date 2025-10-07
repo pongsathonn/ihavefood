@@ -20,7 +20,7 @@ psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$CUSTOMER_DB" <<-EOSQL
     CREATE TABLE customers (
         customer_id UUID,
         username VARCHAR(255) UNIQUE NOT NULL,     
-        bio TEXT,                                  
+        email VARCHAR(255) UNIQUE NOT NULL,
         facebook VARCHAR(255),                     
         instagram VARCHAR(255),                    
         line VARCHAR(255),                         

@@ -23,6 +23,13 @@ service MerchantService {
         };
     }
 
+    rpc CreateMerchant(CreateMerchantRequest) returns(Merchant) {
+        option (google.api.http) = {
+            post: "/api/merchants"
+            body: "*"
+        };
+    }
+
     rpc UpdateMerchant(UpdateMerchantRequest) returns(Merchant) {
         option (google.api.http) = {
             patch: "/api/merchants/{merchant_id}"
@@ -30,7 +37,6 @@ service MerchantService {
         };
     }
 
-    // Menu management
     rpc CreateMenu(CreateMenuRequest) returns(CreateMenuResponse) {
         option (google.api.http) = {
             post: "/api/merchants/{merchant_id}/menu"
@@ -59,23 +65,30 @@ message Merchant {
     string merchant_id = 1;
     string merchant_name = 2;
     repeated MenuItem menu = 3;
+    ImageInfo image = 8;
     Address address = 4;
-    string phone_number = 5;
-    StoreStatus status = 6;
+    string phone = 5;
+    string email = 6;
+    StoreStatus status = 7;
 }
 
 message MenuItem {
     string item_id = 1;
     string food_name = 2;
     int32 price = 3;
-    string description = 4;
-    bool is_available = 5;
+    ImageInfo image = 4;
+}
+
+message ImageInfo {
+  string url = 1;
+  // MIME type: image/jpeg, image/png
+  string type = 2;
 }
 
 message NewMenuItem {
     string food_name = 1;
     int32 price = 2;
-    string description = 3;
+    ImageInfo image = 3;
 }
 
 message GetMerchantRequest{
@@ -83,6 +96,16 @@ message GetMerchantRequest{
       example: "{\"merchant_id\": \"a1b2c3d4-5678-90ab-cdef-1234567890ab\"}"
     };
     string merchant_id = 1;
+}
+
+message CreateMerchantRequest {
+    string merchant_name = 1;
+    repeated NewMenuItem menu = 2;
+    NewAddress address = 3;
+    string phone = 4;
+    string email = 5;
+    ImageInfo image = 8;
+    StoreStatus status = 7;
 }
 
 message ListMerchantsResponse{
@@ -101,7 +124,7 @@ message UpdateMerchantRequest {
 
 message CreateMenuRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_menu\":[{\"food_name\":\"Khai Jiao\",\"price\":50,\"description\":\"Omelette Thai style\"},{\"food_name\":\"Pad Thai\",\"price\":60,\"description\":\"Stir-fried noodles with shrimp\"},{\"food_name\":\"Kra Prao Moo Sub\",\"price\":70,\"description\":\"Stir-fried minced pork with basil\"},{\"food_name\":\"Khao Pad Goong\",\"price\":80,\"description\":\"Fried rice with shrimp\"}]}"
+      example: "{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_menu\":[{\"food_name\":\"Khai Jiao\",\"price\":50,\"image\":{\"url\":\"http://localhost/images/khai_jiao.png\",\"type\":\"image/png\"}},{\"food_name\":\"Pad Thai\",\"price\":60,\"image\":{\"url\":\"http://localhost/images/pad_thai.png\",\"type\":\"image/png\"}},{\"food_name\":\"Kra Prao Moo Sub\",\"price\":70,\"image\":{\"url\":\"http://localhost/images/kra_prao_moo_sub.png\",\"type\":\"image/jpeg\"}},{\"food_name\":\"Khao Pad Goong\",\"price\":80,\"image\":{\"url\":\"http://localhost/images/khao_pad_goong.png\",\"type\":\"image/jpeg\"}}]}"
     };
 
     string merchant_id = 1;
@@ -114,14 +137,13 @@ message CreateMenuResponse {
 
 message UpdateMenuItemRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"item_id\":\"a1111111-1111-1111-1111-111111111111\",\"food_name\":\"Khai Jiao\",\"price\":55,\"description\":\"Omelette Thai style with extra herbs\",\"is_available\":true}"
+      example: "{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"item_id\":\"a1111111-1111-1111-1111-111111111111\",\"food_name\":\"Khai Jiao\",\"price\":55,\"is_available\":true}"
     };
 
     string merchant_id = 1;
     string item_id = 2;
     string food_name = 3;
     int32 price = 4;
-    string description = 5;
     bool is_available = 6;
 }
 

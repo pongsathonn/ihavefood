@@ -22,6 +22,82 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type NewAddress struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AddressName   string                 `protobuf:"bytes,2,opt,name=address_name,json=addressName,proto3" json:"address_name,omitempty"`
+	SubDistrict   string                 `protobuf:"bytes,3,opt,name=sub_district,json=subDistrict,proto3" json:"sub_district,omitempty"`
+	District      string                 `protobuf:"bytes,4,opt,name=district,proto3" json:"district,omitempty"`
+	Province      string                 `protobuf:"bytes,5,opt,name=province,proto3" json:"province,omitempty"`
+	PostalCode    string                 `protobuf:"bytes,6,opt,name=postal_code,json=postalCode,proto3" json:"postal_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NewAddress) Reset() {
+	*x = NewAddress{}
+	mi := &file_common_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NewAddress) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NewAddress) ProtoMessage() {}
+
+func (x *NewAddress) ProtoReflect() protoreflect.Message {
+	mi := &file_common_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NewAddress.ProtoReflect.Descriptor instead.
+func (*NewAddress) Descriptor() ([]byte, []int) {
+	return file_common_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *NewAddress) GetAddressName() string {
+	if x != nil {
+		return x.AddressName
+	}
+	return ""
+}
+
+func (x *NewAddress) GetSubDistrict() string {
+	if x != nil {
+		return x.SubDistrict
+	}
+	return ""
+}
+
+func (x *NewAddress) GetDistrict() string {
+	if x != nil {
+		return x.District
+	}
+	return ""
+}
+
+func (x *NewAddress) GetProvince() string {
+	if x != nil {
+		return x.Province
+	}
+	return ""
+}
+
+func (x *NewAddress) GetPostalCode() string {
+	if x != nil {
+		return x.PostalCode
+	}
+	return ""
+}
+
 type Address struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AddressId     string                 `protobuf:"bytes,1,opt,name=address_id,json=addressId,proto3" json:"address_id,omitempty"`
@@ -36,7 +112,7 @@ type Address struct {
 
 func (x *Address) Reset() {
 	*x = Address{}
-	mi := &file_common_proto_msgTypes[0]
+	mi := &file_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +124,7 @@ func (x *Address) String() string {
 func (*Address) ProtoMessage() {}
 
 func (x *Address) ProtoReflect() protoreflect.Message {
-	mi := &file_common_proto_msgTypes[0]
+	mi := &file_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +137,7 @@ func (x *Address) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Address.ProtoReflect.Descriptor instead.
 func (*Address) Descriptor() ([]byte, []int) {
-	return file_common_proto_rawDescGZIP(), []int{0}
+	return file_common_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Address) GetAddressId() string {
@@ -117,7 +193,7 @@ type Social struct {
 
 func (x *Social) Reset() {
 	*x = Social{}
-	mi := &file_common_proto_msgTypes[1]
+	mi := &file_common_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -129,7 +205,7 @@ func (x *Social) String() string {
 func (*Social) ProtoMessage() {}
 
 func (x *Social) ProtoReflect() protoreflect.Message {
-	mi := &file_common_proto_msgTypes[1]
+	mi := &file_common_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -142,7 +218,7 @@ func (x *Social) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Social.ProtoReflect.Descriptor instead.
 func (*Social) Descriptor() ([]byte, []int) {
-	return file_common_proto_rawDescGZIP(), []int{1}
+	return file_common_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Social) GetFacebook() string {
@@ -170,7 +246,15 @@ var File_common_proto protoreflect.FileDescriptor
 
 const file_common_proto_rawDesc = "" +
 	"\n" +
-	"\fcommon.proto\x12\tihavefood\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xc7\x01\n" +
+	"\fcommon.proto\x12\tihavefood\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xab\x01\n" +
+	"\n" +
+	"NewAddress\x12!\n" +
+	"\faddress_name\x18\x02 \x01(\tR\vaddressName\x12!\n" +
+	"\fsub_district\x18\x03 \x01(\tR\vsubDistrict\x12\x1a\n" +
+	"\bdistrict\x18\x04 \x01(\tR\bdistrict\x12\x1a\n" +
+	"\bprovince\x18\x05 \x01(\tR\bprovince\x12\x1f\n" +
+	"\vpostal_code\x18\x06 \x01(\tR\n" +
+	"postalCode\"\xc7\x01\n" +
 	"\aAddress\x12\x1d\n" +
 	"\n" +
 	"address_id\x18\x01 \x01(\tR\taddressId\x12!\n" +
@@ -203,10 +287,11 @@ func file_common_proto_rawDescGZIP() []byte {
 	return file_common_proto_rawDescData
 }
 
-var file_common_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_common_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_common_proto_goTypes = []any{
-	(*Address)(nil), // 0: ihavefood.Address
-	(*Social)(nil),  // 1: ihavefood.Social
+	(*NewAddress)(nil), // 0: ihavefood.NewAddress
+	(*Address)(nil),    // 1: ihavefood.Address
+	(*Social)(nil),     // 2: ihavefood.Social
 }
 var file_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -227,7 +312,7 @@ func file_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_proto_rawDesc), len(file_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

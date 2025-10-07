@@ -17,8 +17,7 @@ type customerStorage struct {
 
 func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, error) {
 	customerRows, err := s.db.QueryContext(ctx, `
-		SELECT 
-			customer_id, username, bio, facebook, instagram, line, create_time, update_time
+		SELECT customer_id, username, facebook, instagram, line, create_time, update_time
 		FROM customers
 	`)
 	if err != nil {
@@ -32,7 +31,7 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 	for customerRows.Next() {
 		var p dbCustomer
 		err := customerRows.Scan(
-			&p.CustomerID, &p.Username, &p.Bio, &p.Social.Facebook,
+			&p.CustomerID, &p.Username, &p.Social.Facebook,
 			&p.Social.Instagram, &p.Social.Line, &p.CreateTime, &p.UpdateTime,
 		)
 		if err != nil {
@@ -108,14 +107,14 @@ func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*
 	var customer dbCustomer
 	if err := s.db.QueryRowContext(ctx, `
 		SELECT 
-			customer_id,username,bio,facebook,instagram,line,create_time,update_time
+			customer_id,username,email,facebook,instagram,line,create_time,update_time
 		FROM customers 
 		WHERE customer_id = $1`,
 		customerID,
 	).Scan(
 		&customer.CustomerID,
 		&customer.Username,
-		&customer.Bio,
+		&customer.Email,
 		&customer.Social.Facebook,
 		&customer.Social.Instagram,
 		&customer.Social.Line,
@@ -168,7 +167,7 @@ func (s *customerStorage) getAddress(ctx context.Context, customerID, addressID 
 	row := s.db.QueryRowContext(ctx, `
         SELECT 
             address_id,
-            address_name,
+            address_name
             sub_district,
             district,
             province,
@@ -196,13 +195,15 @@ func (s *customerStorage) create(ctx context.Context, newCustomer *dbNewCustomer
 	res := s.db.QueryRowContext(ctx, `
 		INSERT INTO customers(
 			customer_id,
-			username
+			username,
+			email
 		)
-		VALUES($1,$2)
+		VALUES($1,$2,$3)
 		RETURNING customer_id
 	`,
 		newCustomer.CustomerID,
 		newCustomer.Username,
+		newCustomer.Email,
 	)
 
 	var customerID string
@@ -228,11 +229,11 @@ func (s *customerStorage) createAddress(ctx context.Context, customerID string, 
     RETURNING address_id
 	`,
 		customerID,
-		newAddress.AddressName.String,
-		newAddress.SubDistrict.String,
-		newAddress.District.String,
-		newAddress.Province.String,
-		newAddress.PostalCode.String,
+		newAddress.AddressName,
+		newAddress.SubDistrict,
+		newAddress.District,
+		newAddress.Province,
+		newAddress.PostalCode,
 	)
 
 	var addressID string
@@ -266,10 +267,9 @@ func (s *customerStorage) update(ctx context.Context, customerID string, update 
 			customers
 		SET
 		    username = COALESCE(NULLIF($2, ''), username),
-		    bio = COALESCE(NULLIF($3,''), bio),
-		    facebook = COALESCE(NULLIF($4,''), facebook),
-		    instagram = COALESCE(NULLIF($5,''), instagram),
-		    line = COALESCE(NULLIF($6,''), line),
+		    facebook = COALESCE(NULLIF($3,''), facebook),
+		    instagram = COALESCE(NULLIF($4,''), instagram),
+		    line = COALESCE(NULLIF($5,''), line),
 			update_time = NOW()
 		WHERE 
 			customer_id = $1
@@ -277,7 +277,6 @@ func (s *customerStorage) update(ctx context.Context, customerID string, update 
 	`,
 		customerID,
 		update.Username,
-		update.Bio,
 		update.Social.Facebook,
 		update.Social.Instagram,
 		update.Social.Line,

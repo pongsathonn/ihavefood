@@ -26,16 +26,15 @@ const (
 )
 
 type Customer struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	CustomerId string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
-	Username   string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	// bytes picture = 3;
-	Bio           string                 `protobuf:"bytes,4,opt,name=bio,proto3" json:"bio,omitempty"`
-	Social        *Social                `protobuf:"bytes,5,opt,name=social,proto3" json:"social,omitempty"`
-	Addresses     []*Address             `protobuf:"bytes,6,rep,name=addresses,proto3" json:"addresses,omitempty"`
-	Contact       *ContactInfo           `protobuf:"bytes,7,opt,name=contact,proto3" json:"contact,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Phone         string                 `protobuf:"bytes,4,opt,name=phone,proto3" json:"phone,omitempty"`
+	Social        *Social                `protobuf:"bytes,6,opt,name=social,proto3" json:"social,omitempty"`
+	Addresses     []*Address             `protobuf:"bytes,7,rep,name=addresses,proto3" json:"addresses,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"` // bytes picture = 10;
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -84,9 +83,16 @@ func (x *Customer) GetUsername() string {
 	return ""
 }
 
-func (x *Customer) GetBio() string {
+func (x *Customer) GetEmail() string {
 	if x != nil {
-		return x.Bio
+		return x.Email
+	}
+	return ""
+}
+
+func (x *Customer) GetPhone() string {
+	if x != nil {
+		return x.Phone
 	}
 	return ""
 }
@@ -105,13 +111,6 @@ func (x *Customer) GetAddresses() []*Address {
 	return nil
 }
 
-func (x *Customer) GetContact() *ContactInfo {
-	if x != nil {
-		return x.Contact
-	}
-	return nil
-}
-
 func (x *Customer) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
@@ -126,58 +125,6 @@ func (x *Customer) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
-type ContactInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PhoneNumber   string                 `protobuf:"bytes,1,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ContactInfo) Reset() {
-	*x = ContactInfo{}
-	mi := &file_customerservice_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ContactInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ContactInfo) ProtoMessage() {}
-
-func (x *ContactInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_customerservice_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ContactInfo.ProtoReflect.Descriptor instead.
-func (*ContactInfo) Descriptor() ([]byte, []int) {
-	return file_customerservice_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *ContactInfo) GetPhoneNumber() string {
-	if x != nil {
-		return x.PhoneNumber
-	}
-	return ""
-}
-
-func (x *ContactInfo) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
 type ListCustomersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -186,7 +133,7 @@ type ListCustomersRequest struct {
 
 func (x *ListCustomersRequest) Reset() {
 	*x = ListCustomersRequest{}
-	mi := &file_customerservice_proto_msgTypes[2]
+	mi := &file_customerservice_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +145,7 @@ func (x *ListCustomersRequest) String() string {
 func (*ListCustomersRequest) ProtoMessage() {}
 
 func (x *ListCustomersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_customerservice_proto_msgTypes[2]
+	mi := &file_customerservice_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,7 +158,7 @@ func (x *ListCustomersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCustomersRequest.ProtoReflect.Descriptor instead.
 func (*ListCustomersRequest) Descriptor() ([]byte, []int) {
-	return file_customerservice_proto_rawDescGZIP(), []int{2}
+	return file_customerservice_proto_rawDescGZIP(), []int{1}
 }
 
 type ListCustomersResponse struct {
@@ -223,7 +170,7 @@ type ListCustomersResponse struct {
 
 func (x *ListCustomersResponse) Reset() {
 	*x = ListCustomersResponse{}
-	mi := &file_customerservice_proto_msgTypes[3]
+	mi := &file_customerservice_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -235,7 +182,7 @@ func (x *ListCustomersResponse) String() string {
 func (*ListCustomersResponse) ProtoMessage() {}
 
 func (x *ListCustomersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_customerservice_proto_msgTypes[3]
+	mi := &file_customerservice_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -248,7 +195,7 @@ func (x *ListCustomersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCustomersResponse.ProtoReflect.Descriptor instead.
 func (*ListCustomersResponse) Descriptor() ([]byte, []int) {
-	return file_customerservice_proto_rawDescGZIP(), []int{3}
+	return file_customerservice_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListCustomersResponse) GetCustomers() []*Customer {
@@ -267,7 +214,7 @@ type GetCustomerRequest struct {
 
 func (x *GetCustomerRequest) Reset() {
 	*x = GetCustomerRequest{}
-	mi := &file_customerservice_proto_msgTypes[4]
+	mi := &file_customerservice_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -279,7 +226,7 @@ func (x *GetCustomerRequest) String() string {
 func (*GetCustomerRequest) ProtoMessage() {}
 
 func (x *GetCustomerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_customerservice_proto_msgTypes[4]
+	mi := &file_customerservice_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -292,7 +239,7 @@ func (x *GetCustomerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCustomerRequest.ProtoReflect.Descriptor instead.
 func (*GetCustomerRequest) Descriptor() ([]byte, []int) {
-	return file_customerservice_proto_rawDescGZIP(), []int{4}
+	return file_customerservice_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetCustomerRequest) GetCustomerId() string {
@@ -312,7 +259,7 @@ type CreateAddressRequest struct {
 
 func (x *CreateAddressRequest) Reset() {
 	*x = CreateAddressRequest{}
-	mi := &file_customerservice_proto_msgTypes[5]
+	mi := &file_customerservice_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -324,7 +271,7 @@ func (x *CreateAddressRequest) String() string {
 func (*CreateAddressRequest) ProtoMessage() {}
 
 func (x *CreateAddressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_customerservice_proto_msgTypes[5]
+	mi := &file_customerservice_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -337,7 +284,7 @@ func (x *CreateAddressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAddressRequest.ProtoReflect.Descriptor instead.
 func (*CreateAddressRequest) Descriptor() ([]byte, []int) {
-	return file_customerservice_proto_rawDescGZIP(), []int{5}
+	return file_customerservice_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateAddressRequest) GetCustomerId() string {
@@ -361,7 +308,6 @@ type UpdateCustomerRequest struct {
 	// such as update every XX months.
 	NewUsername string `protobuf:"bytes,2,opt,name=new_username,json=newUsername,proto3" json:"new_username,omitempty"`
 	// bytes new_picture = 3;
-	NewBio        string  `protobuf:"bytes,4,opt,name=new_bio,json=newBio,proto3" json:"new_bio,omitempty"`
 	NewSocial     *Social `protobuf:"bytes,5,opt,name=new_social,json=newSocial,proto3" json:"new_social,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -369,7 +315,7 @@ type UpdateCustomerRequest struct {
 
 func (x *UpdateCustomerRequest) Reset() {
 	*x = UpdateCustomerRequest{}
-	mi := &file_customerservice_proto_msgTypes[6]
+	mi := &file_customerservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -381,7 +327,7 @@ func (x *UpdateCustomerRequest) String() string {
 func (*UpdateCustomerRequest) ProtoMessage() {}
 
 func (x *UpdateCustomerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_customerservice_proto_msgTypes[6]
+	mi := &file_customerservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -394,7 +340,7 @@ func (x *UpdateCustomerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCustomerRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCustomerRequest) Descriptor() ([]byte, []int) {
-	return file_customerservice_proto_rawDescGZIP(), []int{6}
+	return file_customerservice_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateCustomerRequest) GetCustomerId() string {
@@ -407,13 +353,6 @@ func (x *UpdateCustomerRequest) GetCustomerId() string {
 func (x *UpdateCustomerRequest) GetNewUsername() string {
 	if x != nil {
 		return x.NewUsername
-	}
-	return ""
-}
-
-func (x *UpdateCustomerRequest) GetNewBio() string {
-	if x != nil {
-		return x.NewBio
 	}
 	return ""
 }
@@ -434,7 +373,7 @@ type DeleteCustomerRequest struct {
 
 func (x *DeleteCustomerRequest) Reset() {
 	*x = DeleteCustomerRequest{}
-	mi := &file_customerservice_proto_msgTypes[7]
+	mi := &file_customerservice_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -446,7 +385,7 @@ func (x *DeleteCustomerRequest) String() string {
 func (*DeleteCustomerRequest) ProtoMessage() {}
 
 func (x *DeleteCustomerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_customerservice_proto_msgTypes[7]
+	mi := &file_customerservice_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -459,7 +398,7 @@ func (x *DeleteCustomerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCustomerRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCustomerRequest) Descriptor() ([]byte, []int) {
-	return file_customerservice_proto_rawDescGZIP(), []int{7}
+	return file_customerservice_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DeleteCustomerRequest) GetCustomerId() string {
@@ -473,22 +412,19 @@ var File_customerservice_proto protoreflect.FileDescriptor
 
 const file_customerservice_proto_rawDesc = "" +
 	"\n" +
-	"\x15customerservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xe2\x02\n" +
+	"\x15customerservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xca\x02\n" +
 	"\bCustomer\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x10\n" +
-	"\x03bio\x18\x04 \x01(\tR\x03bio\x12)\n" +
-	"\x06social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\x06social\x120\n" +
-	"\taddresses\x18\x06 \x03(\v2\x12.ihavefood.AddressR\taddresses\x120\n" +
-	"\acontact\x18\a \x01(\v2\x16.ihavefood.ContactInfoR\acontact\x12;\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\x04 \x01(\tR\x05phone\x12)\n" +
+	"\x06social\x18\x06 \x01(\v2\x11.ihavefood.SocialR\x06social\x120\n" +
+	"\taddresses\x18\a \x03(\v2\x12.ihavefood.AddressR\taddresses\x12;\n" +
 	"\vcreate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"F\n" +
-	"\vContactInfo\x12!\n" +
-	"\fphone_number\x18\x01 \x01(\tR\vphoneNumber\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\"\x16\n" +
+	"updateTime\"\x16\n" +
 	"\x14ListCustomersRequest\"J\n" +
 	"\x15ListCustomersResponse\x121\n" +
 	"\tcustomers\x18\x01 \x03(\v2\x13.ihavefood.CustomerR\tcustomers\"t\n" +
@@ -498,14 +434,13 @@ const file_customerservice_proto_rawDesc = "" +
 	"\x14CreateAddressRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12,\n" +
-	"\aaddress\x18\x02 \x01(\v2\x12.ihavefood.AddressR\aaddress:\xd6\x01\x92A\xd2\x012\xcf\x01{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"address\": {\"address_name\": \"Arun House\", \"sub_district\": \"Suthep\", \"district\": \"Mueang Chiang Mai\", \"province\": \"Chiang Mai\", \"postal_code\": \"50200\"}}\"\x8d\x03\n" +
+	"\aaddress\x18\x02 \x01(\v2\x12.ihavefood.AddressR\aaddress:\xd6\x01\x92A\xd2\x012\xcf\x01{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"address\": {\"address_name\": \"Arun House\", \"sub_district\": \"Suthep\", \"district\": \"Mueang Chiang Mai\", \"province\": \"Chiang Mai\", \"postal_code\": \"50200\"}}\"\xcd\x02\n" +
 	"\x15UpdateCustomerRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12!\n" +
-	"\fnew_username\x18\x02 \x01(\tR\vnewUsername\x12\x17\n" +
-	"\anew_bio\x18\x04 \x01(\tR\x06newBio\x120\n" +
+	"\fnew_username\x18\x02 \x01(\tR\vnewUsername\x120\n" +
 	"\n" +
-	"new_social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\tnewSocial:\xe4\x01\x92A\xe0\x012\xdd\x01{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"new_username\": \"anurak_new\", \"new_bio\": \"Loves coffee and coding.\", \"new_social\": {\"facebook\": \"anurak.chiangmai\", \"instagram\": \"@anurak_insta\", \"line\": \"@anurak\"}}\"v\n" +
+	"new_social\x18\x05 \x01(\v2\x11.ihavefood.SocialR\tnewSocial:\xbd\x01\x92A\xb9\x012\xb6\x01{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"new_username\": \"anurak_new\", \"new_social\": {\"facebook\": \"anurak.chiangmai\", \"instagram\": \"@anurak_insta\", \"line\": \"@anurak\"}}\"v\n" +
 	"\x15DeleteCustomerRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId:<\x92A927{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\"}2\xc1\x04\n" +
@@ -528,45 +463,43 @@ func file_customerservice_proto_rawDescGZIP() []byte {
 	return file_customerservice_proto_rawDescData
 }
 
-var file_customerservice_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_customerservice_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_customerservice_proto_goTypes = []any{
 	(*Customer)(nil),              // 0: ihavefood.Customer
-	(*ContactInfo)(nil),           // 1: ihavefood.ContactInfo
-	(*ListCustomersRequest)(nil),  // 2: ihavefood.ListCustomersRequest
-	(*ListCustomersResponse)(nil), // 3: ihavefood.ListCustomersResponse
-	(*GetCustomerRequest)(nil),    // 4: ihavefood.GetCustomerRequest
-	(*CreateAddressRequest)(nil),  // 5: ihavefood.CreateAddressRequest
-	(*UpdateCustomerRequest)(nil), // 6: ihavefood.UpdateCustomerRequest
-	(*DeleteCustomerRequest)(nil), // 7: ihavefood.DeleteCustomerRequest
-	(*Social)(nil),                // 8: ihavefood.Social
-	(*Address)(nil),               // 9: ihavefood.Address
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 11: google.protobuf.Empty
+	(*ListCustomersRequest)(nil),  // 1: ihavefood.ListCustomersRequest
+	(*ListCustomersResponse)(nil), // 2: ihavefood.ListCustomersResponse
+	(*GetCustomerRequest)(nil),    // 3: ihavefood.GetCustomerRequest
+	(*CreateAddressRequest)(nil),  // 4: ihavefood.CreateAddressRequest
+	(*UpdateCustomerRequest)(nil), // 5: ihavefood.UpdateCustomerRequest
+	(*DeleteCustomerRequest)(nil), // 6: ihavefood.DeleteCustomerRequest
+	(*Social)(nil),                // 7: ihavefood.Social
+	(*Address)(nil),               // 8: ihavefood.Address
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 10: google.protobuf.Empty
 }
 var file_customerservice_proto_depIdxs = []int32{
-	8,  // 0: ihavefood.Customer.social:type_name -> ihavefood.Social
-	9,  // 1: ihavefood.Customer.addresses:type_name -> ihavefood.Address
-	1,  // 2: ihavefood.Customer.contact:type_name -> ihavefood.ContactInfo
-	10, // 3: ihavefood.Customer.create_time:type_name -> google.protobuf.Timestamp
-	10, // 4: ihavefood.Customer.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 5: ihavefood.ListCustomersResponse.customers:type_name -> ihavefood.Customer
-	9,  // 6: ihavefood.CreateAddressRequest.address:type_name -> ihavefood.Address
-	8,  // 7: ihavefood.UpdateCustomerRequest.new_social:type_name -> ihavefood.Social
-	2,  // 8: ihavefood.CustomerService.ListCustomers:input_type -> ihavefood.ListCustomersRequest
-	4,  // 9: ihavefood.CustomerService.GetCustomer:input_type -> ihavefood.GetCustomerRequest
-	5,  // 10: ihavefood.CustomerService.CreateAddress:input_type -> ihavefood.CreateAddressRequest
-	6,  // 11: ihavefood.CustomerService.UpdateCustomer:input_type -> ihavefood.UpdateCustomerRequest
-	7,  // 12: ihavefood.CustomerService.DeleteCustomer:input_type -> ihavefood.DeleteCustomerRequest
-	3,  // 13: ihavefood.CustomerService.ListCustomers:output_type -> ihavefood.ListCustomersResponse
-	0,  // 14: ihavefood.CustomerService.GetCustomer:output_type -> ihavefood.Customer
-	9,  // 15: ihavefood.CustomerService.CreateAddress:output_type -> ihavefood.Address
-	0,  // 16: ihavefood.CustomerService.UpdateCustomer:output_type -> ihavefood.Customer
-	11, // 17: ihavefood.CustomerService.DeleteCustomer:output_type -> google.protobuf.Empty
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	7,  // 0: ihavefood.Customer.social:type_name -> ihavefood.Social
+	8,  // 1: ihavefood.Customer.addresses:type_name -> ihavefood.Address
+	9,  // 2: ihavefood.Customer.create_time:type_name -> google.protobuf.Timestamp
+	9,  // 3: ihavefood.Customer.update_time:type_name -> google.protobuf.Timestamp
+	0,  // 4: ihavefood.ListCustomersResponse.customers:type_name -> ihavefood.Customer
+	8,  // 5: ihavefood.CreateAddressRequest.address:type_name -> ihavefood.Address
+	7,  // 6: ihavefood.UpdateCustomerRequest.new_social:type_name -> ihavefood.Social
+	1,  // 7: ihavefood.CustomerService.ListCustomers:input_type -> ihavefood.ListCustomersRequest
+	3,  // 8: ihavefood.CustomerService.GetCustomer:input_type -> ihavefood.GetCustomerRequest
+	4,  // 9: ihavefood.CustomerService.CreateAddress:input_type -> ihavefood.CreateAddressRequest
+	5,  // 10: ihavefood.CustomerService.UpdateCustomer:input_type -> ihavefood.UpdateCustomerRequest
+	6,  // 11: ihavefood.CustomerService.DeleteCustomer:input_type -> ihavefood.DeleteCustomerRequest
+	2,  // 12: ihavefood.CustomerService.ListCustomers:output_type -> ihavefood.ListCustomersResponse
+	0,  // 13: ihavefood.CustomerService.GetCustomer:output_type -> ihavefood.Customer
+	8,  // 14: ihavefood.CustomerService.CreateAddress:output_type -> ihavefood.Address
+	0,  // 15: ihavefood.CustomerService.UpdateCustomer:output_type -> ihavefood.Customer
+	10, // 16: ihavefood.CustomerService.DeleteCustomer:output_type -> google.protobuf.Empty
+	12, // [12:17] is the sub-list for method output_type
+	7,  // [7:12] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_customerservice_proto_init() }
@@ -581,7 +514,7 @@ func file_customerservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_customerservice_proto_rawDesc), len(file_customerservice_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

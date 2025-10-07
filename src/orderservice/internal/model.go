@@ -19,7 +19,7 @@ type newPlaceOrder struct {
 	Total           int32
 	CustomerAddress *dbAddress
 	MerchantAddress *dbAddress
-	CustomerContact *dbContactInfo
+	CustomerPhone   string
 	PaymentMethods  dbPaymentMethods
 }
 
@@ -37,7 +37,7 @@ type dbPlaceOrder struct {
 	Total           int32            `bson:"total"`
 	CustomerAddress *dbAddress       `bson:"customerAddress"`
 	MerchantAddress *dbAddress       `bson:"merchantAddress"`
-	CustomerContact *dbContactInfo   `bson:"customerContact"`
+	CustomerPhone   string           `bson:"customerPhone"`
 	PaymentMethods  dbPaymentMethods `bson:"paymentMethods"`
 	PaymentStatus   dbPaymentStatus  `bson:"paymentStatus"`
 	OrderStatus     dbOrderStatus    `bson:"orderStatus"`
@@ -56,11 +56,6 @@ type dbAddress struct {
 	District    string `bson:"district"`
 	Province    string `bson:"province"`
 	PostalCode  string `bson:"postalCode"`
-}
-
-type dbContactInfo struct {
-	PhoneNumber string `bson:"phoneNumber"`
-	Email       string `bson:"email"`
 }
 
 type dbPaymentMethods int32
@@ -103,25 +98,6 @@ var EventToStatus = map[any]pb.OrderStatus{
 	pb.OrderEvent_RIDER_PICKED_UP_EVENT:   pb.OrderStatus_ONGOING,
 	pb.OrderEvent_RIDER_DELIVERED_EVENT:   pb.OrderStatus_DELIVERED,
 	pb.OrderEvent_ORDER_CANCELLED_EVENT:   pb.OrderStatus_CANCELLED,
-}
-
-func toDbContactInfo(ct *pb.ContactInfo) *dbContactInfo {
-	if ct == nil {
-		return nil
-	}
-	return &dbContactInfo{
-		PhoneNumber: ct.PhoneNumber,
-		Email:       ct.Email,
-	}
-}
-func toProtoContactInfo(ct *dbContactInfo) *pb.ContactInfo {
-	if ct == nil {
-		return nil
-	}
-	return &pb.ContactInfo{
-		PhoneNumber: ct.PhoneNumber,
-		Email:       ct.Email,
-	}
 }
 
 func toDbAddress(addr *pb.Address) *dbAddress {
@@ -176,7 +152,8 @@ func toProtoPlaceOrder(order *dbPlaceOrder) *pb.PlaceOrder {
 		Total:           order.Total,
 		CustomerAddress: toProtoAddress(order.CustomerAddress),
 		MerchantAddress: toProtoAddress(order.MerchantAddress),
-		CustomerContact: toProtoContactInfo(order.CustomerContact),
+		CustomerPhone:   order.CustomerPhone,
+		CouponCode:      order.CouponCode,
 		PaymentMethods:  pb.PaymentMethods(order.PaymentMethods),
 		PaymentStatus:   pb.PaymentStatus(order.PaymentStatus),
 		OrderStatus:     pb.OrderStatus(order.OrderStatus),

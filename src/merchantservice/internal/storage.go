@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,18 +19,18 @@ func NewMerchantStorage(client *mongo.Client) MerchantStorage {
 	return &merchantStorage{client: client}
 }
 
-func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*dbMerchant, error) {
+func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*DbMerchant, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 
-	var merchant dbMerchant
+	var merchant DbMerchant
 	if err := coll.FindOne(ctx, bson.M{"_id": merchantID}).Decode(&merchant); err != nil {
 		return nil, err
 	}
 	return &merchant, nil
 }
 
-func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*dbMerchant, error) {
+func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*DbMerchant, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 
@@ -39,10 +40,10 @@ func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*dbMerchant, err
 	}
 	defer cursor.Close(ctx)
 
-	var merchants []*dbMerchant
+	var merchants []*DbMerchant
 	for cursor.Next(ctx) {
 
-		var merchant dbMerchant
+		var merchant DbMerchant
 		if err := cursor.Decode(&merchant); err != nil {
 			return nil, err
 		}
@@ -57,32 +58,46 @@ func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*dbMerchant, err
 
 }
 
-func (s *merchantStorage) SaveMerchant(ctx context.Context, merchantID string, merchantName string) (*dbMerchant, error) {
+func (s *merchantStorage) CreateMerchant(ctx context.Context, newMerchant *NewMerchant) (string, error) {
 
-	coll := s.client.Database("db", nil).Collection("merchants")
+	var merchant DbMerchant
+	merchant.ID = uuid.New().String()
+	merchant.Name = newMerchant.Name
+	for _, item := range newMerchant.Menu {
+		merchant.Menu = append(merchant.Menu, &DbMenuItem{
+			ItemID:   uuid.New().String(),
+			FoodName: item.FoodName,
+			Price:    item.Price,
+		})
+	}
 
-	res, err := coll.InsertOne(ctx, dbMerchant{
-		ID:   merchantID,
-		Name: merchantName,
-	})
+	if newMerchant.Address != nil {
+		merchant.Address = &DbAddress{
+			AddressID:   uuid.New().String(),
+			AddressName: newMerchant.Address.AddressName,
+			SubDistrict: newMerchant.Address.SubDistrict,
+			District:    newMerchant.Address.District,
+			Province:    newMerchant.Address.Province,
+			PostalCode:  newMerchant.Address.PostalCode,
+		}
+	}
+	merchant.PhoneNumber = newMerchant.PhoneNumber
+	merchant.Status = newMerchant.Status
+
+	coll := s.client.Database("db").Collection("merchants")
+	_, err := coll.InsertOne(ctx, merchant)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	var merchant *dbMerchant
-	if err := coll.FindOne(ctx, bson.M{"_id": res.InsertedID}).Decode(&merchant); err != nil {
-		return nil, err
-	}
-
-	return merchant, nil
+	return merchant.ID, nil
 }
 
-func (s *merchantStorage) CreateMenu(ctx context.Context, merchantID string, menu []*dbMenuItem) ([]*dbMenuItem, error) {
+func (s *merchantStorage) CreateMenu(ctx context.Context, merchantID string, menu []*DbMenuItem) ([]*DbMenuItem, error) {
 	return nil, errors.New("TODO: CreateMenu not implement")
 }
 
 // UpdateMenuItem updates a specific menu item in a merchant's menu
-func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *dbMenuItem) (*dbMenuItem, error) {
+func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *DbMenuItem) (*DbMenuItem, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
 
@@ -93,10 +108,6 @@ func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string,
 	if updateMenu.Price != 0 {
 		set["menu.$.price"] = updateMenu.Price
 	}
-	if updateMenu.Description != "" {
-		set["menu.$.description"] = updateMenu.Description
-	}
-	set["menu.$.is_available"] = updateMenu.IsAvailable
 
 	if len(set) == 0 {
 		return nil, fmt.Errorf("no fields to update")
@@ -107,7 +118,7 @@ func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string,
 		"menu.item_id": updateMenu.ItemID,
 	}
 
-	var updatedMerchant dbMerchant
+	var updatedMerchant DbMerchant
 
 	update := bson.M{"$set": set}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)

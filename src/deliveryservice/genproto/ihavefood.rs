@@ -28,8 +28,12 @@ pub struct Point {
 pub struct Rider {
     #[prost(string, tag = "1")]
     pub rider_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub phone_number: ::prost::alloc::string::String,
+    pub email: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub phone: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -630,8 +634,10 @@ pub struct Merchant {
     #[prost(message, optional, tag = "4")]
     pub address: ::core::option::Option<Address>,
     #[prost(string, tag = "5")]
-    pub phone_number: ::prost::alloc::string::String,
-    #[prost(enumeration = "StoreStatus", tag = "6")]
+    pub phone: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub email: ::prost::alloc::string::String,
+    #[prost(enumeration = "StoreStatus", tag = "7")]
     pub status: i32,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -1514,29 +1520,22 @@ pub struct Customer {
     pub customer_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub username: ::prost::alloc::string::String,
-    /// bytes picture = 3;
+    #[prost(string, tag = "3")]
+    pub email: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
+    pub phone: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
     pub bio: ::prost::alloc::string::String,
-    #[prost(message, optional, tag = "5")]
+    #[prost(message, optional, tag = "6")]
     pub social: ::core::option::Option<Social>,
-    #[prost(message, repeated, tag = "6")]
+    #[prost(message, repeated, tag = "7")]
     pub addresses: ::prost::alloc::vec::Vec<Address>,
-    #[prost(message, optional, tag = "7")]
-    pub contact: ::core::option::Option<ContactInfo>,
     #[prost(message, optional, tag = "8")]
     pub create_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
+    /// bytes picture = 10;
     #[prost(message, optional, tag = "9")]
     pub update_time: ::core::option::Option<::prost_wkt_types::Timestamp>,
 }
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ContactInfo {
-    #[prost(string, tag = "1")]
-    pub phone_number: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub email: ::prost::alloc::string::String,
-}
-/// TODO filter here
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct ListCustomersRequest {}
@@ -2202,8 +2201,8 @@ pub struct PlaceOrder {
     pub customer_address: ::core::option::Option<Address>,
     #[prost(message, optional, tag = "11")]
     pub merchant_address: ::core::option::Option<Address>,
-    #[prost(message, optional, tag = "12")]
-    pub customer_contact: ::core::option::Option<ContactInfo>,
+    #[prost(string, tag = "12")]
+    pub customer_phone: ::prost::alloc::string::String,
     #[prost(enumeration = "PaymentMethods", tag = "13")]
     pub payment_methods: i32,
     #[prost(enumeration = "PaymentStatus", tag = "14")]

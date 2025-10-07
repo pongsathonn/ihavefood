@@ -1,3 +1,7 @@
+ <!-- ----------------------------------------------------------------------------------------------- -->
+ <!-- ---------------------------------------INDEX--------------------------------------------------- -->
+ <!-- ----------------------------------------------------------------------------------------------- -->
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -69,7 +73,7 @@
             <!-- Header Section (Always Visible) -->
             <header id="main-header" class="text-center py-6 mb-6 relative col-span-1 md:col-span-3">
                 <h1 class="text-5xl font-extrabold text-gray-900 tracking-tight">IHAVEFOOD</h1>
-                <p class="text-xl text-gray-500 mt-2">Your favorite food, delivered fast.</p>
+                <!-- <p class="text-xl text-gray-500 mt-2">Your favorite food, delivered fast.</p> -->
             </header>
 
             <!-- Food and Restaurant Content Section -->
@@ -106,8 +110,8 @@
                         <div id="signin-form" class="space-y-4">
                             <p class="text-sm text-gray-500 text-center">This is a UI demonstration. The forms below are not functional.</p>
                             <div>
-                                <label for="signin-email" class="block text-sm font-medium text-gray-700">Email</label>
-                                <input type="email" id="signin-email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <label for="signin-email" class="block text-sm font-medium text-gray-700">Email or Phone Number</label>
+                                <input type="email" id="signin-email-phone" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div>
                                 <label for="signin-password" class="block text-sm font-medium text-gray-700">Password</label>
@@ -149,36 +153,28 @@
                     </div>
                 </section>
 
-                <!-- User Profile Section (Initially Hidden) -->
-                <section id="user-profile" class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 hidden">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">User Profile</h2>
-                    <div class="flex flex-col items-center">
-                        <div class="w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-gray-200">
-                            <img src="https://placehold.co/128x128/94a3b8/fff?text=User" alt="User Profile Picture" class="w-full h-full object-cover">
-                        </div>
-                        <p class="text-xl font-semibold text-gray-800 mb-1">Authenticated User</p>
-                        <p id="user-email" class="text-sm text-gray-500 break-all"></p>
-                        <p id="user-id" class="text-sm text-gray-500 break-all mt-1"></p>
+                 <!-- User Profile Section (Initially Hidden) -->
+                 <section id="user-profile" class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 hidden">
+                     <!-- <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Customer Profile</h2> -->
+                     <div class="flex flex-col items-center">
+                         <!-- Profile Picture -->
+                         <div class="w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-gray-200">
+                             <img id="user-picture" src="https://placehold.co/128x128/94a3b8/fff?text=C" alt="User Profile Picture" class="w-full h-full object-cover">
+                         </div>
 
-                        <div class="mt-8 w-full">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-3">Account Information</h3>
-                            <div class="bg-gray-100 p-4 rounded-xl space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-500">Phone:</span>
-                                    <span class="text-gray-700 font-medium">+66 123 456 789</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-500">Address:</span>
-                                    <span class="text-gray-700 font-medium">123 Foodlivery St., Chiang Mai</span>
-                                </div>
-                            </div>
-                        </div>
+                         <!-- Username -->
+                         <p id="customer-name"
+                             contenteditable="true"
+                             class="text-xl font-semibold text-gray-800 mb-1 px-3 py-1 rounded-lg border border-transparent focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition">
+                             FooCustomer
+                         </p>
 
-                        <button id="signout-btn" class="mt-8 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-50">
-                            Sign Out
-                        </button>
-                    </div>
-                </section>
+                         <!-- Sign Out -->
+                         <button id="signout-btn" class="mt-8 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-50">
+                             Sign Out
+                         </button>
+                     </div>
+                 </section>
 
                 <!-- Order Tracking Section (Initially Hidden) -->
                 <section id="order-tracking-section" class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 hidden col-span-1 md:col-span-3">
@@ -254,10 +250,22 @@
                             <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
                                 <h3 class="text-xl font-bold text-gray-800 mb-4">Order Details</h3>
                                 <div class="space-y-2 text-gray-600 text-sm">
-                                    <div class="flex justify-between"><span class="font-semibold">Order ID:</span> <span id="tracking-order-id">#1A2B3C4D</span></div>
-                                    <div class="flex justify-between"><span class="font-semibold">Restaurant:</span> <span id="tracking-restaurant-name">อร่อยดีตามสั่ง</span></div>
-                                    <div class="flex justify-between"><span class="font-semibold">Total:</span> <span id="tracking-order-total">฿200.00</span></div>
-                                    <div class="flex justify-between"><span class="font-semibold">Est. Delivery:</span> <span id="tracking-eta">15-20 mins</span></div>
+                                    <div class="flex justify-between">
+                                        <span class="font-semibold">Order ID:</span>
+                                        <span id="tracking-order-id">#1A2B3C4D</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-semibold">Restaurant:</span>
+                                        <span id="tracking-restaurant-name">อร่อยดีตามสั่ง</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-semibold">Total:</span>
+                                        <span id="tracking-order-total">฿200.00</span>
+                                    </div>
+                                    <!-- <div class="flex justify-between"> -->
+                                    <!--     <span class="font-semibold">Est. Delivery:</span> -->
+                                    <!--     <span id="tracking-eta">15-20 mins</span> -->
+                                    <!-- </div> -->
                                 </div>
                             </div>
 
@@ -327,7 +335,7 @@
                             <span id="cart-delivery" class="text-lg font-bold text-gray-600">฿0.00</span>
                         </div>
                         <div id="discount-row" class="flex justify-between items-center mb-2 hidden">
-                            <span class="text-lg font-semibold text-gray-500">Discount:</span>
+                            <span class="text-lg font-semibold text-gray-800">Discount:</span>
                             <span id="cart-discount" class="text-lg font-bold text-red-500">-฿0.00</span>
                         </div>
                         <div class="flex justify-between items-center mb-4">
@@ -342,11 +350,10 @@
             </aside>
 
             <!-- Footer Credit -->
-            <footer class="text-center py-4 text-xl text-gray-500">
-                99% of UI made by AI 😎
-            </footer>
+            <!-- <footer class="text-center py-4 text-xl text-gray-500"> credit </footer> -->
 
         </div>
+
 
         <!-- Order Confirmation Modal -->
         <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
@@ -365,91 +372,17 @@
             </div>
         </div>
 
+ <!-- ----------------------------------------------------------------------------------------------- -->
+ <!-- ---------------------------------------JavaScript---------------------------------------------- -->
+ <!-- ----------------------------------------------------------------------------------------------- -->
+
         <script>
+
         // --- Static Data (replaces Firestore) ---
         let isUserAuthenticated = false;
         // The cart is now an object, storing a separate cart array for each restaurant
         let localCart = {};
         let currentRestaurant = null;
-
-        const initialRestaurants = [
-            {
-                merchantId: 'a1b2c3d4e5f6',
-                merchantName: 'อร่อยดีตามสั่ง',
-                image: 'assets/res1c.png',
-                status: 'OPEN',
-                menu: [
-                    { itemId: '101', foodName: 'ข้าวผัดหมู', price: 50, image: 'assets/khaopad_mu.png' },
-                    { itemId: '102', foodName: 'กระเพราหมูไข่ดาว', price: 50,image: 'assets/krapao_khaidaw.png' },
-                    { itemId: '103', foodName: 'สุกี้แห้งทะเล', price: 60 ,image: 'assets/sukiheng.png' }
-                ],
-                deliveryFee: '20',
-                distance: '3.1',
-                eta: '15'
-            },
-            {
-                merchantId: 'f7g8h9i0j1k2',
-                merchantName: 'ป้าแดง ก๋วยเตี๋ยว',
-                image: 'assets/res2c.png',
-                status: 'OPEN',
-                menu: [
-                    { itemId: '201', foodName: 'ก๋วยเตี๋ยวหมูน้ำใส', price: 40 , image: 'assets/namsai_noodle.png' },
-                    { itemId: '202', foodName: 'ก๋วยเตี๋ยวต้มยำ', price: 45 , image:'assets/bame_tomyum.png' },
-                    { itemId: '203', foodName: 'เส้นเล็กน้ำตก', price: 45, image: 'assets/noodle_namtuk.png' }
-                ],
-                distance: '4.1',
-                eta: '20'
-            },
-            {
-                merchantId: 'l3m4n5o6p7q8',
-                merchantName: 'ตำ ตำ ตำ',
-                image: 'assets/res3c.png',
-                status: 'CLOSE',
-                menu: [
-                    { itemId: '301', foodName: 'ส้มตำไทย', price: 50 },
-                    { itemId: '303', foodName: 'ไก่ย่าง', price: 60 }
-                ],
-                distance: '4.1',
-                eta: '20'
-            },
-            {
-                merchantId: 'm9n0o1p2q3r4',
-                merchantName:'ไก่จอมพลัง',
-                image: 'assets/res4c.png',
-                status: 'OPEN',
-                menu: [
-                    { itemId: '401', foodName: 'ข้าวมันไก่ต้ม', price: 50,image: 'assets/chickken_tom.png' },
-                    { itemId: '402', foodName: 'ข้าวมันไก่ทอด', price: 60 ,image:'assets/chicken_tod.png' },
-                ],
-                distance: '4.1',
-                eta: '20'
-            },
-            {
-                merchantId: 'p5q6r7s8t9u0',
-                merchantName:'ปั่น ปั่น สดชื่น',
-                image: 'assets/res5c.png',
-                status: 'OPEN',
-                menu: [
-                    { itemId: '501', foodName: 'น้ำส้มปั่น', price: 35 , image:'assets/namsom.png'},
-                    { itemId: '502', foodName: 'น้ำแตงโมปั่น', price: 35 , image: 'assets/namtangmo.png'},
-                ],
-                distance: '4.1',
-                eta: '20'
-            },
-            {
-                merchantId: 'v1w2x3y4z5a6',
-                merchantName: 'ใจดีสเต็ก',
-                image: 'assets/res6c.png',
-                status: 'OPEN',
-                menu: [
-                    { itemId: '601', foodName: 'สเต็กเนื้อ', price: 150 ,image:'assets/steak.png'},
-                    { itemId: '602', foodName: 'สเต็กปลา', price: 120, image:'assets/fish_steak.png' },
-                    { itemId: '603', foodName: 'เฟรนช์ฟรายส์', price: 50 }
-                ],
-                distance: '4.1',
-                eta: '20'
-            }
-        ];
 
         // --- UI Element References ---
         const mainContent = document.getElementById('main-content');
@@ -469,13 +402,21 @@
         const signoutButton = document.getElementById('signout-btn');
         const signinForm = document.getElementById('signin-form');
         const signupForm = document.getElementById('signup-form');
-        const signinEmailInput = document.getElementById('signin-email');
+        const signinEmailPhoneInput = document.getElementById('signin-email-phone');
         const signinPasswordInput = document.getElementById('signin-password');
-        const signupEmailInput = document.getElementById('signup-email');
+        const signupEmailPhoneInput = document.getElementById('signup-email');
         const signupPasswordInput = document.getElementById('signup-password');
         const signupRoleSelect = document.getElementById('signup-role');
         const signinBtn = document.getElementById('signin-btn');
+        const infoEmail = document.getElementById('info-email');
+        const infoPhone = document.getElementById('info-phone');
+        const socialFacebook = document.getElementById('social-facebook');
+        const socialInstagram = document.getElementById('social-instagram');
+        const socialLine =  document.getElementById('social-line');
         const signupBtn = document.getElementById('signup-btn');
+
+        const addPhoneBtn = document.getElementById('add-phone');
+
         const authStatus = document.getElementById('auth-status');
         const showSignupLink = document.getElementById('show-signup');
         const showSigninLink = document.getElementById('show-signin');
@@ -495,11 +436,9 @@
         const applyCouponBtn = document.getElementById('apply-coupon-btn');
         const couponStatus = document.getElementById('coupon-status');
         const userIdDisplay = document.getElementById('user-id');
-        const userEmailDisplay = document.getElementById('user-email');
         const trackingSteps = document.querySelectorAll('.tracking-step');
 
         const presetCouponButtons = document.querySelectorAll('.preset-coupon-btn');
-
         let couponApplied = false;
         let deliveryFeeApplied = false;
 
@@ -509,6 +448,7 @@
             sections.forEach(section => {
                 section.style.display = (section.id === sectionId) ? 'block' : 'none';
             });
+
             // Update the main content layout based on which section is visible
             if (sectionId === 'food-menu') {
                 mainContent.classList.remove('md:col-span-3');
@@ -519,11 +459,6 @@
                 mainContent.classList.add('md:col-span-3');
                 cartAside.classList.add('hidden');
             }
-        };
-
-        const showAuthStatus = (message, isError = false) => {
-            authStatus.textContent = message;
-            authStatus.className = `text-sm mt-2 text-center ${isError ? 'text-red-500' : 'text-pink-600'}`;
         };
 
         const renderRestaurants = (merchants) => {
@@ -538,15 +473,15 @@
                 const isClosed = merchant.status === 'CLOSED';
                 card.className = `restaurant-card bg-gray-50 rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-lg ${isClosed ? 'opacity-50 pointer-events-none' : ''}`;
                 card.innerHTML = `
-<img src="${merchant.image}" alt="${merchant.merchantName}" class="w-full h-[220px] object-cover">
-<div class="p-4">
-    <h3 class="text-lg font-semibold text-gray-800">${merchant.merchantName}</h3>
-    <p class="text-sm text-gray-500">
-        Delivery: <span class="text-red-700">฿${merchant.deliveryFee}</span> <span class="text-gray-200">|</span> ${merchant.distance} km (${merchant.eta} min)
-    </p>
-    <p class="text-sm text-gray-500">Status: ${isClosed ? 'Closed' : 'Open'}</p>
-</div>
-`;
+                    <img src="${merchant.image}" alt="${merchant.merchantName}" class="w-full h-[220px] object-cover">
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-800">${merchant.merchantName}</h3>
+                        <p class="text-sm text-gray-500">
+                            Delivery: <span class="text-red-700">฿${merchant.deliveryFee}</span> <span class="text-gray-200">|</span> ${merchant.distance} km (${merchant.eta} min)
+                        </p>
+                        <p class="text-sm text-gray-500">Status: ${isClosed ? 'Closed' : 'Open'}</p>
+                    </div>
+                `;
                 if (!isClosed) {
                     card.addEventListener('click', () => {
                         currentRestaurant = merchant;
@@ -571,15 +506,15 @@
                 const card = document.createElement('div');
                 card.className = 'food-item-card ...';
                 card.innerHTML = `
-<div class="flex items-center space-x-4">
-    <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
-    <div>
-        <h4 class="text-md font-semibold text-gray-800">${item.foodName}</h4>
-        <span class="text-sm text-gray-500">฿${(item.price).toFixed(2)}</span>
-    </div>
-</div>
-<button class="add-to-cart-btn ..." data-item='${JSON.stringify(item)}'>Add</button>
-`;
+                <div class="flex items-center space-x-4">
+                    <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
+                    <div>
+                        <h4 class="text-md font-semibold text-gray-800">${item.foodName}</h4>
+                        <span class="text-sm text-gray-500">฿${(item.price).toFixed(2)}</span>
+                    </div>
+                </div>
+                <button class="add-to-cart-btn ..." data-item='${JSON.stringify(item)}'>Add</button>
+                `;
                 menuContainer.appendChild(card);
             });
 
@@ -709,8 +644,101 @@
             });
         };
 
-        // --- Event Listeners ---
+        const createPlaceOrder = async () => {
 
+            // TODO generate uuid for request_id
+
+            const orderPayload = {
+                request_id: crypto.randomUUID(),
+                customer_id: localStorage.getItem('customer_id'),
+                merchant_id: "422fe523-b6a0-4ff0-8cb5-aa6c65c29285",
+                items: [
+                    {
+                        item_id: "874ae56c-730a-43cd-a0d6-96e8f0ccdad7",
+                        quantity: 2,
+                        note: "no spice"
+                    },
+                    {
+                        item_id: "28cf88d0-a31c-41b7-8c0e-e85e6344a99d",
+                        quantity: 1,
+                        note: "extra egg"
+                    }
+                ],
+                coupon_code: "DISCOUNT10",
+                customer_address_id: "c912f252-4ceb-49e8-82eb-63ea6a61b8a2",
+                payment_methods: "PAYMENT_METHOD_CREDIT_CARD"
+            };
+
+            const res = await fetch("http://localhost:9999/api/orders/place_order", {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(orderPayload)
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to create order: ${errorText}`);
+            }
+
+            return await res.json();
+        };
+
+        const login = async (auth,pass) => {
+
+             let loginPayload = {
+                 identifier: auth,
+                 password: pass,
+                 role: "CUSTOMER",
+             };
+
+             const res = await fetch("http://localhost:9999/auth/login", {
+                 method: "POST",
+                 headers: {
+                     "Accept": "application/json",
+                     "Content-Type": "application/json"
+                 },
+                 body: JSON.stringify(loginPayload)
+             });
+
+             if (!res.ok) {
+                 const errorText = await res.text();
+                 throw new Error(`Failed to make a login request: ${errorText}`);
+             }
+
+             return await res.json();
+        };
+
+        const fetchMerchants = async () => {
+            const merchants = await fetch(`http://localhost:9999/api/merchants`,{
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+
+             if (!merchants.ok) {
+                 throw new Error(`Fetch merchants failed: ${merchants.status} ${merchants.statusText}`);
+             }
+
+             return await merchants.json();
+
+        };
+
+         const fetchCustomer = async (customerID) => {
+             const customer = await fetch(`http://localhost:9999/api/customers/${customerID}`, {
+                 method: "GET",
+                 headers: { "Accept": "application/json" }
+             });
+
+             if (!customer.ok) {
+                 throw new Error(`Fetch customer failed: ${customer.status} ${customer.statusText}`);
+             }
+
+             return await customer.json();
+         };
+
+        // --- Event Listeners ---
         presetCouponButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const code = btn.dataset.coupon;
@@ -742,12 +770,22 @@
             }
         });
 
+        // addPhoneBtn.addEventListener('click', () => {
+        //     const value = prompt("Enter your phone number:");
+        //     if (value && value.trim()) {
+        //         phoneEl.textContent = value.trim();
+        //     } else {
+        //         phoneEl.textContent = '';
+        //         phoneEl.appendChild(placeholder); // fallback placeholder
+        //     }
+        // });
+
         signoutButton.addEventListener('click', () => {
             isUserAuthenticated = false;
             showSection('auth-section');
         });
 
-        orderButton.addEventListener('click', () => {
+        orderButton.addEventListener('click', async () => {
             const restaurantId = currentRestaurant.merchantId;
             localCart[restaurantId] = [];
             couponApplied = false;
@@ -755,17 +793,29 @@
             couponStatus.textContent = '';
             applyCouponBtn.disabled = true;
             renderCart();
-            showModal();
-            // Simulate status change
-            setTimeout(() => setTrackingStep(2), 2000); // Food is being prepared
-            setTimeout(() => setTrackingStep(3), 6000); // Rider is on the way
-            setTimeout(() => setTrackingStep(4), 10000); // Delivered
-        });
+
+             // call CreatePlaceOrder here.
+             try {
+                 const place_order = await createPlaceOrder();
+                 showModal();
+
+                 // Simulate status change
+                 setTimeout(() => setTrackingStep(2), 2000); // Food is being prepared
+                 setTimeout(() => setTrackingStep(3), 6000); // Rider is on the way
+                 setTimeout(() => setTrackingStep(4), 10000); // Delivered
+             }catch (err){
+                 console.error("Order failed:", err);
+                 alert("Failed to place an order. Please try again."); // or show a small popup/modal    
+             }
+         });
 
         closeModalButton.addEventListener('click', hideModal);
 
         trackOrderButton.addEventListener('click', () => {
             hideModal();
+
+            // TODO: get data before showing section.
+
             showSection('order-tracking-section');
         });
 
@@ -845,34 +895,104 @@
             authStatus.textContent = '';
         });
 
-        showSigninLink.addEventListener('click', () => {
-            signupForm.classList.add('hidden');
-            signinForm.classList.remove('hidden');
-            showSigninLink.classList.add('hidden');
-            showSignupLink.classList.remove('hidden');
-            authStatus.textContent = '';
-        });
+        // showSigninLink.addEventListener('click', () => {
+        //     signupForm.classList.add('hidden');
+        //     signinForm.classList.remove('hidden');
+        //     showSigninLink.classList.add('hidden');
+        //     showSignupLink.classList.remove('hidden');
+        //     authStatus.textContent = '';
+        // });
 
         signupBtn.addEventListener('click', () => {
             const email = signupEmailInput.value;
             isUserAuthenticated = true;
-            userIdDisplay.textContent = `User ID: demo-user-12345`;
-            userEmailDisplay.textContent = email || 'demo@example.com';
             showSection('restaurant-list');
         });
 
-        signinBtn.addEventListener('click', () => {
-            const email = signinEmailInput.value;
-            isUserAuthenticated = true;
-            userIdDisplay.textContent = `User ID: demo-user-12345`;
-            userEmailDisplay.textContent = email || 'demo@example.com';
-            showSection('restaurant-list');
-        });
+         signinBtn.addEventListener('click', async () => {
+             const auth = signinEmailPhoneInput.value;
+             const pass = signinPasswordInput.value;
+             try {
+                 const loginResponse = await login(auth, pass);
+                 const accessToken = loginResponse.accessToken;
+                 const payload = decodeJwt(accessToken);
+
+                 if (!payload || !payload.ID) {
+                     console.error('JWT payload is missing the required ID field.');
+                     return; 
+                 }
+                 const customerIdFromToken = payload.ID;
+                 const customer = await fetchCustomer(customerIdFromToken); 
+                 localStorage.setItem("customer", customer);
+
+                 isUserAuthenticated = true;
+                 // userIdDisplay.textContent = `User ID: ${customer.customerId}`;
+
+                // if (customer.email) {
+                //     infoEmail.textContent = customer.email;
+                // }
+                //
+                // if (customer.phone) {
+                //     infoPhone.textContent = customer.phone;
+                // }
+
+                showSection('restaurant-list');
+
+             } catch (error) {
+                 console.error('Error:', error.message, error.stack, error.response);
+                 authStatus.textContent = "Login or password is invalid.";
+                 authStatus.className = `text-sm mt-2 text-center text-red-500`;
+                 return;
+             }
+         });
+
+         /**
+            * Decodes the payload of a JSON Web Token (JWT).
+            * @param {string} token The JWT string.
+            * @returns {object|null} The decoded JSON payload, or null on failure.
+        */
+         const decodeJwt = (token) => {
+             try {
+                 // The token is split into header, payload, and signature. We want the payload (index 1).
+                 const [_, base64Url] = token.split('.');
+                 if (!base64Url) return null;
+
+                 // Replace URL-safe characters with standard Base64 characters
+                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+                 // Decode Base64 and parse the resulting JSON string
+                 // The original logic is unnecessarily complex due to handling byte-by-byte decoding
+                 // Using `atob` for standard Base64 decoding, followed by a simple JSON.parse
+                 const jsonPayload = window.atob(base64);
+
+                 // NOTE: If the payload contains multi-byte characters (like emojis or non-latin text), 
+                 // the original `decodeURIComponent(window.atob(...))` logic is needed.
+                 // For a standard JWT with common claims, simple `atob` often works, but 
+                 // using a standard library (like `jwt-decode`) is best practice.
+                 // For safety/compatibility, here is the robust decoding:
+                 const payload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                 }).join(''));
+
+                 return JSON.parse(payload);
+             } catch (e) {
+                 console.error('Failed to decode or parse JWT payload:', e);
+                 return null;
+             }
+         };
+
 
         // --- Initialization on page load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            renderRestaurants(initialRestaurants);
-            showSection('restaurant-list');
+        document.addEventListener('DOMContentLoaded', async () => {
+
+            try {
+                renderRestaurants(await fetchMerchants());
+                showSection('restaurant-list');
+            } catch (error) {
+                console.error("Order failed:", err);
+                return;
+            }
+
         });
         </script>
     </body>

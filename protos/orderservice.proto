@@ -7,7 +7,6 @@ option go_package =  "/genproto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "common.proto";
-import "customerservice.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 // ---------------------ORDER SERVICE------------------------------
@@ -43,7 +42,7 @@ message PlaceOrder {
     int32 total = 9;
     Address customer_address = 10;
     Address merchant_address = 11;
-    ContactInfo customer_contact = 12;
+    string customer_phone = 12;
     PaymentMethods payment_methods = 13;
     PaymentStatus payment_status = 14;
     OrderStatus order_status = 15;
