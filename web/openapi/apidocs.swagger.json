@@ -1,0 +1,1489 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "IHAVEFOOD",
+    "description": "TODO",
+    "version": "0.1"
+  },
+  "tags": [
+    {
+      "name": "CustomerService"
+    },
+    {
+      "name": "AuthService"
+    },
+    {
+      "name": "MerchantService"
+    },
+    {
+      "name": "OrderService"
+    },
+    {
+      "name": "CouponService"
+    },
+    {
+      "name": "DeliveryService"
+    }
+  ],
+  "host": "localhost:9999",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/coupons": {
+      "get": {
+        "summary": "ListCoupons shows all coupons.",
+        "operationId": "CouponService_ListCoupons",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListCouponsResponse"
+            }
+          }
+        },
+        "tags": [
+          "CouponService"
+        ]
+      },
+      "post": {
+        "summary": "AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).",
+        "operationId": "CouponService_AddCoupon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Coupon"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "NOTE: if type is FREE_DELIVERY, discount will be ignored",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddCouponRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CouponService"
+        ]
+      }
+    },
+    "/api/coupons/{code}": {
+      "get": {
+        "summary": "GetCoupon shows a valid coupon by code.",
+        "operationId": "CouponService_GetCoupon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Coupon"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CouponService"
+        ]
+      }
+    },
+    "/api/customers": {
+      "get": {
+        "summary": "ListCustomers shows all customers profile.",
+        "operationId": "CustomerService_ListCustomers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListCustomersResponse"
+            }
+          }
+        },
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/customers/{customerId}": {
+      "get": {
+        "summary": "GetCustomer shows a customer profile.",
+        "operationId": "CustomerService_GetCustomer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      },
+      "delete": {
+        "operationId": "CustomerService_DeleteCustomer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      },
+      "patch": {
+        "operationId": "CustomerService_UpdateCustomer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateCustomerBody"
+            }
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/customers/{customerId}/address": {
+      "post": {
+        "summary": "CreateAddress creates new address to exists uer customer.",
+        "operationId": "CustomerService_CreateAddress",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Address"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateAddressBody"
+            }
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/deliveries/fee": {
+      "get": {
+        "summary": "GetDeliveryFee calculates the delivery fee from merchant to customer\nusing merchant ID and customer address ID.",
+        "description": "Example:\n     GET /api/deliveries/fee?customer_id=1111\u0026customer_address_id=2222\u0026merchant_id=5555",
+        "operationId": "DeliveryService_GetDeliveryFee",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/GetDeliveryFeeResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "customerAddressId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DeliveryService"
+        ]
+      }
+    },
+    "/api/deliveries/{orderId}/status": {
+      "patch": {
+        "operationId": "DeliveryService_ReportDeliveryStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "orderId",
+            "description": "example: 1783de85-456a-4cca-8f7a-489750e21aa4",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReportDeliveryStatusBody"
+            }
+          }
+        ],
+        "tags": [
+          "DeliveryService"
+        ]
+      }
+    },
+    "/api/merchants": {
+      "get": {
+        "operationId": "MerchantService_ListMerchants",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListMerchantsResponse"
+            }
+          }
+        },
+        "tags": [
+          "MerchantService"
+        ]
+      },
+      "post": {
+        "operationId": "MerchantService_CreateMerchant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Merchant"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateMerchantRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/merchants/{merchantId}": {
+      "get": {
+        "operationId": "MerchantService_GetMerchant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Merchant"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      },
+      "patch": {
+        "operationId": "MerchantService_UpdateMerchant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Merchant"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateMerchantBody"
+            }
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/merchants/{merchantId}/menu": {
+      "post": {
+        "operationId": "MerchantService_CreateMenu",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CreateMenuResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateMenuBody"
+            }
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/merchants/{merchantId}/menu/items/{itemId}": {
+      "patch": {
+        "operationId": "MerchantService_UpdateMenuItem",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/MenuItem"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateMenuItemBody"
+            }
+          }
+        ],
+        "tags": [
+          "MerchantService"
+        ]
+      }
+    },
+    "/api/orders/place_order": {
+      "post": {
+        "operationId": "OrderService_CreatePlaceOrder",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/PlaceOrder"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreatePlaceOrderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "OrderService"
+        ]
+      }
+    },
+    "/api/orders/{customerId}": {
+      "get": {
+        "summary": "ListOrderHistory retrives Customer's place order history by CustomerID",
+        "operationId": "OrderService_ListOrderHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListOrderHistoryResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "OrderService"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login sign in as customer, rider",
+        "operationId": "AuthService_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Create a new auth credential (customer, merchant, rider) using one endpoint.",
+        "operationId": "AuthService_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AuthCredentials"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
+    "/auth/{authId}/phone-number": {
+      "patch": {
+        "operationId": "AuthService_UpdatePhoneNumber",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/UpdatePhoneNumberResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "authId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePhoneNumberBody"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AddCouponRequest": {
+      "type": "object",
+      "example": {
+        "coupon_types": "COUPON_TYPE_DISCOUNT",
+        "discount": 40,
+        "expire_in_hour": 72,
+        "quantity": 50
+      },
+      "properties": {
+        "couponTypes": {
+          "$ref": "#/definitions/CouponTypes"
+        },
+        "discount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "expireInHour": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The coupon expiration time in hours from now.\nFor example expire_in_hour is 72 means the coupon will be expired\nin 3 days (72 hours) from now."
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "description": "NOTE: if type is FREE_DELIVERY, discount will be ignored"
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "addressId": {
+          "type": "string"
+        },
+        "addressName": {
+          "type": "string"
+        },
+        "subDistrict": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        }
+      }
+    },
+    "AuthCredentials": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/Roles"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Coupon": {
+      "type": "object",
+      "properties": {
+        "types": {
+          "$ref": "#/definitions/CouponTypes"
+        },
+        "code": {
+          "type": "string"
+        },
+        "discount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.\nThe server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY."
+        },
+        "expiresIn": {
+          "type": "string",
+          "format": "int64",
+          "description": "Number of seconds until the coupon expires(UNIX)."
+        },
+        "quantityCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "CouponTypes": {
+      "type": "string",
+      "enum": [
+        "COUPON_TYPE_UNSPECIFICED",
+        "COUPON_TYPE_DISCOUNT",
+        "COUPON_TYPE_FREE_DELIVERY"
+      ],
+      "default": "COUPON_TYPE_UNSPECIFICED",
+      "description": " - COUPON_TYPE_DISCOUNT: Discount is a fixed amount, not a percentage."
+    },
+    "CreateAddressBody": {
+      "type": "object",
+      "example": {
+        "customer_id": "0cf361e1-4b44-483d-a159-54dabdf7e814",
+        "address": {
+          "address_name": "Arun House",
+          "sub_district": "Suthep",
+          "district": "Mueang Chiang Mai",
+          "province": "Chiang Mai",
+          "postal_code": "50200"
+        }
+      },
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        }
+      }
+    },
+    "CreateMenuBody": {
+      "type": "object",
+      "example": {
+        "merchant_id": "m1234567-89ab-cdef-0123-456789abcdef",
+        "new_menu": [
+          {
+            "food_name": "Khai Jiao",
+            "price": 50,
+            "image": {
+              "url": "http://localhost/images/khai_jiao.png",
+              "type": "image/png"
+            }
+          },
+          {
+            "food_name": "Pad Thai",
+            "price": 60,
+            "image": {
+              "url": "http://localhost/images/pad_thai.png",
+              "type": "image/png"
+            }
+          },
+          {
+            "food_name": "Kra Prao Moo Sub",
+            "price": 70,
+            "image": {
+              "url": "http://localhost/images/kra_prao_moo_sub.png",
+              "type": "image/jpeg"
+            }
+          },
+          {
+            "food_name": "Khao Pad Goong",
+            "price": 80,
+            "image": {
+              "url": "http://localhost/images/khao_pad_goong.png",
+              "type": "image/jpeg"
+            }
+          }
+        ]
+      },
+      "properties": {
+        "newMenu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/NewMenuItem"
+          }
+        }
+      }
+    },
+    "CreateMenuResponse": {
+      "type": "object",
+      "properties": {
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        }
+      }
+    },
+    "CreateMerchantRequest": {
+      "type": "object",
+      "properties": {
+        "merchantName": {
+          "type": "string"
+        },
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/NewMenuItem"
+          }
+        },
+        "address": {
+          "$ref": "#/definitions/NewAddress"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/definitions/ImageInfo"
+        },
+        "status": {
+          "$ref": "#/definitions/StoreStatus"
+        }
+      }
+    },
+    "CreatePlaceOrderRequest": {
+      "type": "object",
+      "example": {
+        "request_id": "cee942b9-5ae7-4511-9717-5e6a9d10ece2",
+        "customer_id": "f7407f59-3904-495b-b7d1-c15dbbb723e3",
+        "merchant_id": "422fe523-b6a0-4ff0-8cb5-aa6c65c29285",
+        "items": [
+          {
+            "item_id": "874ae56c-730a-43cd-a0d6-96e8f0ccdad7",
+            "quantity": 2,
+            "note": "no spice"
+          },
+          {
+            "item_id": "28cf88d0-a31c-41b7-8c0e-e85e6344a99d",
+            "quantity": 1,
+            "note": "extra egg"
+          }
+        ],
+        "coupon_code": "DISCOUNT10",
+        "customer_address_id": "c912f252-4ceb-49e8-82eb-63ea6a61b8a2",
+        "payment_methods": "PAYMENT_METHOD_CREDIT_CARD"
+      },
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "customerId": {
+          "type": "string"
+        },
+        "merchantId": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/OrderItem"
+          }
+        },
+        "couponCode": {
+          "type": "string"
+        },
+        "customerAddressId": {
+          "type": "string"
+        },
+        "paymentMethods": {
+          "$ref": "#/definitions/PaymentMethods"
+        }
+      }
+    },
+    "Customer": {
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "social": {
+          "$ref": "#/definitions/Social"
+        },
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Address"
+          }
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "bytes picture = 10;"
+        }
+      }
+    },
+    "DeliveryStatus": {
+      "type": "string",
+      "enum": [
+        "RIDER_UNACCEPT",
+        "RIDER_ACCEPTED",
+        "RIDER_PICKED_UP",
+        "RIDER_DELIVERED"
+      ],
+      "default": "RIDER_UNACCEPT",
+      "description": " - RIDER_UNACCEPT: indicates the rider has not yet accepted the order.\n - RIDER_ACCEPTED: indicates the rider has accepted the order.\n - RIDER_PICKED_UP: indicates the rider has picked up the order.\n - RIDER_DELIVERED: indicates the order has been delivered by the rider."
+    },
+    "GetDeliveryFeeResponse": {
+      "type": "object",
+      "properties": {
+        "fee": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "ImageInfo": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "title": "MIME type: image/jpeg, image/png"
+        }
+      }
+    },
+    "ListCouponsResponse": {
+      "type": "object",
+      "properties": {
+        "coupons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Coupon"
+          }
+        }
+      }
+    },
+    "ListCustomersResponse": {
+      "type": "object",
+      "properties": {
+        "customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Customer"
+          }
+        }
+      }
+    },
+    "ListMerchantsResponse": {
+      "type": "object",
+      "properties": {
+        "merchants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/Merchant"
+          }
+        }
+      }
+    },
+    "ListOrderHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "placeOrders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PlaceOrder"
+          }
+        }
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "example": {
+        "identifier": "somsak22@mail.com",
+        "password": "Newpa$sword9",
+        "role": "CUSTOMER"
+      },
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "title": "Email, or Phone number"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/Roles"
+        }
+      }
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string",
+          "description": "Access token. Valid for 30 days."
+        },
+        "expiresIn": {
+          "type": "string",
+          "format": "int64",
+          "description": "Number of seconds until the access token expires."
+        }
+      }
+    },
+    "MenuItem": {
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string"
+        },
+        "foodName": {
+          "type": "string"
+        },
+        "price": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "image": {
+          "$ref": "#/definitions/ImageInfo"
+        }
+      }
+    },
+    "Merchant": {
+      "type": "object",
+      "properties": {
+        "merchantId": {
+          "type": "string"
+        },
+        "merchantName": {
+          "type": "string"
+        },
+        "menu": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MenuItem"
+          }
+        },
+        "image": {
+          "$ref": "#/definitions/ImageInfo"
+        },
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/StoreStatus"
+        }
+      }
+    },
+    "NewAddress": {
+      "type": "object",
+      "properties": {
+        "addressName": {
+          "type": "string"
+        },
+        "subDistrict": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        }
+      }
+    },
+    "NewMenuItem": {
+      "type": "object",
+      "properties": {
+        "foodName": {
+          "type": "string"
+        },
+        "price": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "image": {
+          "$ref": "#/definitions/ImageInfo"
+        }
+      }
+    },
+    "OrderEventTimestamps": {
+      "type": "object",
+      "properties": {
+        "orderPlacedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "merchantAcceptTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "riderNotifiedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "riderAssignedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "riderPickedUpTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deliveredTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cancelledTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "OrderItem": {
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "OrderStatus": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "PREPARING_ORDER",
+        "FINDING_RIDER",
+        "WAIT_FOR_PICKUP",
+        "ONGOING",
+        "DELIVERED",
+        "CANCELLED"
+      ],
+      "default": "PENDING"
+    },
+    "PaymentMethods": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_METHOD_UNSPECIFIED",
+        "PAYMENT_METHOD_CASH",
+        "PAYMENT_METHOD_CREDIT_CARD",
+        "PAYMENT_METHOD_PROMPT_PAY"
+      ],
+      "default": "PAYMENT_METHOD_UNSPECIFIED"
+    },
+    "PaymentStatus": {
+      "type": "string",
+      "enum": [
+        "UNPAID",
+        "PAID"
+      ],
+      "default": "UNPAID"
+    },
+    "PlaceOrder": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "description": "request_id for idempotency."
+        },
+        "orderId": {
+          "type": "string"
+        },
+        "customerId": {
+          "type": "string"
+        },
+        "merchantId": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/OrderItem"
+          }
+        },
+        "couponCode": {
+          "type": "string"
+        },
+        "couponDiscount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "deliveryFee": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "customerAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "merchantAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "customerPhone": {
+          "type": "string"
+        },
+        "paymentMethods": {
+          "$ref": "#/definitions/PaymentMethods"
+        },
+        "paymentStatus": {
+          "$ref": "#/definitions/PaymentStatus"
+        },
+        "orderStatus": {
+          "$ref": "#/definitions/OrderStatus"
+        },
+        "timestamps": {
+          "$ref": "#/definitions/OrderEventTimestamps"
+        }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "double",
+          "description": "The latitude in degrees. It must be in the range [-90.0, +90.0]."
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double",
+          "description": "The longitude in degrees. It must be in the range [-180.0, +180.0]."
+        }
+      }
+    },
+    "RedeemCouponResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "RegisterRequest": {
+      "type": "object",
+      "example": {
+        "email": "somsak@example.com",
+        "password": "Newpa$sword9",
+        "role": "CUSTOMER"
+      },
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/Roles"
+        }
+      }
+    },
+    "ReportDeliveryStatusBody": {
+      "type": "object",
+      "example": {
+        "rider_id": "388b9219-8fd5-4164-a0ba-ed7ddf411966",
+        "status": "RIDER_ACCEPTED"
+      },
+      "properties": {
+        "riderId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/DeliveryStatus"
+        }
+      }
+    },
+    "Roles": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "CUSTOMER",
+        "RIDER",
+        "SUPER_ADMIN",
+        "ADMIN"
+      ],
+      "default": "UNKNOWN",
+      "description": " - SUPER_ADMIN: For simplicity, admin roles are included in this enum."
+    },
+    "Social": {
+      "type": "object",
+      "properties": {
+        "facebook": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "line": {
+          "type": "string"
+        }
+      }
+    },
+    "StoreStatus": {
+      "type": "string",
+      "enum": [
+        "CLOSED",
+        "OPEN"
+      ],
+      "default": "CLOSED"
+    },
+    "StoreStatusResponse": {
+      "type": "object",
+      "properties": {
+        "merchantId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/StoreStatus"
+        }
+      }
+    },
+    "TrackingRiderResponse": {
+      "type": "object",
+      "properties": {
+        "riderId": {
+          "type": "string"
+        },
+        "riderLocation": {
+          "$ref": "#/definitions/Point"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the most recent update to the rider's location."
+        }
+      }
+    },
+    "UpdateCustomerBody": {
+      "type": "object",
+      "example": {
+        "customer_id": "0cf361e1-4b44-483d-a159-54dabdf7e814",
+        "new_username": "anurak_new",
+        "new_social": {
+          "facebook": "anurak.chiangmai",
+          "instagram": "@anurak_insta",
+          "line": "@anurak"
+        }
+      },
+      "properties": {
+        "newUsername": {
+          "type": "string",
+          "description": "username must has constraint for update\nsuch as update every XX months."
+        },
+        "newSocial": {
+          "$ref": "#/definitions/Social",
+          "title": "bytes new_picture = 3;"
+        }
+      }
+    },
+    "UpdateMenuItemBody": {
+      "type": "object",
+      "example": {
+        "merchant_id": "m1234567-89ab-cdef-0123-456789abcdef",
+        "item_id": "a1111111-1111-1111-1111-111111111111",
+        "food_name": "Khai Jiao",
+        "price": 55,
+        "is_available": true
+      },
+      "properties": {
+        "foodName": {
+          "type": "string"
+        },
+        "price": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isAvailable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "UpdateMerchantBody": {
+      "type": "object",
+      "example": {
+        "merchant_id": "m1234567-89ab-cdef-0123-456789abcdef",
+        "new_merchant_name": "Jaidee Tamsung 2",
+        "new_address": {
+          "address_name": "Second Branch",
+          "sub_district": "Nimman",
+          "district": "Mueang Chiang Mai",
+          "province": "Chiang Mai",
+          "postal_code": "50200"
+        }
+      },
+      "properties": {
+        "newMerchantName": {
+          "type": "string"
+        },
+        "newAddress": {
+          "$ref": "#/definitions/Address"
+        }
+      }
+    },
+    "UpdatePhoneNumberBody": {
+      "type": "object",
+      "properties": {
+        "newPhone": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdatePhoneNumberResponse": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "$ref": "#/definitions/AuthCredentials"
+        }
+      }
+    },
+    "VerifyAdminTokenResponse": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        }
+      }
+    },
+    "VerifyUserTokenResponse": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "bearer": {
+      "type": "apiKey",
+      "description": "Authentication token, prefixed by Bearer: Bearer \u003ctoken\u003e",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}
