@@ -78,7 +78,7 @@ type Merchant struct {
 	MerchantId    string                 `protobuf:"bytes,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	MerchantName  string                 `protobuf:"bytes,2,opt,name=merchant_name,json=merchantName,proto3" json:"merchant_name,omitempty"`
 	Menu          []*MenuItem            `protobuf:"bytes,3,rep,name=menu,proto3" json:"menu,omitempty"`
-	Image         *ImageInfo             `protobuf:"bytes,8,opt,name=image,proto3" json:"image,omitempty"`
+	ImageInfo     *ImageInfo             `protobuf:"bytes,8,opt,name=image_info,json=imageInfo,proto3" json:"image_info,omitempty"`
 	Address       *Address               `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`
 	Phone         string                 `protobuf:"bytes,5,opt,name=phone,proto3" json:"phone,omitempty"`
 	Email         string                 `protobuf:"bytes,6,opt,name=email,proto3" json:"email,omitempty"`
@@ -138,9 +138,9 @@ func (x *Merchant) GetMenu() []*MenuItem {
 	return nil
 }
 
-func (x *Merchant) GetImage() *ImageInfo {
+func (x *Merchant) GetImageInfo() *ImageInfo {
 	if x != nil {
-		return x.Image
+		return x.ImageInfo
 	}
 	return nil
 }
@@ -178,7 +178,7 @@ type MenuItem struct {
 	ItemId        string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	FoodName      string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3" json:"food_name,omitempty"`
 	Price         int32                  `protobuf:"varint,3,opt,name=price,proto3" json:"price,omitempty"`
-	Image         *ImageInfo             `protobuf:"bytes,4,opt,name=image,proto3" json:"image,omitempty"`
+	ImageInfo     *ImageInfo             `protobuf:"bytes,4,opt,name=image_info,json=imageInfo,proto3" json:"image_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -234,9 +234,9 @@ func (x *MenuItem) GetPrice() int32 {
 	return 0
 }
 
-func (x *MenuItem) GetImage() *ImageInfo {
+func (x *MenuItem) GetImageInfo() *ImageInfo {
 	if x != nil {
-		return x.Image
+		return x.ImageInfo
 	}
 	return nil
 }
@@ -298,7 +298,7 @@ type NewMenuItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FoodName      string                 `protobuf:"bytes,1,opt,name=food_name,json=foodName,proto3" json:"food_name,omitempty"`
 	Price         int32                  `protobuf:"varint,2,opt,name=price,proto3" json:"price,omitempty"`
-	Image         *ImageInfo             `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
+	ImageInfo     *ImageInfo             `protobuf:"bytes,3,opt,name=image_info,json=imageInfo,proto3" json:"image_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -347,9 +347,9 @@ func (x *NewMenuItem) GetPrice() int32 {
 	return 0
 }
 
-func (x *NewMenuItem) GetImage() *ImageInfo {
+func (x *NewMenuItem) GetImageInfo() *ImageInfo {
 	if x != nil {
-		return x.Image
+		return x.ImageInfo
 	}
 	return nil
 }
@@ -405,7 +405,7 @@ type CreateMerchantRequest struct {
 	Address       *NewAddress            `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 	Phone         string                 `protobuf:"bytes,4,opt,name=phone,proto3" json:"phone,omitempty"`
 	Email         string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
-	Image         *ImageInfo             `protobuf:"bytes,8,opt,name=image,proto3" json:"image,omitempty"`
+	ImageInfo     *ImageInfo             `protobuf:"bytes,8,opt,name=image_info,json=imageInfo,proto3" json:"image_info,omitempty"`
 	Status        StoreStatus            `protobuf:"varint,7,opt,name=status,proto3,enum=ihavefood.StoreStatus" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -476,9 +476,9 @@ func (x *CreateMerchantRequest) GetEmail() string {
 	return ""
 }
 
-func (x *CreateMerchantRequest) GetImage() *ImageInfo {
+func (x *CreateMerchantRequest) GetImageInfo() *ImageInfo {
 	if x != nil {
-		return x.Image
+		return x.ImageInfo
 	}
 	return nil
 }
@@ -918,39 +918,43 @@ var File_merchantservice_proto protoreflect.FileDescriptor
 
 const file_merchantservice_proto_rawDesc = "" +
 	"\n" +
-	"\x15merchantservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xaf\x02\n" +
+	"\x15merchantservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\fcommon.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xb8\x02\n" +
 	"\bMerchant\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
 	"merchantId\x12#\n" +
 	"\rmerchant_name\x18\x02 \x01(\tR\fmerchantName\x12'\n" +
-	"\x04menu\x18\x03 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x12*\n" +
-	"\x05image\x18\b \x01(\v2\x14.ihavefood.ImageInfoR\x05image\x12,\n" +
+	"\x04menu\x18\x03 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\x123\n" +
+	"\n" +
+	"image_info\x18\b \x01(\v2\x14.ihavefood.ImageInfoR\timageInfo\x12,\n" +
 	"\aaddress\x18\x04 \x01(\v2\x12.ihavefood.AddressR\aaddress\x12\x14\n" +
 	"\x05phone\x18\x05 \x01(\tR\x05phone\x12\x14\n" +
 	"\x05email\x18\x06 \x01(\tR\x05email\x12.\n" +
-	"\x06status\x18\a \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status\"\x82\x01\n" +
+	"\x06status\x18\a \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status\"\x8b\x01\n" +
 	"\bMenuItem\x12\x17\n" +
 	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x1b\n" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12\x14\n" +
-	"\x05price\x18\x03 \x01(\x05R\x05price\x12*\n" +
-	"\x05image\x18\x04 \x01(\v2\x14.ihavefood.ImageInfoR\x05image\"1\n" +
+	"\x05price\x18\x03 \x01(\x05R\x05price\x123\n" +
+	"\n" +
+	"image_info\x18\x04 \x01(\v2\x14.ihavefood.ImageInfoR\timageInfo\"1\n" +
 	"\tImageInfo\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x12\n" +
-	"\x04type\x18\x02 \x01(\tR\x04type\"l\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\"u\n" +
 	"\vNewMenuItem\x12\x1b\n" +
 	"\tfood_name\x18\x01 \x01(\tR\bfoodName\x12\x14\n" +
-	"\x05price\x18\x02 \x01(\x05R\x05price\x12*\n" +
-	"\x05image\x18\x03 \x01(\v2\x14.ihavefood.ImageInfoR\x05image\"s\n" +
+	"\x05price\x18\x02 \x01(\x05R\x05price\x123\n" +
+	"\n" +
+	"image_info\x18\x03 \x01(\v2\x14.ihavefood.ImageInfoR\timageInfo\"s\n" +
 	"\x12GetMerchantRequest\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
-	"merchantId:<\x92A927{\"merchant_id\": \"a1b2c3d4-5678-90ab-cdef-1234567890ab\"}\"\xa1\x02\n" +
+	"merchantId:<\x92A927{\"merchant_id\": \"a1b2c3d4-5678-90ab-cdef-1234567890ab\"}\"\xaa\x02\n" +
 	"\x15CreateMerchantRequest\x12#\n" +
 	"\rmerchant_name\x18\x01 \x01(\tR\fmerchantName\x12*\n" +
 	"\x04menu\x18\x02 \x03(\v2\x16.ihavefood.NewMenuItemR\x04menu\x12/\n" +
 	"\aaddress\x18\x03 \x01(\v2\x15.ihavefood.NewAddressR\aaddress\x12\x14\n" +
 	"\x05phone\x18\x04 \x01(\tR\x05phone\x12\x14\n" +
-	"\x05email\x18\x05 \x01(\tR\x05email\x12*\n" +
-	"\x05image\x18\b \x01(\v2\x14.ihavefood.ImageInfoR\x05image\x12.\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x123\n" +
+	"\n" +
+	"image_info\x18\b \x01(\v2\x14.ihavefood.ImageInfoR\timageInfo\x12.\n" +
 	"\x06status\x18\a \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status\"J\n" +
 	"\x15ListMerchantsResponse\x121\n" +
 	"\tmerchants\x18\x01 \x03(\v2\x13.ihavefood.MerchantR\tmerchants\"\x94\x03\n" +
@@ -959,11 +963,11 @@ const file_merchantservice_proto_rawDesc = "" +
 	"merchantId\x12*\n" +
 	"\x11new_merchant_name\x18\x02 \x01(\tR\x0fnewMerchantName\x123\n" +
 	"\vnew_address\x18\x03 \x01(\v2\x12.ihavefood.AddressR\n" +
-	"newAddress:\xf8\x01\x92A\xf4\x012\xf1\x01{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_merchant_name\":\"Jaidee Tamsung 2\",\"new_address\":{\"address_name\":\"Second Branch\",\"sub_district\":\"Nimman\",\"district\":\"Mueang Chiang Mai\",\"province\":\"Chiang Mai\",\"postal_code\":\"50200\"}}\"\x8c\x05\n" +
+	"newAddress:\xf8\x01\x92A\xf4\x012\xf1\x01{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_merchant_name\":\"Jaidee Tamsung 2\",\"new_address\":{\"address_name\":\"Second Branch\",\"sub_district\":\"Nimman\",\"district\":\"Mueang Chiang Mai\",\"province\":\"Chiang Mai\",\"postal_code\":\"50200\"}}\"\x9b\x05\n" +
 	"\x11CreateMenuRequest\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
 	"merchantId\x121\n" +
-	"\bnew_menu\x18\x02 \x03(\v2\x16.ihavefood.NewMenuItemR\anewMenu:\xa2\x04\x92A\x9e\x042\x9b\x04{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_menu\":[{\"food_name\":\"Khai Jiao\",\"price\":50,\"image\":{\"url\":\"http://localhost/images/khai_jiao.png\",\"type\":\"image/png\"}},{\"food_name\":\"Pad Thai\",\"price\":60,\"image\":{\"url\":\"http://localhost/images/pad_thai.png\",\"type\":\"image/png\"}},{\"food_name\":\"Kra Prao Moo Sub\",\"price\":70,\"image\":{\"url\":\"http://localhost/images/kra_prao_moo_sub.png\",\"type\":\"image/jpeg\"}},{\"food_name\":\"Khao Pad Goong\",\"price\":80,\"image\":{\"url\":\"http://localhost/images/khao_pad_goong.png\",\"type\":\"image/jpeg\"}}]}\"=\n" +
+	"\bnew_menu\x18\x02 \x03(\v2\x16.ihavefood.NewMenuItemR\anewMenu:\xb1\x04\x92A\xad\x042\xaa\x04{\"merchant_id\":\"m1234567-89ab-cdef-0123-456789abcdef\",\"new_menu\":[{\"food_name\":\"Khai Jiao\",\"price\":50,\"image_info\":{\"url\":\"http://localhost/images/khai_jiao.png\",\"type\":\"image/png\"}},{\"food_name\":\"Pad Thai\",\"price\":60,\"image_info\":{\"url\":\"http://localhost/images/pad_thai.png\",\"type\":\"image/png\"}},{\"food_name\":\"Kra Prao Moo Sub\",\"price\":70,\"image\":{\"url\":\"http://localhost/images/kra_prao_moo_sub.png\",\"type\":\"image/jpeg\"}},{\"food_name\":\"Khao Pad Goong\",\"price\":80,\"image_info\":{\"url\":\"http://localhost/images/khao_pad_goong.png\",\"type\":\"image/jpeg\"}}]}\"=\n" +
 	"\x12CreateMenuResponse\x12'\n" +
 	"\x04menu\x18\x01 \x03(\v2\x13.ihavefood.MenuItemR\x04menu\"\xcf\x02\n" +
 	"\x15UpdateMenuItemRequest\x12\x1f\n" +
@@ -1036,14 +1040,14 @@ var file_merchantservice_proto_goTypes = []any{
 }
 var file_merchantservice_proto_depIdxs = []int32{
 	2,  // 0: ihavefood.Merchant.menu:type_name -> ihavefood.MenuItem
-	3,  // 1: ihavefood.Merchant.image:type_name -> ihavefood.ImageInfo
+	3,  // 1: ihavefood.Merchant.image_info:type_name -> ihavefood.ImageInfo
 	15, // 2: ihavefood.Merchant.address:type_name -> ihavefood.Address
 	0,  // 3: ihavefood.Merchant.status:type_name -> ihavefood.StoreStatus
-	3,  // 4: ihavefood.MenuItem.image:type_name -> ihavefood.ImageInfo
-	3,  // 5: ihavefood.NewMenuItem.image:type_name -> ihavefood.ImageInfo
+	3,  // 4: ihavefood.MenuItem.image_info:type_name -> ihavefood.ImageInfo
+	3,  // 5: ihavefood.NewMenuItem.image_info:type_name -> ihavefood.ImageInfo
 	4,  // 6: ihavefood.CreateMerchantRequest.menu:type_name -> ihavefood.NewMenuItem
 	16, // 7: ihavefood.CreateMerchantRequest.address:type_name -> ihavefood.NewAddress
-	3,  // 8: ihavefood.CreateMerchantRequest.image:type_name -> ihavefood.ImageInfo
+	3,  // 8: ihavefood.CreateMerchantRequest.image_info:type_name -> ihavefood.ImageInfo
 	0,  // 9: ihavefood.CreateMerchantRequest.status:type_name -> ihavefood.StoreStatus
 	1,  // 10: ihavefood.ListMerchantsResponse.merchants:type_name -> ihavefood.Merchant
 	15, // 11: ihavefood.UpdateMerchantRequest.new_address:type_name -> ihavefood.Address
