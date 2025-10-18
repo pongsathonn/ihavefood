@@ -19,6 +19,18 @@ func NewMerchantStorage(client *mongo.Client) MerchantStorage {
 	return &merchantStorage{client: client}
 }
 
+func (s *merchantStorage) MerchantExistsByName(ctx context.Context, name string) (bool, error) {
+	coll := s.client.Database("db").Collection("merchants")
+
+	filter := bson.M{"name": name}
+	count, err := coll.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*DbMerchant, error) {
 
 	coll := s.client.Database("db", nil).Collection("merchants")
@@ -65,12 +77,12 @@ func (s *merchantStorage) CreateMerchant(ctx context.Context, newMerchant *NewMe
 	merchant.Name = newMerchant.Name
 	for _, item := range newMerchant.Menu {
 		merchant.Menu = append(merchant.Menu, &DbMenuItem{
-			ItemID:   uuid.New().String(),
-			FoodName: item.FoodName,
-			Price:    item.Price,
+			ItemID:    uuid.New().String(),
+			FoodName:  item.FoodName,
+			Price:     item.Price,
+			ImageInfo: item.ImageInfo,
 		})
 	}
-
 	if newMerchant.Address != nil {
 		merchant.Address = &DbAddress{
 			AddressID:   uuid.New().String(),
@@ -81,7 +93,9 @@ func (s *merchantStorage) CreateMerchant(ctx context.Context, newMerchant *NewMe
 			PostalCode:  newMerchant.Address.PostalCode,
 		}
 	}
-	merchant.PhoneNumber = newMerchant.PhoneNumber
+	merchant.ImageInfo = newMerchant.ImageInfo
+	merchant.Phone = newMerchant.Phone
+	merchant.Email = newMerchant.Email
 	merchant.Status = newMerchant.Status
 
 	coll := s.client.Database("db").Collection("merchants")
