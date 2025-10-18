@@ -9,7 +9,7 @@ services:
     image: nginx:alpine
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./src/merchantservice/images:/usr/share/nginx/html/images:ro
+      - ./api-gateway/cloud/images:/usr/share/nginx/html/images:ro
     ports:
       - "80:80"
     networks:
@@ -47,9 +47,9 @@ services:
         restart: true
     networks:
       - mynetwork
-    # ports:
-    #   - "4042:4042" 
-    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4042","--accept-multiclient", "/order" ]
+    ports:
+      - "4042:4042" 
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4042","--accept-multiclient", "/order" ]
     security_opt:
       - seccomp:unconfined
   orderdb:
@@ -70,9 +70,9 @@ services:
       - path: .env
     networks:
       - mynetwork
-    # ports:
-    #   - "4043:4043" 
-    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/merchant" ]
+    ports:
+      - "4043:4043" 
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4043","--accept-multiclient", "/merchant" ]
     security_opt:
       - seccomp:unconfined
     depends_on:
@@ -100,11 +100,11 @@ services:
       - path: .env
     networks:
       - mynetwork
-    # ports:
-    #   - "4044:4044"
-    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/customer" ]
-    # security_opt:
-    #   - seccomp:unconfined
+    ports:
+      - "4044:4044"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4044","--accept-multiclient", "/customer" ]
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       customerdb:
         condition: service_healthy
@@ -138,11 +138,11 @@ services:
       - path: .env
     networks:
       - mynetwork
-    # ports:
-    #   - "4045:4045"
-    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4045","--accept-multiclient", "/auth" ]
-    # security_opt:
-    #   - seccomp:unconfined
+    ports:
+      - "4045:4045"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4045","--accept-multiclient", "/auth" ]
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       authdb:
         condition: service_healthy
@@ -179,10 +179,10 @@ services:
       - path: .env
     networks:
       - mynetwork
-    # ports:
-    #   - "4046:4046" # for gdbserver
-    # security_opt:
-    #   - seccomp:unconfined
+    ports:
+      - "4046:4046" # for gdbserver
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       rabbitmqx: 
         condition: service_healthy
@@ -209,11 +209,11 @@ services:
       - path: .env
     networks:
       - mynetwork
-    # ports:
-    #   - "4047:4047"
-    # command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
-    # security_opt:
-    #   - seccomp:unconfined
+    ports:
+      - "4047:4047"
+    command: [ "dlv", "exec", "--headless", "--continue","--listen", ":4047","--accept-multiclient", "/coupon" ]
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       coupondb:
         condition: service_started

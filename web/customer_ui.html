@@ -442,6 +442,18 @@
         let couponApplied = false;
         let deliveryFeeApplied = false;
 
+        // Detect page refresh
+        window.addEventListener('load', () => {
+            const perfEntries = performance.getEntriesByType("navigation");
+            const navType = perfEntries[0]?.type || performance.navigation.type;
+
+            if (navType === "reload" || navType === 1) { // 1 = reload in older browsers
+                console.log("Page was refreshed — clearing localStorage");
+                localStorage.clear();
+            }
+        });
+
+
         // --- UI Rendering Functions ---
         const showSection = (sectionId) => {
             const sections = [restaurantListSection, foodMenuSection, userProfileSection, authSection, orderTrackingSection];
@@ -469,11 +481,13 @@
                 return;
             }
             merchants.forEach(merchant => {
+                const imageUrl = `${window.location.protocol}//${merchant.imageInfo.url}`;
+
                 const card = document.createElement('div');
                 const isClosed = merchant.status === 'CLOSED';
                 card.className = `restaurant-card bg-gray-50 rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-lg ${isClosed ? 'opacity-50 pointer-events-none' : ''}`;
                 card.innerHTML = `
-                    <img src="${merchant.image}" alt="${merchant.merchantName}" class="w-full h-[220px] object-cover">
+                    <img src="${imageUrl}" alt="${merchant.merchantName}" class="w-full h-[220px] object-cover">
                     <div class="p-4">
                         <h3 class="text-lg font-semibold text-gray-800">${merchant.merchantName}</h3>
                         <p class="text-sm text-gray-500">
@@ -485,6 +499,9 @@
                 if (!isClosed) {
                     card.addEventListener('click', () => {
                         currentRestaurant = merchant;
+
+                        localStorage.setItem('selected_merchant_id', merchant.merchantId);
+
                         menuTitle.textContent = currentRestaurant.merchantName;
                         renderMenu(currentRestaurant.menu);
                         renderCart(); // Render the cart for the selected restaurant
@@ -502,9 +519,10 @@
                 return;
             }
             menu.forEach(item => {
-                const imageUrl = item.image || `https://placehold.co/150x150/f97316/fff?text=${encodeURIComponent(item.foodName)}`;
+                const imageUrl = item.imageInfo?.url ? `${window.location.protocol}//${item.imageInfo.url}` : '';
                 const card = document.createElement('div');
                 card.className = 'food-item-card ...';
+
                 card.innerHTML = `
                 <div class="flex items-center space-x-4">
                     <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
@@ -585,6 +603,8 @@
 
 
         const addToCart = (foodItem) => {
+
+
             const restaurantId = currentRestaurant.merchantId;
             if (!localCart[restaurantId]) {
                 localCart[restaurantId] = [];
@@ -596,6 +616,7 @@
             } else {
                 currentCart.push({ ...foodItem, quantity: 1 });
             }
+
             renderCart();
         };
 
@@ -645,31 +666,30 @@
         };
 
         const createPlaceOrder = async () => {
+            const restaurantId = currentRestaurant.merchantId;
+            const customerId = localStorage.getItem('customer_id');
+            const customerAddresses = JSON.parse(localStorage.getItem('customer_addresses') || "[]");
+            const customerAddressId = customerAddresses[0]?.addressId; // or let user choose later
 
-            // TODO generate uuid for request_id
+            const cartItems = (localCart[restaurantId] || []).map(item => ({
+                item_id: item.itemId,
+                quantity: item.quantity,
+                note: item.note || ""
+            }));
 
             const orderPayload = {
                 request_id: crypto.randomUUID(),
-                customer_id: localStorage.getItem('customer_id'),
-                merchant_id: "422fe523-b6a0-4ff0-8cb5-aa6c65c29285",
-                items: [
-                    {
-                        item_id: "874ae56c-730a-43cd-a0d6-96e8f0ccdad7",
-                        quantity: 2,
-                        note: "no spice"
-                    },
-                    {
-                        item_id: "28cf88d0-a31c-41b7-8c0e-e85e6344a99d",
-                        quantity: 1,
-                        note: "extra egg"
-                    }
-                ],
-                coupon_code: "DISCOUNT10",
-                customer_address_id: "c912f252-4ceb-49e8-82eb-63ea6a61b8a2",
+                customer_id: customerId,
+                merchant_id: restaurantId,
+                items: cartItems,
+                coupon_code: couponInput.value.trim() || null,
+                customer_address_id: customerAddressId,
                 payment_methods: "PAYMENT_METHOD_CREDIT_CARD"
             };
 
-            const res = await fetch("http://localhost:9999/api/orders/place_order", {
+            console.log("payload before request",orderPayload);
+
+            const res = await fetch("http://localhost/api/orders/place_order", {
                 method: "POST",
                 headers: {
                     "Accept": "application/json",
@@ -694,7 +714,7 @@
                  role: "CUSTOMER",
              };
 
-             const res = await fetch("http://localhost:9999/auth/login", {
+             const res = await fetch("http://localhost/auth/login", {
                  method: "POST",
                  headers: {
                      "Accept": "application/json",
@@ -712,7 +732,7 @@
         };
 
         const fetchMerchants = async () => {
-            const merchants = await fetch(`http://localhost:9999/api/merchants`,{
+            const merchants = await fetch(`http://localhost/api/merchants`,{
                 method: "GET",
                 headers: { "Accept": "application/json" }
             });
@@ -722,11 +742,10 @@
              }
 
              return await merchants.json();
-
         };
 
          const fetchCustomer = async (customerID) => {
-             const customer = await fetch(`http://localhost:9999/api/customers/${customerID}`, {
+             const customer = await fetch(`http://localhost/api/customers/${customerID}`, {
                  method: "GET",
                  headers: { "Accept": "application/json" }
              });
@@ -735,7 +754,8 @@
                  throw new Error(`Fetch customer failed: ${customer.status} ${customer.statusText}`);
              }
 
-             return await customer.json();
+            const data = await customer.json();
+            return data;
          };
 
         // --- Event Listeners ---
@@ -770,40 +790,37 @@
             }
         });
 
-        // addPhoneBtn.addEventListener('click', () => {
-        //     const value = prompt("Enter your phone number:");
-        //     if (value && value.trim()) {
-        //         phoneEl.textContent = value.trim();
-        //     } else {
-        //         phoneEl.textContent = '';
-        //         phoneEl.appendChild(placeholder); // fallback placeholder
-        //     }
-        // });
-
         signoutButton.addEventListener('click', () => {
             isUserAuthenticated = false;
+            localStorage.clear();
             showSection('auth-section');
         });
 
         orderButton.addEventListener('click', async () => {
-            const restaurantId = currentRestaurant.merchantId;
-            localCart[restaurantId] = [];
-            couponApplied = false;
-            couponInput.value = '';
-            couponStatus.textContent = '';
-            applyCouponBtn.disabled = true;
-            renderCart();
 
-             // call CreatePlaceOrder here.
-             try {
-                 const place_order = await createPlaceOrder();
-                 showModal();
+            if (!isUserAuthenticated) {
+                alert("Please sign in to place an order.");
+                return;
+            }
 
-                 // Simulate status change
-                 setTimeout(() => setTrackingStep(2), 2000); // Food is being prepared
-                 setTimeout(() => setTrackingStep(3), 6000); // Rider is on the way
-                 setTimeout(() => setTrackingStep(4), 10000); // Delivered
-             }catch (err){
+            try {
+                const place_order = await createPlaceOrder();
+
+                const restaurantId = currentRestaurant.merchantId;
+                localCart[restaurantId] = [];
+                couponApplied = false;
+                couponInput.value = '';
+                couponStatus.textContent = '';
+                applyCouponBtn.disabled = true;
+                renderCart();
+
+                showModal();
+
+                // Simulate status change
+                setTimeout(() => setTrackingStep(2), 2000); // Food is being prepared
+                setTimeout(() => setTrackingStep(3), 6000); // Rider is on the way
+                setTimeout(() => setTrackingStep(4), 10000); // Delivered
+            }catch (err){
                  console.error("Order failed:", err);
                  alert("Failed to place an order. Please try again."); // or show a small popup/modal    
              }
@@ -923,18 +940,11 @@
                  }
                  const customerIdFromToken = payload.ID;
                  const customer = await fetchCustomer(customerIdFromToken); 
-                 localStorage.setItem("customer", customer);
+                 localStorage.setItem("customer_id", customer.customerId);
+
+                 localStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
 
                  isUserAuthenticated = true;
-                 // userIdDisplay.textContent = `User ID: ${customer.customerId}`;
-
-                // if (customer.email) {
-                //     infoEmail.textContent = customer.email;
-                // }
-                //
-                // if (customer.phone) {
-                //     infoPhone.textContent = customer.phone;
-                // }
 
                 showSection('restaurant-list');
 
@@ -986,14 +996,16 @@
         document.addEventListener('DOMContentLoaded', async () => {
 
             try {
-                renderRestaurants(await fetchMerchants());
+                const data = await fetchMerchants();
+                renderRestaurants(data.merchants);
                 showSection('restaurant-list');
             } catch (error) {
-                console.error("Order failed:", err);
+                console.error("Failed to fetch merchants:", error);
                 return;
             }
 
         });
+
         </script>
     </body>
 </html>

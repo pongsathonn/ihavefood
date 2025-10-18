@@ -25,7 +25,7 @@
       "name": "DeliveryService"
     }
   ],
-  "host": "localhost:9999",
+  "host": "localhost",
   "schemes": [
     "http",
     "https"
@@ -747,7 +747,7 @@
           {
             "food_name": "Khai Jiao",
             "price": 50,
-            "image": {
+            "image_info": {
               "url": "http://localhost/images/khai_jiao.png",
               "type": "image/png"
             }
@@ -755,7 +755,7 @@
           {
             "food_name": "Pad Thai",
             "price": 60,
-            "image": {
+            "image_info": {
               "url": "http://localhost/images/pad_thai.png",
               "type": "image/png"
             }
@@ -771,7 +771,7 @@
           {
             "food_name": "Khao Pad Goong",
             "price": 80,
-            "image": {
+            "image_info": {
               "url": "http://localhost/images/khao_pad_goong.png",
               "type": "image/jpeg"
             }
@@ -822,7 +822,7 @@
         "email": {
           "type": "string"
         },
-        "image": {
+        "imageInfo": {
           "$ref": "#/definitions/ImageInfo"
         },
         "status": {
@@ -1043,7 +1043,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "image": {
+        "imageInfo": {
           "$ref": "#/definitions/ImageInfo"
         }
       }
@@ -1064,7 +1064,7 @@
             "$ref": "#/definitions/MenuItem"
           }
         },
-        "image": {
+        "imageInfo": {
           "$ref": "#/definitions/ImageInfo"
         },
         "address": {
@@ -1111,7 +1111,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "image": {
+        "imageInfo": {
           "$ref": "#/definitions/ImageInfo"
         }
       }
@@ -1342,10 +1342,11 @@
     "StoreStatus": {
       "type": "string",
       "enum": [
+        "STATUS_UNSPECIFIED",
         "CLOSED",
         "OPEN"
       ],
-      "default": "CLOSED"
+      "default": "STATUS_UNSPECIFIED"
     },
     "StoreStatusResponse": {
       "type": "object",
