@@ -43,7 +43,7 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 		if in.Discount < 1 || in.Discount > 99 {
 			return nil, status.Error(codes.InvalidArgument, "discount must be between 1 and 99")
 		}
-		code = fmt.Sprintf("SAVE%dFORYOU", in.Discount)
+		code = fmt.Sprintf("SAVE%d", in.Discount)
 		discount = in.Discount
 	case pb.CouponTypes_COUPON_TYPE_FREE_DELIVERY:
 		code = fmt.Sprintf("FREEDELIVERY")
