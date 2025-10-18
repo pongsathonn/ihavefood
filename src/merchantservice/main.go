@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -44,26 +43,6 @@ func main() {
 	storage := internal.NewMerchantStorage(mongo)
 	rabbitmq := internal.NewRabbitMQ(initAMQPCon())
 	s := internal.NewMerchantService(storage, rabbitmq)
-
-	insertDemoMerchants := func(st internal.MerchantStorage) {
-		raw_bytes, err := os.ReadFile("demo_merchants.json")
-		if err != nil {
-			slog.Error("Failed to read demo_merchants", "err", err)
-		}
-
-		var demo_merchants []internal.NewMerchant
-		if err := json.Unmarshal(raw_bytes, &demo_merchants); err != nil {
-			slog.Error("Failed to unmarshal demo_merchants", "err", err)
-		}
-
-		for _, v := range demo_merchants {
-			if _, err := st.CreateMerchant(context.TODO(), &v); err != nil {
-				slog.Error("Failed to create demo_merchants", "err", err)
-			}
-		}
-
-	}
-	insertDemoMerchants(storage)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
