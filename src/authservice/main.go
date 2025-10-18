@@ -30,10 +30,7 @@ func initPostgres() (*sql.DB, error) {
 	dbName := os.Getenv("AUTH_DB_NAME")
 
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-		user,
-		pass,
-		host,
-		dbName,
+		user, pass, host, dbName,
 	))
 	if err != nil {
 		return nil, err
