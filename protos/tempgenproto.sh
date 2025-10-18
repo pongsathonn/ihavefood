@@ -23,3 +23,7 @@ for i in "${!SERVICES[@]}"; do
         "${protos[@]}"
 done
 
+find ~/workspace/ihavefood -type d -name "genproto" -exec git add {}/* \;
+git commit -m "update protobuf" || echo "No changes to commit"
+
+
