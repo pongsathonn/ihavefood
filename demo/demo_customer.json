@@ -1,0 +1,12 @@
+{
+    "email": "customer@example.com",
+    "password": "Secret1.",
+    "role": "CUSTOMER",
+    "address": {
+        "address_name": "Arun House",
+        "sub_district": "Suthep",
+        "district": "Mueang Chiang Mai",
+        "province": "Chiang Mai",
+        "postal_code": "50200"
+    }
+}
