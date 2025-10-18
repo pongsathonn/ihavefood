@@ -4,13 +4,15 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/merchantservice/genproto"
 )
 
+// WARN: DbImageInfo share with database model might change in the future.
 type NewMerchant struct {
-	Name        string         `json:"merchantName"`
-	Menu        []*NewMenuItem `json:"menu"`
-	ImageInfo   *DbImageInfo   `json:"imageInfo"`
-	Address     *NewAddress    `json:"address,omitempty"`
-	PhoneNumber string         `json:"phoneNumber,omitempty"`
-	Status      string         `json:"status,omitempty"`
+	Name      string         `json:"merchantName"`
+	Menu      []*NewMenuItem `json:"menu"`
+	ImageInfo *DbImageInfo   `json:"imageInfo"`
+	Address   *NewAddress    `json:"address,omitempty"`
+	Phone     string         `json:"phone,omitempty"`
+	Email     string         `json:"email"`
+	Status    string         `json:"status,omitempty"`
 }
 
 type NewMenuItem struct {
@@ -28,13 +30,14 @@ type NewAddress struct {
 }
 
 type DbMerchant struct {
-	ID          string        `bson:"_id,omitempty"`
-	Name        string        `bson:"name"`
-	Menu        []*DbMenuItem `bson:"menu"`
-	ImageInfo   *DbImageInfo  `bson:"imageInfo"`
-	Address     *DbAddress    `bson:"address,omitempty"`
-	PhoneNumber string        `bson:"phoneNumber,omitempty"`
-	Status      string        `bson:"status"`
+	ID        string        `bson:"_id,omitempty"`
+	Name      string        `bson:"name"`
+	Menu      []*DbMenuItem `bson:"menu"`
+	ImageInfo *DbImageInfo  `bson:"imageInfo"`
+	Address   *DbAddress    `bson:"address,omitempty"`
+	Phone     string        `bson:"phone,omitempty"`
+	Email     string        `bson:"email"`
+	Status    string        `bson:"status"`
 }
 
 type DbMenuItem struct {
@@ -45,8 +48,8 @@ type DbMenuItem struct {
 }
 
 type DbImageInfo struct {
-	Url  string `bson:"url"`
-	Type string `bson:"type"`
+	Url  string `bson:"url" json:"url"`
+	Type string `bson:"type" json:"type"`
 }
 
 type DbAddress struct {
@@ -65,13 +68,17 @@ func (nm *NewMerchant) FromProto(req *pb.CreateMerchantRequest) *NewMerchant {
 
 	menuItems := make([]*NewMenuItem, 0, len(req.Menu))
 	for _, m := range req.Menu {
+		var img *DbImageInfo
+		if m.ImageInfo != nil {
+			img = &DbImageInfo{
+				Url:  m.ImageInfo.Url,
+				Type: m.ImageInfo.Type,
+			}
+		}
 		menuItems = append(menuItems, &NewMenuItem{
-			FoodName: m.FoodName,
-			Price:    m.Price,
-			ImageInfo: &DbImageInfo{
-				Url:  m.Image.Url,
-				Type: m.Image.Type,
-			},
+			FoodName:  m.FoodName,
+			Price:     m.Price,
+			ImageInfo: img,
 		})
 	}
 
@@ -86,16 +93,22 @@ func (nm *NewMerchant) FromProto(req *pb.CreateMerchantRequest) *NewMerchant {
 		}
 	}
 
+	var img *DbImageInfo
+	if req.ImageInfo != nil {
+		img = &DbImageInfo{
+			Url:  req.ImageInfo.Url,
+			Type: req.ImageInfo.Type,
+		}
+	}
+
 	return &NewMerchant{
-		Name: req.MerchantName,
-		Menu: menuItems,
-		ImageInfo: &DbImageInfo{
-			Url:  req.Image.Url,
-			Type: req.Image.Type,
-		},
-		Address:     addr,
-		PhoneNumber: req.Phone,
-		Status:      req.Status.String(),
+		Name:      req.MerchantName,
+		Menu:      menuItems,
+		ImageInfo: img,
+		Address:   addr,
+		Phone:     req.Phone,
+		Email:     req.Email,
+		Status:    req.Status.String(),
 	}
 }
 
@@ -106,14 +119,18 @@ func (dm *DbMerchant) IntoProto() *pb.Merchant {
 
 	menuItems := make([]*pb.MenuItem, 0, len(dm.Menu))
 	for _, m := range dm.Menu {
-		menuItems = append(menuItems, &pb.MenuItem{
-			ItemId:   m.ItemID,
-			FoodName: m.FoodName,
-			Price:    m.Price,
-			Image: &pb.ImageInfo{
+		var img *pb.ImageInfo
+		if m.ImageInfo != nil {
+			img = &pb.ImageInfo{
 				Url:  m.ImageInfo.Url,
-				Type: m.ImageInfo.Url,
-			},
+				Type: m.ImageInfo.Type,
+			}
+		}
+		menuItems = append(menuItems, &pb.MenuItem{
+			ItemId:    m.ItemID,
+			FoodName:  m.FoodName,
+			Price:     m.Price,
+			ImageInfo: img,
 		})
 	}
 
@@ -129,16 +146,23 @@ func (dm *DbMerchant) IntoProto() *pb.Merchant {
 		}
 	}
 
+	var img *pb.ImageInfo
+	if dm.ImageInfo != nil {
+		img = &pb.ImageInfo{
+			Url:  dm.ImageInfo.Url,
+			Type: dm.ImageInfo.Type,
+		}
+	}
+
+	status := pb.StoreStatus(pb.StoreStatus_value[dm.Status])
 	return &pb.Merchant{
 		MerchantId:   dm.ID,
 		MerchantName: dm.Name,
 		Menu:         menuItems,
 		Address:      addr,
-		Phone:        dm.PhoneNumber,
-		Image: &pb.ImageInfo{
-			Url:  dm.ImageInfo.Url,
-			Type: dm.ImageInfo.Type,
-		},
-		Status: pb.StoreStatus(pb.StoreStatus_value[dm.Status]),
+		Phone:        dm.Phone,
+		Email:        dm.Email,
+		ImageInfo:    img,
+		Status:       status,
 	}
 }

@@ -24,6 +24,7 @@ type MerchantStorage interface {
 	CreateMerchant(ctx context.Context, newMerchant *NewMerchant) (string, error)
 	CreateMenu(ctx context.Context, merchantID string, menu []*DbMenuItem) ([]*DbMenuItem, error)
 	UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *DbMenuItem) (*DbMenuItem, error)
+	MerchantExistsByName(ctx context.Context, name string) (bool, error)
 }
 
 type MerchantService struct {
@@ -42,16 +43,15 @@ func NewMerchantService(storage MerchantStorage, rabbitmq RabbitMQ) *MerchantSer
 
 func (x *MerchantService) ListMerchants(ctx context.Context, empty *emptypb.Empty) (*pb.ListMerchantsResponse, error) {
 
-	results, err := x.Storage.ListMerchants(ctx)
+	dbMerchants, err := x.Storage.ListMerchants(ctx)
 	if err != nil {
 		slog.Error("storage list merchants", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	var merchants []*pb.Merchant
-	for _, result := range results {
-		merchant := DbToProto(result)
-		merchants = append(merchants, merchant)
+	for _, dbMerchant := range dbMerchants {
+		merchants = append(merchants, DbToProto(dbMerchant))
 	}
 
 	return &pb.ListMerchantsResponse{Merchants: merchants}, nil
@@ -234,23 +234,32 @@ func (x *MerchantService) handlePlaceOrder() chan<- amqp.Delivery {
 }
 
 func DbToProto(merchant *DbMerchant) *pb.Merchant {
+	if merchant == nil {
+		return nil
+	}
 
 	var menu []*pb.MenuItem
 	for _, dbItem := range merchant.Menu {
-		menu = append(menu, &pb.MenuItem{
-			ItemId:   dbItem.ItemID,
-			FoodName: dbItem.FoodName,
-			Price:    dbItem.Price,
-			Image: &pb.ImageInfo{
+		var img *pb.ImageInfo
+		if dbItem.ImageInfo != nil {
+			img = &pb.ImageInfo{
 				Url:  dbItem.ImageInfo.Url,
 				Type: dbItem.ImageInfo.Type,
-			},
+			}
+		}
+
+		menu = append(menu, &pb.MenuItem{
+			ItemId:    dbItem.ItemID,
+			FoodName:  dbItem.FoodName,
+			Price:     dbItem.Price,
+			ImageInfo: img,
 		})
 	}
 
 	var address *pb.Address
 	if merchant.Address != nil {
 		address = &pb.Address{
+			AddressId:   merchant.Address.AddressID,
 			AddressName: merchant.Address.AddressName,
 			SubDistrict: merchant.Address.SubDistrict,
 			District:    merchant.Address.District,
@@ -276,8 +285,10 @@ func DbToProto(merchant *DbMerchant) *pb.Merchant {
 		MerchantId:   merchant.ID,
 		MerchantName: merchant.Name,
 		Menu:         menu,
+		ImageInfo:    imageInfo,
 		Address:      address,
-		Image:        imageInfo,
+		Phone:        merchant.Phone,
+		Email:        merchant.Email,
 		Status:       status,
 	}
 }
