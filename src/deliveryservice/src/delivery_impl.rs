@@ -360,13 +360,15 @@ fn haversine_distance(p1: &Point, p2: &Point) -> f64 {
 pub fn fake_geocode(_addr: &Address) -> Point {
     let mut rng = rand::rng();
 
-    // arbitrary “center” at 0,0 and offset within ~25 km (~0.225 lat, ~0.25 lng)
-    let max_lat_offset = 0.225;
-    let max_lng_offset = 0.25;
+    // Reduce the offset range.
+    // A max offset of 0.1 degrees ensures the largest possible distance
+    // between two generated points (up to 0.2 degrees apart)
+    // is safely below 25km. (0.2 * 111km/deg ≈ 22.2km)
+    let max_offset = 0.1;
 
     Point {
-        latitude: rng.random_range(-max_lat_offset..=max_lat_offset),
-        longitude: rng.random_range(-max_lng_offset..=max_lng_offset),
+        latitude: rng.random_range(-max_offset..=max_offset),
+        longitude: rng.random_range(-max_offset..=max_offset),
     }
 }
 

@@ -52,15 +52,15 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 	query := `
 		SELECT
 			customer_id,
+			address_id,
 			address_name,
 			sub_district,
 			district,
 			province,
 			postal_code
 		FROM addresses
-		WHERE customer_id IN =  ANY($1)
+		WHERE customer_id =  ANY($1)
 	`
-
 	addressRows, err := s.db.QueryContext(ctx, query, pq.Array(customerIDs))
 	if err != nil {
 		return nil, err
@@ -76,6 +76,7 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 
 		if err := addressRows.Scan(
 			&customerID,
+			&addr.AddressID,
 			&addr.AddressName,
 			&addr.SubDistrict,
 			&addr.District,
@@ -126,6 +127,7 @@ func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*
 
 	addressRows, err := s.db.QueryContext(ctx, `
 		SELECT
+			address_id,
 			address_name,
 			sub_district,
 			district,
@@ -144,6 +146,7 @@ func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*
 	for addressRows.Next() {
 		var addr dbAddress
 		if err := addressRows.Scan(
+			&addr.AddressID,
 			&addr.AddressName,
 			&addr.SubDistrict,
 			&addr.District,
@@ -167,7 +170,7 @@ func (s *customerStorage) getAddress(ctx context.Context, customerID, addressID 
 	row := s.db.QueryRowContext(ctx, `
         SELECT 
             address_id,
-            address_name
+            address_name,
             sub_district,
             district,
             province,
