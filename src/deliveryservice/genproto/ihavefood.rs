@@ -598,6 +598,20 @@ pub mod delivery_service_server {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NewAddress {
+    #[prost(string, tag = "2")]
+    pub address_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub sub_district: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub district: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub province: ::prost::alloc::string::String,
+    #[prost(string, tag = "6")]
+    pub postal_code: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Address {
     #[prost(string, tag = "1")]
     pub address_id: ::prost::alloc::string::String,
@@ -631,6 +645,8 @@ pub struct Merchant {
     pub merchant_name: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "3")]
     pub menu: ::prost::alloc::vec::Vec<MenuItem>,
+    #[prost(message, optional, tag = "8")]
+    pub image_info: ::core::option::Option<ImageInfo>,
     #[prost(message, optional, tag = "4")]
     pub address: ::core::option::Option<Address>,
     #[prost(string, tag = "5")]
@@ -649,10 +665,17 @@ pub struct MenuItem {
     pub food_name: ::prost::alloc::string::String,
     #[prost(int32, tag = "3")]
     pub price: i32,
-    #[prost(string, tag = "4")]
-    pub description: ::prost::alloc::string::String,
-    #[prost(bool, tag = "5")]
-    pub is_available: bool,
+    #[prost(message, optional, tag = "4")]
+    pub image_info: ::core::option::Option<ImageInfo>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImageInfo {
+    #[prost(string, tag = "1")]
+    pub url: ::prost::alloc::string::String,
+    /// MIME type: image/jpeg, image/png
+    #[prost(string, tag = "2")]
+    pub r#type: ::prost::alloc::string::String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -661,14 +684,32 @@ pub struct NewMenuItem {
     pub food_name: ::prost::alloc::string::String,
     #[prost(int32, tag = "2")]
     pub price: i32,
-    #[prost(string, tag = "3")]
-    pub description: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "3")]
+    pub image_info: ::core::option::Option<ImageInfo>,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetMerchantRequest {
     #[prost(string, tag = "1")]
     pub merchant_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateMerchantRequest {
+    #[prost(string, tag = "1")]
+    pub merchant_name: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "2")]
+    pub menu: ::prost::alloc::vec::Vec<NewMenuItem>,
+    #[prost(message, optional, tag = "3")]
+    pub address: ::core::option::Option<NewAddress>,
+    #[prost(string, tag = "4")]
+    pub phone: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub email: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "8")]
+    pub image_info: ::core::option::Option<ImageInfo>,
+    #[prost(enumeration = "StoreStatus", tag = "7")]
+    pub status: i32,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -711,8 +752,6 @@ pub struct UpdateMenuItemRequest {
     pub food_name: ::prost::alloc::string::String,
     #[prost(int32, tag = "4")]
     pub price: i32,
-    #[prost(string, tag = "5")]
-    pub description: ::prost::alloc::string::String,
     #[prost(bool, tag = "6")]
     pub is_available: bool,
 }
@@ -742,8 +781,9 @@ pub struct StoreStatusResponse {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum StoreStatus {
-    Closed = 0,
-    Open = 1,
+    StatusUnspecified = 0,
+    Closed = 1,
+    Open = 2,
 }
 impl StoreStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -752,6 +792,7 @@ impl StoreStatus {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
+            Self::StatusUnspecified => "STATUS_UNSPECIFIED",
             Self::Closed => "CLOSED",
             Self::Open => "OPEN",
         }
@@ -759,6 +800,7 @@ impl StoreStatus {
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
+            "STATUS_UNSPECIFIED" => Some(Self::StatusUnspecified),
             "CLOSED" => Some(Self::Closed),
             "OPEN" => Some(Self::Open),
             _ => None,
@@ -902,6 +944,27 @@ pub mod merchant_service_client {
                 .insert(GrpcMethod::new("ihavefood.MerchantService", "GetMerchant"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn create_merchant(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateMerchantRequest>,
+        ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.MerchantService/CreateMerchant",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("ihavefood.MerchantService", "CreateMerchant"));
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn update_merchant(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateMerchantRequest>,
@@ -923,7 +986,6 @@ pub mod merchant_service_client {
                 .insert(GrpcMethod::new("ihavefood.MerchantService", "UpdateMerchant"));
             self.inner.unary(req, path, codec).await
         }
-        /// Menu management
         pub async fn create_menu(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateMenuRequest>,
@@ -1046,11 +1108,14 @@ pub mod merchant_service_server {
             &self,
             request: tonic::Request<super::GetMerchantRequest>,
         ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status>;
+        async fn create_merchant(
+            &self,
+            request: tonic::Request<super::CreateMerchantRequest>,
+        ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status>;
         async fn update_merchant(
             &self,
             request: tonic::Request<super::UpdateMerchantRequest>,
         ) -> std::result::Result<tonic::Response<super::Merchant>, tonic::Status>;
-        /// Menu management
         async fn create_menu(
             &self,
             request: tonic::Request<super::CreateMenuRequest>,
@@ -1231,6 +1296,52 @@ pub mod merchant_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = GetMerchantSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.MerchantService/CreateMerchant" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreateMerchantSvc<T: MerchantService>(pub Arc<T>);
+                    impl<
+                        T: MerchantService,
+                    > tonic::server::UnaryService<super::CreateMerchantRequest>
+                    for CreateMerchantSvc<T> {
+                        type Response = super::Merchant;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreateMerchantRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as MerchantService>::create_merchant(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CreateMerchantSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -1524,8 +1635,6 @@ pub struct Customer {
     pub email: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub phone: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub bio: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "6")]
     pub social: ::core::option::Option<Social>,
     #[prost(message, repeated, tag = "7")]
@@ -1569,8 +1678,6 @@ pub struct UpdateCustomerRequest {
     #[prost(string, tag = "2")]
     pub new_username: ::prost::alloc::string::String,
     /// bytes new_picture = 3;
-    #[prost(string, tag = "4")]
-    pub new_bio: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "5")]
     pub new_social: ::core::option::Option<Social>,
 }
