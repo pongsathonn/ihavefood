@@ -222,16 +222,6 @@ func (x *AuthService) CreateDemoUsers() error {
 		return err
 	}
 
-	// Call Register to create a demo customer and send to CustomerService.
-	_, err = x.Register(ctx, &pb.RegisterRequest{
-		Email:    os.Getenv("DEMO_EMAIL"),
-		Password: os.Getenv("DEMO_PASS"),
-		Role:     pb.Roles_CUSTOMER,
-	})
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
