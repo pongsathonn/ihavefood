@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,11 +20,11 @@ type OrderStorage interface {
 	// Create inserts new place order into database and returns the order number.
 	Create(ctx context.Context, newOrder *newPlaceOrder) (string, error)
 
-	UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (string, error)
+	UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (bool, error)
 
-	UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (string, error)
+	UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (bool, error)
 
-	//DeletePlaceOrder(ctx context.Context, orderID string) error
+	DeletePlaceOrder(ctx context.Context, orderID string) error
 }
 
 type orderStorage struct {
@@ -58,7 +57,7 @@ func (s *orderStorage) ListPlaceOrders(ctx context.Context, customerID string) (
 
 	coll := s.client.Database("db", nil).Collection("orders")
 
-	cur, err := coll.Find(ctx, bson.D{{"customerID", customerID}})
+	cur, err := coll.Find(ctx, bson.M{"customerID": customerID})
 	if err != nil {
 		return nil, err
 	}
@@ -89,20 +88,20 @@ func (s *orderStorage) GetPlaceOrder(ctx context.Context, orderID string) (*dbPl
 	}
 
 	var order dbPlaceOrder
-	if err := coll.FindOne(ctx, bson.D{{"_id", ID}}).Decode(&order); err != nil {
+	if err := coll.FindOne(ctx, bson.D{{Key: "_id", Value: ID}}).Decode(&order); err != nil {
 		return nil, err
 	}
 
 	return &order, nil
 }
 
-func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (string, error) {
+func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (bool, error) {
 
 	coll := s.client.Database("db", nil).Collection("orders")
 
 	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 
 	var timestamp string
@@ -110,7 +109,7 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, st
 
 	// Updating to "PENDING" will result in an error, as it is the default status.
 	if status == OrderStatus_PENDING {
-		return "", errors.New("pending is default status can not be updated")
+		return false, errors.New("pending is default status can not be updated")
 	}
 
 	if status == OrderStatus_DELIVERED {
@@ -118,63 +117,63 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, st
 	}
 
 	now := time.Now()
-
 	update := bson.D{
-		{"$set", bson.D{
-			{"orderStatus", status},
-			{timestamp, now},
+		{Key: "$set", Value: bson.D{
+			{Key: "orderStatus", Value: status},
+			{Key: timestamp, Value: now},
 		}},
 	}
 
 	res, err := coll.UpdateByID(ctx, ID, update)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 
-	if res.ModifiedCount == 0 {
-		slog.Info("order number %s not found", orderID)
-		return "", errors.New("order not found")
+	if res.MatchedCount == 0 {
+		return false, errors.New("order not found")
 	}
 
-	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
-	if !ok {
-		return "", errors.New("failed to convert upsertedID to primitive.ObjectID")
-	}
-
-	return updatedID.Hex(), nil
+	return true, nil
 }
 
-func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (string, error) {
+func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (bool, error) {
 
 	coll := s.client.Database("db", nil).Collection("orders")
 
 	ID, err := primitive.ObjectIDFromHex(orderID)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 
-	if status == PaymentStatus_UNPAID {
-		return "", errors.New("unpaid is default status")
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "paymentStatus", Value: status},
+		}},
 	}
-
-	update := bson.D{{"$set", bson.D{
-		{"paymentStatus", status},
-	}}}
 
 	res, err := coll.UpdateByID(ctx, ID, update)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 
-	if res.ModifiedCount == 0 {
-		slog.Info("order number %s not found", orderID)
-		return "", errors.New("order not found")
+	if res.MatchedCount == 0 {
+		return false, errors.New("order not found")
+	}
+	return true, nil
+}
+
+func (s *orderStorage) DeletePlaceOrder(ctx context.Context, orderID string) error {
+	coll := s.client.Database("db").Collection("orders")
+
+	ID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		return err
 	}
 
-	updatedID, ok := res.UpsertedID.(primitive.ObjectID)
-	if !ok {
-		return "", errors.New("failed to convert upsertedID to primitive.ObjectID")
+	_, err = coll.DeleteOne(ctx, bson.M{"_id": ID})
+	if err != nil {
+		return err
 	}
 
-	return updatedID.Hex(), nil
+	return nil
 }
