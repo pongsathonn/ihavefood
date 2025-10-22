@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -14,24 +15,50 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type OrderService struct {
-	pb.UnimplementedOrderServiceServer
+type CouponClient interface {
+	GetCoupon(ctx context.Context, in *pb.GetCouponRequest, opts ...grpc.CallOption) (*pb.Coupon, error)
+}
 
+type CustomerClient interface {
+	GetCustomer(ctx context.Context, in *pb.GetCustomerRequest, opts ...grpc.CallOption) (*pb.Customer, error)
+}
+
+type DeliveryClient interface {
+	GetDeliveryFee(ctx context.Context, in *pb.GetDeliveryFeeRequest, opts ...grpc.CallOption) (*pb.GetDeliveryFeeResponse, error)
+}
+
+type MerchantClient interface {
+	GetMerchant(ctx context.Context, in *pb.GetMerchantRequest, opts ...grpc.CallOption) (*pb.Merchant, error)
+}
+
+type OrderService struct {
 	storage  OrderStorage
 	rabbitmq RabbitMQ
-	clients  ServiceClients
+
+	coupon   CouponClient
+	customer CustomerClient
+	delivery DeliveryClient
+	merchant MerchantClient
+
+	pb.UnimplementedOrderServiceServer
 }
 
-// external service clients
-type ServiceClients struct {
-	Coupon   pb.CouponServiceClient
-	Customer pb.CustomerServiceClient
-	Delivery pb.DeliveryServiceClient
-	Merchant pb.MerchantServiceClient
-}
-
-func NewOrderService(s OrderStorage, rb RabbitMQ, cl ServiceClients) *OrderService {
-	return &OrderService{storage: s, rabbitmq: rb, clients: cl}
+func NewOrderService(
+	storage OrderStorage,
+	rabbitmq RabbitMQ,
+	coupon CouponClient,
+	customer CustomerClient,
+	delivery DeliveryClient,
+	merchant MerchantClient,
+) *OrderService {
+	return &OrderService{
+		storage:  storage,
+		rabbitmq: rabbitmq,
+		coupon:   coupon,
+		customer: customer,
+		delivery: delivery,
+		merchant: merchant,
+	}
 }
 
 func (x *OrderService) ListOrderHistory(ctx context.Context,
@@ -79,6 +106,15 @@ func (x *OrderService) CreatePlaceOrder(ctx context.Context, in *pb.CreatePlaceO
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
+	var success bool
+	defer func() {
+		if !success {
+			if err := x.storage.DeletePlaceOrder(ctx, orderID); err != nil {
+				slog.Error("failed to cleanup order", "orderId", orderID, "err", err)
+			}
+		}
+	}()
+
 	dbOrder, err := x.storage.GetPlaceOrder(ctx, orderID)
 	if err != nil {
 		slog.Error("storage get place order", "err", err)
@@ -102,8 +138,8 @@ func (x *OrderService) CreatePlaceOrder(ctx context.Context, in *pb.CreatePlaceO
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
+	success = true
 	slog.Info("published event", "orderId", order.OrderId)
-
 	return order, nil
 }
 
@@ -226,19 +262,19 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 
 	ctx := context.TODO()
 
-	customer, err := x.clients.Customer.GetCustomer(ctx, &pb.GetCustomerRequest{
+	customer, err := x.customer.GetCustomer(ctx, &pb.GetCustomerRequest{
 		CustomerId: newOrder.CustomerId,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	merchant, err := x.clients.Merchant.GetMerchant(ctx, &pb.GetMerchantRequest{MerchantId: newOrder.MerchantId})
+	merchant, err := x.merchant.GetMerchant(ctx, &pb.GetMerchantRequest{MerchantId: newOrder.MerchantId})
 	if err != nil {
 		return nil, err
 	}
 
-	deliveryFee, err := x.clients.Delivery.GetDeliveryFee(ctx, &pb.GetDeliveryFeeRequest{
+	deliveryFee, err := x.delivery.GetDeliveryFee(ctx, &pb.GetDeliveryFeeRequest{
 		CustomerId:        newOrder.CustomerId,
 		CustomerAddressId: newOrder.CustomerAddressId,
 		MerchantId:        newOrder.MerchantId,
@@ -249,7 +285,7 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 
 	foodCost := calcFoodCost(merchant.Menu, newOrder.Items)
 
-	coupon, err := x.clients.Coupon.GetCoupon(ctx, &pb.GetCouponRequest{Code: newOrder.CouponCode})
+	coupon, err := x.coupon.GetCoupon(ctx, &pb.GetCouponRequest{Code: newOrder.CouponCode})
 	if err != nil {
 		return nil, err
 	}
