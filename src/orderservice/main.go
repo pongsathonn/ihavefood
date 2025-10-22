@@ -46,7 +46,10 @@ func main() {
 	s := internal.NewOrderService(
 		internal.NewOrderStorage(initMongoClient()),
 		internal.NewRabbitMQ(initAMQPCon()),
-		initServiceClients(),
+		pb.NewCouponServiceClient(newGRPCConn("COUPON_URI")),
+		pb.NewCustomerServiceClient(newGRPCConn("CUSTOMER_URI")),
+		pb.NewDeliveryServiceClient(newGRPCConn("DELIVERY_URI")),
+		pb.NewMerchantServiceClient(newGRPCConn("MERCHANT_URI")),
 	)
 	go s.StartConsume()
 
@@ -66,25 +69,13 @@ func main() {
 	}
 }
 
-func initServiceClients() internal.ServiceClients {
-
-	// TODO: impl healthcheck
-
-	newGRPCConn := func(env string) *grpc.ClientConn {
-		opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-		conn, err := grpc.NewClient(os.Getenv(env), opt)
-		if err != nil {
-			log.Fatalf("failed to create new grpc channel for %s: %v", env, err)
-		}
-		return conn
+func newGRPCConn(env string) *grpc.ClientConn {
+	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.NewClient(os.Getenv(env), opt)
+	if err != nil {
+		log.Fatalf("failed to create new grpc channel for %s: %v", env, err)
 	}
-
-	return internal.ServiceClients{
-		Coupon:   pb.NewCouponServiceClient(newGRPCConn("COUPON_URI")),
-		Customer: pb.NewCustomerServiceClient(newGRPCConn("CUSTOMER_URI")),
-		Delivery: pb.NewDeliveryServiceClient(newGRPCConn("DELIVERY_URI")),
-		Merchant: pb.NewMerchantServiceClient(newGRPCConn("MERCHANT_URI")),
-	}
+	return conn
 }
 
 func initAMQPCon() *amqp.Connection {
@@ -139,7 +130,9 @@ func initMongoClient() *mongo.Client {
 
 	coll := db.Collection("orders")
 	indexModel := mongo.IndexModel{
-		Keys:    bson.D{{"requestId", 1}}, //preventing duplicate order
+		Keys: bson.D{
+			{Key: "requestId", Value: 1}, // preventing duplicate order
+		},
 		Options: options.Index().SetUnique(true),
 	}
 
