@@ -1,0 +1,30 @@
+substitutions:
+  _REGION: 'asia-southeast1'
+  _REPOSITORY: 'my-artifact-repo'
+  _IMAGE_NAME: 'merchant'
+  _SERVICE_NAME: 'merchantservice'
+
+steps:
+# Build the image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}', '.']
+
+# Push the image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}']
+
+# Deploy image to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - '${_SERVICE_NAME}'
+    - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}'
+    - '--region=${_REGION}'
+    - '--platform=managed'
+    - '--no-allow-unauthenticated'
+    - '--use-http2'
+    - '--set-env-vars=GCP_PROJECT_ID=$PROJECT_ID'
+images:
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}'

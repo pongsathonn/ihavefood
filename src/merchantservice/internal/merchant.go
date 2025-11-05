@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"log/slog"
 	"time"
@@ -52,6 +53,13 @@ func (x *MerchantService) ListMerchants(ctx context.Context, empty *emptypb.Empt
 	var merchants []*pb.Merchant
 	for _, dbMerchant := range dbMerchants {
 		merchants = append(merchants, DbToProto(dbMerchant))
+	}
+
+	// demo for deploying
+	for i := range 5 {
+		merchants = append(merchants, &pb.Merchant{
+			MerchantId: fmt.Sprintf("TEST ID: %d", i),
+		})
 	}
 
 	return &pb.ListMerchantsResponse{Merchants: merchants}, nil

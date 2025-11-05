@@ -6,93 +6,87 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/pongsathonn/ihavefood/src/merchantservice/internal"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"google.golang.org/grpc"
 
-	amqp "github.com/rabbitmq/amqp091-go"
-
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	pb "github.com/pongsathonn/ihavefood/src/merchantservice/genproto"
-	"github.com/pongsathonn/ihavefood/src/merchantservice/internal"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+// //////////////////////////////////////////////////////////////////////////
+type FakeRabbitMQ struct{}
 
-			if a.Key == slog.SourceKey {
-				source := a.Value.Any().(*slog.Source)
-				source.File = filepath.Base(source.File)
-			}
-			return a
-		},
-	}))
-	slog.SetDefault(logger)
-
-	mongo, err := initMongoClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	storage := internal.NewMerchantStorage(mongo)
-	rabbitmq := internal.NewRabbitMQ(initAMQPCon())
-	s := internal.NewMerchantService(storage, rabbitmq)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go s.RunMessageProcessing(ctx)
-	startGRPCServer(s)
+func (f *FakeRabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
+	// Just log instead of sending
+	fmt.Printf("FakeRabbitMQ.Publish called: routingKey=%s, body=%s\n", routingKey, string(msg.Body))
+	return nil
 }
 
-func initMongoClient() (*mongo.Client, error) {
-	uri := fmt.Sprintf("mongodb://%s:%s@%s/db?authSource=admin",
-		os.Getenv("MERCHANT_DB_USER"),
-		os.Getenv("MERCHANT_DB_PASS"),
-		os.Getenv("MERCHANT_DB_HOST"),
+func (f *FakeRabbitMQ) Subscribe(ctx context.Context, queue, routingkey string) (<-chan amqp.Delivery, error) {
+	fmt.Printf("FakeRabbitMQ.Subscribe called: queue=%s, routingKey=%s\n", queue, routingkey)
+	ch := make(chan amqp.Delivery)
+	close(ch) // immediately close so consuming goroutines don’t block
+	return ch, nil
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+// getSecret panics because it tends to use in main only.
+func getSecret(secretName string) string {
+
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		panic("GCP_PROJECT_ID environment variable is not set")
+	}
+
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		panic(err)
+	}
+	defer client.Close()
+
+	versionName := fmt.Sprintf("projects/%s/secrets/%s/versions/latest",
+		projectID,
+		secretName,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
+	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: versionName,
+	}
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	result, err := client.AccessSecretVersion(ctx, accessRequest)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	if err := client.Ping(ctx, nil); err != nil {
-		return nil, err
-	}
-
-	coll := client.Database("db", nil).Collection("merchants")
-	indexModel := mongo.IndexModel{
-		Keys:    bson.D{{"name", 1}},
-		Options: options.Index().SetUnique(true),
-	}
-
-	_, err = coll.Indexes().CreateOne(ctx, indexModel)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
+	return string(result.Payload.Data)
 }
 
 func initAMQPCon() *amqp.Connection {
+
 	uri := fmt.Sprintf("amqp://%s:%s@%s",
 		os.Getenv("RBMQ_MERCHANT_USER"),
 		os.Getenv("RBMQ_MERCHANT_PASS"),
 		os.Getenv("AMQP_SERVER_URI"),
 	)
+
 	maxRetries := 5
 	var conn *amqp.Connection
 	var err error
-
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
@@ -109,19 +103,75 @@ func initAMQPCon() *amqp.Connection {
 	return nil
 }
 
-func startGRPCServer(s *internal.MerchantService) {
+func initMongoDB() *mongo.Client {
 
-	uri := fmt.Sprintf(":%s", os.Getenv("MERCHANT_SERVER_PORT"))
+	uri := fmt.Sprintf("mongodb+srv://%s:%s@mymongodb.jtcdxwq.mongodb.net/?appName=MyMongoDB",
+		url.QueryEscape(getSecret("MERCHANT_DB_USER")),
+		url.QueryEscape(getSecret("MERCHANT_DB_PASS")),
+	)
+
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+
+	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI).SetTimeout(30 * time.Second)
+
+	client, err := mongo.Connect(opts)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		panic(err)
+	}
+
+	coll := client.Database("db", nil).Collection("merchants")
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{Key: "name", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err = coll.Indexes().CreateOne(context.TODO(), indexModel)
+	if err != nil {
+		panic(err)
+	}
+
+	return client
+
+}
+
+func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+
+			if a.Key == slog.SourceKey {
+				source := a.Value.Any().(*slog.Source)
+				source.File = filepath.Base(source.File)
+			}
+			return a
+		},
+	}))
+
+	slog.SetDefault(logger)
+
+	srv := internal.NewMerchantService(
+		internal.NewMerchantStorage(initMongoDB()),
+		&FakeRabbitMQ{},
+		// internal.NewRabbitMQ(initAMQPCon()),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go srv.RunMessageProcessing(ctx)
+
+	uri := fmt.Sprintf(":%s", os.Getenv("PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterMerchantServiceServer(grpcServer, s)
-
-	slog.Info("merchant service is running", "port", os.Getenv("MERCHANT_SERVER_PORT"))
-
+	pb.RegisterMerchantServiceServer(grpcServer, srv)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
 	}
