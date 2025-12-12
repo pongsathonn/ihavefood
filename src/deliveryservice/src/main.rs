@@ -1,11 +1,9 @@
-mod database_impl;
 mod delivery_impl;
 mod event_impl;
 mod models;
+mod mongo_impl;
 
 use anyhow::Result;
-
-use database_impl::Db;
 use delivery_impl::MyDelivery;
 use event_impl::*;
 use ihavefood::{
@@ -14,12 +12,9 @@ use ihavefood::{
 };
 use lapin::{Connection, ConnectionProperties};
 use log::info;
-use sqlx::{
-    sqlite::{SqliteConnectOptions, SqlitePool},
-    Sqlite,
-};
+use mongo_impl::Db;
+use mongodb::{Client, Database};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::str::FromStr;
 use std::sync::Arc;
 // use tokio::sync::Semaphore;
 use tokio::time::Duration;
@@ -30,55 +25,48 @@ pub mod ihavefood {
     include!("../genproto/ihavefood.rs");
 }
 
-fn init_redis_pool() -> redis::Client {
-    let client = redis::Client::open("redis://redisx:6379/").expect("Invalid Redis URL");
-    let _ = client.get_connection();
-    client
+fn init_redis_pool() -> Result<redis::Client> {
+    let client = redis::Client::open("redis://10.123.136.115:6379/")?;
+    let mut conn = client.get_connection()?;
+    redis::cmd("PING").query::<String>(&mut conn)?;
+    info!("Redis connection successful!");
+    Ok(client)
 }
 
-async fn init_amqp_conn() -> Connection {
+async fn init_amqp_conn() -> Result<Connection> {
     let conn = Connection::connect(
         format!(
-            "amqp://{}:{}@{}",
-            dotenv::var("RBMQ_DELIVERY_USER").expect("RBMQ_DELIVERY_USER must be set"),
-            dotenv::var("RBMQ_DELIVERY_PASS").expect("RBMQ_DELIVERY_PASS must be set"),
-            dotenv::var("AMQP_SERVER_URI").expect("AMQP_SERVER_URI must be set"),
+            "amqp://{}:{}@{}/{}",
+            dotenv::var("RBMQ_USER").expect("RBMQ_USER must be set"),
+            dotenv::var("RBMQ_PASS").expect("RBMQ_PASS must be set"),
+            dotenv::var("RBMQ_HOST").expect("RBMQ_HOST must be set"),
+            dotenv::var("RBMQ_USER").expect("RBMQ_USER must be set"),
         )
         .as_str(),
         ConnectionProperties::default(),
     )
-    .await
-    .expect("Failed to connect AMQP server");
+    .await?;
 
     info!("AMQP connection established successfully");
-    conn
+    Ok(conn)
 }
 
-async fn init_sqlite_pool() -> sqlx::Pool<Sqlite> {
-    let url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
-
-    let opts = SqliteConnectOptions::from_str(url.as_str())
-        .expect("Failed to parse DATABASE_URL")
-        .create_if_missing(true);
-
-    let pool = SqlitePool::connect_with(opts)
-        .await
-        .expect("Failed to create Sqlite pool");
-
-    sqlx::migrate!()
-        .run(&pool)
-        .await
-        .expect("Failed to run sqlx migration");
-
-    info!("SQLite connection pool initialized");
-    pool
+async fn init_mongo_db() -> Result<Database> {
+    let uri = format!(
+        "mongodb+srv://{}:{}@{}/?appName={}",
+        dotenv::var("MONGO_USER").expect("MONGO_USER must be set"),
+        dotenv::var("MONGO_PASS").expect("MONGO_PASS must be set"),
+        dotenv::var("MONGO_HOST").expect("MONGO_HOST must be set"),
+        dotenv::var("MONGO_CLUSTER").expect("MONGO_CLUSTER must be set"),
+    );
+    let client = Client::with_uri_str(uri).await?;
+    let database = client.database("deliverydb");
+    return Ok(database);
 }
 
 async fn init_customer_client() -> Result<CustomerServiceClient<Channel>> {
     for _ in 0..5 {
-        match CustomerServiceClient::connect(format!("http://{}", dotenv::var("CUSTOMER_URI")?))
-            .await
-        {
+        match CustomerServiceClient::connect(dotenv::var("CUSTOMER_URI")?).await {
             Ok(conn) => return Ok(conn),
             Err(_) => {
                 tokio::time::sleep(Duration::from_secs(5)).await;
@@ -92,9 +80,7 @@ async fn init_customer_client() -> Result<CustomerServiceClient<Channel>> {
 
 async fn init_merchant_client() -> Result<MerchantServiceClient<Channel>> {
     for _ in 0..5 {
-        match MerchantServiceClient::connect(format!("http://{}", dotenv::var("MERCHANT_URI")?))
-            .await
-        {
+        match MerchantServiceClient::connect(dotenv::var("MERCHANT_URI")?).await {
             Ok(conn) => return Ok(conn),
             Err(_) => {
                 tokio::time::sleep(Duration::from_secs(5)).await;
@@ -110,7 +96,7 @@ async fn init_merchant_client() -> Result<MerchantServiceClient<Channel>> {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    std::env::set_var("RUST_LOG", "info,lapin=warn");
+    std::env::set_var("RUST_LOG", "info,lapin=warn,h2=debug");
 
     env_logger::builder()
         .format_file(true)
@@ -118,25 +104,35 @@ async fn main() -> Result<()> {
         .format_target(false)
         .init();
 
-    let event_bus = Arc::new(EventBus::new(init_amqp_conn().await));
-    let db = Arc::new(Db::new(init_sqlite_pool().await));
-    let redis_cl = init_redis_pool();
+    let mongo_db = init_mongo_db().await?;
+
+    let event_bus = Arc::new(EventBus::new(init_amqp_conn().await?));
+    let db = Arc::new(Db::new(
+        mongo_db.collection("deliveries"),
+        mongo_db.collection("riders"),
+    ));
+    let redis_cl = init_redis_pool()?;
 
     let my_delivery = MyDelivery {
-        db: db.clone(),
         event_bus: event_bus.clone(),
         redis_cl: redis_cl.clone(),
         customercl: init_customer_client().await?,
         merchantcl: init_merchant_client().await?,
     };
 
+    let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
+    health_reporter
+        .set_service_status("", tonic_health::ServingStatus::Serving)
+        .await;
+
     let socket = SocketAddr::new(
         IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-        dotenv::var("DELIVERY_SERVER_PORT")?.parse()?,
+        dotenv::var("PORT")?.parse()?,
     );
 
     let server = Server::builder()
         .add_service(DeliveryServiceServer::new(my_delivery.clone()))
+        .add_service(health_service)
         .serve(socket);
 
     let event_bus_cloned = Arc::clone(&event_bus);
@@ -158,7 +154,7 @@ async fn main() -> Result<()> {
 
     info!(
         "Server initialized and listening on {}",
-        dotenv::var("DELIVERY_SERVER_PORT")?
+        dotenv::var("PORT")?
     );
 
     server.await?;

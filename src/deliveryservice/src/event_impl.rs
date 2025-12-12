@@ -233,9 +233,9 @@ impl EventDispatcher {
             .to_string();
 
         self.db
-            .create_rider(&NewRider {
+            .create_rider(NewRider {
                 rider_id: new_rider.rider_id,
-                username: username,
+                username,
             })
             .await?;
 

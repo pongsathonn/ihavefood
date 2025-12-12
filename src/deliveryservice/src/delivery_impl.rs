@@ -1,13 +1,11 @@
 use crate::ihavefood::delivery_service_server::DeliveryService;
 use crate::ihavefood::*;
-use crate::models::*;
-use crate::Db;
 use crate::EventBus;
 
 use self::{
     customer_service_client::CustomerServiceClient, merchant_service_client::MerchantServiceClient,
 };
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Result};
 use chrono::Utc;
 use log::error;
 use prost::Message;
@@ -24,7 +22,6 @@ use tonic::{Code, Request, Response, Status};
 
 #[derive(Debug, Clone)]
 pub struct MyDelivery {
-    pub db: Arc<Db>,
     pub event_bus: Arc<EventBus>,
     pub redis_cl: redis::Client,
 
