@@ -1,12 +1,12 @@
 [
   {
     "merchantName": "อร่อยดีตามสั่ง",
-    "imageInfo": { "url": "localhost/images/res1c.png", "type": "image/jpg" },
+    "imageInfo": { "url": "images/res1c.png", "type": "image/jpg" },
     "status": "OPEN",
     "menu": [
-      { "foodName": "ข้าวผัดหมู", "price": 50, "imageInfo": { "url": "localhost/images/khaopad_mu.png", "type": "image/jpg" } },
-      { "foodName": "กระเพราหมูไข่ดาว", "price": 50, "imageInfo": { "url": "localhost/images/krapao_khaidaw.png", "type": "image/jpg" } },
-      { "foodName": "สุกี้แห้งทะเล", "price": 60, "imageInfo": { "url": "localhost/images/sukiheng.png", "type": "image/jpg" } }
+      { "foodName": "ข้าวผัดหมู", "price": 50, "imageInfo": { "url": "images/khaopad_mu.png", "type": "image/jpg" } },
+      { "foodName": "กระเพราหมูไข่ดาว", "price": 50, "imageInfo": { "url": "images/krapao_khaidaw.png", "type": "image/jpg" } },
+      { "foodName": "สุกี้แห้งทะเล", "price": 60, "imageInfo": { "url": "images/sukiheng.png", "type": "image/jpg" } }
     ],
     "address": {
       "addressName": "123 ถนนนิมมานเหมินท์",
@@ -20,12 +20,12 @@
   },
   {
     "merchantName": "ป้าแดง ก๋วยเตี๋ยว",
-    "imageInfo": { "url": "localhost/images/res2c.png", "type": "image/jpg" },
+    "imageInfo": { "url": "images/res2c.png", "type": "image/jpg" },
     "status": "OPEN",
     "menu": [
-      { "foodName": "ก๋วยเตี๋ยวหมูน้ำใส", "price": 40, "imageInfo": { "url": "localhost/images/namsai_noodle.png", "type": "image/jpg" } },
-      { "foodName": "ก๋วยเตี๋ยวต้มยำ", "price": 45, "imageInfo": { "url": "localhost/images/bame_tomyum.png", "type": "image/jpg" } },
-      { "foodName": "เส้นเล็กน้ำตก", "price": 45, "imageInfo": { "url": "localhost/images/noodle_namtuk.png", "type": "image/jpg" } }
+      { "foodName": "ก๋วยเตี๋ยวหมูน้ำใส", "price": 40, "imageInfo": { "url": "images/namsai_noodle.png", "type": "image/jpg" } },
+      { "foodName": "ก๋วยเตี๋ยวต้มยำ", "price": 45, "imageInfo": { "url": "images/bame_tomyum.png", "type": "image/jpg" } },
+      { "foodName": "เส้นเล็กน้ำตก", "price": 45, "imageInfo": { "url": "images/noodle_namtuk.png", "type": "image/jpg" } }
     ],
     "address": {
       "addressName": "45 ถนนราชภาคินัย",
@@ -39,7 +39,7 @@
   },
   {
     "merchantName": "ตำ ตำ ตำ",
-    "imageInfo": { "url": "localhost/images/res3c.png", "type": "image/jpg" },
+    "imageInfo": { "url": "images/res3c.png", "type": "image/jpg" },
     "status": "CLOSED",
     "menu": [
       { "foodName": "ส้มตำไทย", "price": 50 },
@@ -57,11 +57,11 @@
   },
   {
     "merchantName": "ไก่จอมพลัง",
-    "imageInfo": { "url": "localhost/images/res4c.png", "type": "image/jpg" },
+    "imageInfo": { "url": "images/res4c.png", "type": "image/jpg" },
     "status": "OPEN",
     "menu": [
-      { "foodName": "ข้าวมันไก่ต้ม", "price": 50, "imageInfo": { "url": "localhost/images/chickken_tom.png", "type": "image/jpg" } },
-      { "foodName": "ข้าวมันไก่ทอด", "price": 60, "imageInfo": { "url": "localhost/images/chicken_tod.png", "type": "image/jpg" } }
+      { "foodName": "ข้าวมันไก่ต้ม", "price": 50, "imageInfo": { "url": "images/chickken_tom.png", "type": "image/jpg" } },
+      { "foodName": "ข้าวมันไก่ทอด", "price": 60, "imageInfo": { "url": "images/chicken_tod.png", "type": "image/jpg" } }
     ],
     "address": {
       "addressName": "12 ถนนวัวลาย",
@@ -75,11 +75,11 @@
   },
   {
     "merchantName": "ปั่น ปั่น สดชื่น",
-    "imageInfo": { "url": "localhost/images/res5c.png", "type": "image/jpg" },
+    "imageInfo": { "url": "images/res5c.png", "type": "image/jpg" },
     "status": "OPEN",
     "menu": [
-      { "foodName": "น้ำส้มปั่น", "price": 35, "imageInfo": { "url": "localhost/images/namsom.png", "type": "image/jpg" } },
-      { "foodName": "น้ำแตงโมปั่น", "price": 35, "imageInfo": { "url": "localhost/images/namtangmo.png", "type": "image/jpg" } }
+      { "foodName": "น้ำส้มปั่น", "price": 35, "imageInfo": { "url": "images/namsom.png", "type": "image/jpg" } },
+      { "foodName": "น้ำแตงโมปั่น", "price": 35, "imageInfo": { "url": "images/namtangmo.png", "type": "image/jpg" } }
     ],
     "address": {
       "addressName": "90 ถนนท่าแพ",
@@ -93,11 +93,11 @@
   },
   {
     "merchantName": "ใจดีสเต็ก",
-    "imageInfo": { "url": "localhost/images/res6c.png", "type": "image/jpg" },
+    "imageInfo": { "url": "images/res6c.png", "type": "image/jpg" },
     "status": "OPEN",
     "menu": [
-      { "foodName": "สเต็กเนื้อ", "price": 150, "imageInfo": { "url": "localhost/images/steak.png", "type": "image/jpg" } },
-      { "foodName": "สเต็กปลา", "price": 120, "imageInfo": { "url": "localhost/images/fish_steak.png", "type": "image/jpg" } },
+      { "foodName": "สเต็กเนื้อ", "price": 150, "imageInfo": { "url": "images/steak.png", "type": "image/jpg" } },
+      { "foodName": "สเต็กปลา", "price": 120, "imageInfo": { "url": "images/fish_steak.png", "type": "image/jpg" } },
       { "foodName": "เฟรนช์ฟรายส์", "price": 50 }
     ],
     "address": {

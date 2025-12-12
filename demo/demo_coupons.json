@@ -1,0 +1,26 @@
+[
+  {
+    "coupon_types": "COUPON_TYPE_DISCOUNT",
+    "discount": 10,
+    "expire_in_hour": 1440,
+    "quantity": 90
+  },
+  {
+    "coupon_types": "COUPON_TYPE_DISCOUNT",
+    "discount": 30,
+    "expire_in_hour": 1440,
+    "quantity": 90
+  },
+  {
+    "coupon_types": "COUPON_TYPE_DISCOUNT",
+    "discount": 50,
+    "expire_in_hour": 1440,
+    "quantity": 90
+  },
+  {
+    "coupon_types": "COUPON_TYPE_FREE_DELIVERY",
+    "expire_in_hour": 1440,
+    "quantity": 90
+  }
+]
+
