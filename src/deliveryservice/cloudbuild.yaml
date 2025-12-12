@@ -1,0 +1,48 @@
+substitutions:
+  _REGION: 'asia-southeast1'
+  _REPOSITORY: 'my-artifact-repo'
+  _IMAGE_NAME: 'delivery'
+  _SERVICE_NAME: 'deliveryservice'
+  _COUPON_URI: 'https://couponservice-731964455549.asia-southeast1.run.app'
+  _CUSTOMER_URI: 'https://customerservice-731964455549.asia-southeast1.run.app'
+  _MERCHANT_URI: 'https://merchantservice-731964455549.asia-southeast1.run.app'
+
+steps:
+# Build the image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}', '.']
+
+# Push the image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}']
+
+# Deploy image to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - '${_SERVICE_NAME}'
+    - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}'
+    - '--region=${_REGION}'
+    - '--platform=managed'
+    - '--network=default'
+    - '--no-allow-unauthenticated'
+    - '--set-env-vars=GCP_PROJECT_ID=$PROJECT_ID'
+    - '--set-env-vars=COUPON_URI=$_COUPON_URI'
+    - '--set-env-vars=CUSTOMER_URI=$_CUSTOMER_URI'
+    - '--set-env-vars=MERCHANT_URI=$_MERCHANT_URI'
+    - '--set-secrets=RBMQ_USER=RBMQ_USER:latest'
+    - '--set-secrets=RBMQ_PASS=RBMQ_PASS:latest'
+    - '--set-secrets=RBMQ_HOST=RBMQ_HOST:latest'
+    - '--set-secrets=MONGO_USER=MONGO_USER:latest'
+    - '--set-secrets=MONGO_PASS=MONGO_PASS:latest'
+    - '--set-secrets=MONGO_HOST=MONGO_HOST:latest'
+    - '--set-secrets=MONGO_CLUSTER=MONGO_CLUSTER:latest'
+
+
+
+
+images:
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}'
+

@@ -1,4 +1,4 @@
-FROM rust:1.87-slim AS build
+FROM rust:1.87 AS build
 WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -9,25 +9,24 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-RUN --mount=type=bind,source=src,target=src \
-    --mount=type=bind,source=Cargo.toml,target=Cargo.toml \
-    --mount=type=bind,source=Cargo.lock,target=Cargo.lock \
-    --mount=type=bind,source=migrations,target=migrations \
-    --mount=type=bind,source=genproto,target=genproto \
-    --mount=type=bind,source=queries,target=queries \
-    --mount=type=bind,source=.sqlx,target=.sqlx \
-    --mount=type=cache,target=/app/target/ \
-    --mount=type=cache,target=/usr/local/cargo/registry/ \
-    cargo build --release && \
+COPY Cargo.toml Cargo.lock ./
+COPY genproto ./genproto
+COPY . .
+RUN cargo fetch
+
+RUN cargo build --release && \
     cp target/release/deliveryservice /bin/deliveryservice
 
-FROM debian:bookworm-slim
+FROM debian:bookworm
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libssl3 && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
-
-COPY --from=build /bin/deliveryservice /bin/
+COPY --from=build /bin/deliveryservice /bin/deliveryservice
+RUN useradd -m -u 1000 appuser && \
+    chown appuser:appuser /bin/deliveryservice
+USER appuser
 
 CMD ["/bin/deliveryservice"]
-

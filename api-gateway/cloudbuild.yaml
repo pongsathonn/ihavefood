@@ -1,0 +1,43 @@
+substitutions:
+  _REGION: 'asia-southeast1'
+  _REPOSITORY: 'my-artifact-repo'
+  _IMAGE_NAME: 'gateway'
+  _SERVICE_NAME: 'api-gateway'
+  _AUTH_URI: 'https://authservice-731964455549.asia-southeast1.run.app'
+  _COUPON_URI: 'https://couponservice-731964455549.asia-southeast1.run.app'
+  _CUSTOMER_URI: 'https://customerservice-731964455549.asia-southeast1.run.app'
+  _MERCHANT_URI: 'https://merchantservice-731964455549.asia-southeast1.run.app'
+  _ORDER_URI: 'https://orderservice-731964455549.asia-southeast1.run.app'  
+  _DELIVERY_URI: 'https://deliveryservice-731964455549.asia-southeast1.run.app'
+
+steps:
+# Build the image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}', '.']
+
+# Push the image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}']
+
+# Deploy image to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - '${_SERVICE_NAME}'
+    - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}'
+    - '--region=${_REGION}'
+    - '--allow-unauthenticated'
+    - '--platform=managed'
+    - '--set-env-vars=GCP_PROJECT_ID=$PROJECT_ID'
+    - '--set-env-vars=MERCHANT_URI=$_MERCHANT_URI'
+    - '--set-env-vars=AUTH_URI=$_AUTH_URI'
+    - '--set-env-vars=COUPON_URI=$_COUPON_URI'
+    - '--set-env-vars=CUSTOMER_URI=$_CUSTOMER_URI'
+    - '--set-env-vars=ORDER_URI=$_ORDER_URI'
+    - '--set-env-vars=DELIVERY_URI=$_DELIVERY_URI'
+
+images:
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}'
+
