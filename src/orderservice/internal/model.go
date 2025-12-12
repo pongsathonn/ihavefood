@@ -4,7 +4,7 @@ import (
 	"time"
 
 	// "google.golang.org/protobuf/types/known/timestamppb"
-
+	"github.com/google/uuid"
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 )
 
@@ -100,6 +100,36 @@ var EventToStatus = map[any]pb.OrderStatus{
 	pb.OrderEvent_ORDER_CANCELLED_EVENT:   pb.OrderStatus_CANCELLED,
 }
 
+func toDbPlaceOrder(n *newPlaceOrder) *dbPlaceOrder {
+	if n == nil {
+		return nil
+	}
+
+	now := time.Now()
+	return &dbPlaceOrder{
+		OrderID:         uuid.New().String(),
+		RequestID:       n.RequestID,
+		CustomerID:      n.CustomerID,
+		MerchantID:      n.MerchantID,
+		Items:           n.Items,
+		CouponCode:      n.CouponCode,
+		CouponDiscount:  n.CouponDiscount,
+		DeliveryFee:     n.DeliveryFee,
+		Total:           n.Total,
+		CustomerAddress: n.CustomerAddress,
+		MerchantAddress: n.MerchantAddress,
+		CustomerPhone:   n.CustomerPhone,
+		PaymentMethods:  n.PaymentMethods,
+		PaymentStatus:   PaymentStatus_UNPAID,
+		OrderStatus:     OrderStatus_PENDING,
+		Timestamps: &dbTimestamps{
+			CreateTime:   now,
+			UpdateTime:   now,
+			CompleteTime: time.Time{},
+		},
+	}
+}
+
 func toDbAddress(addr *pb.Address) *dbAddress {
 	if addr == nil {
 		return nil
@@ -159,7 +189,7 @@ func toProtoPlaceOrder(order *dbPlaceOrder) *pb.PlaceOrder {
 		OrderStatus:     pb.OrderStatus(order.OrderStatus),
 		// Timestamps: &pb.OrderEventTimestamps{
 		// 	OrderPlacedTime: timestamppb.New(order.Timestamps.TODO)
-		// 	// TODO: ...other fields.
+		// 	// TODO:
 		// },
 	}
 }

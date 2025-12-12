@@ -38,7 +38,7 @@ func (r *rabbitMQ) publish(ctx context.Context, routingKey string, msg amqp.Publ
 		ctx,
 		"my_exchange", // exchange
 		routingKey,    // routing key
-		false,         // mandatory
+		true,          // mandatory
 		false,         // immediate
 		msg,
 	)
@@ -107,4 +107,3 @@ func (r *rabbitMQ) subscribe(ctx context.Context, queue, routingKey string) (<-c
 
 	return deliveries, nil
 }
-

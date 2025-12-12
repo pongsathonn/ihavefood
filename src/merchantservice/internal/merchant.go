@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"log/slog"
 	"time"
@@ -32,10 +31,10 @@ type MerchantService struct {
 	pb.UnimplementedMerchantServiceServer
 
 	Storage  MerchantStorage
-	rabbitmq RabbitMQ
+	rabbitmq *RabbitMQ
 }
 
-func NewMerchantService(storage MerchantStorage, rabbitmq RabbitMQ) *MerchantService {
+func NewMerchantService(storage MerchantStorage, rabbitmq *RabbitMQ) *MerchantService {
 	return &MerchantService{
 		Storage:  storage,
 		rabbitmq: rabbitmq,
@@ -53,13 +52,6 @@ func (x *MerchantService) ListMerchants(ctx context.Context, empty *emptypb.Empt
 	var merchants []*pb.Merchant
 	for _, dbMerchant := range dbMerchants {
 		merchants = append(merchants, DbToProto(dbMerchant))
-	}
-
-	// demo for deploying
-	for i := range 5 {
-		merchants = append(merchants, &pb.Merchant{
-			MerchantId: fmt.Sprintf("TEST ID: %d", i),
-		})
 	}
 
 	return &pb.ListMerchantsResponse{Merchants: merchants}, nil
@@ -172,73 +164,41 @@ func (x *MerchantService) GetStoreStatus(context.Context, *pb.GetStoreStatusRequ
 	return nil, status.Error(codes.Unimplemented, "method GetStoreStatus not implemented")
 }
 
-// -------------------------------------------------------
+// handlePlaceOrder will notify to merchant and waiting for merchant accept the order then publish "merchant.accepted.event"
+func (x *MerchantService) HandlePlaceOrder(msg amqp.Delivery) error {
 
-// TODO : create register for event handler
-func (x *MerchantService) RunMessageProcessing(ctx context.Context) {
+	var order pb.PlaceOrder
+	if err := json.Unmarshal(msg.Body, &order); err != nil {
+		return err
+	}
 
-	deliveries, err := x.rabbitmq.Subscribe(
+	// assume this logs is push notification to merchant
+	log.Printf("HI RESTAURANT! you have new order %s\n", order.OrderId)
+
+	// TODO wait for merchant accept here
+	// <- AcceptOrder()
+
+	// assume merchant accept order after 10s
+	time.Sleep(10 * time.Second)
+
+	rk := "merchant.accepted.event"
+	err := x.rabbitmq.Publish(
 		context.TODO(),
-		"merchant_assign_queue",
-		"order.placed.event",
+		rk,
+		amqp.Publishing{
+			Body: []byte(order.OrderId),
+		},
 	)
 	if err != nil {
-		slog.Error("failed to subscribe", "err", err)
+		return err
 	}
 
-	for msg := range deliveries {
-		x.handlePlaceOrder() <- msg
-	}
+	slog.Info("published event",
+		"routingKey", rk,
+		"orderId", order.OrderId,
+	)
 
-	<-ctx.Done()
-}
-
-// handlePlaceOrder will notify to merchant
-// and wait for merchant accept the order
-// thne publish "merchant.accepted.event"
-func (x *MerchantService) handlePlaceOrder() chan<- amqp.Delivery {
-
-	messages := make(chan amqp.Delivery)
-
-	go func() {
-		for msg := range messages {
-
-			var order pb.PlaceOrder
-			if err := json.Unmarshal(msg.Body, &order); err != nil {
-				slog.Error("failed to unmarshal", "err", err)
-				continue
-			}
-
-			// assume this logs is push notification to merchant
-			log.Printf("HI RESTAURANT! you have new order %s\n", order.OrderId)
-
-			// TODO wait for merchant accept here
-			// <- AcceptOrder()
-
-			// assume merchant accept order after 10s
-			time.Sleep(10 * time.Second)
-
-			rk := "merchant.accepted.event"
-			err := x.rabbitmq.Publish(
-				context.TODO(),
-				rk,
-				amqp.Publishing{
-					Body: []byte(order.OrderId),
-				},
-			)
-			if err != nil {
-				slog.Error("failed to publish event", "err", err)
-				continue
-			}
-
-			slog.Info("published event",
-				"routingKey", rk,
-				"orderId", order.OrderId,
-			)
-		}
-	}()
-
-	return messages
+	return nil
 }
 
 func DbToProto(merchant *DbMerchant) *pb.Merchant {

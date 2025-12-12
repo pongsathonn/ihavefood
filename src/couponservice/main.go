@@ -6,15 +6,21 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+
+	"google.golang.org/grpc/health"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "github.com/pongsathonn/ihavefood/src/couponservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/couponservice/internal"
@@ -22,11 +28,14 @@ import (
 )
 
 func initAMQPCon() *amqp.Connection {
-	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("RBMQ_COUPON_USER"),
-		os.Getenv("RBMQ_COUPON_PASS"),
-		os.Getenv("AMQP_SERVER_URI"),
+
+	uri := fmt.Sprintf("amqp://%s:%s@%s/%s",
+		os.Getenv("RBMQ_USER"),
+		os.Getenv("RBMQ_PASS"),
+		os.Getenv("RBMQ_HOST"),
+		os.Getenv("RBMQ_USER"),
 	)
+
 	maxRetries := 5
 	var conn *amqp.Connection
 	var err error
@@ -47,47 +56,53 @@ func initAMQPCon() *amqp.Connection {
 	return nil
 }
 
-func initMongoClient() *mongo.Client {
+func initMongoDB() *mongo.Collection {
 
-	uri := fmt.Sprintf("mongodb://%s:%s@%s/db?authSource=admin",
-		os.Getenv("COUPON_DB_USER"),
-		os.Getenv("COUPON_DB_PASS"),
-		os.Getenv("COUPON_DB_HOST"),
+	uri := fmt.Sprintf("mongodb+srv://%s:%s@%s/?appName=%s",
+		url.QueryEscape(os.Getenv("MONGO_USER")),
+		url.QueryEscape(os.Getenv("MONGO_PASS")),
+		url.QueryEscape(os.Getenv("MONGO_HOST")),
+		url.QueryEscape(os.Getenv("MONGO_CLUSTER")),
 	)
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+
+	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI).SetTimeout(30 * time.Second)
+
+	client, err := mongo.Connect(opts)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	err = client.Database("db").CreateCollection(context.TODO(), "coupons")
-	if err != nil {
-		//TODO if exists pass
-		log.Fatal(err)
+	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+	// indexModel := mongo.IndexModel{
+	// 	Keys:    bson.D{{Key: "name", Value: 1}},
+	// 	Options: options.Index().SetUnique(true),
+	// }
+	// _, err = coll.Indexes().CreateOne(context.TODO(), indexModel)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal(err)
-	}
-
-	return client
+	return client.Database("coupondb", nil).Collection("coupons")
 }
 
 func startGRPCServer(s *internal.CouponService) {
 
-	uri := fmt.Sprintf(":%s", os.Getenv("COUPON_SERVER_PORT"))
+	uri := fmt.Sprintf(":%s", os.Getenv("PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatal("Failed to listen:", err)
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterCouponServiceServer(grpcServer, s)
+	healthcheck := health.NewServer()
+	healthgrpc.RegisterHealthServer(grpcServer, healthcheck)
 
-	slog.Info("coupon service is running", "port", os.Getenv("COUPON_SERVER_PORT"))
+	pb.RegisterCouponServiceServer(grpcServer, s)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)
@@ -97,18 +112,7 @@ func startGRPCServer(s *internal.CouponService) {
 // cleanUpCoupons runs a scheduled job that removes expired coupons
 // or coupons with zero quantity from the database. It executes this
 // cleanup operation every 30 minutes.
-//
-// Parameters:
-//   - ctx: A context to allow for graceful shutdown of the job.
-//   - client: A MongoDB client used to interact with the database.
-//
-// The function runs in an infinite loop and performs the following:
-//   - Removes any coupon whose 'expiration' field is less than the current time.
-//   - Removes any coupon whose 'quantity' field is less than 1.
-//   - Stops when the context is canceled, allowing for graceful termination.
-func cleanUpCoupons(ctx context.Context, client *mongo.Client) {
-
-	coll := client.Database("db", nil).Collection("coupons")
+func cleanUpCoupons(ctx context.Context, coll *mongo.Collection) {
 
 	ticker := time.NewTicker(30 * time.Minute)
 	defer ticker.Stop()
@@ -144,7 +148,7 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	mongo := initMongoClient()
+	mongo := initMongoDB()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

@@ -2,26 +2,34 @@ package main
 
 import (
 	"context"
-	"errors"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log"
 	"log/slog"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
+
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/api/idtoken"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/oauth"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/pongsathonn/ihavefood/src/orderservice/internal"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
+	"github.com/pongsathonn/ihavefood/src/orderservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
+
+	"google.golang.org/grpc/health"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func init() {
@@ -44,7 +52,7 @@ func main() {
 	internal.SetupValidator()
 
 	s := internal.NewOrderService(
-		internal.NewOrderStorage(initMongoClient()),
+		internal.NewOrderStorage(initMongoDB()),
 		internal.NewRabbitMQ(initAMQPCon()),
 		pb.NewCouponServiceClient(newGRPCConn("COUPON_URI")),
 		pb.NewCustomerServiceClient(newGRPCConn("CUSTOMER_URI")),
@@ -53,37 +61,91 @@ func main() {
 	)
 	go s.StartConsume()
 
-	uri := fmt.Sprintf(":%s", os.Getenv("ORDER_SERVER_PORT"))
-	lis, err := net.Listen("tcp", uri)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("Defaulting to port %s", port)
+	}
+
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatal("Failed to listen:", err)
+		log.Fatalf("net.Listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
+	healthcheck := health.NewServer()
+	healthgrpc.RegisterHealthServer(grpcServer, healthcheck)
 	pb.RegisterOrderServiceServer(grpcServer, s)
-
-	slog.Info("Order service started", "port", os.Getenv("ORDER_SERVER_PORT"))
-
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatal("Failed to serve:", err)
+		log.Fatal(err)
 	}
 }
 
 func newGRPCConn(env string) *grpc.ClientConn {
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.NewClient(os.Getenv(env), opt)
+
+	ctx := context.Background()
+
+	uri := os.Getenv(env)
+	tokenSource, err := idtoken.NewTokenSource(ctx, uri)
 	if err != nil {
-		log.Fatalf("failed to create new grpc channel for %s: %v", env, err)
+		log.Fatalf("Failed to create token source: %v", err)
 	}
-	return conn
+
+	parsedURL, err := url.Parse(uri)
+	if err != nil {
+		log.Fatalf("Failed to parse URI: %v", err)
+	}
+
+	systemRoots, err := x509.SystemCertPool()
+	if err != nil {
+		log.Fatal("failed to load system root CA cert pool:", err)
+	}
+
+	var creds grpc.DialOption
+	if env != "DELIVERY_URI" {
+		creds = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
+	} else {
+		creds = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+			RootCAs: systemRoots,
+		}))
+	}
+
+	cc, err := grpc.NewClient(
+		parsedURL.Host+":443",
+		creds,
+		grpc.WithPerRPCCredentials(oauth.TokenSource{TokenSource: tokenSource}),
+	)
+	if err != nil {
+		log.Fatalf("failed to create grpc client for %s: %v", env, err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	healthClient := healthgrpc.NewHealthClient(cc)
+	resp, err := healthClient.Check(ctx, &healthgrpc.HealthCheckRequest{
+		Service: "",
+	})
+	if err != nil {
+		log.Fatalf("health check failed for %s: %v", env, err)
+	}
+
+	if resp.Status != healthgrpc.HealthCheckResponse_SERVING {
+		log.Fatalf("service not healthy for %s: %v", env, resp.Status)
+	}
+
+	return cc
 }
 
 func initAMQPCon() *amqp.Connection {
-	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("RBMQ_ORDER_USER"),
-		os.Getenv("RBMQ_ORDER_PASS"),
-		os.Getenv("AMQP_SERVER_URI"),
+
+	uri := fmt.Sprintf("amqp://%s:%s@%s/%s",
+		os.Getenv("RBMQ_USER"),
+		os.Getenv("RBMQ_PASS"),
+		os.Getenv("RBMQ_HOST"),
+		os.Getenv("RBMQ_USER"),
 	)
+
 	maxRetries := 5
 	var conn *amqp.Connection
 	var err error
@@ -91,7 +153,7 @@ func initAMQPCon() *amqp.Connection {
 	for i := 1; i <= maxRetries; i++ {
 		conn, err = amqp.Dial(uri)
 		if err == nil {
-			slog.Info("AMQP connection established")
+			slog.Info("Successfully connected to AMQP server")
 			return conn
 		}
 		if i == maxRetries {
@@ -104,31 +166,30 @@ func initAMQPCon() *amqp.Connection {
 	return nil
 }
 
-func initMongoClient() *mongo.Client {
+func initMongoDB() *mongo.Collection {
 
-	uri := fmt.Sprintf("mongodb://%s:%s@%s/db?authSource=admin",
-		os.Getenv("ORDER_DB_USER"),
-		os.Getenv("ORDER_DB_PASS"),
-		os.Getenv("ORDER_DB_HOST"),
+	uri := fmt.Sprintf("mongodb+srv://%s:%s@%s/?appName=%s",
+		url.QueryEscape(os.Getenv("MONGO_USER")),
+		url.QueryEscape(os.Getenv("MONGO_PASS")),
+		url.QueryEscape(os.Getenv("MONGO_HOST")),
+		url.QueryEscape(os.Getenv("MONGO_CLUSTER")),
 	)
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+
+	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI).SetTimeout(30 * time.Second)
+
+	client, err := mongo.Connect(opts)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	slog.Info("MongoDB connection established")
-
-	db := client.Database("db")
-
-	if err := db.CreateCollection(context.TODO(), "orders"); err != nil {
-		var alreayExistsColl mongo.CommandError
-		if !errors.As(err, &alreayExistsColl) {
-			log.Fatal("Failed to create collection:", err)
-		}
+	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		panic(err)
 	}
 
-	coll := db.Collection("orders")
+	coll := client.Database("orderdb", nil).Collection("orders")
+
 	indexModel := mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "requestId", Value: 1}, // preventing duplicate order
@@ -136,20 +197,10 @@ func initMongoClient() *mongo.Client {
 		Options: options.Index().SetUnique(true),
 	}
 
-	newIndex, err := coll.Indexes().CreateOne(context.TODO(), indexModel)
+	_, err = coll.Indexes().CreateOne(context.TODO(), indexModel)
 	if err != nil {
-		log.Fatal("Failed to create index:", err)
+		panic(err)
 	}
 
-	slog.Info("MongoDB index created", "index", newIndex)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal("Failed to ping:", err)
-	}
-
-	return client
-
+	return coll
 }

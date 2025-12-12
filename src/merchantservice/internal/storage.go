@@ -12,18 +12,17 @@ import (
 )
 
 type merchantStorage struct {
-	client *mongo.Client
+	coll *mongo.Collection
 }
 
-func NewMerchantStorage(client *mongo.Client) MerchantStorage {
-	return &merchantStorage{client: client}
+func NewMerchantStorage(coll *mongo.Collection) MerchantStorage {
+	return &merchantStorage{coll: coll}
 }
 
 func (s *merchantStorage) MerchantExistsByName(ctx context.Context, name string) (bool, error) {
-	coll := s.client.Database("db").Collection("merchants")
 
 	filter := bson.M{"name": name}
-	count, err := coll.CountDocuments(ctx, filter)
+	count, err := s.coll.CountDocuments(ctx, filter)
 	if err != nil {
 		return false, err
 	}
@@ -33,10 +32,8 @@ func (s *merchantStorage) MerchantExistsByName(ctx context.Context, name string)
 
 func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*DbMerchant, error) {
 
-	coll := s.client.Database("db", nil).Collection("merchants")
-
 	var merchant DbMerchant
-	if err := coll.FindOne(ctx, bson.M{"_id": merchantID}).Decode(&merchant); err != nil {
+	if err := s.coll.FindOne(ctx, bson.M{"_id": merchantID}).Decode(&merchant); err != nil {
 		return nil, err
 	}
 	return &merchant, nil
@@ -44,9 +41,7 @@ func (s *merchantStorage) GetMerchant(ctx context.Context, merchantID string) (*
 
 func (s *merchantStorage) ListMerchants(ctx context.Context) ([]*DbMerchant, error) {
 
-	coll := s.client.Database("db", nil).Collection("merchants")
-
-	cursor, err := coll.Find(ctx, bson.D{})
+	cursor, err := s.coll.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
@@ -98,8 +93,7 @@ func (s *merchantStorage) CreateMerchant(ctx context.Context, newMerchant *NewMe
 	merchant.Email = newMerchant.Email
 	merchant.Status = newMerchant.Status
 
-	coll := s.client.Database("db").Collection("merchants")
-	_, err := coll.InsertOne(ctx, merchant)
+	_, err := s.coll.InsertOne(ctx, merchant)
 	if err != nil {
 		return "", err
 	}
@@ -112,8 +106,6 @@ func (s *merchantStorage) CreateMenu(ctx context.Context, merchantID string, men
 
 // UpdateMenuItem updates a specific menu item in a merchant's menu
 func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string, updateMenu *DbMenuItem) (*DbMenuItem, error) {
-
-	coll := s.client.Database("db", nil).Collection("merchants")
 
 	set := bson.M{}
 	if updateMenu.FoodName != "" {
@@ -136,7 +128,7 @@ func (s *merchantStorage) UpdateMenuItem(ctx context.Context, merchantID string,
 
 	update := bson.M{"$set": set}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
-	if err := coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(updatedMerchant); err != nil {
+	if err := s.coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(updatedMerchant); err != nil {
 		return nil, fmt.Errorf("failed to update menu item: %v", err)
 	}
 

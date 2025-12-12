@@ -2,25 +2,47 @@ package internal
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type RabbitMQ interface {
-	Publish(ctx context.Context, key string, msg amqp.Publishing) error
-
-	Subscribe(ctx context.Context, queue, key string) (<-chan amqp.Delivery, error)
+type EventHandler struct {
+	Queue, Key string
+	Handler    func(amqp.Delivery) error
 }
 
-type rabbitMQ struct {
+type RabbitMQ struct {
 	conn *amqp.Connection
 }
 
-func NewRabbitMQ(conn *amqp.Connection) RabbitMQ {
-	return &rabbitMQ{conn: conn}
+func NewRabbitMQ(conn *amqp.Connection) *RabbitMQ {
+	return &RabbitMQ{conn: conn}
 }
 
-func (r *rabbitMQ) Publish(ctx context.Context, key string, msg amqp.Publishing) error {
+func (r *RabbitMQ) Start(handlers []*EventHandler) error {
+	for _, handler := range handlers {
+		deliveries, err := r.Subscribe(context.Background(), handler.Queue, handler.Key)
+		if err != nil {
+			return fmt.Errorf("failed to subscribe to %s: %w", handler.Key, err)
+		}
+
+		go func(h *EventHandler, deliveries <-chan amqp.Delivery) {
+			for msg := range deliveries {
+				if err := h.Handler(msg); err != nil {
+					slog.Error("handler error", "err", err, "routingKey", msg.RoutingKey)
+					continue
+				}
+			}
+		}(handler, deliveries)
+		slog.Info("handler started", "queue", handler.Queue, "key", handler.Key)
+	}
+
+	select {}
+}
+
+func (r *RabbitMQ) Publish(ctx context.Context, key string, msg amqp.Publishing) error {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return err
@@ -55,7 +77,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, key string, msg amqp.Publishing)
 	return nil
 }
 
-func (r *rabbitMQ) Subscribe(ctx context.Context, queue, key string) (<-chan amqp.Delivery, error) {
+func (r *RabbitMQ) Subscribe(ctx context.Context, queue, key string) (<-chan amqp.Delivery, error) {
 	ch, err := r.conn.Channel()
 	if err != nil {
 		return nil, err

@@ -13,54 +13,92 @@ import (
 
 	"google.golang.org/grpc"
 
+	"cloud.google.com/go/cloudsqlconn"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+
 	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/authservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"google.golang.org/grpc/health"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func initPostgres() (*sql.DB, error) {
+// From https://docs.cloud.google.com/sql/docs/postgres/samples/cloud-sql-postgres-databasesql-connect-connector
+func connectWithConnector() (*sql.DB, error) {
+	mustGetenv := func(k string) string {
+		v := os.Getenv(k)
+		if v == "" {
+			log.Fatalf("Fatal Error in connect_connector.go: %s environment variable not set.\n", k)
+		}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+		return v
+	}
+	// Note: Saving credentials in environment variables is convenient, but not
+	// secure - consider a more secure solution such as
+	// Cloud Secret Manager (https://cloud.google.com/secret-manager) to help
+	// keep passwords and other secrets safe.
+	var (
+		dbUser                 = mustGetenv("PG_USER")                  // e.g. 'my-db-user'
+		dbPwd                  = mustGetenv("PG_PASS")                  // e.g. 'my-db-password'
+		dbName                 = mustGetenv("AUTH_DB_NAME")             // e.g. 'my-database'
+		instanceConnectionName = mustGetenv("INSTANCE_CONNECTION_NAME") // e.g. 'project:region:instance'
+		usePrivate             = os.Getenv("PRIVATE_IP")
+	)
 
-	user := os.Getenv("AUTH_DB_USER")
-	pass := os.Getenv("AUTH_DB_PASS")
-	host := os.Getenv("AUTH_DB_HOST")
-	dbName := os.Getenv("AUTH_DB_NAME")
-
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-		user, pass, host, dbName,
-	))
+	dsn := fmt.Sprintf("user=%s password=%s database=%s", dbUser, dbPwd, dbName)
+	config, err := pgx.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
 	}
-
-	if err = db.PingContext(ctx); err != nil {
+	var opts []cloudsqlconn.Option
+	if usePrivate != "" {
+		opts = append(opts, cloudsqlconn.WithDefaultDialOptions(cloudsqlconn.WithPrivateIP()))
+	}
+	// WithLazyRefresh() Option is used to perform refresh
+	// when needed, rather than on a scheduled interval.
+	// This is recommended for serverless environments to
+	// avoid background refreshes from throttling CPU.
+	opts = append(opts, cloudsqlconn.WithLazyRefresh())
+	d, err := cloudsqlconn.NewDialer(context.Background(), opts...)
+	if err != nil {
 		return nil, err
 	}
+	// Use the Cloud SQL connector to handle connecting to the instance.
+	// This approach does *NOT* require the Cloud SQL proxy.
+	config.DialFunc = func(ctx context.Context, network, instance string) (net.Conn, error) {
+		return d.Dial(ctx, instanceConnectionName)
+	}
+	dbURI := stdlib.RegisterConnConfig(config)
+	dbPool, err := sql.Open("pgx", dbURI)
+	if err != nil {
+		return nil, fmt.Errorf("sql.Open: %w", err)
+	}
 
-	slog.Info("Database initialized successfully", "host", host)
-	return db, nil
+	if err := dbPool.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
+	return dbPool, nil
 }
 
-// startGRPCServer sets up and starts the gRPC server
-// func startGRPCServer(s *internal.AuthService) {
 func startGRPCServer(s *internal.AuthService) {
 
-	uri := fmt.Sprintf(":%s", os.Getenv("AUTH_SERVER_PORT"))
+	uri := fmt.Sprintf(":%s", os.Getenv("PORT"))
 	lis, err := net.Listen("tcp", uri)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
+	healthcheck := health.NewServer()
+	healthgrpc.RegisterHealthServer(grpcServer, healthcheck)
+
 	pb.RegisterAuthServiceServer(grpcServer, s)
-
-	slog.Info("AuthService initialized successfully",
-		"port", os.Getenv("AUTH_SERVER_PORT"),
-	)
-
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
@@ -78,11 +116,14 @@ func initTimeZone() error {
 }
 
 func initAMQPCon() *amqp.Connection {
-	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("RBMQ_AUTH_USER"),
-		os.Getenv("RBMQ_AUTH_PASS"),
-		os.Getenv("AMQP_SERVER_URI"),
+
+	uri := fmt.Sprintf("amqp://%s:%s@%s/%s",
+		os.Getenv("RBMQ_USER"),
+		os.Getenv("RBMQ_PASS"),
+		os.Getenv("RBMQ_HOST"),
+		os.Getenv("RBMQ_USER"),
 	)
+
 	maxRetries := 5
 	var conn *amqp.Connection
 	var err error
@@ -103,6 +144,16 @@ func initAMQPCon() *amqp.Connection {
 	log.Fatalf("Unexpected")
 	return nil
 
+}
+
+// created by $openssl rand -base64 32
+func initSigningKey() []byte {
+
+	key := os.Getenv("JWT_SIGNING_KEY")
+	if key == "" {
+		log.Fatal("missing JWT_SIGNING_KEY environment variable")
+	}
+	return []byte(key)
 }
 
 func main() {
@@ -126,16 +177,24 @@ func main() {
 		slog.Error("failed to init time zone", "err", err)
 	}
 
-	if err := internal.InitSigningKey(); err != nil {
-		slog.Error("failed to init jwt signing key", "err", err)
-	}
-
-	db, err := initPostgres()
+	db, err := connectWithConnector()
 	if err != nil {
 		log.Fatalf("Failed to initialize PostgresDB connection: %v", err)
 	}
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	m, err := migrate.NewWithDatabaseInstance(
+		"file:///db/migrations",
+		"postgres", driver)
+	if err != nil {
+		log.Fatalf("Failed to create migrate instance: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
 
 	auth := internal.NewAuthService(
+		initSigningKey(),
 		internal.NewStorage(db),
 		internal.NewRabbitMQ(initAMQPCon()),
 	)

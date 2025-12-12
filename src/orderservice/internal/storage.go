@@ -5,9 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type OrderStorage interface {
@@ -28,36 +27,31 @@ type OrderStorage interface {
 }
 
 type orderStorage struct {
-	client *mongo.Client
+	coll *mongo.Collection
 }
 
-func NewOrderStorage(client *mongo.Client) OrderStorage {
-	return &orderStorage{client: client}
+func NewOrderStorage(coll *mongo.Collection) OrderStorage {
+	return &orderStorage{coll: coll}
 }
 
 func (s *orderStorage) Create(ctx context.Context, newOrder *newPlaceOrder) (string, error) {
 
-	coll := s.client.Database("db", nil).Collection("orders")
-
-	res, err := coll.InsertOne(ctx, newOrder)
+	res, err := s.coll.InsertOne(ctx, toDbPlaceOrder(newOrder))
 	if err != nil {
 		return "", err
 	}
 
-	orderID, ok := res.InsertedID.(primitive.ObjectID)
+	orderID, ok := res.InsertedID.(string)
 	if !ok {
-		return "", errors.New("failed to convert insertedID to primitive.objectID")
+		return "", errors.New("failed to convert insertedID to string")
 	}
 
-	return orderID.Hex(), nil
-
+	return orderID, nil
 }
 
 func (s *orderStorage) ListPlaceOrders(ctx context.Context, customerID string) ([]*dbPlaceOrder, error) {
 
-	coll := s.client.Database("db", nil).Collection("orders")
-
-	cur, err := coll.Find(ctx, bson.M{"customerID": customerID})
+	cur, err := s.coll.Find(ctx, bson.M{"customerID": customerID})
 	if err != nil {
 		return nil, err
 	}
@@ -80,15 +74,8 @@ func (s *orderStorage) ListPlaceOrders(ctx context.Context, customerID string) (
 
 func (s *orderStorage) GetPlaceOrder(ctx context.Context, orderID string) (*dbPlaceOrder, error) {
 
-	coll := s.client.Database("db", nil).Collection("orders")
-
-	ID, err := primitive.ObjectIDFromHex(orderID)
-	if err != nil {
-		return nil, err
-	}
-
 	var order dbPlaceOrder
-	if err := coll.FindOne(ctx, bson.D{{Key: "_id", Value: ID}}).Decode(&order); err != nil {
+	if err := s.coll.FindOne(ctx, bson.D{{Key: "_id", Value: orderID}}).Decode(&order); err != nil {
 		return nil, err
 	}
 
@@ -96,13 +83,6 @@ func (s *orderStorage) GetPlaceOrder(ctx context.Context, orderID string) (*dbPl
 }
 
 func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, status dbOrderStatus) (bool, error) {
-
-	coll := s.client.Database("db", nil).Collection("orders")
-
-	ID, err := primitive.ObjectIDFromHex(orderID)
-	if err != nil {
-		return false, err
-	}
 
 	var timestamp string
 	timestamp = "timestamps.updateTime"
@@ -124,7 +104,7 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, st
 		}},
 	}
 
-	res, err := coll.UpdateByID(ctx, ID, update)
+	res, err := s.coll.UpdateByID(ctx, orderID, update)
 	if err != nil {
 		return false, err
 	}
@@ -138,20 +118,13 @@ func (s *orderStorage) UpdateOrderStatus(ctx context.Context, orderID string, st
 
 func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderID string, status dbPaymentStatus) (bool, error) {
 
-	coll := s.client.Database("db", nil).Collection("orders")
-
-	ID, err := primitive.ObjectIDFromHex(orderID)
-	if err != nil {
-		return false, err
-	}
-
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "paymentStatus", Value: status},
 		}},
 	}
 
-	res, err := coll.UpdateByID(ctx, ID, update)
+	res, err := s.coll.UpdateByID(ctx, orderID, update)
 	if err != nil {
 		return false, err
 	}
@@ -163,15 +136,8 @@ func (s *orderStorage) UpdatePaymentStatus(ctx context.Context, orderID string, 
 }
 
 func (s *orderStorage) DeletePlaceOrder(ctx context.Context, orderID string) error {
-	coll := s.client.Database("db").Collection("orders")
 
-	ID, err := primitive.ObjectIDFromHex(orderID)
-	if err != nil {
-		return err
-	}
-
-	_, err = coll.DeleteOne(ctx, bson.M{"_id": ID})
-	if err != nil {
+	if _, err := s.coll.DeleteOne(ctx, bson.M{"_id": orderID}); err != nil {
 		return err
 	}
 

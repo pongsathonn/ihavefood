@@ -8,10 +8,6 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-// FIXME this might not be good for prod, find other solution .
-// JWT signing key
-var signingKey []byte
-
 // AuthClaims is custom claims use when
 // register new jwt claims.
 type AuthClaims struct {

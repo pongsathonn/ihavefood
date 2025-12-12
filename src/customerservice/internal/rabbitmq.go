@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -9,7 +10,7 @@ import (
 
 type EventHandler struct {
 	Queue, Key string
-	Handler    func() chan<- amqp.Delivery
+	Handler    func(amqp.Delivery) error
 }
 
 type RabbitMQ struct {
@@ -20,23 +21,22 @@ func NewRabbitMQ(conn *amqp.Connection) *RabbitMQ {
 	return &RabbitMQ{conn: conn}
 }
 
-func (r *RabbitMQ) Start(handlers []*EventHandler) {
-	for _, h := range handlers {
-		go func(h *EventHandler) {
-			deliveries, err := r.Subscribe(context.TODO(), h.Queue, h.Key)
-			if err != nil {
-				slog.Error(
-					"failed to subscribe an event",
-					"queue", h.Queue,
-					"key", h.Key,
-					"err", err,
-				)
-			}
+func (r *RabbitMQ) Start(handlers []*EventHandler) error {
+	for _, handler := range handlers {
+		deliveries, err := r.Subscribe(context.Background(), handler.Queue, handler.Key)
+		if err != nil {
+			return fmt.Errorf("failed to subscribe to %s: %w", handler.Key, err)
+		}
 
-			for delivery := range deliveries {
-				h.Handler() <- delivery
+		go func(h *EventHandler, deliveries <-chan amqp.Delivery) {
+			for msg := range deliveries {
+				if err := h.Handler(msg); err != nil {
+					slog.Error("handler error", "err", err, "routingKey", msg.RoutingKey)
+					continue
+				}
 			}
-		}(h)
+		}(handler, deliveries)
+		slog.Info("handler started", "queue", handler.Queue, "key", handler.Key)
 	}
 
 	select {}

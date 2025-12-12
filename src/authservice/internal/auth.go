@@ -3,12 +3,10 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -37,12 +35,17 @@ type AuthStorer interface {
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
-	store    AuthStorer
-	rabbitmq *rabbitMQ
+	signingKey []byte
+	store      AuthStorer
+	rabbitmq   *rabbitMQ
 }
 
-func NewAuthService(store AuthStorer, rabbitmq *rabbitMQ) *AuthService {
-	return &AuthService{store: store, rabbitmq: rabbitmq}
+func NewAuthService(key []byte, store AuthStorer, rabbitmq *rabbitMQ) *AuthService {
+	return &AuthService{
+		signingKey: key,
+		store:      store,
+		rabbitmq:   rabbitmq,
+	}
 }
 
 // Register handles auth registration by creating a new auth credentials
@@ -156,7 +159,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	token, exp, err := createNewToken(auth.ID, pb.Roles(auth.Role))
+	token, exp, err := x.createNewToken(auth.ID, pb.Roles(auth.Role))
 	if err != nil {
 		slog.Error("create new token", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -174,7 +177,7 @@ func (x *AuthService) VerifyUserToken(ctx context.Context, in *pb.VerifyUserToke
 		return nil, status.Error(codes.InvalidArgument, "token must be provided")
 	}
 
-	if valid, err := verifyUserToken(in.AccessToken); !valid {
+	if valid, err := x.verifyUserToken(in.AccessToken); !valid {
 		slog.Error("verify auth token", "err", err)
 		return nil, status.Error(codes.Unauthenticated, "invalid auth token")
 	}
@@ -188,7 +191,7 @@ func (x *AuthService) VerifyAdminToken(ctx context.Context, in *pb.VerifyAdminTo
 		return nil, status.Error(codes.InvalidArgument, "token must be provided")
 	}
 
-	if valid, err := verifyAdminToken(in.AccessToken); !valid {
+	if valid, err := x.verifyAdminToken(in.AccessToken); !valid {
 		slog.Error("verify admin token", "err", err)
 		return nil, status.Error(codes.Unauthenticated, "invalid admin token")
 	}
@@ -268,33 +271,25 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth 
 	return nil
 }
 
-func InitSigningKey() error {
-	if key := os.Getenv("JWT_SIGNING_KEY"); key != "" {
-		signingKey = []byte(key)
-		return nil
-	}
-	return errors.New("JWT_SIGNING_KEY environment variable is empty")
-}
-
-func extractBasicAuth(authorization []string) (identifier, password string, err error) {
-
-	if len(authorization) < 1 {
-		return "", "", errors.New("missing authorization in metadata")
-	}
-
-	encoded := strings.TrimPrefix(authorization[0], "Basic ")
-	decoded, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return "", "", err
-	}
-
-	cred := strings.Split(string(decoded), ":")
-	return cred[0], cred[1], nil
-}
+// func extractBasicAuth(authorization []string) (identifier, password string, err error) {
+//
+// 	if len(authorization) < 1 {
+// 		return "", "", errors.New("missing authorization in metadata")
+// 	}
+//
+// 	encoded := strings.TrimPrefix(authorization[0], "Basic ")
+// 	decoded, err := base64.StdEncoding.DecodeString(encoded)
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+//
+// 	cred := strings.Split(string(decoded), ":")
+// 	return cred[0], cred[1], nil
+// }
 
 // createNewToken generates a new JWT token specific roles with an expiration time from the current time.
 // It returns the signed token string, its expiration time in Unix format, and any error encountered.
-func createNewToken(id string, role pb.Roles) (signedToken string, expiration int64, err error) {
+func (x *AuthService) createNewToken(id string, role pb.Roles) (signedToken string, expiration int64, err error) {
 
 	day := 24 * time.Hour
 	now := time.Now()
@@ -313,12 +308,49 @@ func createNewToken(id string, role pb.Roles) (signedToken string, expiration in
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	ss, err := token.SignedString(signingKey)
+	ss, err := token.SignedString(x.signingKey)
 	if err != nil {
 		return "", 0, err
 	}
 
 	return ss, exp.Unix(), nil
+}
+
+// verifyUserToken verifies the validity of a JWT token using the provided signing key.
+// It returns true if the token is valid, false otherwise, along with any error encountered.
+func (x *AuthService) verifyUserToken(tokenString string) (bool, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return x.signingKey, nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if !token.Valid {
+		return false, errors.New("invalid user token")
+	}
+
+	return true, nil
+}
+func (x *AuthService) verifyAdminToken(tokenString string) (bool, error) {
+	token, err := jwt.ParseWithClaims(tokenString, new(AuthClaims), func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return x.signingKey, nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
+		return false, errors.New("token claims do not have admin role")
+	}
+
+	return true, nil
 }
 
 func hashPassword(password string) ([]byte, error) {

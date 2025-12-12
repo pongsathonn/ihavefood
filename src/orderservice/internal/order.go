@@ -256,8 +256,6 @@ func (x *OrderService) handlePaymentStatus() chan<- amqp.Delivery {
 
 // prepareNewOrder validates order dependencies and calculates totals. then build the complete order
 // for database insertion.
-//
-// REFACTOR: make this function cleaner
 func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*newPlaceOrder, error) {
 
 	ctx := context.TODO()

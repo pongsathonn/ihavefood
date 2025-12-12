@@ -18,70 +18,22 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 
-	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"google.golang.org/grpc"
 
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"google.golang.org/grpc/health"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
+
 	pb "github.com/pongsathonn/ihavefood/src/merchantservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// //////////////////////////////////////////////////////////////////////////
-type FakeRabbitMQ struct{}
-
-func (f *FakeRabbitMQ) Publish(ctx context.Context, routingKey string, msg amqp.Publishing) error {
-	// Just log instead of sending
-	fmt.Printf("FakeRabbitMQ.Publish called: routingKey=%s, body=%s\n", routingKey, string(msg.Body))
-	return nil
-}
-
-func (f *FakeRabbitMQ) Subscribe(ctx context.Context, queue, routingkey string) (<-chan amqp.Delivery, error) {
-	fmt.Printf("FakeRabbitMQ.Subscribe called: queue=%s, routingKey=%s\n", queue, routingkey)
-	ch := make(chan amqp.Delivery)
-	close(ch) // immediately close so consuming goroutines don’t block
-	return ch, nil
-}
-
-////////////////////////////////////////////////////////////////////////////
-
-// getSecret panics because it tends to use in main only.
-func getSecret(secretName string) string {
-
-	projectID := os.Getenv("GCP_PROJECT_ID")
-	if projectID == "" {
-		panic("GCP_PROJECT_ID environment variable is not set")
-	}
-
-	ctx := context.Background()
-	client, err := secretmanager.NewClient(ctx)
-	if err != nil {
-		panic(err)
-	}
-	defer client.Close()
-
-	versionName := fmt.Sprintf("projects/%s/secrets/%s/versions/latest",
-		projectID,
-		secretName,
-	)
-
-	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
-		Name: versionName,
-	}
-
-	result, err := client.AccessSecretVersion(ctx, accessRequest)
-	if err != nil {
-		panic(err)
-	}
-
-	return string(result.Payload.Data)
-}
-
 func initAMQPCon() *amqp.Connection {
 
-	uri := fmt.Sprintf("amqp://%s:%s@%s",
-		os.Getenv("RBMQ_MERCHANT_USER"),
-		os.Getenv("RBMQ_MERCHANT_PASS"),
-		os.Getenv("AMQP_SERVER_URI"),
+	uri := fmt.Sprintf("amqp://%s:%s@%s/%s",
+		os.Getenv("RBMQ_USER"),
+		os.Getenv("RBMQ_PASS"),
+		os.Getenv("RBMQ_HOST"),
+		os.Getenv("RBMQ_USER"),
 	)
 
 	maxRetries := 5
@@ -103,17 +55,17 @@ func initAMQPCon() *amqp.Connection {
 	return nil
 }
 
-func initMongoDB() *mongo.Client {
+func initMongoDB() *mongo.Collection {
 
-	uri := fmt.Sprintf("mongodb+srv://%s:%s@mymongodb.jtcdxwq.mongodb.net/?appName=MyMongoDB",
-		url.QueryEscape(getSecret("MERCHANT_DB_USER")),
-		url.QueryEscape(getSecret("MERCHANT_DB_PASS")),
+	uri := fmt.Sprintf("mongodb+srv://%s:%s@%s/?appName=%s",
+		url.QueryEscape(os.Getenv("MONGO_USER")),
+		url.QueryEscape(os.Getenv("MONGO_PASS")),
+		url.QueryEscape(os.Getenv("MONGO_HOST")),
+		url.QueryEscape(os.Getenv("MONGO_CLUSTER")),
 	)
 
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI).SetTimeout(30 * time.Second)
-
 	client, err := mongo.Connect(opts)
 	if err != nil {
 		panic(err)
@@ -123,19 +75,18 @@ func initMongoDB() *mongo.Client {
 		panic(err)
 	}
 
-	coll := client.Database("db", nil).Collection("merchants")
+	coll := client.Database("merchantdb", nil).Collection("merchants")
+
 	indexModel := mongo.IndexModel{
 		Keys:    bson.D{{Key: "name", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	}
-
 	_, err = coll.Indexes().CreateOne(context.TODO(), indexModel)
 	if err != nil {
 		panic(err)
 	}
 
-	return client
-
+	return coll
 }
 
 func main() {
@@ -153,16 +104,19 @@ func main() {
 
 	slog.SetDefault(logger)
 
+	rabbitmq := internal.NewRabbitMQ(initAMQPCon())
 	srv := internal.NewMerchantService(
 		internal.NewMerchantStorage(initMongoDB()),
-		&FakeRabbitMQ{},
-		// internal.NewRabbitMQ(initAMQPCon()),
+		rabbitmq,
 	)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go srv.RunMessageProcessing(ctx)
+	go rabbitmq.Start([]*internal.EventHandler{
+		{
+			Queue:   "merchant_assign_queue",
+			Key:     "order.placed.event",
+			Handler: srv.HandlePlaceOrder,
+		},
+	})
 
 	uri := fmt.Sprintf(":%s", os.Getenv("PORT"))
 	lis, err := net.Listen("tcp", uri)
@@ -171,6 +125,9 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
+	healthcheck := health.NewServer()
+	healthgrpc.RegisterHealthServer(grpcServer, healthcheck)
+
 	pb.RegisterMerchantServiceServer(grpcServer, srv)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal("Failed to serve:", err)

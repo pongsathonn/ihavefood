@@ -88,7 +88,10 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	coupon, err := x.storage.GetCoupon(ctx, in.Code)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			slog.Error("retrive coupon", "err", err)
+			slog.Error("retrive coupon",
+				"code", in.Code,
+				"err", err,
+			)
 			return nil, status.Error(codes.NotFound, "coupon not found")
 		}
 		slog.Error("retrive coupon", "err", err)

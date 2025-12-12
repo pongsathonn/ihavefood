@@ -144,50 +144,34 @@ func (x *CustomerService) DeleteCustomer(ctx context.Context, in *pb.DeleteCusto
 	return &emptypb.Empty{}, nil
 }
 
-func (x *CustomerService) HandleCustomerCreation() chan<- amqp.Delivery {
+func (x *CustomerService) HandleCustomerCreation(msg amqp.Delivery) error {
 
-	messages := make(chan amqp.Delivery)
+	var newCustomer pb.SyncCustomerCreated
+	if err := proto.Unmarshal(msg.Body, &newCustomer); err != nil {
+		return err
+	}
 
-	go func() {
-		for msg := range messages {
+	parsed, err := uuid.Parse(newCustomer.CustomerId)
+	if err != nil {
+		slog.Error("invalid uuid", "err", err)
+		return err
+	}
 
-			var newCustomer pb.SyncCustomerCreated
-			if err := proto.Unmarshal(msg.Body, &newCustomer); err != nil {
-				slog.Error("failed to unmarshal new customer", "err", err)
-				continue
-			}
+	customerId := parsed.String()
+	defaultUsername := fmt.Sprintf("customer%s", customerId[len(customerId)-4:])
 
-			parsed, err := uuid.Parse(newCustomer.CustomerId)
-			if err != nil {
-				slog.Error("invalid uuid", "err", err)
-				continue
-			}
+	customerID, err := x.store.create(context.TODO(), &dbNewCustomer{
+		CustomerID: customerId,
+		Username:   defaultUsername,
+		Email:      newCustomer.Email,
+		CreateTime: newCustomer.CreateTime.AsTime(),
+	})
+	if err != nil {
+		return err
+	}
 
-			customerId := parsed.String()
-			defaultUsername := fmt.Sprintf("customer%s", customerId[len(customerId)-4:])
-
-			customerID, err := x.store.create(context.TODO(), &dbNewCustomer{
-				CustomerID: customerId,
-				Username:   defaultUsername,
-				Email:      newCustomer.Email,
-				CreateTime: newCustomer.CreateTime.AsTime(),
-			})
-			if err != nil {
-				slog.Error("storage create customer", "err", err)
-				continue
-			}
-
-			if newCustomer.CustomerId != customerID {
-				slog.Error(
-					"customerID mismatch",
-					"expected", newCustomer.CustomerId,
-					"found", customerID,
-				)
-				continue
-			}
-		}
-	}()
-	return messages
+	slog.Info("created a new customer", "customerID", customerID)
+	return nil
 }
 
 func protoToDb(customer *pb.Customer) *dbCustomer {

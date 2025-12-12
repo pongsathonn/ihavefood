@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // Code is the primary identifier
@@ -39,19 +39,17 @@ type CouponStorage interface {
 }
 
 type couponStorage struct {
-	db *mongo.Client
+	coll *mongo.Collection
 }
 
-func NewCouponStorage(db *mongo.Client) CouponStorage {
-	return &couponStorage{db: db}
+func NewCouponStorage(coll *mongo.Collection) CouponStorage {
+	return &couponStorage{coll: coll}
 }
 
-func (r *couponStorage) ListCoupons(ctx context.Context) ([]*dbCoupon, error) {
-
-	coll := r.db.Database("db", nil).Collection("coupons")
+func (s *couponStorage) ListCoupons(ctx context.Context) ([]*dbCoupon, error) {
 
 	// filter := bson.M{"quantity": bson.M{"$gt": 0}}
-	cur, err := coll.Find(ctx, bson.D{})
+	cur, err := s.coll.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
@@ -65,52 +63,51 @@ func (r *couponStorage) ListCoupons(ctx context.Context) ([]*dbCoupon, error) {
 
 }
 
-func (r *couponStorage) GetCoupon(ctx context.Context, code string) (*dbCoupon, error) {
-
-	coll := r.db.Database("db", nil).Collection("coupons")
+func (s *couponStorage) GetCoupon(ctx context.Context, code string) (*dbCoupon, error) {
 
 	var coupon dbCoupon
-	if err := coll.FindOne(ctx, bson.M{"code": code}).Decode(&coupon); err != nil {
+	if err := s.coll.FindOne(ctx, bson.M{"_id": code}).Decode(&coupon); err != nil {
 		return nil, err
 	}
 	return &coupon, nil
 }
 
-func (r *couponStorage) Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, error) {
-
-	coll := r.db.Database("db", nil).Collection("coupons")
+func (s *couponStorage) Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, error) {
 
 	// if coupon code exists increase quantity field
 	// and update with longest expiration time
 	filter := bson.M{"_id": coupon.Code}
 	update := bson.M{
+		"$setOnInsert": bson.M{
+			"types":    coupon.Types,
+			"discount": coupon.Discount,
+		},
 		"$inc": bson.M{"quantity": coupon.Quantity},
 		"$max": bson.M{"expiration": coupon.Expiration},
 	}
+	opts := options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After)
 
-	opts := options.FindOneAndUpdate().
-		SetUpsert(true).
-		SetReturnDocument(options.After)
-
-	var addedCoupon *dbCoupon
-
-	if err := coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(addedCoupon); err != nil {
+	addedCoupon := &dbCoupon{}
+	if err := s.coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(addedCoupon); err != nil {
 		return nil, err
 	}
 
 	return addedCoupon, nil
 }
 
-func (r *couponStorage) UpdateQuantity(ctx context.Context, code string) (string, error) {
-	coll := r.db.Database("db", nil).Collection("coupons")
+func (s *couponStorage) UpdateQuantity(ctx context.Context, code string) (string, error) {
 
 	filter := bson.M{
 		"_id":      code,
 		"quantity": bson.M{"$gt": 0},
 	}
-	update := bson.D{{"$inc", bson.D{{"quantity", -1}}}}
+	update := bson.D{
+		{Key: "$inc", Value: bson.D{
+			{Key: "quantity", Value: -1},
+		}},
+	}
 
-	res, err := coll.UpdateOne(ctx, filter, update)
+	res, err := s.coll.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return "", err
 	}

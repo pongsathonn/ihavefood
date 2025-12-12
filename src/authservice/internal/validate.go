@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/golang-jwt/jwt/v5"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
@@ -129,42 +128,4 @@ func validatePassword(fl validator.FieldLevel) bool {
 	return regexp.MustCompile(`[a-z]`).MatchString(password) &&
 		regexp.MustCompile(`[A-Z]`).MatchString(password) &&
 		regexp.MustCompile(`[!.@#$%^&*()_\-+=<>?]`).MatchString(password)
-}
-
-// verifyUserToken verifies the validity of a JWT token using the provided signing key.
-// It returns true if the token is valid, false otherwise, along with any error encountered.
-func verifyUserToken(tokenString string) (bool, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return signingKey, nil
-	})
-	if err != nil {
-		return false, err
-	}
-
-	if !token.Valid {
-		return false, errors.New("invalid user token")
-	}
-
-	return true, nil
-}
-
-func verifyAdminToken(tokenString string) (bool, error) {
-	token, err := jwt.ParseWithClaims(tokenString, new(AuthClaims), func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return signingKey, nil
-	})
-	if err != nil {
-		return false, err
-	}
-
-	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
-		return false, errors.New("token claims do not have admin role")
-	}
-
-	return true, nil
 }
