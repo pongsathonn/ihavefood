@@ -1,4 +1,4 @@
-use std::{env, error::Error, fs};
+use std::{error::Error, fs};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // The protobuf files are located locally using relative paths.
@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     //
     // WKT = standard protobuf types from `google.protobuf` like Timestamp.
     // see generate wkt issues on: https://github.com/tokio-rs/prost/issues/672
-    if env!("PLATFORM") == "host" {
+    if option_env!("PLATFORM") == Some("host") {
         // Use /genproto as the output dir for consistency across services.
         let _ = fs::create_dir("genproto");
 
