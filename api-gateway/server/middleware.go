@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+
 	"strings"
 
 	pb "github.com/pongsathonn/ihavefood/api-gateway/genproto"
@@ -42,7 +43,7 @@ func (m *AuthMiddleware) Authn(next http.Handler) http.Handler {
 	})
 }
 
-// authz checks user permission to access resource
+// authz checks user permission to access resources
 //
 // TODO might implement Role based access control instead checkking only admin token
 func (m *AuthMiddleware) Authz(next http.Handler) http.Handler {

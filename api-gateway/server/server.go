@@ -2,34 +2,31 @@ package server
 
 import (
 	"fmt"
-	"log/slog"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"net/http"
 	"os"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"context"
+	"net/url"
+
+	"google.golang.org/api/idtoken"
+	"google.golang.org/grpc/credentials/oauth"
+
+	"log"
+
+	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "github.com/pongsathonn/ihavefood/api-gateway/genproto"
 )
 
-const ihavefood = `
-=======================================================================
-██╗██╗  ██╗ █████╗ ██╗   ██╗███████╗███████╗ ██████╗  ██████╗ ██████╗
-██║██║  ██║██╔══██╗██║   ██║██╔════╝██╔════╝██╔═══██╗██╔═══██╗██╔══██╗
-██║███████║███████║██║   ██║█████╗  █████╗  ██║   ██║██║   ██║██║  ██║
-██║██╔══██║██╔══██║╚██╗ ██╔╝██╔══╝  ██╔══╝  ██║   ██║██║   ██║██║  ██║
-██║██║  ██║██║  ██║ ╚████╔╝ ███████╗██║     ╚██████╔╝╚██████╔╝██████╔╝
-╚═╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═════╝
-=======================================================================
-`
-
 func cors(h http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		//    For production
-		// 	  swg := fmt.Sprintf("http://localhost:%s", os.Getenv("SWAGGER_UI_PORT"))
-		// 	  w.Header().Add("Access-Control-Allow-Origin", swg)
 
 		w.Header().Add("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
@@ -53,26 +50,128 @@ func prettierJSON(h http.Handler) http.Handler {
 	})
 }
 
-func Run(h http.Handler) error {
-	fmt.Print(ihavefood)
+func newGateway() http.Handler {
 
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.NewClient(os.Getenv("AUTH_URI"), opt)
+	mars := &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			Indent:    "  ",
+			Multiline: true, // Optional, implied by presence of "Indent".
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	}
+
+	mux := runtime.NewServeMux(
+		runtime.WithMarshalerOption("application/json+pretty", mars),
+		// runtime.WithHealthzEndpoint(grpc_health_v1.NewHealthClient(cl)),
+	)
+
+	for env, f := range map[string]func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error{
+		"CUSTOMER_URI": pb.RegisterCustomerServiceHandlerFromEndpoint,
+		"COUPON_URI":   pb.RegisterCouponServiceHandlerFromEndpoint,
+		"ORDER_URI":    pb.RegisterOrderServiceHandlerFromEndpoint,
+		"MERCHANT_URI": pb.RegisterMerchantServiceHandlerFromEndpoint,
+		"DELIVERY_URI": pb.RegisterDeliveryServiceHandlerFromEndpoint,
+		"AUTH_URI":     pb.RegisterAuthServiceHandlerFromEndpoint,
+	} {
+
+		ctx := context.Background()
+		uri := os.Getenv(env)
+		if uri == "" {
+			log.Fatalf("%s is not set", env)
+		}
+
+		// NOTE: audience must include scheme
+		tokenSource, err := idtoken.NewTokenSource(ctx, uri)
+		if err != nil {
+			log.Fatalf("idtoken.NewTokenSource failed: %v", err)
+		}
+
+		parsedURL, err := url.Parse(uri)
+		if err != nil {
+			log.Fatalf("Failed to parse uri: %v", err)
+		}
+
+		opts := []grpc.DialOption{
+			grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")),
+			grpc.WithPerRPCCredentials(oauth.TokenSource{TokenSource: tokenSource}),
+		}
+
+		host := parsedURL.Host
+		if parsedURL.Port() == "" {
+			host = host + ":443"
+		}
+
+		conn, err := grpc.NewClient(host, opts...)
+		if err != nil {
+			log.Fatalf("Failed to dial %s for health check: %v", env, err)
+		}
+
+		healthClient := healthgrpc.NewHealthClient(conn)
+		res, err := healthClient.Check(ctx, &healthgrpc.HealthCheckRequest{})
+		if err != nil || res.GetStatus() != healthgrpc.HealthCheckResponse_SERVING {
+			log.Fatalf("Health check failed for %s: %v", uri, err)
+		}
+
+		if err := f(ctx, mux, host, opts); err != nil {
+			log.Fatalf("Failed to register %s: %v", env, err)
+		}
+	}
+
+	return mux
+}
+
+func initAuthMiddleware() (*AuthMiddleware, error) {
+	ctx := context.Background()
+
+	authURI := os.Getenv("AUTH_URI")
+	tokenSource, err := idtoken.NewTokenSource(ctx, authURI)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create token source: %v", err)
+	}
+
+	parsedURL, err := url.Parse(authURI)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse AUTH_URI: %v", err)
+	}
+
+	authConn, err := grpc.NewClient(parsedURL.Host,
+		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")),
+		grpc.WithPerRPCCredentials(oauth.TokenSource{TokenSource: tokenSource}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create auth client: %v", err)
+
+	}
+	return NewAuthMiddleware(pb.NewAuthServiceClient(authConn)), nil
+}
+
+func Run() error {
+
+	gwmux := newGateway()
+
+	auth, err := initAuthMiddleware()
 	if err != nil {
 		return err
 	}
-	auth := NewAuthMiddleware(pb.NewAuthServiceClient(conn))
 
-	// FIXME: remove this ?
-	// Update role and DELETE methods requires "admin" role.(Just for now)
-	http.Handle("PATCH /auth/users/roles", auth.Authz(h))
-	http.Handle("DELETE /api/*", auth.Authz(h))
-	http.Handle("/api/*", auth.Authn(h))
-	http.Handle("/", h)
+	mux := http.NewServeMux()
+	mux.Handle("DELETE /api/*", auth.Authz(gwmux))
+	mux.Handle("/api/*", auth.Authn(gwmux))
+	mux.Handle("/", gwmux)
 
-	port := os.Getenv("GATEWAY_PORT")
-	slog.Info(fmt.Sprintf("Gateway listening on port :%s", port))
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), prettierJSON(cors(h))); err != nil {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	s := &http.Server{
+		Addr:    ":" + port,
+		Handler: prettierJSON(cors(mux)),
+	}
+
+	if err := s.ListenAndServe(); err != nil {
 		return err
 	}
 	return nil
