@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rider Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Sarabun', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .order-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .order-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            font-weight: 600;
+        }
+        .status-new {
+            background-color: #fef3c7;
+            color: #f59e0b;
+        }
+        .status-accepted {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+        .status-picked-up {
+            background-color: #e0f2fe;
+            color: #0c4a6e;
+        }
+        .status-completed {
+            background-color: #d1d5db;
+            color: #4b5563;
+        }
+        .notification-alert {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            animation: fadeInOut 4s forwards;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen p-4 sm:p-6 lg:p-8">
+
+    <main class="flex-grow flex items-center justify-center">
+        <!-- Login Screen -->
+        <div id="login-screen" class="w-full max-w-sm p-8 bg-white rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center space-y-6">
+            <h1 class="text-3xl font-extrabold text-gray-800">Rider Login</h1>
+            <div class="w-full space-y-4">
+                <input type="email" id="login-email" placeholder="Email" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="login-password" placeholder="Password" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button id="login-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 text-lg">
+                Log In
+            </button>
+            <p class="text-sm text-gray-500">
+                Don't have an account? <a href="#" id="toggle-to-signup-btn" class="text-blue-500 hover:underline">Sign up here</a>
+            </p>
+        </div>
+
+        <!-- Sign Up Screen -->
+        <div id="signup-screen" class="w-full max-w-sm p-8 bg-white rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center space-y-6 hidden">
+            <h1 class="text-3xl font-extrabold text-gray-800">Rider Sign Up</h1>
+            <div class="w-full space-y-4">
+                <input type="text" id="signup-name" placeholder="Rider Name" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="email" id="signup-email" placeholder="Email" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="signup-password" placeholder="Password" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button id="signup-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 text-lg">
+                Create Account
+            </button>
+            <p class="text-sm text-gray-500">
+                Already have an account? <a href="#" id="toggle-to-login-btn" class="text-blue-500 hover:underline">Log in here</a>
+            </p>
+        </div>
+
+        <!-- Dashboard UI (Initially hidden) -->
+        <div id="dashboard-screen" class="w-full space-y-6 hidden">
+             <!-- New Order Notification Alert -->
+            <div id="new-order-alert" class="hidden notification-alert bg-yellow-400 text-yellow-900 p-4 rounded-full shadow-lg font-bold">
+                🔔 New Order Received!
+            </div>
+
+             <header class="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 lg:p-8 bg-white rounded-3xl shadow-lg border border-gray-100 mb-6">
+                <div class="flex items-center space-x-4 mb-4 sm:mb-0 w-full sm:w-auto">
+                    <img id="profile-pic" src="https://placehold.co/100x100/A0B2C3/FFFFFF?text=SS" alt="Profile Picture" class="w-16 h-16 rounded-full border-2 border-blue-500 shadow-md">
+                    <div class="flex flex-col flex-grow">
+                        <div class="flex items-center space-x-2">
+                             <h1 class="text-2xl font-bold text-gray-800">Hi, <span id="rider-name">Somsak</span>!</h1>
+                             <!-- Status Badge -->
+                             <span id="rider-status" class="px-3 py-1 rounded-full text-sm font-bold transition-colors duration-200">Off Duty</span>
+                        </div>
+                        <p class="text-sm text-gray-500" id="rider-uid">UID: simulated-rider-123</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <!-- Action Button -->
+                    <button id="toggle-duty-btn" class="font-bold py-2 px-4 rounded-full transition-colors duration-200">
+                        Go On Duty
+                    </button>
+                    <button id="logout-btn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200">
+                        Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Today's Earnings Section -->
+            <section class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800 mb-1">Orders Delivered Today</h2>
+                    <p id="orders-delivered-today" class="text-4xl font-extrabold text-blue-500">0</p>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800 mb-1">Today's Earnings</h2>
+                    <p id="today-earnings" class="text-4xl font-extrabold text-green-500">฿0.00</p>
+                </div>
+            </section>
+
+            <!-- New Order Notifications Section -->
+            <section class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    New Orders <span id="notification-count" class="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white">0</span>
+                </h2>
+                <div id="new-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <p id="no-new-orders" class="text-gray-500 italic">No new orders at the moment.</p>
+                </div>
+            </section>
+            
+            <!-- Accepted Orders Section -->
+            <section class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Accepted Orders</h2>
+                <div id="accepted-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <p id="no-accepted-orders" class="text-gray-500 italic">No accepted orders yet.</p>
+                </div>
+            </section>
+
+             <!-- Picked Up Orders Section -->
+            <section class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Picked Up</h2>
+                <div id="picked-up-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <p id="no-picked-up-orders" class="text-gray-500 italic">No orders to pick up yet.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // In-memory data store for this simulation.
+        let riderData = {
+            name: "",
+            status: "off-duty",
+            profilePicUrl: "https://placehold.co/100x100/A0B2C3/FFFFFF?text=SS",
+            rating: 4.8,
+            vehicleType: "Motorcycle",
+            ordersDeliveredToday: 0,
+            todayEarnings: 0
+        };
+
+        let ordersData = []; // Start with no orders
+        
+        // Simulating some initial orders for demonstration purposes
+        const mockInitialOrders = [
+            { id: 'order-1', orderId: 101, deliveryAddress: "หมู่บ้านแสนสุข, ถนนสุขุมวิท, เขตวัฒนา, กรุงเทพฯ", status: 'new' },
+            { id: 'order-2', orderId: 102, deliveryAddress: "ซอยอารีย์, พญาไท, กรุงเทพฯ", status: 'new' },
+            { id: 'order-3', orderId: 103, deliveryAddress: "ถนนนิมมานเหมินทร์, อ.เมือง, เชียงใหม่", status: 'new' }
+        ];
+
+        let isAuthReady = true; 
+        let userId = "simulated-rider-123";
+
+        // --- UI Element References ---
+        const loginScreen = document.getElementById('login-screen');
+        const signupScreen = document.getElementById('signup-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+
+        // Buttons for screen toggling and actions
+        const toggleDutyBtn = document.getElementById('toggle-duty-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const toggleToSignupBtn = document.getElementById('toggle-to-signup-btn');
+        const toggleToLoginBtn = document.getElementById('toggle-to-login-btn');
+        const newOrderAlert = document.getElementById('new-order-alert');
+
+        // Other UI elements
+        const profilePic = document.getElementById('profile-pic');
+        const riderNameSpan = document.getElementById('rider-name');
+        const riderUidSpan = document.getElementById('rider-uid');
+        const riderStatusSpan = document.getElementById('rider-status');
+        const newOrdersContainer = document.getElementById('new-orders');
+        const notificationCountSpan = document.getElementById('notification-count');
+        const noNewOrdersMessage = document.getElementById('no-new-orders');
+        const ordersDeliveredTodaySpan = document.getElementById('orders-delivered-today');
+        const todayEarningsSpan = document.getElementById('today-earnings');
+        const acceptedOrdersContainer = document.getElementById('accepted-orders');
+        const noAcceptedOrdersMessage = document.getElementById('no-accepted-orders');
+        const pickedUpOrdersContainer = document.getElementById('picked-up-orders');
+        const noPickedUpOrdersMessage = document.getElementById('no-picked-up-orders');
+
+        // --- UI Rendering Functions ---
+        const updateRiderStatusUI = (status) => {
+            if (status === 'on-duty') {
+                riderStatusSpan.textContent = 'On Duty';
+                riderStatusSpan.className = 'px-3 py-1 rounded-full text-sm font-bold transition-colors duration-200 bg-green-100 text-green-600';
+                toggleDutyBtn.textContent = 'Go Off Duty';
+                toggleDutyBtn.className = 'font-bold py-2 px-4 rounded-full transition-colors duration-200 bg-red-500 hover:bg-red-600 text-white';
+            } else {
+                riderStatusSpan.textContent = 'Off Duty';
+                riderStatusSpan.className = 'px-3 py-1 rounded-full text-sm font-bold transition-colors duration-200 bg-red-100 text-red-600';
+                toggleDutyBtn.textContent = 'Go On Duty';
+                toggleDutyBtn.className = 'font-bold py-2 px-4 rounded-full transition-colors duration-200 bg-green-500 hover:bg-green-600 text-white';
+            }
+        };
+
+        const createOrderCard = (order) => {
+            const card = document.createElement('div');
+            let statusClass;
+            let buttonText;
+            let buttonColor;
+            let actionType;
+            let locationText;
+
+            switch (order.status) {
+                case 'new':
+                    statusClass = 'status-new';
+                    buttonText = 'Accept';
+                    buttonColor = 'bg-green-500';
+                    actionType = 'accept';
+                    locationText = 'From <span class="font-semibold">Restaurant XYZ</span>';
+                    break;
+                case 'accepted':
+                    statusClass = 'status-accepted';
+                    buttonText = 'Pick Up';
+                    buttonColor = 'bg-blue-500';
+                    actionType = 'picked-up';
+                    locationText = 'To <span class="font-semibold">Restaurant XYZ</span>';
+                    break;
+                case 'picked-up':
+                    statusClass = 'status-picked-up';
+                    buttonText = 'Complete Delivery';
+                    buttonColor = 'bg-purple-500';
+                    actionType = 'complete';
+                    locationText = 'To <span class="font-semibold">' + order.deliveryAddress + '</span>';
+                    break;
+                default:
+                    return null;
+            }
+
+            card.className = `order-card bg-gray-50 p-4 rounded-2xl shadow-sm border border-gray-200`;
+            card.innerHTML = `
+                <div class="space-y-2 mb-4">
+                    <h3 class="font-bold text-gray-800">Order #${order.orderId}</h3>
+                    <p class="text-sm text-gray-700">${locationText}</p>
+                    <span class="inline-block px-3 py-1 rounded-full text-xs status-badge ${statusClass}">
+                        ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </span>
+                </div>
+                <button data-order-id="${order.id}" data-action="${actionType}" class="action-btn w-full ${buttonColor} hover:opacity-80 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200">
+                    ${buttonText}
+                </button>
+            `;
+            return card;
+        };
+
+        const renderUI = (screen) => {
+            // Hide all screens first
+            loginScreen.classList.add('hidden');
+            signupScreen.classList.add('hidden');
+            dashboardScreen.classList.add('hidden');
+
+            // Show the requested screen
+            switch (screen) {
+                case 'login':
+                    loginScreen.classList.remove('hidden');
+                    break;
+                case 'signup':
+                    signupScreen.classList.remove('hidden');
+                    break;
+                case 'dashboard':
+                    dashboardScreen.classList.remove('hidden');
+                    // Update dashboard screen with rider data and orders
+                    riderNameSpan.textContent = riderData.name;
+                    profilePic.src = riderData.profilePicUrl;
+                    riderUidSpan.textContent = userId;
+                    ordersDeliveredTodaySpan.textContent = riderData.ordersDeliveredToday;
+                    todayEarningsSpan.textContent = `฿${riderData.todayEarnings.toFixed(2)}`;
+                    updateRiderStatusUI(riderData.status);
+
+                    const newOrders = ordersData.filter(o => o.status === 'new');
+                    const acceptedOrders = ordersData.filter(o => o.status === 'accepted');
+                    const pickedUpOrders = ordersData.filter(o => o.status === 'picked-up');
+
+                    notificationCountSpan.textContent = newOrders.length;
+                    newOrdersContainer.innerHTML = '';
+                    if (newOrders.length > 0) {
+                        noNewOrdersMessage.classList.add('hidden');
+                        newOrders.forEach(order => newOrdersContainer.appendChild(createOrderCard(order)));
+                    } else {
+                        noNewOrdersMessage.classList.remove('hidden');
+                    }
+
+                    acceptedOrdersContainer.innerHTML = '';
+                    if (acceptedOrders.length > 0) {
+                        noAcceptedOrdersMessage.classList.add('hidden');
+                        acceptedOrders.forEach(order => acceptedOrdersContainer.appendChild(createOrderCard(order)));
+                    } else {
+                        noAcceptedOrdersMessage.classList.remove('hidden');
+                    }
+
+                    pickedUpOrdersContainer.innerHTML = '';
+                    if (pickedUpOrders.length > 0) {
+                        noPickedUpOrdersMessage.classList.add('hidden');
+                        pickedUpOrders.forEach(order => pickedUpOrdersContainer.appendChild(createOrderCard(order)));
+                    } else {
+                        noPickedUpOrdersMessage.classList.remove('hidden');
+                    }
+                    break;
+            }
+        };
+
+        // --- Event Handlers ---
+        const handleLogin = () => {
+            const email = document.getElementById('login-email').value;
+            // In a real app, you would validate credentials here.
+            // For this UI-only version, we just assume success.
+            riderData.name = "Somsak"; // Simulate a successful login
+            ordersData = [...mockInitialOrders];
+            renderUI('dashboard');
+        };
+
+        const handleSignup = () => {
+            const name = document.getElementById('signup-name').value;
+            // In a real app, you would create an account here.
+            // For this UI-only version, we just assume success and use the name.
+            if (name) {
+                riderData.name = name;
+            } else {
+                riderData.name = "New Rider";
+            }
+            ordersData = [...mockInitialOrders];
+            renderUI('dashboard');
+        };
+
+        const handleLogout = () => {
+            // Reset rider data to initial state
+            riderData = {
+                name: "",
+                status: "off-duty",
+                profilePicUrl: "https://placehold.co/100x100/A0B2C3/FFFFFF?text=SS",
+                rating: 4.8,
+                vehicleType: "Motorcycle",
+                ordersDeliveredToday: 0,
+                todayEarnings: 0
+            };
+            // Clear orders data as well for a clean start
+            ordersData = [];
+            renderUI('login');
+        };
+
+        const handleToggleDuty = () => {
+            riderData.status = riderData.status === 'on-duty' ? 'off-duty' : 'on-duty';
+            if (riderData.status === 'on-duty') {
+                 // Show the alert and let the animation handle the fade out
+                newOrderAlert.classList.remove('hidden');
+                setTimeout(() => {
+                    newOrderAlert.classList.add('hidden');
+                }, 4000);
+            }
+            updateRiderStatusUI(riderData.status);
+        };
+        
+        const handleOrderAction = (event) => {
+            const target = event.target;
+            if (target.classList.contains('action-btn')) {
+                const orderId = target.dataset.orderId;
+                const action = target.dataset.action;
+                const order = ordersData.find(o => o.id === orderId);
+
+                if (order) {
+                    if (action === 'accept') {
+                        order.status = 'accepted';
+                        renderUI('dashboard');
+                    } else if (action === 'picked-up') {
+                        order.status = 'picked-up';
+                        renderUI('dashboard');
+                    } else if (action === 'complete') {
+                        order.status = 'completed';
+                        riderData.ordersDeliveredToday += 1;
+                        riderData.todayEarnings += 55.00; // Simulating a fixed earning amount in Baht
+                        // Remove completed order from the list
+                        ordersData = ordersData.filter(o => o.id !== orderId);
+                        renderUI('dashboard');
+                    }
+                }
+            }
+        };
+
+        // Add a simulation function to add new orders
+        window.simulateNewOrder = () => {
+            const newOrderId = `order-${Math.floor(Math.random() * 10000)}`;
+            const mockAddresses = [
+                "ถนนพระราม 1, ปทุมวัน, กรุงเทพฯ",
+                "ถนนราชดำริ, ลุมพินี, กรุงเทพฯ",
+                "สยามสแควร์, ปทุมวัน, กรุงเทพฯ",
+                "ซอยทองหล่อ, วัฒนา, กรุงเทพฯ",
+            ];
+            const mockOrder = {
+                id: newOrderId,
+                orderId: Math.floor(Math.random() * 900) + 100,
+                deliveryAddress: mockAddresses[Math.floor(Math.random() * mockAddresses.length)],
+                status: 'new'
+            };
+            ordersData.push(mockOrder);
+            renderUI('dashboard');
+        };
+
+        // --- Event Listeners ---
+        loginBtn.addEventListener('click', handleLogin);
+        signupBtn.addEventListener('click', handleSignup);
+        toggleDutyBtn.addEventListener('click', handleToggleDuty);
+        logoutBtn.addEventListener('click', handleLogout);
+        toggleToSignupBtn.addEventListener('click', (e) => { e.preventDefault(); renderUI('signup'); });
+        toggleToLoginBtn.addEventListener('click', (e) => { e.preventDefault(); renderUI('login'); });
+        newOrdersContainer.addEventListener('click', handleOrderAction);
+        acceptedOrdersContainer.addEventListener('click', handleOrderAction);
+        pickedUpOrdersContainer.addEventListener('click', handleOrderAction);
+
+        // Initial render
+        renderUI('login');
+    </script>
+</body>
+</html>
+
