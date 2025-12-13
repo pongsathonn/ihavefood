@@ -83,14 +83,11 @@ pub struct ReportDeliveryStatusRequest {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum DeliveryStatus {
-    /// indicates the rider has not yet accepted the order.
-    RiderUnaccept = 0,
-    /// indicates the rider has accepted the order.
-    RiderAccepted = 1,
-    /// indicates the rider has picked up the order.
-    RiderPickedUp = 2,
-    /// indicates the order has been delivered by the rider.
-    RiderDelivered = 3,
+    Unspecified = 0,
+    RiderPending = 1,
+    RiderAccepted = 2,
+    RiderPickedUp = 3,
+    RiderDelivered = 4,
 }
 impl DeliveryStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -99,19 +96,21 @@ impl DeliveryStatus {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            Self::RiderUnaccept => "RIDER_UNACCEPT",
-            Self::RiderAccepted => "RIDER_ACCEPTED",
-            Self::RiderPickedUp => "RIDER_PICKED_UP",
-            Self::RiderDelivered => "RIDER_DELIVERED",
+            Self::Unspecified => "DELIVERY_STATUS_UNSPECIFIED",
+            Self::RiderPending => "DELIVERY_STATUS_RIDER_PENDING",
+            Self::RiderAccepted => "DELIVERY_STATUS_RIDER_ACCEPTED",
+            Self::RiderPickedUp => "DELIVERY_STATUS_RIDER_PICKED_UP",
+            Self::RiderDelivered => "DELIVERY_STATUS_RIDER_DELIVERED",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "RIDER_UNACCEPT" => Some(Self::RiderUnaccept),
-            "RIDER_ACCEPTED" => Some(Self::RiderAccepted),
-            "RIDER_PICKED_UP" => Some(Self::RiderPickedUp),
-            "RIDER_DELIVERED" => Some(Self::RiderDelivered),
+            "DELIVERY_STATUS_UNSPECIFIED" => Some(Self::Unspecified),
+            "DELIVERY_STATUS_RIDER_PENDING" => Some(Self::RiderPending),
+            "DELIVERY_STATUS_RIDER_ACCEPTED" => Some(Self::RiderAccepted),
+            "DELIVERY_STATUS_RIDER_PICKED_UP" => Some(Self::RiderPickedUp),
+            "DELIVERY_STATUS_RIDER_DELIVERED" => Some(Self::RiderDelivered),
             _ => None,
         }
     }
@@ -781,7 +780,7 @@ pub struct StoreStatusResponse {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum StoreStatus {
-    StatusUnspecified = 0,
+    Unspecified = 0,
     Closed = 1,
     Open = 2,
 }
@@ -792,17 +791,17 @@ impl StoreStatus {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            Self::StatusUnspecified => "STATUS_UNSPECIFIED",
-            Self::Closed => "CLOSED",
-            Self::Open => "OPEN",
+            Self::Unspecified => "STORE_STATUS_UNSPECIFIED",
+            Self::Closed => "STORE_STATUS_CLOSED",
+            Self::Open => "STORE_STATUS_OPEN",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "STATUS_UNSPECIFIED" => Some(Self::StatusUnspecified),
-            "CLOSED" => Some(Self::Closed),
-            "OPEN" => Some(Self::Open),
+            "STORE_STATUS_UNSPECIFIED" => Some(Self::Unspecified),
+            "STORE_STATUS_CLOSED" => Some(Self::Closed),
+            "STORE_STATUS_OPEN" => Some(Self::Open),
             _ => None,
         }
     }
@@ -2414,8 +2413,9 @@ impl PaymentMethods {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum PaymentStatus {
-    Unpaid = 0,
-    Paid = 1,
+    Unspecified = 0,
+    Pending = 1,
+    Paid = 2,
 }
 impl PaymentStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -2424,15 +2424,17 @@ impl PaymentStatus {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            Self::Unpaid => "UNPAID",
-            Self::Paid => "PAID",
+            Self::Unspecified => "PAYMENT_STATUS_UNSPECIFIED",
+            Self::Pending => "PAYMENT_STATUS_PENDING",
+            Self::Paid => "PAYMENT_STATUS_PAID",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "UNPAID" => Some(Self::Unpaid),
-            "PAID" => Some(Self::Paid),
+            "PAYMENT_STATUS_UNSPECIFIED" => Some(Self::Unspecified),
+            "PAYMENT_STATUS_PENDING" => Some(Self::Pending),
+            "PAYMENT_STATUS_PAID" => Some(Self::Paid),
             _ => None,
         }
     }
@@ -2441,13 +2443,14 @@ impl PaymentStatus {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum OrderStatus {
-    Pending = 0,
-    PreparingOrder = 1,
-    FindingRider = 2,
-    WaitForPickup = 3,
-    Ongoing = 4,
-    Delivered = 5,
-    Cancelled = 6,
+    Unspecified = 0,
+    Pending = 1,
+    PreparingOrder = 2,
+    FindingRider = 3,
+    WaitForPickup = 4,
+    Ongoing = 5,
+    Delivered = 6,
+    Cancelled = 7,
 }
 impl OrderStatus {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -2456,25 +2459,27 @@ impl OrderStatus {
     /// (if the ProtoBuf definition does not change) and safe for programmatic use.
     pub fn as_str_name(&self) -> &'static str {
         match self {
-            Self::Pending => "PENDING",
-            Self::PreparingOrder => "PREPARING_ORDER",
-            Self::FindingRider => "FINDING_RIDER",
-            Self::WaitForPickup => "WAIT_FOR_PICKUP",
-            Self::Ongoing => "ONGOING",
-            Self::Delivered => "DELIVERED",
-            Self::Cancelled => "CANCELLED",
+            Self::Unspecified => "ORDER_STATUS_UNSPECIFIED",
+            Self::Pending => "ORDER_STATUS_PENDING",
+            Self::PreparingOrder => "ORDER_STATUS_PREPARING_ORDER",
+            Self::FindingRider => "ORDER_STATUS_FINDING_RIDER",
+            Self::WaitForPickup => "ORDER_STATUS_WAIT_FOR_PICKUP",
+            Self::Ongoing => "ORDER_STATUS_ONGOING",
+            Self::Delivered => "ORDER_STATUS_DELIVERED",
+            Self::Cancelled => "ORDER_STATUS_CANCELLED",
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
     pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
         match value {
-            "PENDING" => Some(Self::Pending),
-            "PREPARING_ORDER" => Some(Self::PreparingOrder),
-            "FINDING_RIDER" => Some(Self::FindingRider),
-            "WAIT_FOR_PICKUP" => Some(Self::WaitForPickup),
-            "ONGOING" => Some(Self::Ongoing),
-            "DELIVERED" => Some(Self::Delivered),
-            "CANCELLED" => Some(Self::Cancelled),
+            "ORDER_STATUS_UNSPECIFIED" => Some(Self::Unspecified),
+            "ORDER_STATUS_PENDING" => Some(Self::Pending),
+            "ORDER_STATUS_PREPARING_ORDER" => Some(Self::PreparingOrder),
+            "ORDER_STATUS_FINDING_RIDER" => Some(Self::FindingRider),
+            "ORDER_STATUS_WAIT_FOR_PICKUP" => Some(Self::WaitForPickup),
+            "ORDER_STATUS_ONGOING" => Some(Self::Ongoing),
+            "ORDER_STATUS_DELIVERED" => Some(Self::Delivered),
+            "ORDER_STATUS_CANCELLED" => Some(Self::Cancelled),
             _ => None,
         }
     }
