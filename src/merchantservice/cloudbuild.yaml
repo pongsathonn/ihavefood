@@ -28,7 +28,7 @@ steps:
       - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}'
       - '--region=${_REGION}'
       - '--platform=managed'
-      - '--no-allow-unauthenticated'
+      - '--allow-unauthenticated'
       - '--format=value(status.address.url)'
       - '--set-env-vars=GCP_PROJECT_ID=$PROJECT_ID'
       - '--set-secrets=MONGO_USER=MONGO_USER:latest'
