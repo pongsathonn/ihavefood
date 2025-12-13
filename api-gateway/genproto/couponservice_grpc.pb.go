@@ -37,7 +37,6 @@ type CouponServiceClient interface {
 	ListCoupons(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListCouponsResponse, error)
 	// GetCoupon shows a valid coupon by code.
 	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
-	// AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).
 	AddCoupon(ctx context.Context, in *AddCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
 	// RedeemCoupon updates coupon quantity after an order is paid.
 	RedeemCoupon(ctx context.Context, in *RedeemCouponRequest, opts ...grpc.CallOption) (*RedeemCouponResponse, error)
@@ -102,7 +101,6 @@ type CouponServiceServer interface {
 	ListCoupons(context.Context, *emptypb.Empty) (*ListCouponsResponse, error)
 	// GetCoupon shows a valid coupon by code.
 	GetCoupon(context.Context, *GetCouponRequest) (*Coupon, error)
-	// AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).
 	AddCoupon(context.Context, *AddCouponRequest) (*Coupon, error)
 	// RedeemCoupon updates coupon quantity after an order is paid.
 	RedeemCoupon(context.Context, *RedeemCouponRequest) (*RedeemCouponResponse, error)

@@ -24,65 +24,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type CouponTypes int32
-
-const (
-	CouponTypes_COUPON_TYPE_UNSPECIFICED CouponTypes = 0
-	// Discount is a fixed amount, not a percentage.
-	CouponTypes_COUPON_TYPE_DISCOUNT      CouponTypes = 1
-	CouponTypes_COUPON_TYPE_FREE_DELIVERY CouponTypes = 2
-)
-
-// Enum value maps for CouponTypes.
-var (
-	CouponTypes_name = map[int32]string{
-		0: "COUPON_TYPE_UNSPECIFICED",
-		1: "COUPON_TYPE_DISCOUNT",
-		2: "COUPON_TYPE_FREE_DELIVERY",
-	}
-	CouponTypes_value = map[string]int32{
-		"COUPON_TYPE_UNSPECIFICED":  0,
-		"COUPON_TYPE_DISCOUNT":      1,
-		"COUPON_TYPE_FREE_DELIVERY": 2,
-	}
-)
-
-func (x CouponTypes) Enum() *CouponTypes {
-	p := new(CouponTypes)
-	*p = x
-	return p
-}
-
-func (x CouponTypes) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (CouponTypes) Descriptor() protoreflect.EnumDescriptor {
-	return file_couponservice_proto_enumTypes[0].Descriptor()
-}
-
-func (CouponTypes) Type() protoreflect.EnumType {
-	return &file_couponservice_proto_enumTypes[0]
-}
-
-func (x CouponTypes) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use CouponTypes.Descriptor instead.
-func (CouponTypes) EnumDescriptor() ([]byte, []int) {
-	return file_couponservice_proto_rawDescGZIP(), []int{0}
-}
-
 type Coupon struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Types CouponTypes            `protobuf:"varint,1,opt,name=types,proto3,enum=ihavefood.CouponTypes" json:"types,omitempty"`
-	Code  string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	// required if coupon_type is COUPON_TYPE_DISCOUNT.
-	PercentDiscount int32 `protobuf:"varint,3,opt,name=percent_discount,json=percentDiscount,proto3" json:"percent_discount,omitempty"`
-	// Number of seconds until the coupon expires(UNIX).
-	ExpiresIn     int64 `protobuf:"varint,4,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
-	QuantityCount int32 `protobuf:"varint,5,opt,name=quantity_count,json=quantityCount,proto3" json:"quantity_count,omitempty"`
+	Code  string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	// The coupon expiration time in hours from now.
+	// For example expire_in_hour is 72 means the coupon will be expired
+	// in 3 days (72 hours) from now.
+	ExpiresInHour int64 `protobuf:"varint,2,opt,name=expires_in_hour,json=expiresInHour,proto3" json:"expires_in_hour,omitempty"`
+	QuantityCount int32 `protobuf:"varint,3,opt,name=quantity_count,json=quantityCount,proto3" json:"quantity_count,omitempty"`
+	// Types that are valid to be assigned to CouponDetails:
+	//
+	//	*Coupon_PercentDiscount
+	//	*Coupon_FreeDelivery
+	CouponDetails isCoupon_CouponDetails `protobuf_oneof:"coupon_details"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,13 +71,6 @@ func (*Coupon) Descriptor() ([]byte, []int) {
 	return file_couponservice_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Coupon) GetTypes() CouponTypes {
-	if x != nil {
-		return x.Types
-	}
-	return CouponTypes_COUPON_TYPE_UNSPECIFICED
-}
-
 func (x *Coupon) GetCode() string {
 	if x != nil {
 		return x.Code
@@ -131,16 +78,9 @@ func (x *Coupon) GetCode() string {
 	return ""
 }
 
-func (x *Coupon) GetPercentDiscount() int32 {
+func (x *Coupon) GetExpiresInHour() int64 {
 	if x != nil {
-		return x.PercentDiscount
-	}
-	return 0
-}
-
-func (x *Coupon) GetExpiresIn() int64 {
-	if x != nil {
-		return x.ExpiresIn
+		return x.ExpiresInHour
 	}
 	return 0
 }
@@ -152,22 +92,143 @@ func (x *Coupon) GetQuantityCount() int32 {
 	return 0
 }
 
+func (x *Coupon) GetCouponDetails() isCoupon_CouponDetails {
+	if x != nil {
+		return x.CouponDetails
+	}
+	return nil
+}
+
+func (x *Coupon) GetPercentDiscount() *PercentDiscount {
+	if x != nil {
+		if x, ok := x.CouponDetails.(*Coupon_PercentDiscount); ok {
+			return x.PercentDiscount
+		}
+	}
+	return nil
+}
+
+func (x *Coupon) GetFreeDelivery() *FreeDelivery {
+	if x != nil {
+		if x, ok := x.CouponDetails.(*Coupon_FreeDelivery); ok {
+			return x.FreeDelivery
+		}
+	}
+	return nil
+}
+
+type isCoupon_CouponDetails interface {
+	isCoupon_CouponDetails()
+}
+
+type Coupon_PercentDiscount struct {
+	PercentDiscount *PercentDiscount `protobuf:"bytes,4,opt,name=percent_discount,json=percentDiscount,proto3,oneof"`
+}
+
+type Coupon_FreeDelivery struct {
+	FreeDelivery *FreeDelivery `protobuf:"bytes,5,opt,name=free_delivery,json=freeDelivery,proto3,oneof"`
+}
+
+func (*Coupon_PercentDiscount) isCoupon_CouponDetails() {}
+
+func (*Coupon_FreeDelivery) isCoupon_CouponDetails() {}
+
+type PercentDiscount struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Percent       int32                  `protobuf:"varint,1,opt,name=percent,proto3" json:"percent,omitempty"` // 1-100
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PercentDiscount) Reset() {
+	*x = PercentDiscount{}
+	mi := &file_couponservice_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PercentDiscount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PercentDiscount) ProtoMessage() {}
+
+func (x *PercentDiscount) ProtoReflect() protoreflect.Message {
+	mi := &file_couponservice_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PercentDiscount.ProtoReflect.Descriptor instead.
+func (*PercentDiscount) Descriptor() ([]byte, []int) {
+	return file_couponservice_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PercentDiscount) GetPercent() int32 {
+	if x != nil {
+		return x.Percent
+	}
+	return 0
+}
+
+type FreeDelivery struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FreeDelivery) Reset() {
+	*x = FreeDelivery{}
+	mi := &file_couponservice_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FreeDelivery) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FreeDelivery) ProtoMessage() {}
+
+func (x *FreeDelivery) ProtoReflect() protoreflect.Message {
+	mi := &file_couponservice_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FreeDelivery.ProtoReflect.Descriptor instead.
+func (*FreeDelivery) Descriptor() ([]byte, []int) {
+	return file_couponservice_proto_rawDescGZIP(), []int{2}
+}
+
 type AddCouponRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	CouponTypes     CouponTypes            `protobuf:"varint,1,opt,name=coupon_types,json=couponTypes,proto3,enum=ihavefood.CouponTypes" json:"coupon_types,omitempty"`
-	PercentDiscount int32                  `protobuf:"varint,2,opt,name=percent_discount,json=percentDiscount,proto3" json:"percent_discount,omitempty"`
-	// The coupon expiration time in hours from now.
-	// For example expire_in_hour is 72 means the coupon will be expired
-	// in 3 days (72 hours) from now.
-	ExpireInHour  int32 `protobuf:"varint,3,opt,name=expire_in_hour,json=expireInHour,proto3" json:"expire_in_hour,omitempty"`
-	Quantity      int32 `protobuf:"varint,4,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	ExpireInHour int32                  `protobuf:"varint,1,opt,name=expire_in_hour,json=expireInHour,proto3" json:"expire_in_hour,omitempty"`
+	Quantity     int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	// Types that are valid to be assigned to DiscountType:
+	//
+	//	*AddCouponRequest_PercentDiscount
+	//	*AddCouponRequest_FreeDelivery
+	DiscountType  isAddCouponRequest_DiscountType `protobuf_oneof:"discount_type"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AddCouponRequest) Reset() {
 	*x = AddCouponRequest{}
-	mi := &file_couponservice_proto_msgTypes[1]
+	mi := &file_couponservice_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -179,7 +240,7 @@ func (x *AddCouponRequest) String() string {
 func (*AddCouponRequest) ProtoMessage() {}
 
 func (x *AddCouponRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_couponservice_proto_msgTypes[1]
+	mi := &file_couponservice_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -192,21 +253,7 @@ func (x *AddCouponRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddCouponRequest.ProtoReflect.Descriptor instead.
 func (*AddCouponRequest) Descriptor() ([]byte, []int) {
-	return file_couponservice_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *AddCouponRequest) GetCouponTypes() CouponTypes {
-	if x != nil {
-		return x.CouponTypes
-	}
-	return CouponTypes_COUPON_TYPE_UNSPECIFICED
-}
-
-func (x *AddCouponRequest) GetPercentDiscount() int32 {
-	if x != nil {
-		return x.PercentDiscount
-	}
-	return 0
+	return file_couponservice_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *AddCouponRequest) GetExpireInHour() int32 {
@@ -223,6 +270,47 @@ func (x *AddCouponRequest) GetQuantity() int32 {
 	return 0
 }
 
+func (x *AddCouponRequest) GetDiscountType() isAddCouponRequest_DiscountType {
+	if x != nil {
+		return x.DiscountType
+	}
+	return nil
+}
+
+func (x *AddCouponRequest) GetPercentDiscount() *PercentDiscount {
+	if x != nil {
+		if x, ok := x.DiscountType.(*AddCouponRequest_PercentDiscount); ok {
+			return x.PercentDiscount
+		}
+	}
+	return nil
+}
+
+func (x *AddCouponRequest) GetFreeDelivery() *FreeDelivery {
+	if x != nil {
+		if x, ok := x.DiscountType.(*AddCouponRequest_FreeDelivery); ok {
+			return x.FreeDelivery
+		}
+	}
+	return nil
+}
+
+type isAddCouponRequest_DiscountType interface {
+	isAddCouponRequest_DiscountType()
+}
+
+type AddCouponRequest_PercentDiscount struct {
+	PercentDiscount *PercentDiscount `protobuf:"bytes,3,opt,name=percent_discount,json=percentDiscount,proto3,oneof"`
+}
+
+type AddCouponRequest_FreeDelivery struct {
+	FreeDelivery *FreeDelivery `protobuf:"bytes,4,opt,name=free_delivery,json=freeDelivery,proto3,oneof"`
+}
+
+func (*AddCouponRequest_PercentDiscount) isAddCouponRequest_DiscountType() {}
+
+func (*AddCouponRequest_FreeDelivery) isAddCouponRequest_DiscountType() {}
+
 type GetCouponRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
@@ -232,7 +320,7 @@ type GetCouponRequest struct {
 
 func (x *GetCouponRequest) Reset() {
 	*x = GetCouponRequest{}
-	mi := &file_couponservice_proto_msgTypes[2]
+	mi := &file_couponservice_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -244,7 +332,7 @@ func (x *GetCouponRequest) String() string {
 func (*GetCouponRequest) ProtoMessage() {}
 
 func (x *GetCouponRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_couponservice_proto_msgTypes[2]
+	mi := &file_couponservice_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -257,7 +345,7 @@ func (x *GetCouponRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCouponRequest.ProtoReflect.Descriptor instead.
 func (*GetCouponRequest) Descriptor() ([]byte, []int) {
-	return file_couponservice_proto_rawDescGZIP(), []int{2}
+	return file_couponservice_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetCouponRequest) GetCode() string {
@@ -276,7 +364,7 @@ type ListCouponsResponse struct {
 
 func (x *ListCouponsResponse) Reset() {
 	*x = ListCouponsResponse{}
-	mi := &file_couponservice_proto_msgTypes[3]
+	mi := &file_couponservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -288,7 +376,7 @@ func (x *ListCouponsResponse) String() string {
 func (*ListCouponsResponse) ProtoMessage() {}
 
 func (x *ListCouponsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_couponservice_proto_msgTypes[3]
+	mi := &file_couponservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -301,7 +389,7 @@ func (x *ListCouponsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCouponsResponse.ProtoReflect.Descriptor instead.
 func (*ListCouponsResponse) Descriptor() ([]byte, []int) {
-	return file_couponservice_proto_rawDescGZIP(), []int{3}
+	return file_couponservice_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListCouponsResponse) GetCoupons() []*Coupon {
@@ -320,7 +408,7 @@ type RedeemCouponRequest struct {
 
 func (x *RedeemCouponRequest) Reset() {
 	*x = RedeemCouponRequest{}
-	mi := &file_couponservice_proto_msgTypes[4]
+	mi := &file_couponservice_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -332,7 +420,7 @@ func (x *RedeemCouponRequest) String() string {
 func (*RedeemCouponRequest) ProtoMessage() {}
 
 func (x *RedeemCouponRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_couponservice_proto_msgTypes[4]
+	mi := &file_couponservice_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -345,7 +433,7 @@ func (x *RedeemCouponRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedeemCouponRequest.ProtoReflect.Descriptor instead.
 func (*RedeemCouponRequest) Descriptor() ([]byte, []int) {
-	return file_couponservice_proto_rawDescGZIP(), []int{4}
+	return file_couponservice_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RedeemCouponRequest) GetCode() string {
@@ -364,7 +452,7 @@ type RedeemCouponResponse struct {
 
 func (x *RedeemCouponResponse) Reset() {
 	*x = RedeemCouponResponse{}
-	mi := &file_couponservice_proto_msgTypes[5]
+	mi := &file_couponservice_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -376,7 +464,7 @@ func (x *RedeemCouponResponse) String() string {
 func (*RedeemCouponResponse) ProtoMessage() {}
 
 func (x *RedeemCouponResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_couponservice_proto_msgTypes[5]
+	mi := &file_couponservice_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,7 +477,7 @@ func (x *RedeemCouponResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedeemCouponResponse.ProtoReflect.Descriptor instead.
 func (*RedeemCouponResponse) Descriptor() ([]byte, []int) {
-	return file_couponservice_proto_rawDescGZIP(), []int{5}
+	return file_couponservice_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RedeemCouponResponse) GetSuccess() bool {
@@ -403,32 +491,32 @@ var File_couponservice_proto protoreflect.FileDescriptor
 
 const file_couponservice_proto_rawDesc = "" +
 	"\n" +
-	"\x13couponservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xbb\x01\n" +
-	"\x06Coupon\x12,\n" +
-	"\x05types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\x05types\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\x12)\n" +
-	"\x10percent_discount\x18\x03 \x01(\x05R\x0fpercentDiscount\x12\x1d\n" +
-	"\n" +
-	"expires_in\x18\x04 \x01(\x03R\texpiresIn\x12%\n" +
-	"\x0equantity_count\x18\x05 \x01(\x05R\rquantityCount\"\xed\x02\n" +
-	"\x10AddCouponRequest\x129\n" +
-	"\fcoupon_types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\vcouponTypes\x12)\n" +
-	"\x10percent_discount\x18\x02 \x01(\x05R\x0fpercentDiscount\x12$\n" +
-	"\x0eexpire_in_hour\x18\x03 \x01(\x05R\fexpireInHour\x12\x1a\n" +
-	"\bquantity\x18\x04 \x01(\x05R\bquantity:\xb0\x01\x92A\xac\x01\n" +
-	"B2@NOTE: if type is FREE_DELIVERY, percent_discount will be ignored2f{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"percent_discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}\"E\n" +
+	"\x13couponservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x86\x02\n" +
+	"\x06Coupon\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12&\n" +
+	"\x0fexpires_in_hour\x18\x02 \x01(\x03R\rexpiresInHour\x12%\n" +
+	"\x0equantity_count\x18\x03 \x01(\x05R\rquantityCount\x12G\n" +
+	"\x10percent_discount\x18\x04 \x01(\v2\x1a.ihavefood.PercentDiscountH\x00R\x0fpercentDiscount\x12>\n" +
+	"\rfree_delivery\x18\x05 \x01(\v2\x17.ihavefood.FreeDeliveryH\x00R\ffreeDeliveryB\x10\n" +
+	"\x0ecoupon_details\"+\n" +
+	"\x0fPercentDiscount\x12\x18\n" +
+	"\apercent\x18\x01 \x01(\x05R\apercent\"\x0e\n" +
+	"\fFreeDelivery\"\xb0\x02\n" +
+	"\x10AddCouponRequest\x12$\n" +
+	"\x0eexpire_in_hour\x18\x01 \x01(\x05R\fexpireInHour\x12\x1a\n" +
+	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12G\n" +
+	"\x10percent_discount\x18\x03 \x01(\v2\x1a.ihavefood.PercentDiscountH\x00R\x0fpercentDiscount\x12>\n" +
+	"\rfree_delivery\x18\x04 \x01(\v2\x17.ihavefood.FreeDeliveryH\x00R\ffreeDelivery:@\x92A=\n" +
+	";29Specify exactly one of: percent_discount or free_deliveryB\x0f\n" +
+	"\rdiscount_type\"?\n" +
 	"\x10GetCouponRequest\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code:\x1d\x92A\x1a2\x18{\"code\": \"SAVE20FORYOU\"}\"B\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code:\x17\x92A\x142\x12{\"code\": \"SAVE20\"}\"B\n" +
 	"\x13ListCouponsResponse\x12+\n" +
 	"\acoupons\x18\x01 \x03(\v2\x11.ihavefood.CouponR\acoupons\")\n" +
 	"\x13RedeemCouponRequest\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\"0\n" +
 	"\x14RedeemCouponResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess*d\n" +
-	"\vCouponTypes\x12\x1c\n" +
-	"\x18COUPON_TYPE_UNSPECIFICED\x10\x00\x12\x18\n" +
-	"\x14COUPON_TYPE_DISCOUNT\x10\x01\x12\x1d\n" +
-	"\x19COUPON_TYPE_FREE_DELIVERY\x10\x022\xef\x02\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xef\x02\n" +
 	"\rCouponService\x12[\n" +
 	"\vListCoupons\x12\x16.google.protobuf.Empty\x1a\x1e.ihavefood.ListCouponsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/api/coupons\x12X\n" +
 	"\tGetCoupon\x12\x1b.ihavefood.GetCouponRequest\x1a\x11.ihavefood.Coupon\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/coupons/{code}\x12T\n" +
@@ -447,35 +535,37 @@ func file_couponservice_proto_rawDescGZIP() []byte {
 	return file_couponservice_proto_rawDescData
 }
 
-var file_couponservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_couponservice_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_couponservice_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_couponservice_proto_goTypes = []any{
-	(CouponTypes)(0),             // 0: ihavefood.CouponTypes
-	(*Coupon)(nil),               // 1: ihavefood.Coupon
-	(*AddCouponRequest)(nil),     // 2: ihavefood.AddCouponRequest
-	(*GetCouponRequest)(nil),     // 3: ihavefood.GetCouponRequest
-	(*ListCouponsResponse)(nil),  // 4: ihavefood.ListCouponsResponse
-	(*RedeemCouponRequest)(nil),  // 5: ihavefood.RedeemCouponRequest
-	(*RedeemCouponResponse)(nil), // 6: ihavefood.RedeemCouponResponse
-	(*emptypb.Empty)(nil),        // 7: google.protobuf.Empty
+	(*Coupon)(nil),               // 0: ihavefood.Coupon
+	(*PercentDiscount)(nil),      // 1: ihavefood.PercentDiscount
+	(*FreeDelivery)(nil),         // 2: ihavefood.FreeDelivery
+	(*AddCouponRequest)(nil),     // 3: ihavefood.AddCouponRequest
+	(*GetCouponRequest)(nil),     // 4: ihavefood.GetCouponRequest
+	(*ListCouponsResponse)(nil),  // 5: ihavefood.ListCouponsResponse
+	(*RedeemCouponRequest)(nil),  // 6: ihavefood.RedeemCouponRequest
+	(*RedeemCouponResponse)(nil), // 7: ihavefood.RedeemCouponResponse
+	(*emptypb.Empty)(nil),        // 8: google.protobuf.Empty
 }
 var file_couponservice_proto_depIdxs = []int32{
-	0, // 0: ihavefood.Coupon.types:type_name -> ihavefood.CouponTypes
-	0, // 1: ihavefood.AddCouponRequest.coupon_types:type_name -> ihavefood.CouponTypes
-	1, // 2: ihavefood.ListCouponsResponse.coupons:type_name -> ihavefood.Coupon
-	7, // 3: ihavefood.CouponService.ListCoupons:input_type -> google.protobuf.Empty
-	3, // 4: ihavefood.CouponService.GetCoupon:input_type -> ihavefood.GetCouponRequest
-	2, // 5: ihavefood.CouponService.AddCoupon:input_type -> ihavefood.AddCouponRequest
-	5, // 6: ihavefood.CouponService.RedeemCoupon:input_type -> ihavefood.RedeemCouponRequest
-	4, // 7: ihavefood.CouponService.ListCoupons:output_type -> ihavefood.ListCouponsResponse
-	1, // 8: ihavefood.CouponService.GetCoupon:output_type -> ihavefood.Coupon
-	1, // 9: ihavefood.CouponService.AddCoupon:output_type -> ihavefood.Coupon
-	6, // 10: ihavefood.CouponService.RedeemCoupon:output_type -> ihavefood.RedeemCouponResponse
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	1, // 0: ihavefood.Coupon.percent_discount:type_name -> ihavefood.PercentDiscount
+	2, // 1: ihavefood.Coupon.free_delivery:type_name -> ihavefood.FreeDelivery
+	1, // 2: ihavefood.AddCouponRequest.percent_discount:type_name -> ihavefood.PercentDiscount
+	2, // 3: ihavefood.AddCouponRequest.free_delivery:type_name -> ihavefood.FreeDelivery
+	0, // 4: ihavefood.ListCouponsResponse.coupons:type_name -> ihavefood.Coupon
+	8, // 5: ihavefood.CouponService.ListCoupons:input_type -> google.protobuf.Empty
+	4, // 6: ihavefood.CouponService.GetCoupon:input_type -> ihavefood.GetCouponRequest
+	3, // 7: ihavefood.CouponService.AddCoupon:input_type -> ihavefood.AddCouponRequest
+	6, // 8: ihavefood.CouponService.RedeemCoupon:input_type -> ihavefood.RedeemCouponRequest
+	5, // 9: ihavefood.CouponService.ListCoupons:output_type -> ihavefood.ListCouponsResponse
+	0, // 10: ihavefood.CouponService.GetCoupon:output_type -> ihavefood.Coupon
+	0, // 11: ihavefood.CouponService.AddCoupon:output_type -> ihavefood.Coupon
+	7, // 12: ihavefood.CouponService.RedeemCoupon:output_type -> ihavefood.RedeemCouponResponse
+	9, // [9:13] is the sub-list for method output_type
+	5, // [5:9] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_couponservice_proto_init() }
@@ -483,19 +573,26 @@ func file_couponservice_proto_init() {
 	if File_couponservice_proto != nil {
 		return
 	}
+	file_couponservice_proto_msgTypes[0].OneofWrappers = []any{
+		(*Coupon_PercentDiscount)(nil),
+		(*Coupon_FreeDelivery)(nil),
+	}
+	file_couponservice_proto_msgTypes[3].OneofWrappers = []any{
+		(*AddCouponRequest_PercentDiscount)(nil),
+		(*AddCouponRequest_FreeDelivery)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_couponservice_proto_rawDesc), len(file_couponservice_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   6,
+			NumEnums:      0,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_couponservice_proto_goTypes,
 		DependencyIndexes: file_couponservice_proto_depIdxs,
-		EnumInfos:         file_couponservice_proto_enumTypes,
 		MessageInfos:      file_couponservice_proto_msgTypes,
 	}.Build()
 	File_couponservice_proto = out.File
