@@ -91,7 +91,7 @@ func buildMyValidatorErr(f validator.FieldError) myValidatorErr {
 	case "vrole":
 		var roles []string
 		for role := range pb.Roles_value {
-			if role != pb.Roles_UNKNOWN.String() {
+			if role != pb.Roles_ROLES_UNSPECIFIED.String() {
 				roles = append(roles, role)
 			}
 		}
@@ -107,7 +107,7 @@ func buildMyValidatorErr(f validator.FieldError) myValidatorErr {
 func validateRole(fl validator.FieldLevel) bool {
 
 	r := fl.Field().Interface().(pb.Roles)
-	if r == pb.Roles_UNKNOWN {
+	if r == pb.Roles_ROLES_UNSPECIFIED {
 		return false
 	}
 

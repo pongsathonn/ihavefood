@@ -197,9 +197,6 @@ impl DeliveryService for MyDelivery {
         if rider_id.is_empty() {
             return Err(Status::invalid_argument("Rider ID cannot be empty"));
         }
-        if new_status.eq(&DeliveryStatus::RiderUnaccept) {
-            return Err(Status::invalid_argument("Status should not be UNACCEPT"));
-        }
 
         let mut redis = match self.redis_cl.get_multiplexed_async_connection().await {
             Ok(redis_conn) => redis_conn,
@@ -234,10 +231,18 @@ impl DeliveryService for MyDelivery {
                     .ok_or_else(|| Status::internal("invalid status value"))
             })?;
 
+        if new_status.eq(&DeliveryStatus::RiderPending) {
+            return Err(Status::invalid_argument("Status should not be UNACCEPT"));
+        }
+
         match new_status {
-            DeliveryStatus::RiderUnaccept => {
-                error!("status validation not implement");
-                return Err(Status::internal("internal server error"));
+            DeliveryStatus::Unspecified => {
+                return Err(Status::failed_precondition("invalid delivery status"));
+            }
+            DeliveryStatus::RiderPending => {
+                return Err(Status::failed_precondition(
+                    "delivery status is already pending",
+                ));
             }
             DeliveryStatus::RiderAccepted => {
                 if current_status == DeliveryStatus::RiderAccepted

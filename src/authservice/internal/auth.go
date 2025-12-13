@@ -230,7 +230,7 @@ func (x *AuthService) CreateDemoUsers() error {
 
 func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth *dbAuthCredentials) error {
 	switch role {
-	case pb.Roles_CUSTOMER:
+	case pb.Roles_ROLES_CUSTOMER:
 		body, err := proto.Marshal(&pb.SyncCustomerCreated{
 			CustomerId: auth.ID,
 			Email:      auth.Email,
@@ -246,7 +246,7 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth 
 			return fmt.Errorf("failed to create customer: %v", err)
 		}
 
-	case pb.Roles_RIDER:
+	case pb.Roles_ROLES_RIDER:
 		body, err := proto.Marshal(&pb.SyncRiderCreated{
 			RiderId:    auth.ID,
 			Email:      auth.Email,
@@ -346,7 +346,7 @@ func (x *AuthService) verifyAdminToken(tokenString string) (bool, error) {
 		return false, err
 	}
 
-	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ADMIN {
+	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ROLES_ADMIN {
 		return false, errors.New("token claims do not have admin role")
 	}
 

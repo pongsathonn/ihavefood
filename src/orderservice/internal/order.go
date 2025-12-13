@@ -187,15 +187,15 @@ func (x *OrderService) handleOrderStatus() chan<- amqp.Delivery {
 
 			switch msg.RoutingKey {
 			case "rider.finding.event":
-				status = pb.OrderStatus_FINDING_RIDER
+				status = pb.OrderStatus_ORDER_STATUS_FINDING_RIDER
 			case "merchant.accepted.event":
-				status = pb.OrderStatus_PREPARING_ORDER
+				status = pb.OrderStatus_ORDER_STATUS_PREPARING_ORDER
 			case "food.ready.event":
-				status = pb.OrderStatus_WAIT_FOR_PICKUP
+				status = pb.OrderStatus_ORDER_STATUS_WAIT_FOR_PICKUP
 			case "rider.assigned.event":
-				status = pb.OrderStatus_ONGOING
+				status = pb.OrderStatus_ORDER_STATUS_ONGOING
 			case "rider.delivered.event":
-				status = pb.OrderStatus_DELIVERED
+				status = pb.OrderStatus_ORDER_STATUS_DELIVERED
 			default:
 				slog.Error("unknown routing key %s", "key", msg.RoutingKey)
 				continue

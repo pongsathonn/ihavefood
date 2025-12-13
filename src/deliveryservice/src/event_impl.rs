@@ -199,7 +199,7 @@ impl EventDispatcher {
             .hset(
                 place_order.order_id.clone(),
                 "status",
-                DeliveryStatus::RiderUnaccept.as_str_name(),
+                DeliveryStatus::RiderPending.as_str_name(),
             )
             .await?;
 

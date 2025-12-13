@@ -91,13 +91,13 @@ type dbTimestamps struct {
 
 // EventToStatus maps event to status after an event.
 var EventToStatus = map[any]pb.OrderStatus{
-	pb.OrderEvent_ORDER_PLACED_EVENT:      pb.OrderStatus_PENDING,
-	pb.OrderEvent_MERCHANT_ACCEPTED_EVENT: pb.OrderStatus_PREPARING_ORDER,
-	pb.OrderEvent_RIDER_NOTIFIED_EVENT:    pb.OrderStatus_FINDING_RIDER,
-	pb.OrderEvent_RIDER_ASSIGNED_EVENT:    pb.OrderStatus_WAIT_FOR_PICKUP,
-	pb.OrderEvent_RIDER_PICKED_UP_EVENT:   pb.OrderStatus_ONGOING,
-	pb.OrderEvent_RIDER_DELIVERED_EVENT:   pb.OrderStatus_DELIVERED,
-	pb.OrderEvent_ORDER_CANCELLED_EVENT:   pb.OrderStatus_CANCELLED,
+	pb.OrderEvent_ORDER_PLACED_EVENT:      pb.OrderStatus_ORDER_STATUS_PENDING,
+	pb.OrderEvent_MERCHANT_ACCEPTED_EVENT: pb.OrderStatus_ORDER_STATUS_PREPARING_ORDER,
+	pb.OrderEvent_RIDER_NOTIFIED_EVENT:    pb.OrderStatus_ORDER_STATUS_FINDING_RIDER,
+	pb.OrderEvent_RIDER_ASSIGNED_EVENT:    pb.OrderStatus_ORDER_STATUS_WAIT_FOR_PICKUP,
+	pb.OrderEvent_RIDER_PICKED_UP_EVENT:   pb.OrderStatus_ORDER_STATUS_ONGOING,
+	pb.OrderEvent_RIDER_DELIVERED_EVENT:   pb.OrderStatus_ORDER_STATUS_DELIVERED,
+	pb.OrderEvent_ORDER_CANCELLED_EVENT:   pb.OrderStatus_ORDER_STATUS_CANCELLED,
 }
 
 func toDbPlaceOrder(n *newPlaceOrder) *dbPlaceOrder {
