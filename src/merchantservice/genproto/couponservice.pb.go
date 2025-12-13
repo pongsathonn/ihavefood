@@ -78,8 +78,7 @@ type Coupon struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Types CouponTypes            `protobuf:"varint,1,opt,name=types,proto3,enum=ihavefood.CouponTypes" json:"types,omitempty"`
 	Code  string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	// The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.
-	// The server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY.
+	// The discount amount in percent, required if coupon_type is COUPON_TYPE_DISCOUNT.
 	Discount int32 `protobuf:"varint,3,opt,name=discount,proto3" json:"discount,omitempty"`
 	// Number of seconds until the coupon expires(UNIX).
 	ExpiresIn     int64 `protobuf:"varint,4,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
