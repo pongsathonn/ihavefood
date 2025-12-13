@@ -70,13 +70,13 @@ message AuthCredentials {
 }
 
 enum Roles {
-    UNKNOWN = 0;
-    CUSTOMER = 1;
-    RIDER = 3;
+    ROLES_UNSPECIFIED = 0;
+    ROLES_CUSTOMER = 1;
+    ROLES_RIDER = 2;
 
     // For simplicity, admin roles are included in this enum.
-    SUPER_ADMIN = 20;
-    ADMIN = 21;
+    ROLES_SUPER_ADMIN = 20;
+    ROLES_ADMIN = 21;
 }
 
 

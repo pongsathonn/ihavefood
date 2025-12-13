@@ -18,7 +18,7 @@ for i in "${!SERVICES[@]}"; do
         --go_out="$out" \
         --go-grpc_out="$out" \
         --grpc-gateway_out="$out" \
-        --openapiv2_out=../web/openapi \
+        --openapiv2_out=../web/public/openapi \
         --openapiv2_opt=openapi_naming_strategy=simple,allow_merge=true,logtostderr=true,disable_default_errors=true \
         "${protos[@]}"
 done

@@ -63,18 +63,20 @@ enum PaymentMethods {
 }
 
 enum PaymentStatus {
-    UNPAID = 0;
-    PAID = 1;
+    PAYMENT_STATUS_UNSPECIFIED = 0;
+    PAYMENT_STATUS_PENDING = 1;
+    PAYMENT_STATUS_PAID = 2;
 }
 
 enum OrderStatus {
-    PENDING = 0;   
-    PREPARING_ORDER =1;
-    FINDING_RIDER =2;
-    WAIT_FOR_PICKUP = 3; 
-    ONGOING = 4;
-    DELIVERED =5;
-    CANCELLED =6;
+    ORDER_STATUS_UNSPECIFIED = 0;   
+    ORDER_STATUS_PENDING = 1;   
+    ORDER_STATUS_PREPARING_ORDER = 2;
+    ORDER_STATUS_FINDING_RIDER = 3;
+    ORDER_STATUS_WAIT_FOR_PICKUP = 4; 
+    ORDER_STATUS_ONGOING = 5;
+    ORDER_STATUS_DELIVERED =6;
+    ORDER_STATUS_CANCELLED =7;
 }
 
 message OrderEventTimestamps {

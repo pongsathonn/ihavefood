@@ -57,9 +57,9 @@ service MerchantService {
 }
 
 enum StoreStatus{
-    STATUS_UNSPECIFIED = 0;
-    CLOSED = 1;
-    OPEN = 2;
+    STORE_STATUS_UNSPECIFIED = 0;
+    STORE_STATUS_CLOSED = 1;
+    STORE_STATUS_OPEN = 2;
 }
 
 message Merchant {

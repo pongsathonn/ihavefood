@@ -47,14 +47,11 @@ message PickupInfo {
 }
 
 enum DeliveryStatus {
-    // indicates the rider has not yet accepted the order.
-    RIDER_UNACCEPT = 0;
-    // indicates the rider has accepted the order.
-    RIDER_ACCEPTED = 1;
-    // indicates the rider has picked up the order.
-    RIDER_PICKED_UP = 2;
-    // indicates the order has been delivered by the rider.
-    RIDER_DELIVERED = 3;
+    DELIVERY_STATUS_UNSPECIFIED = 0;
+    DELIVERY_STATUS_RIDER_PENDING = 1;
+    DELIVERY_STATUS_RIDER_ACCEPTED = 2;
+    DELIVERY_STATUS_RIDER_PICKED_UP = 3;
+    DELIVERY_STATUS_RIDER_DELIVERED = 4;
 }
 
 message Point {
