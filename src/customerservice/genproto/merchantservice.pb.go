@@ -27,22 +27,22 @@ const (
 type StoreStatus int32
 
 const (
-	StoreStatus_STATUS_UNSPECIFIED StoreStatus = 0
-	StoreStatus_CLOSED             StoreStatus = 1
-	StoreStatus_OPEN               StoreStatus = 2
+	StoreStatus_STORE_STATUS_UNSPECIFIED StoreStatus = 0
+	StoreStatus_STORE_STATUS_CLOSED      StoreStatus = 1
+	StoreStatus_STORE_STATUS_OPEN        StoreStatus = 2
 )
 
 // Enum value maps for StoreStatus.
 var (
 	StoreStatus_name = map[int32]string{
-		0: "STATUS_UNSPECIFIED",
-		1: "CLOSED",
-		2: "OPEN",
+		0: "STORE_STATUS_UNSPECIFIED",
+		1: "STORE_STATUS_CLOSED",
+		2: "STORE_STATUS_OPEN",
 	}
 	StoreStatus_value = map[string]int32{
-		"STATUS_UNSPECIFIED": 0,
-		"CLOSED":             1,
-		"OPEN":               2,
+		"STORE_STATUS_UNSPECIFIED": 0,
+		"STORE_STATUS_CLOSED":      1,
+		"STORE_STATUS_OPEN":        2,
 	}
 )
 
@@ -170,7 +170,7 @@ func (x *Merchant) GetStatus() StoreStatus {
 	if x != nil {
 		return x.Status
 	}
-	return StoreStatus_STATUS_UNSPECIFIED
+	return StoreStatus_STORE_STATUS_UNSPECIFIED
 }
 
 type MenuItem struct {
@@ -487,7 +487,7 @@ func (x *CreateMerchantRequest) GetStatus() StoreStatus {
 	if x != nil {
 		return x.Status
 	}
-	return StoreStatus_STATUS_UNSPECIFIED
+	return StoreStatus_STORE_STATUS_UNSPECIFIED
 }
 
 type ListMerchantsResponse struct {
@@ -815,7 +815,7 @@ func (x *UpdateStoreStatusRequest) GetStatus() StoreStatus {
 	if x != nil {
 		return x.Status
 	}
-	return StoreStatus_STATUS_UNSPECIFIED
+	return StoreStatus_STORE_STATUS_UNSPECIFIED
 }
 
 type GetStoreStatusRequest struct {
@@ -911,7 +911,7 @@ func (x *StoreStatusResponse) GetStatus() StoreStatus {
 	if x != nil {
 		return x.Status
 	}
-	return StoreStatus_STATUS_UNSPECIFIED
+	return StoreStatus_STORE_STATUS_UNSPECIFIED
 }
 
 var File_merchantservice_proto protoreflect.FileDescriptor
@@ -987,12 +987,11 @@ const file_merchantservice_proto_rawDesc = "" +
 	"\x13StoreStatusResponse\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
 	"merchantId\x12.\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status*;\n" +
-	"\vStoreStatus\x12\x16\n" +
-	"\x12STATUS_UNSPECIFIED\x10\x00\x12\n" +
-	"\n" +
-	"\x06CLOSED\x10\x01\x12\b\n" +
-	"\x04OPEN\x10\x022\xe2\x06\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x16.ihavefood.StoreStatusR\x06status*[\n" +
+	"\vStoreStatus\x12\x1c\n" +
+	"\x18STORE_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13STORE_STATUS_CLOSED\x10\x01\x12\x15\n" +
+	"\x11STORE_STATUS_OPEN\x10\x022\xe2\x06\n" +
 	"\x0fMerchantService\x12a\n" +
 	"\rListMerchants\x12\x16.google.protobuf.Empty\x1a .ihavefood.ListMerchantsResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/api/merchants\x12g\n" +
 	"\vGetMerchant\x12\x1d.ihavefood.GetMerchantRequest\x1a\x13.ihavefood.Merchant\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/merchants/{merchant_id}\x12b\n" +
