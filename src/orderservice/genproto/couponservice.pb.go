@@ -78,8 +78,8 @@ type Coupon struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Types CouponTypes            `protobuf:"varint,1,opt,name=types,proto3,enum=ihavefood.CouponTypes" json:"types,omitempty"`
 	Code  string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	// The discount amount in percent, required if coupon_type is COUPON_TYPE_DISCOUNT.
-	Discount int32 `protobuf:"varint,3,opt,name=discount,proto3" json:"discount,omitempty"`
+	// required if coupon_type is COUPON_TYPE_DISCOUNT.
+	PercentDiscount int32 `protobuf:"varint,3,opt,name=percent_discount,json=percentDiscount,proto3" json:"percent_discount,omitempty"`
 	// Number of seconds until the coupon expires(UNIX).
 	ExpiresIn     int64 `protobuf:"varint,4,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
 	QuantityCount int32 `protobuf:"varint,5,opt,name=quantity_count,json=quantityCount,proto3" json:"quantity_count,omitempty"`
@@ -131,9 +131,9 @@ func (x *Coupon) GetCode() string {
 	return ""
 }
 
-func (x *Coupon) GetDiscount() int32 {
+func (x *Coupon) GetPercentDiscount() int32 {
 	if x != nil {
-		return x.Discount
+		return x.PercentDiscount
 	}
 	return 0
 }
@@ -153,9 +153,9 @@ func (x *Coupon) GetQuantityCount() int32 {
 }
 
 type AddCouponRequest struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	CouponTypes CouponTypes            `protobuf:"varint,1,opt,name=coupon_types,json=couponTypes,proto3,enum=ihavefood.CouponTypes" json:"coupon_types,omitempty"`
-	Discount    int32                  `protobuf:"varint,2,opt,name=discount,proto3" json:"discount,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	CouponTypes     CouponTypes            `protobuf:"varint,1,opt,name=coupon_types,json=couponTypes,proto3,enum=ihavefood.CouponTypes" json:"coupon_types,omitempty"`
+	PercentDiscount int32                  `protobuf:"varint,2,opt,name=percent_discount,json=percentDiscount,proto3" json:"percent_discount,omitempty"`
 	// The coupon expiration time in hours from now.
 	// For example expire_in_hour is 72 means the coupon will be expired
 	// in 3 days (72 hours) from now.
@@ -202,9 +202,9 @@ func (x *AddCouponRequest) GetCouponTypes() CouponTypes {
 	return CouponTypes_COUPON_TYPE_UNSPECIFICED
 }
 
-func (x *AddCouponRequest) GetDiscount() int32 {
+func (x *AddCouponRequest) GetPercentDiscount() int32 {
 	if x != nil {
-		return x.Discount
+		return x.PercentDiscount
 	}
 	return 0
 }
@@ -403,20 +403,20 @@ var File_couponservice_proto protoreflect.FileDescriptor
 
 const file_couponservice_proto_rawDesc = "" +
 	"\n" +
-	"\x13couponservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xac\x01\n" +
+	"\x13couponservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xbb\x01\n" +
 	"\x06Coupon\x12,\n" +
 	"\x05types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\x05types\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1a\n" +
-	"\bdiscount\x18\x03 \x01(\x05R\bdiscount\x12\x1d\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x12)\n" +
+	"\x10percent_discount\x18\x03 \x01(\x05R\x0fpercentDiscount\x12\x1d\n" +
 	"\n" +
 	"expires_in\x18\x04 \x01(\x03R\texpiresIn\x12%\n" +
-	"\x0equantity_count\x18\x05 \x01(\x05R\rquantityCount\"\xce\x02\n" +
+	"\x0equantity_count\x18\x05 \x01(\x05R\rquantityCount\"\xed\x02\n" +
 	"\x10AddCouponRequest\x129\n" +
-	"\fcoupon_types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\vcouponTypes\x12\x1a\n" +
-	"\bdiscount\x18\x02 \x01(\x05R\bdiscount\x12$\n" +
+	"\fcoupon_types\x18\x01 \x01(\x0e2\x16.ihavefood.CouponTypesR\vcouponTypes\x12)\n" +
+	"\x10percent_discount\x18\x02 \x01(\x05R\x0fpercentDiscount\x12$\n" +
 	"\x0eexpire_in_hour\x18\x03 \x01(\x05R\fexpireInHour\x12\x1a\n" +
-	"\bquantity\x18\x04 \x01(\x05R\bquantity:\xa0\x01\x92A\x9c\x01\n" +
-	":28NOTE: if type is FREE_DELIVERY, discount will be ignored2^{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}\"E\n" +
+	"\bquantity\x18\x04 \x01(\x05R\bquantity:\xb0\x01\x92A\xac\x01\n" +
+	"B2@NOTE: if type is FREE_DELIVERY, percent_discount will be ignored2f{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"percent_discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}\"E\n" +
 	"\x10GetCouponRequest\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code:\x1d\x92A\x1a2\x18{\"code\": \"SAVE20FORYOU\"}\"B\n" +
 	"\x13ListCouponsResponse\x12+\n" +
