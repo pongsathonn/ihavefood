@@ -27,29 +27,29 @@ const (
 type Roles int32
 
 const (
-	Roles_UNKNOWN  Roles = 0
-	Roles_CUSTOMER Roles = 1
-	Roles_RIDER    Roles = 3
+	Roles_ROLES_UNSPECIFIED Roles = 0
+	Roles_ROLES_CUSTOMER    Roles = 1
+	Roles_ROLES_RIDER       Roles = 2
 	// For simplicity, admin roles are included in this enum.
-	Roles_SUPER_ADMIN Roles = 20
-	Roles_ADMIN       Roles = 21
+	Roles_ROLES_SUPER_ADMIN Roles = 20
+	Roles_ROLES_ADMIN       Roles = 21
 )
 
 // Enum value maps for Roles.
 var (
 	Roles_name = map[int32]string{
-		0:  "UNKNOWN",
-		1:  "CUSTOMER",
-		3:  "RIDER",
-		20: "SUPER_ADMIN",
-		21: "ADMIN",
+		0:  "ROLES_UNSPECIFIED",
+		1:  "ROLES_CUSTOMER",
+		2:  "ROLES_RIDER",
+		20: "ROLES_SUPER_ADMIN",
+		21: "ROLES_ADMIN",
 	}
 	Roles_value = map[string]int32{
-		"UNKNOWN":     0,
-		"CUSTOMER":    1,
-		"RIDER":       3,
-		"SUPER_ADMIN": 20,
-		"ADMIN":       21,
+		"ROLES_UNSPECIFIED": 0,
+		"ROLES_CUSTOMER":    1,
+		"ROLES_RIDER":       2,
+		"ROLES_SUPER_ADMIN": 20,
+		"ROLES_ADMIN":       21,
 	}
 )
 
@@ -147,7 +147,7 @@ func (x *AuthCredentials) GetRole() Roles {
 	if x != nil {
 		return x.Role
 	}
-	return Roles_UNKNOWN
+	return Roles_ROLES_UNSPECIFIED
 }
 
 func (x *AuthCredentials) GetCreateTime() *timestamppb.Timestamp {
@@ -221,7 +221,7 @@ func (x *RegisterRequest) GetRole() Roles {
 	if x != nil {
 		return x.Role
 	}
-	return Roles_UNKNOWN
+	return Roles_ROLES_UNSPECIFIED
 }
 
 type LoginRequest struct {
@@ -282,7 +282,7 @@ func (x *LoginRequest) GetRole() Roles {
 	if x != nil {
 		return x.Role
 	}
-	return Roles_UNKNOWN
+	return Roles_ROLES_UNSPECIFIED
 }
 
 type LoginResponse struct {
@@ -651,13 +651,13 @@ const file_authservice_proto_rawDesc = "" +
 	"\x17VerifyAdminTokenRequest\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"0\n" +
 	"\x18VerifyAdminTokenResponse\x12\x14\n" +
-	"\x05valid\x18\x01 \x01(\bR\x05valid*I\n" +
-	"\x05Roles\x12\v\n" +
-	"\aUNKNOWN\x10\x00\x12\f\n" +
-	"\bCUSTOMER\x10\x01\x12\t\n" +
-	"\x05RIDER\x10\x03\x12\x0f\n" +
-	"\vSUPER_ADMIN\x10\x14\x12\t\n" +
-	"\x05ADMIN\x10\x152\x8f\x04\n" +
+	"\x05valid\x18\x01 \x01(\bR\x05valid*k\n" +
+	"\x05Roles\x12\x15\n" +
+	"\x11ROLES_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eROLES_CUSTOMER\x10\x01\x12\x0f\n" +
+	"\vROLES_RIDER\x10\x02\x12\x15\n" +
+	"\x11ROLES_SUPER_ADMIN\x10\x14\x12\x0f\n" +
+	"\vROLES_ADMIN\x10\x152\x8f\x04\n" +
 	"\vAuthService\x12b\n" +
 	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.AuthCredentials\"\x1e\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12W\n" +
 	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x1b\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12\x87\x01\n" +

@@ -28,29 +28,28 @@ const (
 type DeliveryStatus int32
 
 const (
-	// indicates the rider has not yet accepted the order.
-	DeliveryStatus_RIDER_UNACCEPT DeliveryStatus = 0
-	// indicates the rider has accepted the order.
-	DeliveryStatus_RIDER_ACCEPTED DeliveryStatus = 1
-	// indicates the rider has picked up the order.
-	DeliveryStatus_RIDER_PICKED_UP DeliveryStatus = 2
-	// indicates the order has been delivered by the rider.
-	DeliveryStatus_RIDER_DELIVERED DeliveryStatus = 3
+	DeliveryStatus_DELIVERY_STATUS_UNSPECIFIED     DeliveryStatus = 0
+	DeliveryStatus_DELIVERY_STATUS_RIDER_PENDING   DeliveryStatus = 1
+	DeliveryStatus_DELIVERY_STATUS_RIDER_ACCEPTED  DeliveryStatus = 2
+	DeliveryStatus_DELIVERY_STATUS_RIDER_PICKED_UP DeliveryStatus = 3
+	DeliveryStatus_DELIVERY_STATUS_RIDER_DELIVERED DeliveryStatus = 4
 )
 
 // Enum value maps for DeliveryStatus.
 var (
 	DeliveryStatus_name = map[int32]string{
-		0: "RIDER_UNACCEPT",
-		1: "RIDER_ACCEPTED",
-		2: "RIDER_PICKED_UP",
-		3: "RIDER_DELIVERED",
+		0: "DELIVERY_STATUS_UNSPECIFIED",
+		1: "DELIVERY_STATUS_RIDER_PENDING",
+		2: "DELIVERY_STATUS_RIDER_ACCEPTED",
+		3: "DELIVERY_STATUS_RIDER_PICKED_UP",
+		4: "DELIVERY_STATUS_RIDER_DELIVERED",
 	}
 	DeliveryStatus_value = map[string]int32{
-		"RIDER_UNACCEPT":  0,
-		"RIDER_ACCEPTED":  1,
-		"RIDER_PICKED_UP": 2,
-		"RIDER_DELIVERED": 3,
+		"DELIVERY_STATUS_UNSPECIFIED":     0,
+		"DELIVERY_STATUS_RIDER_PENDING":   1,
+		"DELIVERY_STATUS_RIDER_ACCEPTED":  2,
+		"DELIVERY_STATUS_RIDER_PICKED_UP": 3,
+		"DELIVERY_STATUS_RIDER_DELIVERED": 4,
 	}
 )
 
@@ -534,7 +533,7 @@ func (x *ReportDeliveryStatusRequest) GetStatus() DeliveryStatus {
 	if x != nil {
 		return x.Status
 	}
-	return DeliveryStatus_RIDER_UNACCEPT
+	return DeliveryStatus_DELIVERY_STATUS_UNSPECIFIED
 }
 
 var File_deliveryservice_proto protoreflect.FileDescriptor
@@ -574,12 +573,13 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\x1bReportDeliveryStatusRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\x121\n" +
-	"\x06status\x18\x03 \x01(\x0e2\x19.ihavefood.DeliveryStatusR\x06status:T\x92AQ2O{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}*b\n" +
-	"\x0eDeliveryStatus\x12\x12\n" +
-	"\x0eRIDER_UNACCEPT\x10\x00\x12\x12\n" +
-	"\x0eRIDER_ACCEPTED\x10\x01\x12\x13\n" +
-	"\x0fRIDER_PICKED_UP\x10\x02\x12\x13\n" +
-	"\x0fRIDER_DELIVERED\x10\x032\xe4\x02\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x19.ihavefood.DeliveryStatusR\x06status:T\x92AQ2O{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}*\xc2\x01\n" +
+	"\x0eDeliveryStatus\x12\x1f\n" +
+	"\x1bDELIVERY_STATUS_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dDELIVERY_STATUS_RIDER_PENDING\x10\x01\x12\"\n" +
+	"\x1eDELIVERY_STATUS_RIDER_ACCEPTED\x10\x02\x12#\n" +
+	"\x1fDELIVERY_STATUS_RIDER_PICKED_UP\x10\x03\x12#\n" +
+	"\x1fDELIVERY_STATUS_RIDER_DELIVERED\x10\x042\xe4\x02\n" +
 	"\x0fDeliveryService\x12V\n" +
 	"\rTrackingRider\x12\x1f.ihavefood.TrackingRiderRequest\x1a .ihavefood.TrackingRiderResponse\"\x000\x01\x12r\n" +
 	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x84\x01\n" +

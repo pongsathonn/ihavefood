@@ -79,19 +79,22 @@ func (PaymentMethods) EnumDescriptor() ([]byte, []int) {
 type PaymentStatus int32
 
 const (
-	PaymentStatus_UNPAID PaymentStatus = 0
-	PaymentStatus_PAID   PaymentStatus = 1
+	PaymentStatus_PAYMENT_STATUS_UNSPECIFIED PaymentStatus = 0
+	PaymentStatus_PAYMENT_STATUS_PENDING     PaymentStatus = 1
+	PaymentStatus_PAYMENT_STATUS_PAID        PaymentStatus = 2
 )
 
 // Enum value maps for PaymentStatus.
 var (
 	PaymentStatus_name = map[int32]string{
-		0: "UNPAID",
-		1: "PAID",
+		0: "PAYMENT_STATUS_UNSPECIFIED",
+		1: "PAYMENT_STATUS_PENDING",
+		2: "PAYMENT_STATUS_PAID",
 	}
 	PaymentStatus_value = map[string]int32{
-		"UNPAID": 0,
-		"PAID":   1,
+		"PAYMENT_STATUS_UNSPECIFIED": 0,
+		"PAYMENT_STATUS_PENDING":     1,
+		"PAYMENT_STATUS_PAID":        2,
 	}
 )
 
@@ -125,34 +128,37 @@ func (PaymentStatus) EnumDescriptor() ([]byte, []int) {
 type OrderStatus int32
 
 const (
-	OrderStatus_PENDING         OrderStatus = 0
-	OrderStatus_PREPARING_ORDER OrderStatus = 1
-	OrderStatus_FINDING_RIDER   OrderStatus = 2
-	OrderStatus_WAIT_FOR_PICKUP OrderStatus = 3
-	OrderStatus_ONGOING         OrderStatus = 4
-	OrderStatus_DELIVERED       OrderStatus = 5
-	OrderStatus_CANCELLED       OrderStatus = 6
+	OrderStatus_ORDER_STATUS_UNSPECIFIED     OrderStatus = 0
+	OrderStatus_ORDER_STATUS_PENDING         OrderStatus = 1
+	OrderStatus_ORDER_STATUS_PREPARING_ORDER OrderStatus = 2
+	OrderStatus_ORDER_STATUS_FINDING_RIDER   OrderStatus = 3
+	OrderStatus_ORDER_STATUS_WAIT_FOR_PICKUP OrderStatus = 4
+	OrderStatus_ORDER_STATUS_ONGOING         OrderStatus = 5
+	OrderStatus_ORDER_STATUS_DELIVERED       OrderStatus = 6
+	OrderStatus_ORDER_STATUS_CANCELLED       OrderStatus = 7
 )
 
 // Enum value maps for OrderStatus.
 var (
 	OrderStatus_name = map[int32]string{
-		0: "PENDING",
-		1: "PREPARING_ORDER",
-		2: "FINDING_RIDER",
-		3: "WAIT_FOR_PICKUP",
-		4: "ONGOING",
-		5: "DELIVERED",
-		6: "CANCELLED",
+		0: "ORDER_STATUS_UNSPECIFIED",
+		1: "ORDER_STATUS_PENDING",
+		2: "ORDER_STATUS_PREPARING_ORDER",
+		3: "ORDER_STATUS_FINDING_RIDER",
+		4: "ORDER_STATUS_WAIT_FOR_PICKUP",
+		5: "ORDER_STATUS_ONGOING",
+		6: "ORDER_STATUS_DELIVERED",
+		7: "ORDER_STATUS_CANCELLED",
 	}
 	OrderStatus_value = map[string]int32{
-		"PENDING":         0,
-		"PREPARING_ORDER": 1,
-		"FINDING_RIDER":   2,
-		"WAIT_FOR_PICKUP": 3,
-		"ONGOING":         4,
-		"DELIVERED":       5,
-		"CANCELLED":       6,
+		"ORDER_STATUS_UNSPECIFIED":     0,
+		"ORDER_STATUS_PENDING":         1,
+		"ORDER_STATUS_PREPARING_ORDER": 2,
+		"ORDER_STATUS_FINDING_RIDER":   3,
+		"ORDER_STATUS_WAIT_FOR_PICKUP": 4,
+		"ORDER_STATUS_ONGOING":         5,
+		"ORDER_STATUS_DELIVERED":       6,
+		"ORDER_STATUS_CANCELLED":       7,
 	}
 )
 
@@ -331,14 +337,14 @@ func (x *PlaceOrder) GetPaymentStatus() PaymentStatus {
 	if x != nil {
 		return x.PaymentStatus
 	}
-	return PaymentStatus_UNPAID
+	return PaymentStatus_PAYMENT_STATUS_UNSPECIFIED
 }
 
 func (x *PlaceOrder) GetOrderStatus() OrderStatus {
 	if x != nil {
 		return x.OrderStatus
 	}
-	return OrderStatus_PENDING
+	return OrderStatus_ORDER_STATUS_UNSPECIFIED
 }
 
 func (x *PlaceOrder) GetTimestamps() *OrderEventTimestamps {
@@ -743,19 +749,20 @@ const file_orderservice_proto_rawDesc = "" +
 	"\x1aPAYMENT_METHOD_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PAYMENT_METHOD_CASH\x10\x01\x12\x1e\n" +
 	"\x1aPAYMENT_METHOD_CREDIT_CARD\x10\x02\x12\x1d\n" +
-	"\x19PAYMENT_METHOD_PROMPT_PAY\x10\x03*%\n" +
-	"\rPaymentStatus\x12\n" +
-	"\n" +
-	"\x06UNPAID\x10\x00\x12\b\n" +
-	"\x04PAID\x10\x01*\x82\x01\n" +
-	"\vOrderStatus\x12\v\n" +
-	"\aPENDING\x10\x00\x12\x13\n" +
-	"\x0fPREPARING_ORDER\x10\x01\x12\x11\n" +
-	"\rFINDING_RIDER\x10\x02\x12\x13\n" +
-	"\x0fWAIT_FOR_PICKUP\x10\x03\x12\v\n" +
-	"\aONGOING\x10\x04\x12\r\n" +
-	"\tDELIVERED\x10\x05\x12\r\n" +
-	"\tCANCELLED\x10\x062\x81\x02\n" +
+	"\x19PAYMENT_METHOD_PROMPT_PAY\x10\x03*d\n" +
+	"\rPaymentStatus\x12\x1e\n" +
+	"\x1aPAYMENT_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16PAYMENT_STATUS_PENDING\x10\x01\x12\x17\n" +
+	"\x13PAYMENT_STATUS_PAID\x10\x02*\xfb\x01\n" +
+	"\vOrderStatus\x12\x1c\n" +
+	"\x18ORDER_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14ORDER_STATUS_PENDING\x10\x01\x12 \n" +
+	"\x1cORDER_STATUS_PREPARING_ORDER\x10\x02\x12\x1e\n" +
+	"\x1aORDER_STATUS_FINDING_RIDER\x10\x03\x12 \n" +
+	"\x1cORDER_STATUS_WAIT_FOR_PICKUP\x10\x04\x12\x18\n" +
+	"\x14ORDER_STATUS_ONGOING\x10\x05\x12\x1a\n" +
+	"\x16ORDER_STATUS_DELIVERED\x10\x06\x12\x1a\n" +
+	"\x16ORDER_STATUS_CANCELLED\x10\a2\x81\x02\n" +
 	"\fOrderService\x12~\n" +
 	"\x10ListOrderHistory\x12\".ihavefood.ListOrderHistoryRequest\x1a#.ihavefood.ListOrderHistoryResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/api/orders/{customer_id}\x12q\n" +
 	"\x10CreatePlaceOrder\x12\".ihavefood.CreatePlaceOrderRequest\x1a\x15.ihavefood.PlaceOrder\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/orders/place_orderB\vZ\t/genprotob\x06proto3"
