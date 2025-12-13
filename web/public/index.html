@@ -184,7 +184,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        <h2 class="text-2xl font-bold text-gray-800 ml-2">Order Tracking</h2>
+                         <h2 class="text-2xl font-bold text-gray-800 ml-2">Order Tracking</h2>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -193,55 +193,61 @@
                             <!-- Order Status -->
                             <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
                                 <h3 class="text-xl font-bold text-gray-800 mb-4">Order Status</h3>
-                                <div class="flex items-center justify-between relative">
-                                    <!-- Step 1: Placed -->
-                                    <div class="tracking-step w-1/4 flex flex-col items-center relative active" id="step-1">
-                                        <div class="step-dot w-6 h-6 rounded-full bg-pink-500 border-4 border-white transition-all duration-300"></div>
-                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-300">Order Placed</span>
-                                    </div>
-                                    <!-- Line 1 -->
-                                    <div class="step-line absolute h-1 bg-gray-300 top-3 left-[12.5%] right-[62.5%] transition-all duration-300"></div>
+                                 <div class="flex items-center justify-between relative">
+                                     <!-- Step 1 -->
+                                     <div class="tracking-step w-1/4 flex flex-col items-center relative active" id="step-1">
+                                         <div class="step-dot w-6 h-6 rounded-full bg-pink-500 border-4 border-white transition-all duration-[3000ms]"></div>
+                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Order Placed</span>
+                                     </div>
 
-                                    <!-- Step 2: Preparing -->
-                                    <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-2">
-                                        <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-300"></div>
-                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-300">Preparing Food</span>
-                                    </div>
-                                    <!-- Line 2 -->
-                                    <div class="step-line absolute h-1 bg-gray-300 top-3 left-[37.5%] right-[37.5%] transition-all duration-300"></div>
 
-                                    <!-- Step 3: On the Way -->
-                                    <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-3">
-                                        <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-300"></div>
-                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-300">Rider on the Way</span>
-                                    </div>
-                                    <!-- Line 3 -->
-                                    <div class="step-line absolute h-1 bg-gray-300 top-3 left-[62.5%] right-[12.5%] transition-all duration-300"></div>
+                                     <!-- Step 2 -->
+                                     <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-2">
+                                         <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
+                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Preparing Food</span>
+                                     </div>
+                                     <!-- Line 1 -->
+                                     <div class="step-line absolute h-1 bg-gray-300 top-3 left-[12.5%] right-[62.5%] transition-all duration-[3000ms]"></div>
 
-                                    <!-- Step 4: Delivered -->
-                                    <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-4">
-                                        <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-300"></div>
-                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-300">Delivered</span>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Map Placeholder -->
-                            <div class="bg-gray-100 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                                <iframe 
-                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3778.6015525996613!2d98.98661797587186!3d18.80415516086701!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30da3a817fe01f05%3A0xc317d7b27ed14b3d!2sChiang%20Mai%20International%20Airport!5e0!3m2!1sen!2sth!4v1716382022791!5m2!1sen!2sth" 
-                                    width="100%" 
-                                    height="400" 
-                                    style="border:0;" 
-                                    allowfullscreen="" 
-                                    loading="lazy" 
-                                    referrerpolicy="no-referrer-when-downgrade"
-                                    class="rounded-2xl"
-                                ></iframe>
-                                <div class="p-4 bg-gray-50 text-center">
-                                    <p class="text-sm text-gray-600">Map shows a placeholder location. A real app would track the rider's live location.</p>
-                                </div>
-                            </div>
+                                     <!-- Step 3 -->
+                                     <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-3">
+                                         <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
+                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Rider on the Way</span>
+                                     </div>
+                                     <!-- Line 2 -->
+                                     <div class="step-line absolute h-1 bg-gray-300 top-3 left-[37.5%] right-[37.5%] transition-all duration-[3000ms]"></div>
+
+
+                                     <!-- Step 4 -->
+                                     <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-4">
+                                         <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
+                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Delivered</span>
+                                     </div>
+                                     <!-- Line 3 -->
+                                     <div class="step-line absolute h-1 bg-gray-300 top-3 left-[62.5%] right-[12.5%] transition-all duration-[3000ms]"></div>
+
+                                 </div>
+
+                             </div>
+
+                             <!-- Map Placeholder -->
+                             <div class="bg-gray-100 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                                 <iframe 
+                                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3777.8896428156843!2d98.99113197587258!3d18.78778006195882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30da3a7e90bb6f5d%3A0x8e4e6c5c6de1f11d!2sTha%20Phae%20Gate!5e0!3m2!1sen!2sth!4v1734000000000!5m2!1sen!2sth" 
+                                     width="100%" 
+                                     height="400" 
+                                     style="border:0;" 
+                                     allowfullscreen="" 
+                                     loading="lazy" 
+                                     referrerpolicy="no-referrer-when-downgrade"
+                                     class="rounded-2xl"
+                                 ></iframe>
+                                 <div class="p-4 bg-gray-50 text-center">
+                                     <p class="text-sm text-red-600">**Map feature not implemented yet</p>
+                                 </div>
+                             </div>
+
                         </div>
 
                         <!-- Right Column: Order & Rider Details -->
@@ -252,20 +258,27 @@
                                 <div class="space-y-2 text-gray-600 text-sm">
                                     <div class="flex justify-between">
                                         <span class="font-semibold">Order ID:</span>
-                                        <span id="tracking-order-id">#1A2B3C4D</span>
+                                        <span id="tracking-order-id"></span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="font-semibold">Restaurant:</span>
-                                        <span id="tracking-restaurant-name">อร่อยดีตามสั่ง</span>
+                                        <span id="tracking-restaurant-name"></span>
                                     </div>
+
+                                     <div class="flex justify-between items-start">
+                                         <span class="font-semibold">Foods:</span>
+                                         <div id="tracking-food-items" class="flex flex-col items-end space-y-1 w-40"></div>
+                                     </div>
                                     <div class="flex justify-between">
                                         <span class="font-semibold">Total:</span>
-                                        <span id="tracking-order-total">฿200.00</span>
+                                        <span id="tracking-order-total"></span>
                                     </div>
+
                                     <!-- <div class="flex justify-between"> -->
                                     <!--     <span class="font-semibold">Est. Delivery:</span> -->
                                     <!--     <span id="tracking-eta">15-20 mins</span> -->
                                     <!-- </div> -->
+
                                 </div>
                             </div>
 
@@ -315,6 +328,7 @@
 
                         <div class="flex space-x-2 mt-2 mb-2">
                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE10">SAVE10</button>
+                            <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE50">SAVE50</button>
                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="FREEDELIVERY">FREEDELIVERY</button>
                         </div>
 
@@ -447,6 +461,12 @@
         const userIdDisplay = document.getElementById('user-id');
         const trackingSteps = document.querySelectorAll('.tracking-step');
 
+        const trackingOrderId = document.getElementById("tracking-order-id");
+        const trackingRestaurantName = document.getElementById("tracking-restaurant-name");
+        const trackingFoodItems = document.getElementById("tracking-food-items");
+        const trackingOrderTotal = document.getElementById("tracking-order-total");
+
+
         const presetCouponButtons = document.querySelectorAll('.preset-coupon-btn');
         let couponApplied = false;
         let couponPercent = 0;
@@ -520,6 +540,7 @@
                         currentRestaurant = merchant;
 
                         localStorage.setItem('selected_merchant_id', merchant.merchantId);
+                        localStorage.setItem('selected_merchant_name', merchant.merchantName);
 
                         menuTitle.textContent = currentRestaurant.merchantName;
                         renderMenu(currentRestaurant.menu);
@@ -537,8 +558,6 @@
                 menuContainer.innerHTML = '<p class="text-gray-500 italic">This restaurant has no menu items.</p>';
                 return;
             }
-
-
 
             for (const item of menu ) { 
 
@@ -571,6 +590,7 @@
         const renderCart = () => {
             cartItemsContainer.innerHTML = '';
             const currentCart = localCart[currentRestaurant.merchantId] || [];
+
 
             if (currentCart.length === 0) {
                 emptyCartMessage.style.display = 'block';
@@ -632,7 +652,6 @@
 
 
         const addToCart = (foodItem) => {
-
 
             const restaurantId = currentRestaurant.merchantId;
             if (!localCart[restaurantId]) {
@@ -715,8 +734,6 @@
                 customer_address_id: customerAddressId,
                 payment_methods: "PAYMENT_METHOD_CREDIT_CARD"
             };
-
-            console.log("payload before request",orderPayload);
 
             const res = await fetch(`${serverUrl}/api/orders/place_order`, {
                 method: "POST",
@@ -834,6 +851,7 @@
 
             try {
                 const place_order = await createPlaceOrder();
+                localStorage.setItem("place_order", JSON.stringify(place_order));
 
                 const restaurantId = currentRestaurant.merchantId;
                 localCart[restaurantId] = [];
@@ -860,7 +878,36 @@
         trackOrderButton.addEventListener('click', () => {
             hideModal();
 
-            // TODO: get data before showing section.
+            const order = JSON.parse(localStorage.getItem("place_order"));
+            if (!order) return;
+
+            trackingOrderId.textContent = `#${order.orderId}`;
+            trackingRestaurantName.textContent = localStorage.getItem('selected_merchant_name');
+
+            const tempRestaurant = {};
+            currentRestaurant.menu.forEach(item => {
+                tempRestaurant[item.itemId] = item.foodName
+            });
+
+            if (order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+
+                    const foodItemHtml = `
+                        <div class="flex justify-between text-sm w-full"> 
+                        <span>${tempRestaurant[item.itemId]}</span>
+                        <span class="flex-shrink-0">x ${item.quantity}</span>
+                        </div>
+                        `;
+
+                    // TODO
+                    // Insert the new HTML into the container
+                    trackingFoodItems.insertAdjacentHTML('beforeend', foodItemHtml);
+                });
+            }
+
+            // FIX: total after applying coupon.
+            trackingOrderTotal.textContent = `฿${order.total}`;
+
 
             showSection('order-tracking-section');
         });

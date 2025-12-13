@@ -919,13 +919,13 @@
     "DeliveryStatus": {
       "type": "string",
       "enum": [
-        "RIDER_UNACCEPT",
-        "RIDER_ACCEPTED",
-        "RIDER_PICKED_UP",
-        "RIDER_DELIVERED"
+        "DELIVERY_STATUS_UNSPECIFIED",
+        "DELIVERY_STATUS_RIDER_PENDING",
+        "DELIVERY_STATUS_RIDER_ACCEPTED",
+        "DELIVERY_STATUS_RIDER_PICKED_UP",
+        "DELIVERY_STATUS_RIDER_DELIVERED"
       ],
-      "default": "RIDER_UNACCEPT",
-      "description": " - RIDER_UNACCEPT: indicates the rider has not yet accepted the order.\n - RIDER_ACCEPTED: indicates the rider has accepted the order.\n - RIDER_PICKED_UP: indicates the rider has picked up the order.\n - RIDER_DELIVERED: indicates the order has been delivered by the rider."
+      "default": "DELIVERY_STATUS_UNSPECIFIED"
     },
     "GetDeliveryFeeResponse": {
       "type": "object",
@@ -1167,15 +1167,16 @@
     "OrderStatus": {
       "type": "string",
       "enum": [
-        "PENDING",
-        "PREPARING_ORDER",
-        "FINDING_RIDER",
-        "WAIT_FOR_PICKUP",
-        "ONGOING",
-        "DELIVERED",
-        "CANCELLED"
+        "ORDER_STATUS_UNSPECIFIED",
+        "ORDER_STATUS_PENDING",
+        "ORDER_STATUS_PREPARING_ORDER",
+        "ORDER_STATUS_FINDING_RIDER",
+        "ORDER_STATUS_WAIT_FOR_PICKUP",
+        "ORDER_STATUS_ONGOING",
+        "ORDER_STATUS_DELIVERED",
+        "ORDER_STATUS_CANCELLED"
       ],
-      "default": "PENDING"
+      "default": "ORDER_STATUS_UNSPECIFIED"
     },
     "PaymentMethods": {
       "type": "string",
@@ -1190,10 +1191,11 @@
     "PaymentStatus": {
       "type": "string",
       "enum": [
-        "UNPAID",
-        "PAID"
+        "PAYMENT_STATUS_UNSPECIFIED",
+        "PAYMENT_STATUS_PENDING",
+        "PAYMENT_STATUS_PAID"
       ],
-      "default": "UNPAID"
+      "default": "PAYMENT_STATUS_UNSPECIFIED"
     },
     "PlaceOrder": {
       "type": "object",
@@ -1316,14 +1318,14 @@
     "Roles": {
       "type": "string",
       "enum": [
-        "UNKNOWN",
-        "CUSTOMER",
-        "RIDER",
-        "SUPER_ADMIN",
-        "ADMIN"
+        "ROLES_UNSPECIFIED",
+        "ROLES_CUSTOMER",
+        "ROLES_RIDER",
+        "ROLES_SUPER_ADMIN",
+        "ROLES_ADMIN"
       ],
-      "default": "UNKNOWN",
-      "description": " - SUPER_ADMIN: For simplicity, admin roles are included in this enum."
+      "default": "ROLES_UNSPECIFIED",
+      "description": " - ROLES_SUPER_ADMIN: For simplicity, admin roles are included in this enum."
     },
     "Social": {
       "type": "object",
@@ -1342,11 +1344,11 @@
     "StoreStatus": {
       "type": "string",
       "enum": [
-        "STATUS_UNSPECIFIED",
-        "CLOSED",
-        "OPEN"
+        "STORE_STATUS_UNSPECIFIED",
+        "STORE_STATUS_CLOSED",
+        "STORE_STATUS_OPEN"
       ],
-      "default": "STATUS_UNSPECIFIED"
+      "default": "STORE_STATUS_UNSPECIFIED"
     },
     "StoreStatusResponse": {
       "type": "object",
