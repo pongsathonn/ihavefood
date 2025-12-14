@@ -1,26 +1,23 @@
 [
   {
-    "coupon_types": "COUPON_TYPE_DISCOUNT",
-    "discount": 10,
-    "expire_in_hour": 1440,
-    "quantity": 90
+    "expire_in_hour": 7200,
+    "quantity": 100,
+    "percent_discount": { "percent": 10 }
   },
   {
-    "coupon_types": "COUPON_TYPE_DISCOUNT",
-    "discount": 30,
-    "expire_in_hour": 1440,
-    "quantity": 90
+    "expire_in_hour": 7200,
+    "quantity": 200,
+    "percent_discount": { "percent": 30 }
   },
   {
-    "coupon_types": "COUPON_TYPE_DISCOUNT",
-    "discount": 50,
-    "expire_in_hour": 1440,
-    "quantity": 90
+    "expire_in_hour": 7200,
+    "quantity": 200,
+    "percent_discount": { "percent": 50 }
   },
   {
-    "coupon_types": "COUPON_TYPE_FREE_DELIVERY",
-    "expire_in_hour": 1440,
-    "quantity": 90
+    "expire_in_hour": 2400,
+    "quantity": 200,
+    "free_delivery": {}
   }
 ]
 
