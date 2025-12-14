@@ -28,7 +28,6 @@ service CouponService {
         };
     }
 
-    // AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).
     rpc AddCoupon(AddCouponRequest) returns(Coupon){
         option (google.api.http) = {
             post: "/api/coupons"
@@ -37,57 +36,46 @@ service CouponService {
     }
 
     // RedeemCoupon updates coupon quantity after an order is paid.
-    rpc RedeemCoupon(RedeemCouponRequest) returns (RedeemCouponResponse){}
+    rpc RedeemCoupon(RedeemCouponRequest) returns (google.protobuf.Empty){}
 }
-
 
 message Coupon {
-    CouponTypes types = 1;
-    string code = 2;
-    // The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.
-    // The server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY.
-    int32 discount = 3;
-    // Number of seconds until the coupon expires(UNIX).
-    int64 expires_in = 4;
-
-    int32 quantity_count = 5; 
-}
-
-enum CouponTypes{
-
-    COUPON_TYPE_UNSPECIFICED = 0;
-
-    // Discount is a fixed amount, not a percentage.
-    COUPON_TYPE_DISCOUNT = 1; 
-
-    COUPON_TYPE_FREE_DELIVERY = 2; 
-}
-
-
-message AddCouponRequest {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"coupon_types\": \"COUPON_TYPE_DISCOUNT\", \"discount\": 40, \"expire_in_hour\": 72, \"quantity\": 50}"
-      json_schema: {
-        description: "NOTE: if type is FREE_DELIVERY, discount will be ignored"
-      }
-    };
-
-    CouponTypes coupon_types = 1;
-    int32 discount = 2;
-
+    string code = 1;
     // The coupon expiration time in hours from now.
     // For example expire_in_hour is 72 means the coupon will be expired
     // in 3 days (72 hours) from now.
-    int32 expire_in_hour = 3;
+    int64 expires_in_hour = 2;
+    int32 quantity_count = 3;
+    oneof coupon_details {
+        PercentDiscount percent_discount = 4;
+        FreeDelivery free_delivery = 5;
+    }
+}
 
-    int32 quantity = 4;
+message PercentDiscount {
+    int32 percent = 1; // 1-100
+}
+message FreeDelivery {}
+
+message AddCouponRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {
+        description: "Specify exactly one of: percent_discount or free_delivery"
+      };
+    };
+    
+    int32 expire_in_hour = 1;
+    int32 quantity = 2;
+    oneof discount_type {
+        PercentDiscount percent_discount = 3;
+        FreeDelivery free_delivery = 4;
+    }
 }
 
 message GetCouponRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"code\": \"SAVE20FORYOU\"}"
+      example: "{\"code\": \"SAVE20\"}"
     };
-
     string code = 1;
 }
 
@@ -99,9 +87,6 @@ message RedeemCouponRequest {
     string code = 1;
 }
 
-message RedeemCouponResponse { 
-    bool success = 1;
-}
 
 
 
