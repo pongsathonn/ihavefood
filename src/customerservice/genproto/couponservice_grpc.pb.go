@@ -39,7 +39,7 @@ type CouponServiceClient interface {
 	GetCoupon(ctx context.Context, in *GetCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
 	AddCoupon(ctx context.Context, in *AddCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
 	// RedeemCoupon updates coupon quantity after an order is paid.
-	RedeemCoupon(ctx context.Context, in *RedeemCouponRequest, opts ...grpc.CallOption) (*RedeemCouponResponse, error)
+	RedeemCoupon(ctx context.Context, in *RedeemCouponRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type couponServiceClient struct {
@@ -80,9 +80,9 @@ func (c *couponServiceClient) AddCoupon(ctx context.Context, in *AddCouponReques
 	return out, nil
 }
 
-func (c *couponServiceClient) RedeemCoupon(ctx context.Context, in *RedeemCouponRequest, opts ...grpc.CallOption) (*RedeemCouponResponse, error) {
+func (c *couponServiceClient) RedeemCoupon(ctx context.Context, in *RedeemCouponRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RedeemCouponResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, CouponService_RedeemCoupon_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ type CouponServiceServer interface {
 	GetCoupon(context.Context, *GetCouponRequest) (*Coupon, error)
 	AddCoupon(context.Context, *AddCouponRequest) (*Coupon, error)
 	// RedeemCoupon updates coupon quantity after an order is paid.
-	RedeemCoupon(context.Context, *RedeemCouponRequest) (*RedeemCouponResponse, error)
+	RedeemCoupon(context.Context, *RedeemCouponRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedCouponServiceServer()
 }
 
@@ -123,7 +123,7 @@ func (UnimplementedCouponServiceServer) GetCoupon(context.Context, *GetCouponReq
 func (UnimplementedCouponServiceServer) AddCoupon(context.Context, *AddCouponRequest) (*Coupon, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCoupon not implemented")
 }
-func (UnimplementedCouponServiceServer) RedeemCoupon(context.Context, *RedeemCouponRequest) (*RedeemCouponResponse, error) {
+func (UnimplementedCouponServiceServer) RedeemCoupon(context.Context, *RedeemCouponRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RedeemCoupon not implemented")
 }
 func (UnimplementedCouponServiceServer) mustEmbedUnimplementedCouponServiceServer() {}
