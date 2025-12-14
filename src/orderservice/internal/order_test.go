@@ -81,12 +81,12 @@ type MockCouponClient struct {
 	mock.Mock
 }
 
-func (m *MockCouponClient) GetCoupon(ctx context.Context, in *pb.GetCouponRequest, opts ...grpc.CallOption) (*pb.Coupon, error) {
+func (m *MockCouponClient) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponRequest, opts ...grpc.CallOption) (*pb.RedeemCouponResponse, error) {
 	args := m.Called(ctx, in)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*pb.Coupon), args.Error(1)
+	return args.Get(0).(*pb.RedeemCouponResponse), args.Error(1)
 }
 
 type MockCustomerClient struct {
@@ -194,9 +194,8 @@ func TestCreatePlaceOrder_Success(t *testing.T) {
 		Fee: deliveryFee,
 	}, nil)
 
-	mockCoupon.On("GetCoupon", mock.Anything, mock.AnythingOfType("*genproto.GetCouponRequest")).Return(&pb.Coupon{
-		Code:     req.CouponCode,
-		Discount: couponDiscount,
+	mockCoupon.On("RedeemCoupon", mock.Anything, mock.AnythingOfType("*genproto.RedeemCouponRequest")).Return(&pb.RedeemCouponResponse{
+		Success: true,
 	}, nil)
 
 	mockStorage.On("Create", mock.Anything, mock.AnythingOfType("*internal.newPlaceOrder")).Return(expectedOrderID, nil)
@@ -277,7 +276,7 @@ func TestCreatePlaceOrder_Failure_DeletesOrder(t *testing.T) {
 		Menu:       []*pb.MenuItem{{ItemId: "50000000-0000-4000-8000-000000000005", Price: 100}},
 	}, nil)
 	mockDelivery.On("GetDeliveryFee", mock.Anything, mock.Anything).Return(&pb.GetDeliveryFeeResponse{Fee: 50}, nil)
-	mockCoupon.On("GetCoupon", mock.Anything, mock.Anything).Return(&pb.Coupon{Discount: 0}, nil)
+	mockCoupon.On("RedeemCouponRequest", mock.Anything, mock.Anything).Return(&pb.RedeemCouponResponse{Success: true}, nil)
 
 	// --------------
 	newOrderID := "10111000-0000-4000-8000-000000000005"

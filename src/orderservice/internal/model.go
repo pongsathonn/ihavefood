@@ -14,7 +14,7 @@ type newPlaceOrder struct {
 	MerchantID      string
 	Items           []*dbOrderItem
 	CouponCode      string
-	CouponDiscount  int32
+	Discount        int32
 	DeliveryFee     int32
 	Total           int32
 	CustomerAddress *dbAddress
@@ -32,7 +32,7 @@ type dbPlaceOrder struct {
 	MerchantID      string           `bson:"merchantId"`
 	Items           []*dbOrderItem   `bson:"menus"`
 	CouponCode      string           `bson:"couponCode"`
-	CouponDiscount  int32            `bson:"couponDiscount"`
+	Discount        int32            `bson:"discount"`
 	DeliveryFee     int32            `bson:"deliveryFee"`
 	Total           int32            `bson:"total"`
 	CustomerAddress *dbAddress       `bson:"customerAddress"`
@@ -113,7 +113,7 @@ func toDbPlaceOrder(n *newPlaceOrder) *dbPlaceOrder {
 		MerchantID:      n.MerchantID,
 		Items:           n.Items,
 		CouponCode:      n.CouponCode,
-		CouponDiscount:  n.CouponDiscount,
+		Discount:        n.Discount,
 		DeliveryFee:     n.DeliveryFee,
 		Total:           n.Total,
 		CustomerAddress: n.CustomerAddress,
@@ -177,7 +177,7 @@ func toProtoPlaceOrder(order *dbPlaceOrder) *pb.PlaceOrder {
 		CustomerId:      order.CustomerID,
 		MerchantId:      order.MerchantID,
 		Items:           items,
-		CouponDiscount:  order.CouponDiscount,
+		CouponDiscount:  order.Discount,
 		DeliveryFee:     order.DeliveryFee,
 		Total:           order.Total,
 		CustomerAddress: toProtoAddress(order.CustomerAddress),

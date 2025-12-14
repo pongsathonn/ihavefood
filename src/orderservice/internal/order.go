@@ -4,19 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "github.com/pongsathonn/ihavefood/src/orderservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type CouponClient interface {
-	GetCoupon(ctx context.Context, in *pb.GetCouponRequest, opts ...grpc.CallOption) (*pb.Coupon, error)
+	RedeemCoupon(ctx context.Context, in *pb.RedeemCouponRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type CustomerClient interface {
@@ -281,14 +283,15 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 		return nil, err
 	}
 
-	foodCost := calcFoodCost(merchant.Menu, newOrder.Items)
-
-	coupon, err := x.coupon.GetCoupon(ctx, &pb.GetCouponRequest{Code: newOrder.CouponCode})
-	if err != nil {
-		return nil, err
+	if _, err := x.coupon.RedeemCoupon(ctx, &pb.RedeemCouponRequest{
+		Code: newOrder.CouponCode,
+	}); err != nil {
+		return nil, fmt.Errorf("Failed to redeem coupon: %v", err)
 	}
 
-	total := (deliveryFee.Fee + foodCost) - coupon.Discount
+	foodCost := calcFoodCost(merchant.Menu, newOrder.Items)
+
+	total := foodCost - newOrder.Discount
 
 	var items []*dbOrderItem
 	for _, item := range newOrder.Items {
@@ -312,7 +315,7 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 		MerchantID:      newOrder.MerchantId,
 		Items:           items,
 		CouponCode:      newOrder.CouponCode,
-		CouponDiscount:  coupon.Discount,
+		Discount:        newOrder.Discount,
 		DeliveryFee:     deliveryFee.Fee,
 		Total:           total,
 		CustomerAddress: toDbAddress(selectedAddr),
