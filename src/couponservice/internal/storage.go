@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -10,14 +9,20 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// Code is the primary identifier
-// Types relies on protobuf
-// Discount is fixed amount value, not a percentage.
+// CouponType represents the type of coupon discount
+type CouponType int32
+
+const (
+	CouponTypeUnknown         CouponType = 0
+	CouponTypePercentDiscount CouponType = 1
+	CouponTypeFreeDelivery    CouponType = 2
+)
+
+// dbCoupon represents a coupon in the database
 type dbCoupon struct {
-	Code     string `bson:"_id"`
-	Types    int32  `bson:"types"`
-	Discount int32  `bson:"discount"`
-	// Expiration must be "UTC"
+	Code  string     `bson:"_id"`
+	Types CouponType `bson:"types"`
+	// UTC - calculated from expires_in_hour
 	Expiration time.Time `bson:"expiration"`
 	Quantity   int32     `bson:"quantity"`
 }
@@ -31,9 +36,8 @@ type CouponStorage interface {
 	// update the quantity and expiration time instead
 	Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, error)
 
-	// UpdateQuantity decreases the quantity of the specified coupon
-	// by 1.This function is invoked after the coupon has been used.
-	UpdateQuantity(ctx context.Context, code string) (string, error)
+	// UpdateQuantity decreases the quantity for applied coupon.
+	UpdateQuantity(ctx context.Context, code string) error
 
 	// DeleteCoupon(code string) error
 }
@@ -64,7 +68,6 @@ func (s *couponStorage) ListCoupons(ctx context.Context) ([]*dbCoupon, error) {
 }
 
 func (s *couponStorage) GetCoupon(ctx context.Context, code string) (*dbCoupon, error) {
-
 	var coupon dbCoupon
 	if err := s.coll.FindOne(ctx, bson.M{"_id": code}).Decode(&coupon); err != nil {
 		return nil, err
@@ -79,8 +82,7 @@ func (s *couponStorage) Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, e
 	filter := bson.M{"_id": coupon.Code}
 	update := bson.M{
 		"$setOnInsert": bson.M{
-			"types":    coupon.Types,
-			"discount": coupon.Discount,
+			"types": coupon.Types,
 		},
 		"$inc": bson.M{"quantity": coupon.Quantity},
 		"$max": bson.M{"expiration": coupon.Expiration},
@@ -95,7 +97,7 @@ func (s *couponStorage) Add(ctx context.Context, coupon *dbCoupon) (*dbCoupon, e
 	return addedCoupon, nil
 }
 
-func (s *couponStorage) UpdateQuantity(ctx context.Context, code string) (string, error) {
+func (s *couponStorage) UpdateQuantity(ctx context.Context, code string) error {
 
 	filter := bson.M{
 		"_id":      code,
@@ -107,15 +109,9 @@ func (s *couponStorage) UpdateQuantity(ctx context.Context, code string) (string
 		}},
 	}
 
-	res, err := s.coll.UpdateOne(ctx, filter, update)
-	if err != nil {
-		return "", err
+	if _, err := s.coll.UpdateOne(ctx, filter, update); err != nil {
+		return err
 	}
 
-	if res.ModifiedCount == 0 {
-		return "", errors.New("coupon code does not exists or quantity is insufficient")
-	}
-
-	updatedCode := res.UpsertedID.(string)
-	return updatedCode, nil
+	return nil
 }

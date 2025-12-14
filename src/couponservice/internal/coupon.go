@@ -34,22 +34,23 @@ func NewCouponService(con *amqp.Connection, rp CouponStorage) *CouponService {
 func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) (*pb.Coupon, error) {
 
 	var (
-		code     string
-		discount int32
+		code       string
+		couponType CouponType
 	)
 
-	switch in.CouponTypes {
-	case pb.CouponTypes_COUPON_TYPE_DISCOUNT:
-		if in.Discount < 1 || in.Discount > 99 {
+	switch dt := in.DiscountType.(type) {
+	case *pb.AddCouponRequest_PercentDiscount:
+		discount := dt.PercentDiscount.Percent
+		if discount < 1 || discount > 99 {
 			return nil, status.Error(codes.InvalidArgument, "discount must be between 1 and 99")
 		}
-		code = fmt.Sprintf("SAVE%d", in.Discount)
-		discount = in.Discount
-	case pb.CouponTypes_COUPON_TYPE_FREE_DELIVERY:
+		code = fmt.Sprintf("SAVE%d", discount)
+		couponType = CouponTypePercentDiscount
+	case *pb.AddCouponRequest_FreeDelivery:
 		code = fmt.Sprintf("FREEDELIVERY")
-		discount = 0
+		couponType = CouponTypeFreeDelivery
 	default:
-		return nil, status.Error(codes.InvalidArgument, "invalid coupon type")
+		return nil, status.Error(codes.InvalidArgument, "unknown discount type")
 	}
 
 	if in.Quantity < 1 {
@@ -57,11 +58,9 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 	}
 
 	expiration := time.Now().Add(time.Hour * time.Duration(in.ExpireInHour))
-
 	coupon, err := x.storage.Add(ctx, &dbCoupon{
-		Types:      int32(in.CouponTypes),
 		Code:       code,
-		Discount:   discount,
+		Types:      CouponType(couponType),
 		Expiration: expiration,
 		Quantity:   in.Quantity,
 	})
@@ -71,10 +70,8 @@ func (x *CouponService) AddCoupon(ctx context.Context, in *pb.AddCouponRequest) 
 	}
 
 	return &pb.Coupon{
-		Types:         pb.CouponTypes(coupon.Types),
 		Code:          coupon.Code,
-		Discount:      coupon.Discount,
-		ExpiresIn:     coupon.Expiration.Unix(),
+		ExpiresInHour: coupon.Expiration.Unix(),
 		QuantityCount: coupon.Quantity,
 	}, nil
 }
@@ -107,10 +104,8 @@ func (x *CouponService) GetCoupon(ctx context.Context, in *pb.GetCouponRequest) 
 	}
 
 	return &pb.Coupon{
-		Types:         pb.CouponTypes(coupon.Types),
 		Code:          coupon.Code,
-		Discount:      coupon.Discount,
-		ExpiresIn:     coupon.Expiration.Unix(),
+		ExpiresInHour: coupon.Expiration.Unix(),
 		QuantityCount: coupon.Quantity,
 	}, nil
 }
@@ -126,10 +121,8 @@ func (x *CouponService) ListCoupons(ctx context.Context, empty *emptypb.Empty) (
 	var coupons []*pb.Coupon
 	for _, c := range listCoupons {
 		coupon := &pb.Coupon{
-			Types:         pb.CouponTypes(c.Types),
 			Code:          c.Code,
-			Discount:      c.Discount,
-			ExpiresIn:     c.Expiration.Unix(),
+			ExpiresInHour: c.Expiration.Unix(),
 			QuantityCount: c.Quantity,
 		}
 		coupons = append(coupons, coupon)
@@ -137,16 +130,16 @@ func (x *CouponService) ListCoupons(ctx context.Context, empty *emptypb.Empty) (
 	return &pb.ListCouponsResponse{Coupons: coupons}, nil
 }
 
-func (x *CouponService) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponRequest) (*pb.RedeemCouponResponse, error) {
+func (x *CouponService) RedeemCoupon(ctx context.Context, in *pb.RedeemCouponRequest) (*emptypb.Empty, error) {
 
 	if in.Code == "" {
 		return nil, errNoCouponCode
 	}
 
-	if _, err := x.storage.UpdateQuantity(ctx, in.Code); err != nil {
+	if err := x.storage.UpdateQuantity(ctx, in.Code); err != nil {
 		slog.Error("update coupon quantity", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return &pb.RedeemCouponResponse{Success: true}, nil
+	return &emptypb.Empty{}, nil
 }
