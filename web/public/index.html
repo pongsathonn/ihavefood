@@ -108,7 +108,7 @@
                         <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In</h2>
 
                         <div id="signin-form" class="space-y-4">
-                            <p class="text-sm text-gray-500 text-center">This is a UI demonstration. The forms below are not functional.</p>
+                            <p class="text-sm text-gray-500 text-center"></p>
                             <div>
                                 <label for="signin-email" class="block text-sm font-medium text-gray-700">Email or Phone Number</label>
                                 <input type="email" id="signin-email-phone" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -398,7 +398,6 @@
             storageBucket: "ihavefood-ee231.firebasestorage.app",
         };
         const app = initializeApp(firebaseConfig);
-
         const serverUrl = "https://api-gateway-731964455549.asia-southeast1.run.app"
 
         // --- Static Data ---
@@ -406,6 +405,8 @@
         // The cart is now an object, storing a separate cart array for each restaurant
         let localCart = {};
         let currentRestaurant = null;
+        let isCustomerLogin = false;
+        let cachedData = null;
 
         // --- UI Element References ---
         const mainContent = document.getElementById('main-content');
@@ -469,8 +470,6 @@
 
         const presetCouponButtons = document.querySelectorAll('.preset-coupon-btn');
         let couponApplied = false;
-        let couponPercent = 0;
-        let deliveryFeeApplied = false;
 
         // Detect page refresh
         window.addEventListener('load', () => {
@@ -505,7 +504,9 @@
 
         const renderRestaurants = async (merchants) => {
             restaurantsContainer.innerHTML = '';
-            loadingMessage.style.display = 'none';
+            loadingMessage.textContent = 'Loading...';
+            loadingMessage.style.display = 'block';
+
             if (merchants.length === 0) {
                 restaurantsContainer.innerHTML = '<p class="text-gray-500 italic">No restaurants available.</p>';
                 return;
@@ -513,6 +514,39 @@
 
             const storage = getStorage();
             for (const merchant of merchants) {
+
+                const customerId = localStorage.getItem("customer_id");
+                // NOTE: assume index0 address is default
+                const customerAddrId = JSON.parse(localStorage.getItem("customer_addresses") || "[]")[0]?.addressId;
+                const merchantId = merchant.merchantId
+
+                const url =
+                    `${serverUrl}/api/deliveries/fee` +
+                        `?customer_id=${customerId}` +
+                        `&customer_address_id=${customerAddrId}` +
+                        `&merchant_id=${merchantId}`;
+                const res = await fetch(url,{
+                    method: "GET",
+                    headers: { "Accept": "application/json" }
+                });
+                // const { fee } = await res.json();
+                const { fee = 0 } = await res.json();
+
+                // Calculate fake distance based on fee (1-25 km)
+                let distance;
+                if (fee === 0) {
+                    distance = Math.floor(Math.random() * 8) + 1; // 1-8 km
+                } else if (fee === 50) {
+                    distance = Math.floor(Math.random() * 9) + 9; // 9-17 km
+                } else if (fee === 100) {
+                    distance = Math.floor(Math.random() * 8) + 18; // 18-25 km
+                }
+
+                // Calculate fake ETA based on distance (1-60 minutes)
+                const baseEta = Math.round((distance / 30) * 60); // Convert to minutes
+                const randomVariation = Math.floor(Math.random() * 10) - 5; // ±5 minutes
+                const eta = Math.max(1, Math.min(60, baseEta + randomVariation)); // Clamp between 1-60
+
                 let imageUrl = '';
                 try {
                     imageUrl = await getDownloadURL(
@@ -522,16 +556,24 @@
                     console.error(err);
                 }
                 const card = document.createElement('div');
-                const isClosed = merchant.status === 'CLOSED';
+
+                const isClosed = merchant.status === 'STORE_STATUS_CLOSED';
+
                 card.className = `restaurant-card bg-gray-50 rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-lg ${isClosed ? 'opacity-50 pointer-events-none' : ''}`;
                 card.innerHTML = `
                     <img src="${imageUrl}" alt="${merchant.merchantName}" class="w-full h-[220px] object-cover">
                     <div class="p-4">
                         <h3 class="text-lg font-semibold text-gray-800">${merchant.merchantName}</h3>
+
+                        ${!isClosed ? `
                         <p class="text-sm text-gray-500">
-                            Delivery: <span class="text-red-700">฿${merchant.deliveryFee}</span> <span class="text-gray-200">|</span> ${merchant.distance} km (${merchant.eta} min)
+                            Delivery: <span class="text-red-700">฿${fee}</span>
+                            <span class="text-gray-200">|</span>
+                            ${distance} km (${eta} min)
                         </p>
-                        <p class="text-sm text-gray-500">Status: ${isClosed ? 'Closed' : 'Open'}</p>
+                        ` : ''}
+
+                        <p class="text-sm text-gray-500">Status: ${isClosed ? 'CLOSED' : 'OPEN'}</p>
                     </div>
                 `;
 
@@ -618,32 +660,37 @@
 
         const updateCartTotals = () => {
             const currentCart = localCart[currentRestaurant.merchantId] || [];
-
-            // Food
             const food = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            cartFoodElement.textContent = `฿${food.toFixed(2)}`;
+            const couponPercent = localStorage.getItem('coupon_percent');
+            let deliveryFee = Number(currentRestaurant.deliveryFee) || 0;
             let discountAmount = 0;
 
-            // Delivery Fee
-            let deliveryFee = Number(currentRestaurant.deliveryFee) || 0;
-            if (deliveryFeeApplied) {
-                cartDeliveryElement.textContent = `-฿${deliveryFee.toFixed(2)}`;
-                cartDeliveryElement.className = 'text-lg font-bold text-red-500';
-                deliveryFee = 0; // Don't add to total
+            cartFoodElement.textContent = `฿${food.toFixed(2)}`;
+
+            if (couponApplied) {
+                const couponCode = couponInput.value.trim().toUpperCase();
+                if (couponCode === "FREEDELIVERY") {
+                    cartDeliveryElement.textContent = `-฿${deliveryFee.toFixed(2)}`;
+                    cartDeliveryElement.className = 'text-lg font-bold text-red-500';
+                    discountAmount = deliveryFee;
+                    discountRow.classList.add('hidden'); // Hide percentage discount row
+                } else if (couponPercent > 0) {
+                    // Reset delivery display to normal
+                    cartDeliveryElement.textContent = `฿${deliveryFee.toFixed(2)}`;
+                    cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
+
+                    discountAmount = food * (couponPercent / 100);
+                    discountRow.classList.remove('hidden');
+                    cartDiscountElement.textContent = `-฿${discountAmount.toFixed(2)}`;
+                }
             } else {
+                // No coupon applied
+                discountAmount = 0;
                 cartDeliveryElement.textContent = `฿${deliveryFee.toFixed(2)}`;
                 cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
-            }
-
-            // Discount
-            if (couponApplied && couponPercent > 0) {
-                discountAmount = food * (couponPercent / 100);
-                discountRow.classList.remove('hidden');
-                cartDiscountElement.textContent = `-฿${discountAmount.toFixed(2)}`;
-            } else {
                 discountRow.classList.add('hidden');
-                cartDiscountElement.textContent = '-฿0.00';
             }
+            localStorage.setItem('discount', discountAmount);
 
             let total = food + deliveryFee - discountAmount;
             cartTotalElement.textContent = `฿${total.toFixed(2)}`;
@@ -713,9 +760,11 @@
             });
         };
 
-        const createPlaceOrder = async () => {
+        const buildOrderPayload = () => {
             const restaurantId = currentRestaurant.merchantId;
             const customerId = localStorage.getItem('customer_id');
+            const appliedCoupon = localStorage.getItem('applied_coupon');
+            const discount = localStorage.getItem('discount');
             const customerAddresses = JSON.parse(localStorage.getItem('customer_addresses') || "[]");
             const customerAddressId = customerAddresses[0]?.addressId; // or let user choose later
 
@@ -730,10 +779,16 @@
                 customer_id: customerId,
                 merchant_id: restaurantId,
                 items: cartItems,
-                coupon_code: couponInput.value.trim() || null,
+                coupon_code: appliedCoupon,
+                discount: discount,
                 customer_address_id: customerAddressId,
                 payment_methods: "PAYMENT_METHOD_CREDIT_CARD"
             };
+
+            return orderPayload;
+        };
+
+        const createPlaceOrder = async (orderPayload) => {
 
             const res = await fetch(`${serverUrl}/api/orders/place_order`, {
                 method: "POST",
@@ -849,8 +904,10 @@
                 return;
             }
 
+            const orderPayload = buildOrderPayload()
+
             try {
-                const place_order = await createPlaceOrder();
+                const place_order = await createPlaceOrder(orderPayload);
                 localStorage.setItem("place_order", JSON.stringify(place_order));
 
                 const restaurantId = currentRestaurant.merchantId;
@@ -906,6 +963,7 @@
             }
 
             // FIX: total after applying coupon.
+            // BUG: backend use coupon as actual value,but frontend use percent.
             trackingOrderTotal.textContent = `฿${order.total}`;
 
 
@@ -932,52 +990,39 @@
             applyCouponBtn.disabled = couponInput.value.trim() === '';
         });
 
+
+
         applyCouponBtn.addEventListener('click', () => {
             const couponCode = couponInput.value.trim().toUpperCase();
 
-            if (couponCode === 'SAVE10') {
+            const coupons = {
+                'SAVE10': { percent: 10, message: 'Coupon applied! You got 10% off.' },
+                'SAVE20': { percent: 20, message: 'Coupon applied! You got 20% off.' },
+                'SAVE30': { percent: 30, message: 'Coupon applied! You got 30% off.' },
+                'SAVE40': { percent: 40, message: 'Coupon applied! You got 40% off.' },
+                'SAVE50': { percent: 50, message: 'Coupon applied! You got 50% off.' },
+                'FREEDELIVERY': { percent: 0, message: 'Coupon applied! Delivery fee waived.' }
+            };
+
+            const coupon = coupons[couponCode];
+
+            if (coupon) {
                 couponApplied = true;
-                couponPercent = 10;
-                couponStatus.textContent = 'Coupon applied! You got 10% off.';
+                couponStatus.textContent = coupon.message;
                 couponStatus.className = 'text-sm mt-2 text-pink-600';
-            } 
-            else if (couponCode === 'SAVE20') {
-                couponApplied = true;
-                couponPercent = 20;
-                couponStatus.textContent = 'Coupon applied! You got 20% off.';
-                couponStatus.className = 'text-sm mt-2 text-pink-600';
-            } 
-            else if (couponCode === 'SAVE30') {
-                couponApplied = true;
-                couponPercent = 30;
-                couponStatus.textContent = 'Coupon applied! You got 30% off.';
-                couponStatus.className = 'text-sm mt-2 text-pink-600';
-            } 
-            else if (couponCode === 'SAVE40') {
-                couponApplied = true;
-                couponPercent = 40;
-                couponStatus.textContent = 'Coupon applied! You got 40% off.';
-                couponStatus.className = 'text-sm mt-2 text-pink-600';
-            } 
-            else if (couponCode === 'SAVE50') {
-                couponApplied = true;
-                couponPercent = 50;
-                couponStatus.textContent = 'Coupon applied! You got 50% off.';
-                couponStatus.className = 'text-sm mt-2 text-pink-600';
-            } 
-            else if (couponCode === 'FREEDELIVERY') {
-                deliveryFeeApplied = true;
-                couponStatus.textContent = 'Coupon applied! Delivery fee waived.';
-                couponStatus.className = 'text-sm mt-2 text-pink-600';
-            } 
-            else {
+                localStorage.setItem("applied_coupon", couponCode);
+                localStorage.setItem("coupon_percent", coupon.percent);
+            } else {
                 couponApplied = false;
                 couponStatus.textContent = 'Invalid coupon code. Please try again.';
                 couponStatus.className = 'text-sm mt-2 text-red-500';
+                localStorage.setItem("applied_coupon", "");
+                localStorage.setItem("coupon_percent", 0);
             }
 
             updateCartTotals();
         });
+
 
         // Auth form listeners (simulated)
         showSignupLink.addEventListener('click', () => {
@@ -1021,7 +1066,15 @@
                  localStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
                  isUserAuthenticated = true;
 
-                showSection('restaurant-list');
+                try {
+                    profileButton.classList.remove('hidden');
+                    showSection('user-profile');
+
+                    renderRestaurants(cachedData.merchants);
+                    showSection('restaurant-list');
+                } catch (err) {
+                    console.error("Failed to render restaurants:", err);
+                }
 
              } catch (error) {
                  console.error('Error:', error.message, error.stack, error.response);
@@ -1070,12 +1123,11 @@
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
 
-            try {
-                const data = await fetchMerchants();
-                renderRestaurants(data.merchants);
-                showSection('restaurant-list');
-            } catch (error) {
-                console.error("Failed to fetch merchants:", error);
+            cachedData = await fetchMerchants();
+
+            if (!isUserAuthenticated) {
+                profileButton.classList.add('hidden');
+                showSection('auth-section');
                 return;
             }
 
