@@ -47,19 +47,16 @@ impl MyDelivery {
     }
 
     pub fn calc_delivery_fee(customer_p: &Point, restau_p: &Point) -> Result<i32> {
-        //distance(kilometers)
         let distance = haversine_distance(customer_p, restau_p);
-
         ensure!(
             (0.0..=25.0).contains(&distance),
             "distance must be between 0km and 25km"
         );
 
-        let delivery_fee: i32 = match distance {
-            d if d <= 5.0 => 0,
-            d if d <= 10.0 => 50,
-            _ => 100,
-        };
+        // Linear formula: fee = 10 + (distance * 1.6)
+        // At 0km: 10฿, at 25km: 50฿
+        let fee = 10.0 + (distance * 1.6);
+        let delivery_fee = (fee.round() as i32).clamp(10, 50);
 
         Ok(delivery_fee)
     }
