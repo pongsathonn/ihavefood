@@ -1,16 +1,23 @@
 #!/bin/bash
-set -e
+set -ex
 
 URL="https://api-gateway-731964455549.asia-southeast1.run.app"
 
 # ==========================================================
-# 1. Create customer
-REGISTER_RESPONSE=$(curl -sf -X POST \
+# 1. Create customer & rider
+CUSTOMER_RES=$(curl -sf -X POST \
   "$URL/auth/register" \
   -H "Content-Type: application/json" \
   -d "$(jq -c '{email, password, role}' demo_customer.json)")
-CUSTOMER_ID=$(echo "$REGISTER_RESPONSE" | jq -r '.id')
+CUSTOMER_ID=$(echo "$CUSTOMER_RES" | jq -r '.id')
 echo "INFO: created customer"
+
+RIDER_RES=$(curl -sf -X POST \
+  "$URL/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "$(jq -c '{email, password, role}' demo_rider.json)")
+RIDER_ID=$(echo "$RIDER_RES" | jq -r '.id')
+echo "INFO: created rider"
 
 sleep 1
 # ==========================================================
