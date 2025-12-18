@@ -34,7 +34,7 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 func SetupValidator() {
 	validate.RegisterStructValidationMapRules(map[string]string{
 		"Email":       "required,email",
-		"Password":    "required,vpass,min=8,max=16",
+		"Password":    "required,min=8,max=16,vpass",
 		"PhoneNumber": "required,vphone",
 		"Role":        "vrole",
 	}, pb.RegisterRequest{})
