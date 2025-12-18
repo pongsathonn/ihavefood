@@ -60,6 +60,24 @@
     </head>
     <body class="flex flex-col min-h-screen">
 
+
+         <button id="track-button" class="fixed top-20 right-4 p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition z-50">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+             </svg>
+             <span id="track-dot" class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+         </button>
+
+         <a id="api-button" 
+             href="/openapi/"
+             target="_blank"
+             class="fixed top-6 right-20 px-3 py-2 rounded-full
+             bg-gray-200 hover:bg-gray-300 transition
+             text-sm font-medium text-gray-700
+             flex items-center justify-center z-50">
+             OpenAPI
+         </a>
+
         <!-- Profile/Auth Button - Now fixed to the top-right of the viewport -->
         <button id="profile-button" class="fixed top-6 right-4 p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition z-50">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -105,12 +123,12 @@
                 <!-- Auth Section (Sign-up/Sign-in) -->
                 <section id="auth-section" class="flex items-center justify-center p-6 bg-white rounded-3xl shadow-lg border border-gray-100 max-w-sm mx-auto hidden">
                     <div class="w-full">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In</h2>
 
                         <div id="signin-form" class="space-y-4">
+                             <h2 id="signin-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In</h2>
                             <p class="text-sm text-gray-500 text-center"></p>
                             <div>
-                                <label for="signin-email" class="block text-sm font-medium text-gray-700">Email or Phone Number</label>
+                                <label for="signin-email" class="block text-sm font-medium text-gray-700">Email</label>
                                 <input type="email" id="signin-email-phone" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div>
@@ -124,6 +142,7 @@
                         </div>
 
                         <div id="signup-form" class="space-y-4 hidden">
+                            <h2 id="signup-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign Up</h2>
                             <div>
                                 <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
                                 <input type="email" id="signup-email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -136,7 +155,6 @@
                                 <label for="signup-role" class="block text-sm font-medium text-gray-700">I am a...</label>
                                 <select id="signup-role" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                     <option value="customer">Customer</option>
-                                    <option value="merchant">Merchant</option>
                                     <option value="rider">Rider</option>
                                 </select>
                             </div>
@@ -309,6 +327,8 @@
                             </div>
                         </div>
                     </div>
+
+
                 </section>
 
             </main>
@@ -347,7 +367,7 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-lg font-semibold text-gray-800">Delivery Fee:</span>
                             <span id="cart-delivery" class="text-lg font-bold text-gray-600">฿0.00</span>
-                        </div>
+                         </div>
                         <div id="discount-row" class="flex justify-between items-center mb-2 hidden">
                             <span class="text-lg font-semibold text-gray-800">Discount:</span>
                             <span id="cart-discount" class="text-lg font-bold text-red-500">-฿0.00</span>
@@ -406,6 +426,7 @@
         let localCart = {};
         let currentRestaurant = null;
         let isCustomerLogin = false;
+        let isOrderPlaced = false;
         let cachedData = null;
 
         // --- UI Element References ---
@@ -418,10 +439,15 @@
         const restaurantListSection = document.getElementById('restaurant-list');
         const orderTrackingSection = document.getElementById('order-tracking-section');
         const authSection = document.getElementById('auth-section');
+        const signinTitle = document.getElementById("signin-title");
+        const signupTitle = document.getElementById("signup-title");
         const menuTitle = document.getElementById('menu-title');
         const menuContainer = document.getElementById('menu-container');
         const menuBackButton = document.getElementById('menu-back-button');
         const trackingBackButton = document.getElementById('tracking-back-button');
+        const apiButton = document.getElementById('api-button');
+        const trackButton = document.getElementById('track-button');
+        const trackDot = document.getElementById('track-dot');
         const profileButton = document.getElementById('profile-button');
         const signoutButton = document.getElementById('signout-btn');
         const signinForm = document.getElementById('signin-form');
@@ -468,6 +494,7 @@
         const trackingOrderTotal = document.getElementById("tracking-order-total");
 
 
+
         const presetCouponButtons = document.querySelectorAll('.preset-coupon-btn');
         let couponApplied = false;
 
@@ -485,6 +512,13 @@
 
         // --- UI Rendering Functions ---
         const showSection = (sectionId) => {
+
+            if (!isOrderPlaced) {
+                trackButton.classList.add('opacity-40', 'pointer-events-none');
+            } else {
+                trackButton.classList.remove('opacity-40', 'pointer-events-none');
+            }
+
             const sections = [restaurantListSection, foodMenuSection, userProfileSection, authSection, orderTrackingSection];
             sections.forEach(section => {
                 section.style.display = (section.id === sectionId) ? 'block' : 'none';
@@ -495,9 +529,25 @@
                 mainContent.classList.remove('md:col-span-3');
                 mainContent.classList.add('md:col-span-2');
                 cartAside.classList.remove('hidden');
-            } else {
+            }else if ( sectionId === 'order-tracking-section' || sectionId === 'auth-section' ){
+
+                trackButton.classList.add('hidden');
+                trackDot.classList.add('hidden');
+                profileButton.classList.add('hidden');
+                apiButton.classList.add('hidden');
+
                 mainContent.classList.remove('md:col-span-2');
                 mainContent.classList.add('md:col-span-3');
+                cartAside.classList.add('hidden');
+            } else {
+
+                mainContent.classList.remove('md:col-span-2');
+                mainContent.classList.add('md:col-span-3');
+
+                trackButton.classList.remove('hidden');
+                profileButton.classList.remove('hidden');
+                apiButton.classList.remove('hidden');
+
                 cartAside.classList.add('hidden');
             }
         };
@@ -513,8 +563,9 @@
             }
 
             const storage = getStorage();
-            for (const merchant of merchants) {
+            const deliveryFees = {};
 
+            for (const merchant of merchants) {
                 const customerId = localStorage.getItem("customer_id");
                 // NOTE: assume index0 address is default
                 const customerAddrId = JSON.parse(localStorage.getItem("customer_addresses") || "[]")[0]?.addressId;
@@ -529,23 +580,20 @@
                     method: "GET",
                     headers: { "Accept": "application/json" }
                 });
-                // const { fee } = await res.json();
-                const { fee = 0 } = await res.json();
+                const { fee = 10 } = await res.json(); // Default to 10 instead of 0
+                deliveryFees[merchantId] = fee;
 
-                // Calculate fake distance based on fee (1-25 km)
-                let distance;
-                if (fee === 0) {
-                    distance = Math.floor(Math.random() * 8) + 1; // 1-8 km
-                } else if (fee === 50) {
-                    distance = Math.floor(Math.random() * 9) + 9; // 9-17 km
-                } else if (fee === 100) {
-                    distance = Math.floor(Math.random() * 8) + 18; // 18-25 km
-                }
+                // Reverse calculate distance from fee with some randomness
+                // Formula: distance = (fee - 10) / 1.6
+                const baseDistance = (fee - 10) / 1.6;
+                const randomVariation = (Math.random() * 2) - 1; // ±1 km variation
+                const distance = Math.max(0, Math.min(25, baseDistance + randomVariation)).toFixed(1);
 
                 // Calculate fake ETA based on distance (1-60 minutes)
-                const baseEta = Math.round((distance / 30) * 60); // Convert to minutes
-                const randomVariation = Math.floor(Math.random() * 10) - 5; // ±5 minutes
-                const eta = Math.max(1, Math.min(60, baseEta + randomVariation)); // Clamp between 1-60
+                const distanceNum = parseFloat(distance);
+                const baseEta = Math.round((distanceNum / 30) * 60); // Convert to minutes
+                const etaVariation = Math.floor(Math.random() * 10) - 5; // ±5 minutes
+                const eta = Math.max(1, Math.min(60, baseEta + etaVariation)); // Clamp between 1-60
 
                 let imageUrl = '';
                 try {
@@ -583,6 +631,9 @@
 
                         localStorage.setItem('selected_merchant_id', merchant.merchantId);
                         localStorage.setItem('selected_merchant_name', merchant.merchantName);
+                        localStorage.setItem('delivery_fee', fee);
+
+                        cartDeliveryElement.textContent = `฿${fee}`;
 
                         menuTitle.textContent = currentRestaurant.merchantName;
                         renderMenu(currentRestaurant.menu);
@@ -592,6 +643,7 @@
                 }
                 restaurantsContainer.appendChild(card);
             }
+            localStorage.setItem('deliveryFees', JSON.stringify(deliveryFees));
         };
 
         const renderMenu = async (menu) => {
@@ -633,7 +685,6 @@
             cartItemsContainer.innerHTML = '';
             const currentCart = localCart[currentRestaurant.merchantId] || [];
 
-
             if (currentCart.length === 0) {
                 emptyCartMessage.style.display = 'block';
             } else {
@@ -662,7 +713,7 @@
             const currentCart = localCart[currentRestaurant.merchantId] || [];
             const food = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const couponPercent = localStorage.getItem('coupon_percent');
-            let deliveryFee = Number(currentRestaurant.deliveryFee) || 0;
+            const deliveryFee =  Number(localStorage.getItem('delivery_fee'));
             let discountAmount = 0;
 
             cartFoodElement.textContent = `฿${food.toFixed(2)}`;
@@ -670,31 +721,37 @@
             if (couponApplied) {
                 const couponCode = couponInput.value.trim().toUpperCase();
                 if (couponCode === "FREEDELIVERY") {
-                    cartDeliveryElement.textContent = `-฿${deliveryFee.toFixed(2)}`;
-                    cartDeliveryElement.className = 'text-lg font-bold text-red-500';
+
+                    // cartDeliveryElement.textContent = `-฿${deliveryFee}`;
+                    // cartDeliveryElement.className = 'text-lg font-bold text-red-500';
+
                     discountAmount = deliveryFee;
-                    discountRow.classList.add('hidden'); // Hide percentage discount row
+                    discountRow.classList.remove('hidden');
+                    cartDiscountElement.textContent = `-฿${discountAmount}`;
+
                 } else if (couponPercent > 0) {
+
                     // Reset delivery display to normal
-                    cartDeliveryElement.textContent = `฿${deliveryFee.toFixed(2)}`;
-                    cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
+                    // cartDeliveryElement.textContent = `฿${deliveryFee}`;
+                    // cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
 
                     discountAmount = food * (couponPercent / 100);
                     discountRow.classList.remove('hidden');
-                    cartDiscountElement.textContent = `-฿${discountAmount.toFixed(2)}`;
+                    cartDiscountElement.textContent = `-฿${discountAmount}`;
                 }
             } else {
                 // No coupon applied
                 discountAmount = 0;
-                cartDeliveryElement.textContent = `฿${deliveryFee.toFixed(2)}`;
+                cartDeliveryElement.textContent = `฿${deliveryFee}`;
                 cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
                 discountRow.classList.add('hidden');
             }
             localStorage.setItem('discount', discountAmount);
 
-            let total = food + deliveryFee - discountAmount;
+            const total = food + deliveryFee - discountAmount;
             cartTotalElement.textContent = `฿${total.toFixed(2)}`;
-            orderButton.disabled = food === 0;
+
+            orderButton.disabled = food === 0 || isOrderPlaced;
         };
 
 
@@ -764,7 +821,7 @@
             const restaurantId = currentRestaurant.merchantId;
             const customerId = localStorage.getItem('customer_id');
             const appliedCoupon = localStorage.getItem('applied_coupon');
-            const discount = localStorage.getItem('discount');
+            const discount = Number(localStorage.getItem('discount'));
             const customerAddresses = JSON.parse(localStorage.getItem('customer_addresses') || "[]");
             const customerAddressId = customerAddresses[0]?.addressId; // or let user choose later
 
@@ -873,8 +930,17 @@
             showSection('restaurant-list');
         });
 
+        trackButton.addEventListener('click', () => {
+            if (isOrderPlaced) {
+                showSection('order-tracking-section');
+            }
+        });
+
         trackingBackButton.addEventListener('click', () => {
-            showSection('restaurant-list');
+            showSection('restaurant-list'); 
+            if (isOrderPlaced) {
+                trackDot.classList.remove('hidden');
+            }
         });
 
         profileButton.addEventListener('click', () => {
@@ -904,6 +970,8 @@
                 return;
             }
 
+            const total = Number(cartTotalElement.textContent.replace('฿', ''));
+            localStorage.setItem('total', total);
             const orderPayload = buildOrderPayload()
 
             try {
@@ -916,6 +984,8 @@
                 couponInput.value = '';
                 couponStatus.textContent = '';
                 applyCouponBtn.disabled = true;
+                isOrderPlaced = true;
+
                 renderCart();
 
                 showModal();
@@ -946,6 +1016,7 @@
                 tempRestaurant[item.itemId] = item.foodName
             });
 
+
             if (order.items && Array.isArray(order.items)) {
                 order.items.forEach(item => {
 
@@ -956,17 +1027,12 @@
                         </div>
                         `;
 
-                    // TODO
-                    // Insert the new HTML into the container
                     trackingFoodItems.insertAdjacentHTML('beforeend', foodItemHtml);
                 });
             }
 
-            // FIX: total after applying coupon.
-            // BUG: backend use coupon as actual value,but frontend use percent.
-            trackingOrderTotal.textContent = `฿${order.total}`;
-
-
+            const total = localStorage.getItem('total');
+            trackingOrderTotal.textContent = `฿${total}`;
             showSection('order-tracking-section');
         });
 
@@ -1026,6 +1092,7 @@
 
         // Auth form listeners (simulated)
         showSignupLink.addEventListener('click', () => {
+
             signinForm.classList.add('hidden');
             signupForm.classList.remove('hidden');
             showSignupLink.classList.add('hidden');
@@ -1033,23 +1100,32 @@
             authStatus.textContent = '';
         });
 
-        // showSigninLink.addEventListener('click', () => {
-        //     signupForm.classList.add('hidden');
-        //     signinForm.classList.remove('hidden');
-        //     showSigninLink.classList.add('hidden');
-        //     showSignupLink.classList.remove('hidden');
-        //     authStatus.textContent = '';
-        // });
+        showSigninLink.addEventListener('click', () => {
+            signupForm.classList.add('hidden');
+            signinForm.classList.remove('hidden');
+            showSigninLink.classList.add('hidden');
+            showSignupLink.classList.remove('hidden');
+            authStatus.textContent = '';
+        });
 
         signupBtn.addEventListener('click', () => {
             const email = signupEmailInput.value;
-            isUserAuthenticated = true;
-            showSection('restaurant-list');
+
+            // TODO  call register
+
+            // pseudo code
+            // - Customer register
+            // - success redirect to 'login form'
+
+            // isUserAuthenticated = true;
+            // showSection('restaurant-list');
         });
 
          signinBtn.addEventListener('click', async () => {
              const auth = signinEmailPhoneInput.value;
              const pass = signinPasswordInput.value;
+
+
              try {
                  const loginResponse = await login(auth, pass);
                  const accessToken = loginResponse.accessToken;
@@ -1068,6 +1144,8 @@
 
                 try {
                     profileButton.classList.remove('hidden');
+                    trackButton.classList.remove('hidden');
+                    apiButton.classList.remove('hidden');
                     showSection('user-profile');
 
                     renderRestaurants(cachedData.merchants);
@@ -1126,7 +1204,6 @@
             cachedData = await fetchMerchants();
 
             if (!isUserAuthenticated) {
-                profileButton.classList.add('hidden');
                 showSection('auth-section');
                 return;
             }
