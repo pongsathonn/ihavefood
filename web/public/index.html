@@ -1,6 +1,6 @@
- <!-- ----------------------------------------------------------------------------------------------- -->
- <!-- ---------------------------------------INDEX--------------------------------------------------- -->
- <!-- ----------------------------------------------------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------------------- -->
+<!-- ---------------------------------------INDEX--------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------------------- -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -17,16 +17,6 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7fafc;
         }
-
-        #app-container {
-            display: none;
-        }
-
-        /* Simple style for your login screen so it doesn't look broken */
-        #auth-screen {
-            display: none; /* Initially hidden until JS checks status */
-        }
-
 
         .restaurant-card {
             transition: transform 0.2s, box-shadow 0.2s;
@@ -72,22 +62,22 @@
     <body class="flex flex-col min-h-screen">
 
 
-         <button id="track-button" class="fixed top-20 right-4 p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition z-50 hidden">
-             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-             </svg>
-             <span id="track-dot" class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
-         </button>
+        <button id="track-button" class="fixed top-20 right-4 p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition z-50 hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span id="track-dot" class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+        </button>
 
-         <a id="api-button" 
-             href="/openapi/"
-             target="_blank"
-             class="fixed top-6 right-20 px-3 py-2 rounded-full
-             bg-gray-200 hover:bg-gray-300 transition
-             text-sm font-medium text-gray-700
-             flex items-center justify-center z-50 hidden">
-             OpenAPI
-         </a>
+        <a id="api-button" 
+            href="/openapi/"
+            target="_blank"
+            class="fixed top-6 right-20 px-3 py-2 rounded-full
+            bg-gray-200 hover:bg-gray-300 transition
+            text-sm font-medium text-gray-700
+            flex items-center justify-center z-50 hidden">
+            OpenAPI
+        </a>
 
         <!-- Profile/Auth Button - Now fixed to the top-right of the viewport -->
         <button id="profile-button" class="fixed top-6 right-4 p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition z-50 hidden">
@@ -134,7 +124,7 @@
                     <div class="w-full">
 
                         <div id="signin-form" class="space-y-4">
-                             <h2 id="signin-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In</h2>
+                            <h2 id="signin-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In</h2>
                             <p class="text-sm text-gray-500 text-center"></p>
                             <div>
                                 <label for="signin-email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -156,13 +146,13 @@
                             <div>
                                 <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
                                 <input type="email" id="signup-email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                 <p id="email-register-msg" class="text-sm mt-2 text-red-500 w-full text-left"></p>
+                                <p id="email-register-msg" class="text-sm mt-2 text-red-500 w-full text-left"></p>
                             </div>
 
                             <div>
                                 <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</label>
                                 <input type="password" id="signup-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                 <p id="pass-register-msg" class="text-sm mt-2 text-red-500 text-center"></p>
+                                <p id="pass-register-msg" class="text-sm mt-2 text-red-500 text-center"></p>
                             </div>
 
                             <div>
@@ -186,138 +176,149 @@
                     </div>
                 </section>
 
-                 <!-- User Profile Section -->
-                 <section id="user-profile" class="max-w-xl mx-auto bg-white rounded-3xl shadow-lg p-8 hidden">
+                <!-- User Profile Section -->
+                <section id="user-profile" class="max-w-xl mx-auto bg-white rounded-3xl shadow-lg p-8 hidden">
 
-                     <!-- Profile Picture -->
-                     <div class="flex flex-col items-center mb-8">
-                         <div class="w-24 h-24 rounded-full overflow-hidden mb-3 border-2 border-gray-200">
-                             <img
-                                 id="user-picture"
-                                 src="https://placehold.co/128x128/94a3b8/fff?text=C"
-                                 alt="User Profile Picture"
-                                 class="w-full h-full object-cover"
-                             />
-                         </div>
-                         <p
-                             id="customer-name"
-                             contenteditable="true"
-                             class="text-xl font-semibold text-gray-900"
-                         >
-                             FooCustomer
-                         </p>
-                     </div>
+                    <!-- Profile Picture -->
+                    <div class="flex flex-col items-center mb-8">
+                        <div class="w-24 h-24 rounded-full overflow-hidden mb-3 border-2 border-gray-200">
+                            <img
+                                id="user-picture"
+                                src="https://placehold.co/128x128/94a3b8/fff?text=C"
+                                alt="User Profile Picture"
+                                class="w-full h-full object-cover"
+                            />
+                        </div>
+                        <p
+                            id="customer-name"
+                            contenteditable="true"
+                            class="text-xl font-semibold text-gray-900"
+                        >
+                            FooCustomer
+                        </p>
+                    </div>
 
-                     <!-- Customer Info -->
-                     <div class="space-y-6 text-sm">
+                    <!-- Customer Info -->
+                    <div class="space-y-6 text-sm">
 
-                         <div class="space-y-4">
-                             <div class="flex justify-between items-center">
-                                 <p class="font-semibold text-gray-900">Info</p>
-                                 <button class="text-blue-600 text-xs hover:underline">Edit</button>
-                             </div>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <p class="font-semibold text-gray-900">Info</p>
+                                <button class="text-blue-600 text-xs hover:underline">Edit</button>
+                            </div>
 
-                             <div class="space-y-2">
-                                 <div class="flex items-center">
-                                     <span class="text-gray-500 w-24">CustomerID</span>
-                                     <span id="customer-id" class="text-gray-900">TODO</span>
-                                 </div>
-                                 <div class="flex items-center">
-                                     <span class="text-gray-500 w-24">Email</span>
-                                     <span id="customer-email" class="text-gray-900">TODO</span>
-                                 </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-24">CustomerID</span>
+                                    <span id="customer-id" class="text-gray-900">TODO</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-gray-500 w-24">Email</span>
+                                    <span id="customer-email" class="text-gray-900">TODO</span>
+                                </div>
 
-                                 <div class="flex items-center gap-3">
-                                     <span class="text-gray-500 w-24">Phone</span>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-gray-500 w-24">Phone</span>
 
-                                     <input
-                                         type="text"
-                                         id="customer-phone"
-                                         value="TODO"
-                                         class="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2
-                                         text-gray-900 transition
-                                         focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-                                     >
-                                 </div>
-                             </div>
+                                    <input
+                                        type="text"
+                                        id="customer-phone"
+                                        value="TODO"
+                                        class="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2
+                                        text-gray-900 transition
+                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                    >
+                                </div>
+                            </div>
 
-                             <div class="flex space-x-2 justify-end">
-                                 <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
-                                 <button class="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">Save</button>
-                             </div>
-                         </div>
+                            <div class="flex space-x-2 justify-end">
+                                <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
+                                <button class="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">Save</button>
+                            </div>
+                        </div>
 
-                         <!-- Divider -->
-                         <div class="border-t border-gray-200"></div>
+                        <!-- Divider -->
+                        <div class="border-t border-gray-200"></div>
 
-                         <!-- Social -->
-                         <div class="space-y-2">
-                             <p class="font-semibold text-gray-900 mb-3">Social</p>
-                             <div class="flex">
-                                 <span class="text-gray-500 w-24">Facebook</span>
-                                 <span id="social-facebook" class="text-gray-900">TODO</span>
-                             </div>
-                             <div class="flex">
-                                 <span class="text-gray-500 w-24">Instagram</span>
-                                 <span id="social-instagram" class="text-gray-900">TODO</span>
-                             </div>
-                             <div class="flex">
-                                 <span class="text-gray-500 w-24">LINE</span>
-                                 <span id="social-line" class="text-gray-900">TODO</span>
-                             </div>
-                         </div>
+                        <!-- Social -->
+                        <div class="space-y-2">
+                            <p class="font-semibold text-gray-900 mb-3">Social</p>
+                            <div class="flex">
+                                <span class="text-gray-500 w-24">Facebook</span>
+                                <span id="social-facebook" class="text-gray-900">TODO</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-gray-500 w-24">Instagram</span>
+                                <span id="social-instagram" class="text-gray-900">TODO</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-gray-500 w-24">LINE</span>
+                                <span id="social-line" class="text-gray-900">TODO</span>
+                            </div>
+                        </div>
 
-                         <!-- Divider -->
-                         <div class="border-t border-gray-200"></div>
+                        <!-- Divider -->
+                        <div class="border-t border-gray-200"></div>
 
-                         <!-- My Addresses -->
-<div class="max-w-md">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="font-semibold text-gray-900 text-lg">My Address</h3>
-        <button onclick="addAddress()" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Add New</button>
-    </div>
+                        <!-- My Addresses -->
+                        <!-- <div class="max-w-md"> -->
+                        <!--     <div class="flex items-center justify-between mb-4"> -->
+                        <!--         <h3 class="font-semibold text-gray-900 text-lg">My Address</h3> -->
+                        <!--         <button onclick="addAddress()" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Add New</button> -->
+                        <!--     </div> -->
+                        <!---->
+                        <!--     <div id="address-list" class="space-y-3"> -->
+                        <!--         <div class="address-card relative p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group"> -->
+                        <!--             <div class="flex justify-between items-start mb-2"> -->
+                        <!--                 <div> -->
+                        <!--                     <span id="address-name" class="font-bold text-gray-900">Home</span> -->
+                        <!--                     <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Default</span> -->
+                        <!--                 </div> -->
+                        <!---->
+                        <!--                 <div class="flex space-x-3"> -->
+                        <!--                     <button class="text-gray-400 hover:text-blue-600"> -->
+                        <!--                         <small>Edit</small> -->
+                        <!--                     </button> -->
+                        <!--                     <button class="text-gray-400 hover:text-red-600"> -->
+                        <!--                         <small>Delete</small> -->
+                        <!--                     </button> -->
+                        <!--                 </div> -->
+                        <!--             </div> -->
+                        <!---->
+                        <!--             <div class="text-gray-600 text-sm leading-relaxed"> -->
+                        <!--                 <p id="address-street" class="text-gray-800">123 Sunshine Street</p> -->
+                        <!--                 <p> -->
+                        <!--                     <span id="address-sub-district">Sub-district</span>,  -->
+                        <!--                     <span id="address-district">District</span> -->
+                        <!--                 </p> -->
+                        <!--                 <p> -->
+                        <!--                     <span id="address-province">Province</span>,  -->
+                        <!--                     <span id="address-postal" class="font-medium">12345</span> -->
+                        <!--                 </p> -->
+                        <!--             </div> -->
+                        <!--         </div> -->
+                        <!--     </div> -->
+                        <!-- </div> -->
 
-    <div id="address-list" class="space-y-3">
-        <div class="address-card relative p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group">
-            <div class="flex justify-between items-start mb-2">
-                <div>
-                    <span id="address-name" class="font-bold text-gray-900">Home</span>
-                    <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Default</span>
-                </div>
+                        <div class="max-w-md mx-auto">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-900 text-lg">My Address</h3>
+                                <button id="add-btn" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Add New</button>
+                            </div>
+                            <div id="address-list" class="space-y-3"></div>
+                        </div>
 
-                <div class="flex space-x-3">
-                    <button onclick="editAddress(this)" class="text-gray-400 hover:text-blue-600">
-                        <small>Edit</small>
+
+
+                        <!-- Sign Out -->
+                        <button
+                        id="signout-btn"
+                        class="mt-8 w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded transition"
+                    >
+                        Sign Out
                     </button>
-                    <button onclick="deleteAddress(this)" class="text-gray-400 hover:text-red-600">
-                        <small>Delete</small>
-                    </button>
-                </div>
-            </div>
 
-            <div class="text-gray-600 text-sm leading-relaxed">
-                <p id="address-street" class="text-gray-800">123 Sunshine Street</p>
-                <p>
-                    <span id="address-sub-district">Sub-district</span>, 
-                    <span id="address-district">District</span>
-                </p>
-                <p>
-                    <span id="address-province">Province</span>, 
-                    <span id="address-postal" class="font-medium">12345</span>
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
-                     <!-- Sign Out -->
-                     <button
-                         id="signout-btn"
-                         class="mt-8 w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded transition"
-                     >
-                         Sign Out
-                     </button>
-
-                 </section>
+                </section>
 
                 <!-- Order Tracking Section (Initially Hidden) -->
                 <section id="order-tracking-section" class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 hidden col-span-1 md:col-span-3">
@@ -327,7 +328,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                         <h2 class="text-2xl font-bold text-gray-800 ml-2">Order Tracking</h2>
+                        <h2 class="text-2xl font-bold text-gray-800 ml-2">Order Tracking</h2>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -336,60 +337,60 @@
                             <!-- Order Status -->
                             <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-sm">
                                 <h3 class="text-xl font-bold text-gray-800 mb-4">Order Status</h3>
-                                 <div class="flex items-center justify-between relative">
-                                     <!-- Step 1 -->
-                                     <div class="tracking-step w-1/4 flex flex-col items-center relative active" id="step-1">
-                                         <div class="step-dot w-6 h-6 rounded-full bg-pink-500 border-4 border-white transition-all duration-[3000ms]"></div>
-                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Order Placed</span>
-                                     </div>
+                                <div class="flex items-center justify-between relative">
+                                    <!-- Step 1 -->
+                                    <div class="tracking-step w-1/4 flex flex-col items-center relative active" id="step-1">
+                                        <div class="step-dot w-6 h-6 rounded-full bg-pink-500 border-4 border-white transition-all duration-[3000ms]"></div>
+                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Order Placed</span>
+                                    </div>
 
 
-                                     <!-- Step 2 -->
-                                     <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-2">
-                                         <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
-                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Preparing Food</span>
-                                     </div>
-                                     <!-- Line 1 -->
-                                     <div class="step-line absolute h-1 bg-gray-300 top-3 left-[12.5%] right-[62.5%] transition-all duration-[3000ms]"></div>
+                                    <!-- Step 2 -->
+                                    <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-2">
+                                        <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
+                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Preparing Food</span>
+                                    </div>
+                                    <!-- Line 1 -->
+                                    <div class="step-line absolute h-1 bg-gray-300 top-3 left-[12.5%] right-[62.5%] transition-all duration-[3000ms]"></div>
 
 
-                                     <!-- Step 3 -->
-                                     <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-3">
-                                         <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
-                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Rider on the Way</span>
-                                     </div>
-                                     <!-- Line 2 -->
-                                     <div class="step-line absolute h-1 bg-gray-300 top-3 left-[37.5%] right-[37.5%] transition-all duration-[3000ms]"></div>
+                                    <!-- Step 3 -->
+                                    <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-3">
+                                        <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
+                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Rider on the Way</span>
+                                    </div>
+                                    <!-- Line 2 -->
+                                    <div class="step-line absolute h-1 bg-gray-300 top-3 left-[37.5%] right-[37.5%] transition-all duration-[3000ms]"></div>
 
 
-                                     <!-- Step 4 -->
-                                     <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-4">
-                                         <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
-                                         <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Delivered</span>
-                                     </div>
-                                     <!-- Line 3 -->
-                                     <div class="step-line absolute h-1 bg-gray-300 top-3 left-[62.5%] right-[12.5%] transition-all duration-[3000ms]"></div>
+                                    <!-- Step 4 -->
+                                    <div class="tracking-step w-1/4 flex flex-col items-center relative" id="step-4">
+                                        <div class="step-dot w-6 h-6 rounded-full bg-gray-300 border-4 border-white transition-all duration-[3000ms]"></div>
+                                        <span class="step-text text-xs text-center text-gray-600 mt-2 transition-all duration-[3000ms]">Delivered</span>
+                                    </div>
+                                    <!-- Line 3 -->
+                                    <div class="step-line absolute h-1 bg-gray-300 top-3 left-[62.5%] right-[12.5%] transition-all duration-[3000ms]"></div>
 
-                                 </div>
+                                </div>
 
-                             </div>
+                            </div>
 
-                             <!-- Map Placeholder -->
-                             <div class="bg-gray-100 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                                 <iframe 
-                                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3777.8896428156843!2d98.99113197587258!3d18.78778006195882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30da3a7e90bb6f5d%3A0x8e4e6c5c6de1f11d!2sTha%20Phae%20Gate!5e0!3m2!1sen!2sth!4v1734000000000!5m2!1sen!2sth" 
-                                     width="100%" 
-                                     height="400" 
-                                     style="border:0;" 
-                                     allowfullscreen="" 
-                                     loading="lazy" 
-                                     referrerpolicy="no-referrer-when-downgrade"
-                                     class="rounded-2xl"
-                                 ></iframe>
-                                 <div class="p-4 bg-gray-50 text-center">
-                                     <p class="text-sm text-red-600">**Map feature not implemented yet</p>
-                                 </div>
-                             </div>
+                            <!-- Map Placeholder -->
+                            <div class="bg-gray-100 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                                <iframe 
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3777.8896428156843!2d98.99113197587258!3d18.78778006195882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30da3a7e90bb6f5d%3A0x8e4e6c5c6de1f11d!2sTha%20Phae%20Gate!5e0!3m2!1sen!2sth!4v1734000000000!5m2!1sen!2sth" 
+                                    width="100%" 
+                                    height="400" 
+                                    style="border:0;" 
+                                    allowfullscreen="" 
+                                    loading="lazy" 
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    class="rounded-2xl"
+                                ></iframe>
+                                <div class="p-4 bg-gray-50 text-center">
+                                    <p class="text-sm text-red-600">**Map feature not implemented yet</p>
+                                </div>
+                            </div>
 
                         </div>
 
@@ -408,10 +409,10 @@
                                         <span id="tracking-restaurant-name"></span>
                                     </div>
 
-                                     <div class="flex justify-between items-start">
-                                         <span class="font-semibold">Foods:</span>
-                                         <div id="tracking-food-items" class="flex flex-col items-end space-y-1 w-40"></div>
-                                     </div>
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-semibold">Foods:</span>
+                                        <div id="tracking-food-items" class="flex flex-col items-end space-y-1 w-40"></div>
+                                    </div>
                                     <div class="flex justify-between">
                                         <span class="font-semibold">Total:</span>
                                         <span id="tracking-order-total"></span>
@@ -467,28 +468,28 @@
                         <!-- Cart items will be injected here by JavaScript -->
                     </div>
 
-                     <!-- Coupon Section -->
-                     <div class="mt-4 mb-4">
-                         <h3 class="text-lg font-semibold text-gray-800 mb-2">Coupons</h3>
+                    <!-- Coupon Section -->
+                    <div class="mt-4 mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Coupons</h3>
 
-                         <div class="flex flex-wrap gap-2 mt-2 mb-2">
-                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE10">SAVE10</button>
-                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE50">SAVE50</button>
-                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="FREEDELIVERY">FREEDELIVERY</button>
-                         </div>
+                        <div class="flex flex-wrap gap-2 mt-2 mb-2">
+                            <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE10">SAVE10</button>
+                            <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE50">SAVE50</button>
+                            <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="FREEDELIVERY">FREEDELIVERY</button>
+                        </div>
 
-                         <div class="flex items-center space-x-2 flex-nowrap">
-                             <input type="text" id="coupon-input" placeholder="Code" 
-                                 class="min-w-0 flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-sm">
+                        <div class="flex items-center space-x-2 flex-nowrap">
+                            <input type="text" id="coupon-input" placeholder="Code" 
+                                class="min-w-0 flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-sm">
 
-                             <button id="apply-coupon-btn" 
-                                 class="flex-shrink-0 bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400 text-sm" 
-                                 disabled>
-                                 Apply
-                             </button>
-                         </div>
-                         <p id="coupon-status" class="text-sm mt-2"></p>
-                     </div>
+                            <button id="apply-coupon-btn" 
+                                class="flex-shrink-0 bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400 text-sm" 
+                                disabled>
+                                Apply
+                            </button>
+                        </div>
+                        <p id="coupon-status" class="text-sm mt-2"></p>
+                    </div>
 
                     <div class="border-t pt-4">
                         <div class="flex justify-between items-center mb-2">
@@ -498,7 +499,7 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-lg font-semibold text-gray-800">Delivery Fee:</span>
                             <span id="cart-delivery" class="text-lg font-bold text-gray-600">฿0.00</span>
-                         </div>
+                        </div>
                         <div id="discount-row" class="flex justify-between items-center mb-2 hidden">
                             <span class="text-lg font-semibold text-gray-800">Discount:</span>
                             <span id="cart-discount" class="text-lg font-bold text-red-500">-฿0.00</span>
@@ -537,37 +538,37 @@
             </div>
         </div>
 
-         <!-- Register Success Modal -->
-         <div id="modal-register" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-             <div class="relative bg-white p-8 rounded-3xl shadow-lg w-full max-w-sm text-center">
+        <!-- Register Success Modal -->
+        <div id="modal-register" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+            <div class="relative bg-white p-8 rounded-3xl shadow-lg w-full max-w-sm text-center">
 
-                 <!-- Close button -->
-                 <button
-                     onclick="document.getElementById('modal-register').classList.add('hidden')"
-                     class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                     aria-label="Close"
-                 >
-                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                         <path stroke-linecap="round" stroke-linejoin="round"
-                             d="M6 18L18 6M6 6l12 12" />
-                     </svg>
-                 </button>
+                <!-- Close button -->
+                <button
+                    onclick="document.getElementById('modal-register').classList.add('hidden')"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    aria-label="Close"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
 
-                 <svg class="mx-auto h-16 w-16 text-green-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                     <path stroke-linecap="round" stroke-linejoin="round"
-                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                 </svg>
+                <svg class="mx-auto h-16 w-16 text-green-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
 
-                 <h3 class="text-xl font-bold text-gray-800 mb-2">
-                     Successfully registered!
-                 </h3>
-             </div>
-         </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">
+                    Successfully registered!
+                </h3>
+            </div>
+        </div>
 
- <!-- ----------------------------------------------------------------------------------------------- -->
- <!-- ---------------------------------------JavaScript---------------------------------------------- -->
- <!-- ----------------------------------------------------------------------------------------------- -->
+        <!-- ----------------------------------------------------------------------------------------------- -->
+        <!-- ---------------------------------------JavaScript---------------------------------------------- -->
+        <!-- ----------------------------------------------------------------------------------------------- -->
 
         <script type="module">
 
@@ -578,6 +579,8 @@
         };
         const app = initializeApp(firebaseConfig);
         const serverUrl = "https://api-gateway-731964455549.asia-southeast1.run.app"
+        const DEFAULT_ADDRESS_NAME = "New Address";
+        const DEFAULT_STREET = "Enter Street Address";
 
         // --- Static Data ---
         let isUserAuthenticated = false;
@@ -661,9 +664,16 @@
         const trackingOrderTotal = document.getElementById("tracking-order-total");
 
 
-
         const presetCouponButtons = document.querySelectorAll('.preset-coupon-btn');
         let couponApplied = false;
+
+        let addresses = [
+            { id: 1, name: 'Home', street: '123 Sunshine Street', subDistrict: 'Sub-district', district: 'District', province: 'Province', postal: '12345', isDefault: true }
+        ];
+
+        const addressList = document.getElementById('address-list');
+        const addBtn = document.getElementById('add-btn');
+
 
         // Detect page refresh
         window.addEventListener('load', () => {
@@ -676,41 +686,155 @@
             }
         });
 
+        window.saveAddress = saveAddress;
+        window.editAddress = editAddress;
+        window.renderAddresses = renderAddresses;
 
-const editAddress = (btn) => {
-    // Find the card container
-    const card = btn.closest('.address-card') || btn.closest('[id^="address-list"] > div');
-    const nameSpan = card.querySelector('#address-name');
-    
-    const newName = prompt("Edit Address Label:", nameSpan.innerText);
-    
-    if (newName && newName.trim() !== "") {
-        nameSpan.innerText = newName;
-    }
-};
 
-const deleteAddress = (btn) => {
-    const card = btn.closest('.address-card') || btn.closest('[id^="address-list"] > div');
-    if (confirm("Remove this address?")) {
-        card.remove();
-    }
-};
+        function createInput(label, id, value = '', type = 'text') {
+            return `
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+<input type="${type}" id="${id}" value="${value}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+</div>
+`;
+        }
 
-const addAddress = () => {
-    const list = document.getElementById('address-list');
-    const firstCard = list.querySelector('div');
-    
-    if (firstCard) {
-        const newCard = firstCard.cloneNode(true);
-        // Reset values for the new card
-        newCard.querySelector('#address-name').innerText = "New Place";
-        // Remove the "Default" badge if it exists in the clone
-        const badge = newCard.querySelector('.bg-green-100');
-        if (badge) badge.remove();
-        
-        list.appendChild(newCard);
-    }
-};
+        function renderAddresses() {
+
+            isAddingNew = false;
+
+            addressList.innerHTML = '';
+            addresses.forEach(addr => {
+                const card = document.createElement('div');
+                card.className = 'address-card relative p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors';
+                card.innerHTML = `
+<div class="flex justify-between items-start mb-2">
+    <div>
+        <span class="font-bold text-gray-900">${addr.name}</span>
+        ${addr.isDefault ? '<span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Default</span>' : ''}
+    </div>
+    <div class="flex space-x-3">
+        <button data-edit="${addr.id}" class="text-gray-400 hover:text-blue-600"><small>Edit</small></button>
+        <button data-delete="${addr.id}" class="text-gray-400 hover:text-red-600"><small>Delete</small></button>
+    </div>
+</div>
+<div class="text-gray-600 text-sm leading-relaxed">
+    <p class="text-gray-800">${addr.street}</p>
+    <p>${addr.subDistrict}, ${addr.district}</p>
+    <p>${addr.province}, <span class="font-medium">${addr.postal}</span></p>
+</div>
+`;
+                addressList.appendChild(card);
+            });
+        }
+
+        // Shared save function for both new and existing addresses
+        function saveAddress(id, isNew = false) {
+
+            isAddingNew = false;
+
+            const name = document.getElementById(`name-${id}`).value;
+            const street = document.getElementById(`street-${id}`).value;
+            if (!name || !street) return alert('Please fill in at least Name and Street');
+            const subDistrict = document.getElementById(`sub-${id}`).value;
+            const district = document.getElementById(`district-${id}`).value;
+            const province = document.getElementById(`province-${id}`).value;
+            const postal = document.getElementById(`postal-${id}`).value;
+            const isDefault = document.getElementById(`default-${id}`).checked;
+
+            if (isDefault) addresses.forEach(a => a.isDefault = false);
+
+            if (isNew) {
+                addresses.push({ id, name, street, subDistrict, district, province, postal, isDefault });
+            } else {
+                const addr = addresses.find(a => a.id === id);
+                Object.assign(addr, { name, street, subDistrict, district, province, postal, isDefault });
+            }
+            renderAddresses();
+        }
+
+        function editAddress(id, isNew = false, replaceCard = null) {
+
+            addressList.innerHTML = '';
+
+            const addr = isNew ? {} : addresses.find(a => a.id === id);
+
+            const card = document.createElement('div');
+            card.className = 'address-card relative p-4 border border-blue-300 bg-blue-50 rounded-lg';
+
+            card.innerHTML = `
+                ${createInput('Name', `name-${id}`, addr.name || '')}
+                ${createInput('Street', `street-${id}`, addr.street || '')}
+                <div class="grid grid-cols-2 gap-3">
+                    ${createInput('Sub-district', `sub-${id}`, addr.subDistrict || '')}
+                    ${createInput('District', `district-${id}`, addr.district || '')}
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    ${createInput('Province', `province-${id}`, addr.province || '')}
+                    ${createInput('Postal Code', `postal-${id}`, addr.postal || '')}
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="default-${id}" ${addr.isDefault ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                    <label for="default-${id}" class="ml-2 text-sm text-gray-700">Set as default</label>
+                </div>
+                
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="saveAddress(${id}, ${isNew})" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">${isNew ? 'Add' : 'Save'}</button>
+                    <button onclick="renderAddresses()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+                </div>
+                `;
+            
+            addressList.appendChild(card);
+
+            document.getElementById(`save-${id}`)
+                .addEventListener('click', () => saveAddress(id, isNew));
+
+            document.getElementById(`cancel-${id}`)
+                .addEventListener('click', renderAddresses);
+
+        }
+
+        // Event delegation
+        addressList.addEventListener('click', e => {
+            const editBtn = e.target.closest('button[data-edit]');
+            const deleteBtn = e.target.closest('button[data-delete]');
+
+            if (editBtn) {
+                const card = editBtn.closest('.address-card');
+                editAddress(Number(editBtn.dataset.edit), false, card);
+                return;
+            }
+
+            if (deleteBtn && confirm('Delete this address?')) {
+                addresses = addresses.filter(a => a.id !== Number(deleteBtn.dataset.delete));
+                renderAddresses();
+            }
+            // if (e.target.dataset.edit) editAddress(Number(e.target.dataset.edit));
+            // if (e.target.dataset.delete && confirm('Delete this address?')) {
+            //     addresses = addresses.filter(a => a.id !== Number(e.target.dataset.delete));
+            //     renderAddresses();
+            // }
+        });
+
+
+        let isAddingNew = false;
+        addBtn.addEventListener('click', () => {
+
+
+            // prevent multiple forms
+            if (isAddingNew) return; 
+            isAddingNew = true;
+
+            // If a new address form already exists, do nothing
+            if (document.querySelector('.address-card.new-address')) return;
+
+            const newId = Math.max(...addresses.map(a => a.id), 0) + 1;
+            editAddress(newId, true);
+        });
+
+        renderAddresses();
 
 
 
@@ -788,6 +912,7 @@ const addAddress = () => {
                 // else just update to see delivery fee and est 
 
                 // NOTE: assume index0 address is default
+                // TODO: use 'default' instead index[0]
                 const customerAddrId = JSON.parse(localStorage.getItem("customer_addresses") || "[]")[0]?.addressId;
                 const merchantId = merchant.merchantId
 
@@ -829,21 +954,21 @@ const addAddress = () => {
 
                 card.className = `restaurant-card bg-gray-50 rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-lg ${isClosed ? 'opacity-50 pointer-events-none' : ''}`;
                 card.innerHTML = `
-                    <img src="${imageUrl}" alt="${merchant.merchantName}" class="w-full h-[220px] object-cover">
-                    <div class="p-4">
-                        <h3 class="text-lg font-semibold text-gray-800">${merchant.merchantName}</h3>
+<img src="${imageUrl}" alt="${merchant.merchantName}" class="w-full h-[220px] object-cover">
+<div class="p-4">
+    <h3 class="text-lg font-semibold text-gray-800">${merchant.merchantName}</h3>
 
-                        ${!isClosed ? `
-                        <p class="text-sm text-gray-500">
-                            Delivery: <span class="text-red-700">฿${fee}</span>
-                            <span class="text-gray-200">|</span>
-                            ${distance} km (${eta} min)
-                        </p>
-                        ` : ''}
+    ${!isClosed ? `
+    <p class="text-sm text-gray-500">
+        Delivery: <span class="text-red-700">฿${fee}</span>
+        <span class="text-gray-200">|</span>
+        ${distance} km (${eta} min)
+    </p>
+    ` : ''}
 
-                        <p class="text-sm text-gray-500">Status: ${isClosed ? 'CLOSED' : 'OPEN'}</p>
-                    </div>
-                `;
+    <p class="text-sm text-gray-500">Status: ${isClosed ? 'CLOSED' : 'OPEN'}</p>
+</div>
+`;
 
                 if (!isClosed) {
                     card.addEventListener('click', () => {
@@ -888,15 +1013,15 @@ const addAddress = () => {
                 card.className = 'food-item-card ...';
 
                 card.innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
-                    <div>
-                        <h4 class="text-md font-semibold text-gray-800">${item.foodName}</h4>
-                        <span class="text-sm text-gray-500">฿${(item.price).toFixed(2)}</span>
-                    </div>
-                </div>
-                <button class="add-to-cart-btn ..." data-item='${JSON.stringify(item)}'>Add</button>
-                `;
+<div class="flex items-center space-x-4">
+    <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
+    <div>
+        <h4 class="text-md font-semibold text-gray-800">${item.foodName}</h4>
+        <span class="text-sm text-gray-500">฿${(item.price).toFixed(2)}</span>
+    </div>
+</div>
+<button class="add-to-cart-btn ..." data-item='${JSON.stringify(item)}'>Add</button>
+`;
                 menuContainer.appendChild(card);
             }
         };
@@ -913,16 +1038,16 @@ const addAddress = () => {
                     const itemElement = document.createElement('div');
                     itemElement.className = 'flex justify-between items-center py-2 border-b last:border-b-0 text-sm';
                     itemElement.innerHTML = `
-                    <span>${item.foodName} <span class="text-gray-500">(${item.quantity})</span></span>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-semibold">฿${(item.price * item.quantity).toFixed(2)}</span>
-                        <button class="remove-from-cart-btn text-red-500 hover:text-red-600 transition" data-item-id="${item.itemId}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.038 21H7.962a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-                    </div>
-                    `;
+<span>${item.foodName} <span class="text-gray-500">(${item.quantity})</span></span>
+<div class="flex items-center space-x-2">
+    <span class="font-semibold">฿${(item.price * item.quantity).toFixed(2)}</span>
+    <button class="remove-from-cart-btn text-red-500 hover:text-red-600 transition" data-item-id="${item.itemId}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.038 21H7.962a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+    </button>
+</div>
+`;
                     cartItemsContainer.appendChild(itemElement);
                 });
             }
@@ -1093,20 +1218,20 @@ const addAddress = () => {
 
         const login = async (auth,pass) => {
 
-             let loginPayload = {
-                 identifier: auth,
-                 password: pass,
-                 role: "CUSTOMER",
-             };
+            let loginPayload = {
+                identifier: auth,
+                password: pass,
+                role: "CUSTOMER",
+            };
 
-             const res = await fetch(`${serverUrl}/auth/login`, {
-                 method: "POST",
-                 headers: {
-                     "Accept": "application/json",
-                     "Content-Type": "application/json"
-                 },
-                 body: JSON.stringify(loginPayload)
-             });
+            const res = await fetch(`${serverUrl}/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(loginPayload)
+            });
 
             if (!res.ok) {
                 const errorData = await res.json();
@@ -1119,20 +1244,20 @@ const addAddress = () => {
 
         const register = async (auth,pass,role) => {
 
-             let registerPayload = {
-                 email: auth,
-                 password: pass,
-                 role: role,
-             };
+            let registerPayload = {
+                email: auth,
+                password: pass,
+                role: role,
+            };
 
-             const res = await fetch(`${serverUrl}/auth/register`, {
-                 method: "POST",
-                 headers: {
-                     "Accept": "application/json",
-                     "Content-Type": "application/json"
-                 },
-                 body: JSON.stringify(registerPayload)
-             });
+            const res = await fetch(`${serverUrl}/auth/register`, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(registerPayload)
+            });
 
             if (!res.ok) {
                 const errorData = await res.json();
@@ -1140,7 +1265,7 @@ const addAddress = () => {
                 err.status = res.status;
                 throw err;
             }
-             return await res.json();
+            return await res.json();
         };
 
         const fetchMerchants = async () => {
@@ -1149,26 +1274,26 @@ const addAddress = () => {
                 headers: { "Accept": "application/json" }
             });
 
-             if (!merchants.ok) {
-                 throw new Error(`Fetch merchants failed: ${merchants.status} ${merchants.statusText}`);
-             }
+            if (!merchants.ok) {
+                throw new Error(`Fetch merchants failed: ${merchants.status} ${merchants.statusText}`);
+            }
 
-             return await merchants.json();
+            return await merchants.json();
         };
 
-         const fetchCustomer = async (customerID) => {
+        const fetchCustomer = async (customerID) => {
             const customer = await fetch(`${serverUrl}/api/customers/${customerID}`, {
-                 method: "GET",
-                 headers: { "Accept": "application/json" }
-             });
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
 
-             if (!customer.ok) {
-                 throw new Error(`Fetch customer failed: ${customer.status} ${customer.statusText}`);
-             }
+            if (!customer.ok) {
+                throw new Error(`Fetch customer failed: ${customer.status} ${customer.statusText}`);
+            }
 
             const data = await customer.json();
             return data;
-         };
+        };
 
         // --- Event Listeners ---
         presetCouponButtons.forEach(btn => {
@@ -1249,10 +1374,10 @@ const addAddress = () => {
                 setTimeout(() => setTrackingStep(3), 6000); // Rider is on the way
                 setTimeout(() => setTrackingStep(4), 10000); // Delivered
             }catch (err){
-                 console.error("Order failed:", err);
-                 alert("Failed to place an order. Please try again."); // or show a small popup/modal    
-             }
-         });
+                console.error("Order failed:", err);
+                alert("Failed to place an order. Please try again."); // or show a small popup/modal    
+            }
+        });
 
         closeModalButton.addEventListener('click', hideModal);
 
@@ -1275,11 +1400,11 @@ const addAddress = () => {
                 order.items.forEach(item => {
 
                     const foodItemHtml = `
-                        <div class="flex justify-between text-sm w-full"> 
-                        <span>${tempRestaurant[item.itemId]}</span>
-                        <span class="flex-shrink-0">x ${item.quantity}</span>
-                        </div>
-                        `;
+<div class="flex justify-between text-sm w-full"> 
+<span>${tempRestaurant[item.itemId]}</span>
+<span class="flex-shrink-0">x ${item.quantity}</span>
+</div>
+`;
 
                     trackingFoodItems.insertAdjacentHTML('beforeend', foodItemHtml);
                 });
@@ -1467,40 +1592,40 @@ const addAddress = () => {
             }
         });
 
-         /**
+        /**
             * Decodes the payload of a JSON Web Token (JWT).
             * @param {string} token The JWT string.
             * @returns {object|null} The decoded JSON payload, or null on failure.
         */
-         const decodeJwt = (token) => {
-             try {
-                 // The token is split into header, payload, and signature. We want the payload (index 1).
-                 const [_, base64Url] = token.split('.');
-                 if (!base64Url) return null;
+        const decodeJwt = (token) => {
+            try {
+                // The token is split into header, payload, and signature. We want the payload (index 1).
+                const [_, base64Url] = token.split('.');
+                if (!base64Url) return null;
 
-                 // Replace URL-safe characters with standard Base64 characters
-                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                // Replace URL-safe characters with standard Base64 characters
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
 
-                 // Decode Base64 and parse the resulting JSON string
-                 // The original logic is unnecessarily complex due to handling byte-by-byte decoding
-                 // Using `atob` for standard Base64 decoding, followed by a simple JSON.parse
-                 const jsonPayload = window.atob(base64);
+                // Decode Base64 and parse the resulting JSON string
+                // The original logic is unnecessarily complex due to handling byte-by-byte decoding
+                // Using `atob` for standard Base64 decoding, followed by a simple JSON.parse
+                const jsonPayload = window.atob(base64);
 
-                 // NOTE: If the payload contains multi-byte characters (like emojis or non-latin text), 
-                 // the original `decodeURIComponent(window.atob(...))` logic is needed.
-                 // For a standard JWT with common claims, simple `atob` often works, but 
-                 // using a standard library (like `jwt-decode`) is best practice.
-                 // For safety/compatibility, here is the robust decoding:
-                 const payload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                 }).join(''));
+                // NOTE: If the payload contains multi-byte characters (like emojis or non-latin text), 
+                // the original `decodeURIComponent(window.atob(...))` logic is needed.
+                // For a standard JWT with common claims, simple `atob` often works, but 
+                // using a standard library (like `jwt-decode`) is best practice.
+                // For safety/compatibility, here is the robust decoding:
+                const payload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
 
-                 return JSON.parse(payload);
-             } catch (e) {
-                 console.error('Failed to decode or parse JWT payload:', e);
-                 return null;
-             }
-         };
+                return JSON.parse(payload);
+            } catch (e) {
+                console.error('Failed to decode or parse JWT payload:', e);
+                return null;
+            }
+        };
 
 
         // --- Initialization on page load ---
