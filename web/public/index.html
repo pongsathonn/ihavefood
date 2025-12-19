@@ -467,22 +467,28 @@
                         <!-- Cart items will be injected here by JavaScript -->
                     </div>
 
-                    <!-- Coupon Section -->
-                    <div class="mt-4 mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Coupons</h3>
+                     <!-- Coupon Section -->
+                     <div class="mt-4 mb-4">
+                         <h3 class="text-lg font-semibold text-gray-800 mb-2">Coupons</h3>
 
-                        <div class="flex space-x-2 mt-2 mb-2">
-                            <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE10">SAVE10</button>
-                            <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE50">SAVE50</button>
-                            <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="FREEDELIVERY">FREEDELIVERY</button>
-                        </div>
+                         <div class="flex flex-wrap gap-2 mt-2 mb-2">
+                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE10">SAVE10</button>
+                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="SAVE50">SAVE50</button>
+                             <button class="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300" data-coupon="FREEDELIVERY">FREEDELIVERY</button>
+                         </div>
 
-                        <div class="flex items-center space-x-2">
-                            <input type="text" id="coupon-input" placeholder="Enter coupon code" class="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500">
-                            <button id="apply-coupon-btn" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400" disabled>Apply</button>
-                        </div>
-                        <p id="coupon-status" class="text-sm mt-2"></p>
-                    </div>
+                         <div class="flex items-center space-x-2 flex-nowrap">
+                             <input type="text" id="coupon-input" placeholder="Code" 
+                                 class="min-w-0 flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-sm">
+
+                             <button id="apply-coupon-btn" 
+                                 class="flex-shrink-0 bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400 text-sm" 
+                                 disabled>
+                                 Apply
+                             </button>
+                         </div>
+                         <p id="coupon-status" class="text-sm mt-2"></p>
+                     </div>
 
                     <div class="border-t pt-4">
                         <div class="flex justify-between items-center mb-2">
