@@ -524,6 +524,12 @@
             </div>
         </div>
 
+
+        <div id="loader" class="fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
+            <div class="w-10 h-10 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+            <p class="mt-4 text-sm text-gray-500">Loading...</p>
+        </div>
+
         <!-- ----------------------------------------------------------------------------------------------- -->
         <!-- ---------------------------------------JavaScript---------------------------------------------- -->
         <!-- ----------------------------------------------------------------------------------------------- -->
@@ -1606,7 +1612,11 @@ function saveAddress(id, isNew = false) {
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
 
+            document.getElementById('loader').classList.remove('hidden');
             cachedData = await fetchMerchants();
+            document.getElementById('loader').classList.add('hidden');
+
+            // TODO show loading section
 
             if (!isUserAuthenticated) {
                 showSection('auth-section');
