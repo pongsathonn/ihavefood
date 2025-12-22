@@ -32,11 +32,25 @@ service CustomerService {
         };
     }
 
-    rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer){
-        option (google.api.http) = {
-            patch: "/api/customers/{customer_id}"
-            body: "*"
-        };
+    rpc UpdateCustomerInfo(UpdateCustomerInfoRequest) returns (Customer) {
+      option (google.api.http) = {
+        patch: "/api/customers/{customer_id}/info"
+        body: "*"
+      };
+    }
+    
+    rpc UpdateCustomerSocial(UpdateCustomerSocialRequest) returns (Customer) {
+      option (google.api.http) = {
+        patch: "/api/customers/{customer_id}/social"
+        body: "*"
+      };
+    }
+    
+    rpc UpdateCustomerAddress(UpdateCustomerAddressRequest) returns (Customer) {
+      option (google.api.http) = {
+        patch: "/api/customers/{customer_id}/addresses/{address_id}"
+        body: "*"
+      };
     }
 
     rpc DeleteCustomer(DeleteCustomerRequest) returns(google.protobuf.Empty){
@@ -84,17 +98,34 @@ message CreateAddressRequest {
     Address address = 2;
 }
 
-message UpdateCustomerRequest {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"new_username\": \"anurak_new\", \"new_social\": {\"facebook\": \"anurak.chiangmai\", \"instagram\": \"@anurak_insta\", \"line\": \"@anurak\"}}"
-    };
+message UpdateCustomerInfoRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    example: "{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\",\"new_username\":\"anurak_new\",\"new_phone\":\"0812345678\"}"
+  };
 
-    string customer_id = 1;
-    // username must has constraint for update
-    // such as update every XX months.
-    string new_username = 2;
-    //bytes new_picture = 3;
-    Social new_social = 5;
+  string customer_id = 1;
+  string new_username = 2;
+  string new_phone = 3;
+  //bytes new_picture = TODO;
+}
+
+message UpdateCustomerSocialRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    example: "{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\",\"new_social\":{\"facebook\":\"anurak.chiangmai\",\"instagram\":\"@anurak_insta\",\"line\":\"@anurak\"}}"
+  };
+
+  string customer_id = 1;
+  Social new_social = 2;
+}
+
+message UpdateCustomerAddressRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    example: "{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\",\"address_id\":\"addr-123\",\"address\":{\"address_name\":\"Home\",\"sub_district\":\"Suthep\",\"district\":\"Mueang Chiang Mai\",\"province\":\"Chiang Mai\",\"postal_code\":\"50200\"}}"
+  };
+
+  string customer_id = 1;
+  string address_id = 2;
+  Address address = 3;
 }
 
 message DeleteCustomerRequest {
@@ -104,6 +135,4 @@ message DeleteCustomerRequest {
 
     string customer_id = 1;
 }
-
-
 
