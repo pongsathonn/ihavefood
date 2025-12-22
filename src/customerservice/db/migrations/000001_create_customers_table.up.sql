@@ -1,6 +1,7 @@
 CREATE TABLE customers (
     customer_id UUID,
     username VARCHAR(255) UNIQUE NOT NULL,     
+    phone VARCHAR(20) UNIQUE,
     email VARCHAR(255) UNIQUE NOT NULL,
     facebook VARCHAR(255),                     
     instagram VARCHAR(255),                    

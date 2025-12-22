@@ -247,51 +247,80 @@ func (s *customerStorage) createAddress(ctx context.Context, customerID string, 
 	return addressID, nil
 }
 
-// Update updates the specified fields in a customer. Only non-empty fields
-// in the `update` parameter will overwrite existing values in the database.
-// If a field in `update` is an empty string or `NULL`, the corresponding field
-// in the database will retain its current value.
-//
-// COALESCE(arg1, arg2, ...) returns the first non-null value. `arg1` is a bind variable,
-// meaning if `arg1` is non-null, it is used as the new value for the update.
-// Otherwise, the current database value (`arg2`) is used.
-//
-// When the application passes a primitive type with a default value, such as false, "",
-// or 0 via a bind variable, COALESCE will not treat this as a non-null value. This means
-// that fields will be updated even if they are empty or default values.
-// To address this, we use NULLIF() to compare against the empty value, returning NULL
-// if the value matches the empty or default case.
-//
-// NULLIF(expr1, expr2) returns NULL if `expr1` and `expr2` are equal.
-func (s *customerStorage) update(ctx context.Context, customerID string, update *dbCustomer) (string, error) {
-
+func (s *customerStorage) updateCustomerInfo(ctx context.Context, customerID, username, phone string) (string, error) {
 	row := s.db.QueryRowContext(ctx, `
-		UPDATE 
-			customers
-		SET
-		    username = COALESCE(NULLIF($2, ''), username),
-		    facebook = COALESCE(NULLIF($3,''), facebook),
-		    instagram = COALESCE(NULLIF($4,''), instagram),
-		    line = COALESCE(NULLIF($5,''), line),
-			update_time = NOW()
-		WHERE 
-			customer_id = $1
-		RETURNING customer_id;
-	`,
+    UPDATE customers
+    SET
+      username = COALESCE(NULLIF($2, ''), username),
+	  phone    = COALESCE(NULLIF($3, ''), phone),
+      update_time = NOW()
+    WHERE customer_id = $1
+    RETURNING customer_id;
+  `,
 		customerID,
-		update.Username,
-		update.Social.Facebook,
-		update.Social.Instagram,
-		update.Social.Line,
+		username,
 	)
 
-	var updatedID string
-	if err := row.Scan(&updatedID); err != nil {
+	var id string
+	if err := row.Scan(&id); err != nil {
 		return "", err
 	}
+	return id, nil
+}
 
-	return updatedID, nil
+func (s *customerStorage) updateCustomerSocial(ctx context.Context, customerID string, social *dbSocial) (string, error) {
 
+	row := s.db.QueryRowContext(ctx, `
+    UPDATE customers
+    SET
+      facebook  = COALESCE(NULLIF($2,''), facebook),
+      instagram = COALESCE(NULLIF($3,''), instagram),
+      line      = COALESCE(NULLIF($4,''), line),
+      update_time = NOW()
+    WHERE customer_id = $1
+    RETURNING customer_id;
+  `,
+		customerID,
+		social.Facebook,
+		social.Instagram,
+		social.Line,
+	)
+
+	var id string
+	if err := row.Scan(&id); err != nil {
+		return "", err
+	}
+	return id, nil
+}
+
+func (s *customerStorage) updateCustomerAddress(ctx context.Context, customerID, addressID string, addr *dbAddress) (string, error) {
+
+	row := s.db.QueryRowContext(ctx, `
+    UPDATE addresses
+    SET
+      address_name = COALESCE(NULLIF($3,''), address_name),
+      sub_district = COALESCE(NULLIF($4,''), sub_district),
+      district     = COALESCE(NULLIF($5,''), district),
+      province     = COALESCE(NULLIF($6,''), province),
+      postal_code  = COALESCE(NULLIF($7,''), postal_code)
+    WHERE address_id = $2
+      AND customer_id = $1
+    RETURNING address_id;
+  `,
+		customerID,
+		addressID,
+		addr.AddressName,
+		addr.SubDistrict,
+		addr.District,
+		addr.Province,
+		addr.PostalCode,
+	)
+
+	var id string
+	if err := row.Scan(&id); err != nil {
+		return "", err
+	}
+	return id, nil
 }
 
 func (s *customerStorage) remove(ctx context.Context, customerID string) error {

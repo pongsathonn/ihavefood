@@ -64,6 +64,10 @@ func (x *CustomerService) GetCustomer(ctx context.Context, in *pb.GetCustomerReq
 
 func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddressRequest) (*pb.Address, error) {
 
+	if in.Address == nil {
+		return nil, status.Error(codes.InvalidArgument, "address is required")
+	}
+
 	customer, err := x.store.getCustomer(ctx, in.CustomerId)
 	if err != nil {
 		slog.Error("store get customer", "err", err)
@@ -104,20 +108,11 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 
 }
 
-func (x *CustomerService) UpdateCustomer(ctx context.Context, in *pb.UpdateCustomerRequest) (*pb.Customer, error) {
+func (x *CustomerService) UpdateCustomerInfo(ctx context.Context, in *pb.UpdateCustomerInfoRequest) (*pb.Customer, error) {
 
-	update := &dbCustomer{
-		Username: in.NewUsername,
-		Social: dbSocial{
-			Facebook:  &in.NewSocial.Facebook,
-			Instagram: &in.NewSocial.Instagram,
-			Line:      &in.NewSocial.Line,
-		},
-	}
-
-	customerID, err := x.store.update(ctx, in.CustomerId, update)
+	customerID, err := x.store.updateCustomerInfo(ctx, in.CustomerId, in.NewUsername, in.NewPhone)
 	if err != nil {
-		slog.Error("store update customer", "err", err)
+		slog.Error("store update customer info", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
@@ -128,7 +123,60 @@ func (x *CustomerService) UpdateCustomer(ctx context.Context, in *pb.UpdateCusto
 	}
 
 	return dbToProto(customer), nil
+}
 
+func (x *CustomerService) UpdateCustomerSocial(ctx context.Context, in *pb.UpdateCustomerSocialRequest) (*pb.Customer, error) {
+
+	if in.NewSocial == nil {
+		return nil, status.Error(codes.InvalidArgument, "social is required")
+	}
+
+	customerID, err := x.store.updateCustomerSocial(ctx, in.CustomerId, &dbSocial{
+		Facebook:  &in.NewSocial.Facebook,
+		Instagram: &in.NewSocial.Instagram,
+		Line:      &in.NewSocial.Line,
+	})
+	if err != nil {
+		slog.Error("store update customer social", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	customer, err := x.store.getCustomer(ctx, customerID)
+	if err != nil {
+		slog.Error("store get customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return dbToProto(customer), nil
+}
+
+func (x *CustomerService) UpdateCustomerAddress(ctx context.Context, in *pb.UpdateCustomerAddressRequest) (*pb.Customer, error) {
+
+	if in.Address == nil {
+		return nil, status.Error(codes.InvalidArgument, "address is required")
+	}
+
+	customerID, err := x.store.updateCustomerAddress(ctx, in.CustomerId,
+		in.AddressId,
+		&dbAddress{
+			AddressName: &in.Address.AddressName,
+			SubDistrict: &in.Address.SubDistrict,
+			District:    &in.Address.District,
+			Province:    &in.Address.Province,
+			PostalCode:  &in.Address.PostalCode,
+		})
+	if err != nil {
+		slog.Error("store update customer address", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	customer, err := x.store.getCustomer(ctx, customerID)
+	if err != nil {
+		slog.Error("store get customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return dbToProto(customer), nil
 }
 
 func (x *CustomerService) DeleteCustomer(ctx context.Context, in *pb.DeleteCustomerRequest) (*emptypb.Empty, error) {
@@ -174,18 +222,47 @@ func (x *CustomerService) HandleCustomerCreation(msg amqp.Delivery) error {
 	return nil
 }
 
+func safeDeref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func stringPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 func protoToDb(customer *pb.Customer) *dbCustomer {
+	if customer == nil {
+		return nil
+	}
 
 	var addresses []*dbAddress
 	for _, a := range customer.Addresses {
+		if a == nil {
+			continue
+		}
 		addresses = append(addresses, &dbAddress{
 			AddressID:   a.AddressId,
-			AddressName: &a.AddressName,
-			SubDistrict: &a.SubDistrict,
-			District:    &a.District,
-			Province:    &a.Province,
-			PostalCode:  &a.PostalCode,
+			AddressName: stringPtr(a.AddressName),
+			SubDistrict: stringPtr(a.SubDistrict),
+			District:    stringPtr(a.District),
+			Province:    stringPtr(a.Province),
+			PostalCode:  stringPtr(a.PostalCode),
 		})
+	}
+
+	var social dbSocial
+	if customer.Social != nil {
+		social = dbSocial{
+			Facebook:  stringPtr(customer.Social.Facebook),
+			Instagram: stringPtr(customer.Social.Instagram),
+			Line:      stringPtr(customer.Social.Line),
+		}
 	}
 
 	return &dbCustomer{
@@ -193,22 +270,23 @@ func protoToDb(customer *pb.Customer) *dbCustomer {
 		Username:   customer.Username,
 		Email:      customer.Email,
 		Phone:      customer.Phone,
-		Social: dbSocial{
-			Facebook:  &customer.Social.Facebook,
-			Instagram: &customer.Social.Instagram,
-			Line:      &customer.Social.Line,
-		},
+		Social:     social,
 		Addresses:  addresses,
 		CreateTime: customer.CreateTime.AsTime(),
 		UpdateTime: customer.UpdateTime.AsTime(),
 	}
-
 }
 
 func dbToProto(customer *dbCustomer) *pb.Customer {
+	if customer == nil {
+		return nil
+	}
 
 	var addresses []*pb.Address
 	for _, a := range customer.Addresses {
+		if a == nil {
+			continue
+		}
 		addresses = append(addresses, &pb.Address{
 			AddressId:   a.AddressID,
 			AddressName: safeDeref(a.AddressName),
@@ -232,11 +310,4 @@ func dbToProto(customer *dbCustomer) *pb.Customer {
 		},
 		CreateTime: timestamppb.New(customer.CreateTime),
 	}
-}
-
-func safeDeref(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }
