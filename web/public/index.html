@@ -859,8 +859,7 @@
 
             const MAX_ADDR = 5;
             if (addresses.length >= MAX_ADDR) {
-                // show modal max adress and close
-                // update inner here. use modal -register form as ref
+                alert(`You’ve reached the maximum saved addresses.`);
                 return;
             }
 
@@ -926,13 +925,6 @@
                 return;
             }
 
-            let addresses = [];
-            try {
-                addresses = JSON.parse(localStorage.getItem("customer_addresses")) || [];
-            } catch {
-                addresses = [];
-            }
-
             if (addresses.length === 0) {
                 restaurantsContainer.innerHTML = `<div class="col-span-full flex items-center justify-center min-h-[300px] text-gray-400 text-2xl">
                     Please update your delivery address to see nearby restaurants.
@@ -946,12 +938,13 @@
             for (const merchant of merchants) {
                 const customerId = localStorage.getItem("customer_id");
 
-                // if address update then show merchants
-                // else just update to see delivery fee and est 
+                const defaultAddr = addresses.find(a => a.isDefault);
+                if (!defaultAddr) {
+                    console.error('No default address found');
+                    return;
+                }
+                const customerAddrId = defaultAddr.addressId;
 
-                // NOTE: assume index0 address is default
-                // TODO: use 'default' instead index[0]
-                const customerAddrId = JSON.parse(localStorage.getItem("customer_addresses") || "[]")[0]?.addressId;
                 const merchantId = merchant.merchantId
 
                 const url =
@@ -1623,10 +1616,6 @@
             };
         });
 
-
-
-
-        // TODO
         signinForm.addEventListener('submit', async (e) => {
 
             e.preventDefault();
@@ -1647,8 +1636,12 @@
                 const customerIdFromToken = payload.ID;
                 const customer = await fetchCustomer(customerIdFromToken); 
                 localStorage.setItem("customer_id", customer.customerId);
+
                 // localStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
+
+
                 addresses = customer.addresses || [];
+                if (addresses.length > 0) addresses[0].isDefault = true;
 
                 isUserAuthenticated = true;
 
