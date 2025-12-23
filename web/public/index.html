@@ -123,35 +123,35 @@
                 <section id="auth-section" class="flex items-center justify-center p-6 bg-white rounded-3xl shadow-lg border border-gray-100 max-w-sm mx-auto hidden">
                     <div class="w-full">
 
-                        <div id="signin-form" class="space-y-4">
+                        <form id="signin-form" class="space-y-4">
                             <h2 id="signin-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In</h2>
                             <p class="text-sm text-gray-500 text-center"></p>
                             <div>
                                 <label for="signin-email" class="block text-sm font-medium text-gray-700">Email</label>
-                                <input type="email" id="signin-email-phone" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <input type="email" id="signin-email" autocomplete="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div>
                                 <label for="signin-password" class="block text-sm font-medium text-gray-700">Password</label>
-                                <input type="password" id="signin-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <input type="password" id="signin-password"  autocomplete="current-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
-                            <button id="signin-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200">
+                            <button id="signin-btn" type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200">
                                 Sign In
                             </button>
                             <p id="auth-status" class="text-sm mt-2 text-red-500 text-center"></p>
-                        </div>
+                        </form>
 
-                        <div id="signup-form" class="space-y-4 hidden">
+                        <form id="signup-form" class="space-y-4 hidden">
                             <h2 id="signup-title" class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign Up</h2>
 
                             <div>
                                 <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
-                                <input type="email" id="signup-email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <input type="email" id="signup-email" autocomplete="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                 <p id="email-register-msg" class="text-sm mt-2 text-red-500 w-full text-left"></p>
                             </div>
 
                             <div>
                                 <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</label>
-                                <input type="password" id="signup-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <input type="password" id="signup-password" autocomplete="current-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                 <p id="pass-register-msg" class="text-sm mt-2 text-red-500 text-center"></p>
                             </div>
 
@@ -162,10 +162,10 @@
                                     <option value="rider">Rider</option>
                                 </select>
                             </div>
-                            <button id="signup-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200">
+                            <button id="signup-btn" type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200">
                                 Sign Up
                             </button>
-                        </div>
+                        </form>
                         <p id="register-msg" class="text-sm mt-2 text-red-500 text-center"></p>
 
                         <div class="mt-4 text-center text-sm">
@@ -544,7 +544,6 @@
         const app = initializeApp(firebaseConfig);
         const serverUrl = "https://api-gateway-731964455549.asia-southeast1.run.app"
         const DEFAULT_ADDRESS_NAME = "New Address";
-        const DEFAULT_STREET = "Enter Street Address";
 
         // --- Static Data ---
         let isUserAuthenticated = false;
@@ -578,20 +577,21 @@
         const signinForm = document.getElementById('signin-form');
         const signupForm = document.getElementById('signup-form');
 
-        const signinEmailPhoneInput = document.getElementById('signin-email-phone');
+        const signinEmailInput = document.getElementById('signin-email');
         const signinPasswordInput = document.getElementById('signin-password');
 
         const signupEmailInput = document.getElementById('signup-email');
         const signupPasswordInput = document.getElementById('signup-password');
         const signupRoleSelect = document.getElementById('signup-role');
 
-        const signinBtn = document.getElementById('signin-btn');
+        // const signinBtn = document.getElementById('signin-btn');
+        // const signupBtn = document.getElementById('signup-btn');
+
         const infoEmail = document.getElementById('info-email');
         const infoPhone = document.getElementById('info-phone');
         const socialFacebook = document.getElementById('social-facebook');
         const socialInstagram = document.getElementById('social-instagram');
         const socialLine =  document.getElementById('social-line');
-        const signupBtn = document.getElementById('signup-btn');
 
         const addPhoneBtn = document.getElementById('add-phone');
 
@@ -631,122 +631,193 @@
         const presetCouponButtons = document.querySelectorAll('.preset-coupon-btn');
         let couponApplied = false;
 
-        let addresses = [
-            { id: 1, name: 'Home', street: '123 Sunshine Street', subDistrict: 'Sub-district', district: 'District', province: 'Province', postal: '12345', isDefault: true }
-        ];
+        let addresses = [];
 
         const addressList = document.getElementById('address-list');
         const addBtn = document.getElementById('add-btn');
+        
 
-
-        // Detect page refresh
-        window.addEventListener('load', () => {
-            const perfEntries = performance.getEntriesByType("navigation");
-            const navType = perfEntries[0]?.type || performance.navigation.type;
-
-            if (navType === "reload" || navType === 1) { // 1 = reload in older browsers
-                console.log("Page was refreshed — clearing localStorage");
-                localStorage.clear();
-            }
-        });
-
-        window.saveAddress = saveAddress;
-        window.editAddress = editAddress;
-        window.renderAddresses = renderAddresses;
-
-
-        function createInput(label, id, value = '', type = 'text') {
+        // id = AddressID
+        // value = exist address value
+        function createInput(label, id, value = '', type = 'text', placeholder = '') {
             return `
-                <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
-                <input type="${type}" id="${id}" value="${value}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                `;
+            <div>
+                <label for="${id}" class="block text-sm font-medium text-gray-700 mb-1">
+                    ${label}
+                </label>
+                <input
+                    type="${type}"
+                    id="${id}"
+                    value="${value}"
+                    placeholder="${placeholder}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+        `;
         }
 
-        function renderAddresses() {
+
+         // TODO: render default address first
+         const renderAddresses = async () => {
 
             isAddingNew = false;
-
             addressList.innerHTML = '';
-            addresses.forEach(addr => {
+            const sortedAddresses = [...addresses].sort((a, b) => b.isDefault - a.isDefault);
+
+            sortedAddresses.forEach(addr => {
                 const card = document.createElement('div');
                 card.className = 'address-card relative p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors';
                 card.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
                     <div>
-                        <span class="font-bold text-gray-900">${addr.name}</span>
+                        <span class="font-bold text-gray-900">${addr.addressName}</span>
                         ${addr.isDefault ? '<span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Default</span>' : ''}
                     </div>
                     <div class="flex space-x-3">
-                        <button data-edit="${addr.id}" class="text-gray-400 hover:text-blue-600"><small>Edit</small></button>
-                        <button data-delete="${addr.id}" class="text-gray-400 hover:text-red-600"><small>Delete</small></button>
+                        <button data-edit="${addr.addressId}" class="text-gray-400 hover:text-blue-600"><small>Edit</small></button>
+                        <button data-delete="${addr.addressId}" class="text-gray-400 hover:text-red-600"><small>Delete</small></button>
                     </div>
                 </div>
                 <div class="text-gray-600 text-sm leading-relaxed">
-                    <p class="text-gray-800">${addr.street}</p>
                     <p>${addr.subDistrict}, ${addr.district}</p>
-                    <p>${addr.province}, <span class="font-medium">${addr.postal}</span></p>
+                    <p>${addr.province}, <span class="font-medium">${addr.postalCode}</span></p>
                 </div>
                 `;
                 addressList.appendChild(card);
             });
         }
 
-function saveAddress(id, isNew = false) {
-    isAddingNew = false;
+        async function handleSaveAddress(id, isNew, event) {
+            const addressLine = document.getElementById(`name-${id}`);
+            const subDistrict = document.getElementById(`sub-${id}`);
+            const district = document.getElementById(`district-${id}`);
+            const province = document.getElementById(`province-${id}`);
+            const postal = document.getElementById(`postal-${id}`);
 
-    const name = document.getElementById(`name-${id}`).value;
-    const street = document.getElementById(`street-${id}`).value;
-    if (!name || !street) return alert('Please fill in at least Name and Street');
+            // Reset previous error styles
+            [addressLine, subDistrict, district, province, postal].forEach(el => el.classList.remove('border-red-500'));
 
-    const subDistrict = document.getElementById(`sub-${id}`).value;
-    const district = document.getElementById(`district-${id}`).value;
-    const province = document.getElementById(`province-${id}`).value;
-    const postal = document.getElementById(`postal-${id}`).value;
-    let isDefault = document.getElementById(`default-${id}`).checked;
+            let hasError = false;
 
-    // save first
-    if (isNew) {
-        addresses.push({ id, name, street, subDistrict, district, province, postal, isDefault });
-    } else {
-        Object.assign(
-            addresses.find(a => a.id === id),
-            { name, street, subDistrict, district, province, postal, isDefault }
-        );
-    }
+            if (!addressLine.value) { addressLine.classList.add('border-red-500'); hasError = true; }
+            if (!subDistrict.value) { subDistrict.classList.add('border-red-500'); hasError = true; }
+            if (!district.value) { district.classList.add('border-red-500'); hasError = true; }
+            if (!province.value) { province.classList.add('border-red-500'); hasError = true; }
+            if (!postal.value) { postal.classList.add('border-red-500'); hasError = true; }
 
-    // only one address → must be default
-    if (addresses.length === 1) {
-        addresses[0].isDefault = true;
-    }
+            if (hasError) return; // stop saving
 
-    // user explicitly sets default
-    if (isDefault) {
-        addresses.forEach(a => a.isDefault = a.id === id);
-    }
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = 'Saving...';
 
-    renderAddresses();
-}
+            try {
+                await saveAddress(id, isNew);
+            } catch (error) {
+                console.error('Error saving address:', error);
+                alert('Failed to save address. Please try again.');
+            } finally {
+                button.disabled = false;
+                button.textContent = isNew ? 'Add' : 'Save';
+            }
+        }
 
+        async function saveAddress(addrID, isNew = false) {
+            isAddingNew = false;
+
+            const customerID = localStorage.getItem('customer_id');
+
+            const addressLine = document.getElementById(`name-${addrID}`).value;
+            const subDistrict = document.getElementById(`sub-${addrID}`).value;
+            const district = document.getElementById(`district-${addrID}`).value;
+            const province = document.getElementById(`province-${addrID}`).value;
+            const postal = document.getElementById(`postal-${addrID}`).value;
+            let isDefault = document.getElementById(`default-${addrID}`).checked;
+
+            if (isNew) {
+                const res = await createAddress({
+                    customer_id: customerID,
+                    address: {
+                        address_name: addressLine,
+                        sub_district: subDistrict,
+                        district: district,
+                        province: province,
+                        postal_code: postal
+                    }
+                });
+
+                console.log('CREATE response:', res); // DEBUG
+
+                if (isDefault) {
+                    addresses.forEach(a => a.isDefault = false);
+                }
+
+                addresses.push({ 
+                    addressId: res.addressId,
+                    addressName: res.addressName,
+                    subDistrict: res.subDistrict,
+                    district: res.district,
+                    province: res.province,
+                    postalCode: res.postalCode,
+                    isDefault
+                });
+
+            } else {
+
+                const res = await updateAddress({
+                    customer_id: customerID,
+                    address_id: addrID,
+                    address: {
+                        address_name: addressLine,
+                        sub_district: subDistrict,
+                        district: district,
+                        province: province,
+                        postal_code: postal
+                    }
+                });
+
+                if (isDefault) {
+                    addresses.forEach(a => a.isDefault = false);
+                }
+
+                const addressToUpdate = addresses.find(a => a.addressId === addrID);
+                if (addressToUpdate) {
+                    Object.assign(addressToUpdate, {
+                        addressName: res.addressName,
+                        subDistrict: res.subDistrict,
+                        district: res.district,
+                        province: res.province,
+                        postalCode: res.postalCode,
+                        isDefault
+                    });
+                }
+            }
+
+            if (addresses.length === 1) {
+                addresses[0].isDefault = true;
+            }
+
+            renderAddresses();
+        }
+
+        // editing form used by both '+ Add New' and 'Edit' button
         function editAddress(id, isNew = false) {
 
             addressList.innerHTML = '';
-            const addr = isNew ? {} : addresses.find(a => a.id === id);
+            const addr = isNew ? {} : addresses.find(a => a.addressId === id) || {};
 
             const card = document.createElement('div');
             card.className = 'address-card relative p-4 border border-blue-300 bg-blue-50 rounded-lg';
 
             card.innerHTML = `
-                ${createInput('Name', `name-${id}`, addr.name || '')}
-                ${createInput('Street', `street-${id}`, addr.street || '')}
+                ${createInput('Address Line', `name-${id}`, addr.addressName || '', 'text', 'House no. / Moo / Soi / Road')}
                 <div class="grid grid-cols-2 gap-3">
-                    ${createInput('Sub-district', `sub-${id}`, addr.subDistrict || '')}
-                    ${createInput('District', `district-${id}`, addr.district || '')}
+                    ${createInput('Sub-district', `sub-${id}`, addr.subDistrict || '', 'text', 'e.g., Suthep')}
+                    ${createInput('District', `district-${id}`, addr.district || '', 'text', 'e.g., Mueang Chiang Mai')}
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    ${createInput('Province', `province-${id}`, addr.province || '')}
-                    ${createInput('Postal Code', `postal-${id}`, addr.postal || '')}
+                    ${createInput('Province', `province-${id}`, addr.province || '', 'text', 'e.g., Chiang Mai')}
+                    ${createInput('Postal Code', `postal-${id}`, addr.postalCode || '', 'text', 'e.g., 50200')}
                 </div>
                 
                 <div class="flex items-center">
@@ -755,19 +826,12 @@ function saveAddress(id, isNew = false) {
                 </div>
                 
                 <div class="flex space-x-2 pt-2">
-                    <button onclick="saveAddress(${id}, ${isNew})" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">${isNew ? 'Add' : 'Save'}</button>
+                    <button onclick="handleSaveAddress('${id}', ${isNew}, event)" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">${isNew ? 'Add' : 'Save'}</button>
                     <button onclick="renderAddresses()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
                 </div>
                 `;
-            
+
             addressList.appendChild(card);
-
-            // document.getElementById(`save-${id}`)
-            //     .addEventListener('click', () => saveAddress(id, isNew));
-            //
-            // document.getElementById(`cancel-${id}`)
-            //     .addEventListener('click', renderAddresses);
-
         }
 
         // Event delegation
@@ -777,26 +841,23 @@ function saveAddress(id, isNew = false) {
 
             if (editBtn) {
                 const card = editBtn.closest('.address-card');
-                editAddress(Number(editBtn.dataset.edit), false, card);
+                editAddress(editBtn.dataset.edit, false);
                 return;
             }
 
             if (deleteBtn && confirm('Delete this address?')) {
-                addresses = addresses.filter(a => a.id !== Number(deleteBtn.dataset.delete));
+                // addresses = addresses.filter(a => a.id !== Number(deleteBtn.dataset.delete));
+                addresses.filter(a => a.addressId !== deleteBtn.dataset.delete)
                 renderAddresses();
             }
-            // if (e.target.dataset.edit) editAddress(Number(e.target.dataset.edit));
-            // if (e.target.dataset.delete && confirm('Delete this address?')) {
-            //     addresses = addresses.filter(a => a.id !== Number(e.target.dataset.delete));
-            //     renderAddresses();
-            // }
+
         });
 
 
         let isAddingNew = false;
         addBtn.addEventListener('click', () => {
 
-            const MAX_ADDR = 3;
+            const MAX_ADDR = 5;
             if (addresses.length >= MAX_ADDR) {
                 // show modal max adress and close
                 // update inner here. use modal -register form as ref
@@ -810,13 +871,8 @@ function saveAddress(id, isNew = false) {
             // If a new address form already exists, do nothing
             if (document.querySelector('.address-card.new-address')) return;
 
-            const newId = Math.max(...addresses.map(a => a.id), 0) + 1;
-
-            editAddress(newId, true);
+            editAddress(null, true);
         });
-
-        renderAddresses();
-
 
 
         // --- UI Rendering Functions ---
@@ -861,7 +917,8 @@ function saveAddress(id, isNew = false) {
             }
         };
 
-        const renderRestaurants = async (merchants) => {
+        const renderRestaurants = async () => {
+            let merchants = cachedData.merchants;
             restaurantsContainer.innerHTML = '';
 
             if (merchants.length === 0) {
@@ -1178,6 +1235,42 @@ function saveAddress(id, isNew = false) {
             return orderPayload;
         };
 
+        const updateAddress = async (payload) => {
+            const res = await fetch(`${serverUrl}/api/customers/${payload.customer_id}/addresses/${payload.address_id}`, {
+                method: "PATCH",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to update customer address: ${errorText}`);
+            }
+
+            return await res.json();
+        };
+
+        const createAddress = async (payload) => {
+            const res = await fetch(`${serverUrl}/api/customers/${payload.customer_id}/address`, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to create customer address: ${errorText}`);
+            }
+
+            return await res.json();
+        };
+
         const createPlaceOrder = async (orderPayload) => {
 
             const res = await fetch(`${serverUrl}/api/orders/place_order`, {
@@ -1468,7 +1561,9 @@ function saveAddress(id, isNew = false) {
             authStatus.textContent = '';
         });
 
-        signupBtn.addEventListener('click', async () => {
+        signupForm.addEventListener('submit', async (e) => {
+
+            e.preventDefault();
 
             emailRegisterMsg.textContent = "";
             passRegisterMsg.textContent = "";
@@ -1531,8 +1626,12 @@ function saveAddress(id, isNew = false) {
 
 
 
-        signinBtn.addEventListener('click', async () => {
-            const auth = signinEmailPhoneInput.value;
+        // TODO
+        signinForm.addEventListener('submit', async (e) => {
+
+            e.preventDefault();
+
+            const auth = signinEmailInput.value;
             const pass = signinPasswordInput.value;
 
             try {
@@ -1548,16 +1647,18 @@ function saveAddress(id, isNew = false) {
                 const customerIdFromToken = payload.ID;
                 const customer = await fetchCustomer(customerIdFromToken); 
                 localStorage.setItem("customer_id", customer.customerId);
+                // localStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
+                addresses = customer.addresses || [];
 
-                localStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
                 isUserAuthenticated = true;
+
 
                 profileButton.classList.remove('hidden');
                 trackButton.classList.remove('hidden');
                 apiButton.classList.remove('hidden');
                 showSection('user-profile');
-
-                renderRestaurants(cachedData.merchants);
+                renderAddresses();
+                renderRestaurants();
                 showSection('restaurant-list');
 
             } catch (error) {
@@ -1608,6 +1709,22 @@ function saveAddress(id, isNew = false) {
             }
         };
 
+        window.saveAddress = saveAddress;
+        window.handleSaveAddress = handleSaveAddress;
+        window.editAddress = editAddress;
+        window.renderAddresses = renderAddresses;
+
+        // Detect page refresh
+        window.addEventListener('load', () => {
+            const perfEntries = performance.getEntriesByType("navigation");
+            const navType = perfEntries[0]?.type || performance.navigation.type;
+
+            if (navType === "reload" || navType === 1) { // 1 = reload in older browsers
+                console.log("Page was refreshed — clearing localStorage");
+                localStorage.clear();
+            }
+        });
+
 
         // --- Initialization on page load ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1615,8 +1732,6 @@ function saveAddress(id, isNew = false) {
             document.getElementById('loader').classList.remove('hidden');
             cachedData = await fetchMerchants();
             document.getElementById('loader').classList.add('hidden');
-
-            // TODO show loading section
 
             if (!isUserAuthenticated) {
                 showSection('auth-section');
