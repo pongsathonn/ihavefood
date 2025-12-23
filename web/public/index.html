@@ -198,67 +198,69 @@
                         </p>
                     </div>
 
-                    <!-- Customer Info -->
-                    <div class="space-y-6 text-sm">
+                        <!-- Customer Info -->
+                        <div class="space-y-6 text-sm">
+                        <div class="hidden">
 
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center">
-                                <p class="font-semibold text-gray-900">Info</p>
-                                <button class="text-blue-600 text-xs hover:underline">Edit</button>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-semibold text-gray-900">Info</p>
+                                    <button class="text-blue-600 text-xs hover:underline">Edit</button>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <span class="text-gray-500 w-24">CustomerID</span>
+                                        <span id="customer-id" class="text-gray-900">TODO</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-gray-500 w-24">Email</span>
+                                        <span id="customer-email" class="text-gray-900">TODO</span>
+                                    </div>
+
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-gray-500 w-24">Phone</span>
+
+                                        <input
+                                            type="text"
+                                            id="customer-phone"
+                                            value="TODO"
+                                            class="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2
+                                            text-gray-900 transition
+                                            focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2 justify-end">
+                                    <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
+                                    <button class="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">Save</button>
+                                </div>
                             </div>
 
+                            <!-- Divider -->
+                            <div class="border-t border-gray-200"></div>
+
+                            <!-- Social -->
                             <div class="space-y-2">
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-24">CustomerID</span>
-                                    <span id="customer-id" class="text-gray-900">TODO</span>
+                                <p class="font-semibold text-gray-900 mb-3">Social</p>
+                                <div class="flex">
+                                    <span class="text-gray-500 w-24">Facebook</span>
+                                    <span id="social-facebook" class="text-gray-900">TODO</span>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 w-24">Email</span>
-                                    <span id="customer-email" class="text-gray-900">TODO</span>
+                                <div class="flex">
+                                    <span class="text-gray-500 w-24">Instagram</span>
+                                    <span id="social-instagram" class="text-gray-900">TODO</span>
                                 </div>
-
-                                <div class="flex items-center gap-3">
-                                    <span class="text-gray-500 w-24">Phone</span>
-
-                                    <input
-                                        type="text"
-                                        id="customer-phone"
-                                        value="TODO"
-                                        class="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2
-                                        text-gray-900 transition
-                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-                                    >
+                                <div class="flex">
+                                    <span class="text-gray-500 w-24">LINE</span>
+                                    <span id="social-line" class="text-gray-900">TODO</span>
                                 </div>
                             </div>
 
-                            <div class="flex space-x-2 justify-end">
-                                <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
-                                <button class="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">Save</button>
-                            </div>
+                            <!-- Divider -->
+                            <div class="border-t border-gray-200"></div>
                         </div>
-
-                        <!-- Divider -->
-                        <div class="border-t border-gray-200"></div>
-
-                        <!-- Social -->
-                        <div class="space-y-2">
-                            <p class="font-semibold text-gray-900 mb-3">Social</p>
-                            <div class="flex">
-                                <span class="text-gray-500 w-24">Facebook</span>
-                                <span id="social-facebook" class="text-gray-900">TODO</span>
-                            </div>
-                            <div class="flex">
-                                <span class="text-gray-500 w-24">Instagram</span>
-                                <span id="social-instagram" class="text-gray-900">TODO</span>
-                            </div>
-                            <div class="flex">
-                                <span class="text-gray-500 w-24">LINE</span>
-                                <span id="social-line" class="text-gray-900">TODO</span>
-                            </div>
-                        </div>
-
-                        <!-- Divider -->
-                        <div class="border-t border-gray-200"></div>
 
                         <div class="max-w-md mx-auto">
                             <div class="flex items-center justify-between mb-4">
@@ -746,8 +748,6 @@
                     }
                 });
 
-                console.log('CREATE response:', res); // DEBUG
-
                 if (isDefault) {
                     addresses.forEach(a => a.isDefault = false);
                 }
@@ -830,12 +830,11 @@
                     <button onclick="renderAddresses()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
                 </div>
                 `;
-
             addressList.appendChild(card);
         }
 
         // Event delegation
-        addressList.addEventListener('click', e => {
+        addressList.addEventListener('click', async(e) => {
             const editBtn = e.target.closest('button[data-edit]');
             const deleteBtn = e.target.closest('button[data-delete]');
 
@@ -846,8 +845,14 @@
             }
 
             if (deleteBtn && confirm('Delete this address?')) {
-                // addresses = addresses.filter(a => a.id !== Number(deleteBtn.dataset.delete));
-                addresses.filter(a => a.addressId !== deleteBtn.dataset.delete)
+
+                const customerId = localStorage.getItem('customer_id');
+                const addressId = deleteBtn.dataset.delete;
+
+                await fetch(`${serverUrl}/api/customers/${customerId}/addresses/${addressId}`, {
+                    method: "DELETE",
+                });
+                addresses = addresses.filter(a => a.addressId !== addressId);
                 renderAddresses();
             }
 
@@ -1044,15 +1049,15 @@
                 card.className = 'food-item-card ...';
 
                 card.innerHTML = `
-<div class="flex items-center space-x-4">
-    <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
-    <div>
-        <h4 class="text-md font-semibold text-gray-800">${item.foodName}</h4>
-        <span class="text-sm text-gray-500">฿${(item.price).toFixed(2)}</span>
-    </div>
-</div>
-<button class="add-to-cart-btn ..." data-item='${JSON.stringify(item)}'>Add</button>
-`;
+                <div class="flex items-center space-x-4">
+                    <img src="${imageUrl}" alt="${item.foodName}" class="w-16 h-16 object-cover rounded-lg">
+                    <div>
+                        <h4 class="text-md font-semibold text-gray-800">${item.foodName}</h4>
+                        <span class="text-sm text-gray-500">฿${(item.price).toFixed(2)}</span>
+                    </div>
+                </div>
+                <button class="add-to-cart-btn ..." data-item='${JSON.stringify(item)}'>Add</button>
+                `;
                 menuContainer.appendChild(card);
             }
         };
@@ -1069,16 +1074,16 @@
                     const itemElement = document.createElement('div');
                     itemElement.className = 'flex justify-between items-center py-2 border-b last:border-b-0 text-sm';
                     itemElement.innerHTML = `
-<span>${item.foodName} <span class="text-gray-500">(${item.quantity})</span></span>
-<div class="flex items-center space-x-2">
-    <span class="font-semibold">฿${(item.price * item.quantity).toFixed(2)}</span>
-    <button class="remove-from-cart-btn text-red-500 hover:text-red-600 transition" data-item-id="${item.itemId}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.038 21H7.962a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-    </button>
-</div>
-`;
+                    <span>${item.foodName} <span class="text-gray-500">(${item.quantity})</span></span>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-semibold">฿${(item.price * item.quantity).toFixed(2)}</span>
+                        <button class="remove-from-cart-btn text-red-500 hover:text-red-600 transition" data-item-id="${item.itemId}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.038 21H7.962a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                    `;
                     cartItemsContainer.appendChild(itemElement);
                 });
             }
@@ -1205,8 +1210,14 @@
             const customerId = localStorage.getItem('customer_id');
             const appliedCoupon = localStorage.getItem('applied_coupon');
             const discount = Number(localStorage.getItem('discount'));
-            const customerAddresses = JSON.parse(localStorage.getItem('customer_addresses') || "[]");
-            const customerAddressId = customerAddresses[0]?.addressId; // or let user choose later
+
+
+            const defaultAddr = addresses.find(a => a.isDefault);
+            if (!defaultAddr) {
+                console.error('No default address found');
+                return;
+            }
+            const customerAddressId = defaultAddr.addressId;
 
             const cartItems = (localCart[restaurantId] || []).map(item => ({
                 item_id: item.itemId,
