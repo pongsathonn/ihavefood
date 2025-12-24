@@ -151,8 +151,13 @@
 
                             <div>
                                 <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</label>
-                                <input type="password" id="signup-password" autocomplete="current-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <input type="password" id="signup-password" autocomplete="new-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                 <p id="pass-register-msg" class="text-sm mt-2 text-red-500 text-center"></p>
+                            </div>
+                            <div>
+                                <label for="signup-password-confirm" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                                <input type="password" id="signup-password-confirm" autocomplete="new-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <p id="pass-confirm-msg" class="text-sm mt-2 text-red-500 text-center"></p>
                             </div>
 
                             <div>
@@ -584,6 +589,7 @@
 
         const signupEmailInput = document.getElementById('signup-email');
         const signupPasswordInput = document.getElementById('signup-password');
+        const signupPasswordConfirmInput = document.getElementById('signup-password-confirm');
         const signupRoleSelect = document.getElementById('signup-role');
 
         // const signinBtn = document.getElementById('signin-btn');
@@ -601,6 +607,7 @@
 
         const emailRegisterMsg = document.getElementById('email-register-msg');
         const passRegisterMsg = document.getElementById('pass-register-msg');
+        const passConfirmMsg = document.getElementById('pass-confirm-msg');
         const registerMsg = document.getElementById('register-msg');
 
         const showSignupLink = document.getElementById('show-signup');
@@ -1571,10 +1578,19 @@
 
             emailRegisterMsg.textContent = "";
             passRegisterMsg.textContent = "";
+            passConfirmMsg.textContent = "";
 
             const auth = signupEmailInput.value;
             const pass = signupPasswordInput.value;
+            const passConfirm = signupPasswordConfirmInput.value;
             const roleInput = signupRoleSelect.value;
+
+            if (pass != passConfirm) {
+                passConfirmMsg.textContent = 'Passwords do not match';
+                passConfirmMsg.className = `text-sm mt-2 text-center text-red-500`;
+                return;
+            }
+
 
             let role = "";
             if (roleInput === "customer") {
