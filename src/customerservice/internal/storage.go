@@ -316,15 +316,22 @@ func (s *customerStorage) updateCustomerAddress(ctx context.Context, customerID,
 		addr.PostalCode,
 	)
 
-	var id string
-	if err := row.Scan(&id); err != nil {
+	var addrId string
+	if err := row.Scan(&addrId); err != nil {
 		return "", err
 	}
-	return id, nil
+	return addrId, nil
 }
 
-func (s *customerStorage) remove(ctx context.Context, customerID string) error {
+func (s *customerStorage) delete(ctx context.Context, customerID string) error {
 	if _, err := s.db.ExecContext(ctx, `DELETE FROM customers WHERE customer_id=$1`, customerID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *customerStorage) deleteAddress(ctx context.Context, customerID, addressID string) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM addresses WHERE customer_id=$1 AND address_id=$2`, customerID, addressID); err != nil {
 		return err
 	}
 	return nil

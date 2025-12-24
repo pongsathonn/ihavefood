@@ -97,13 +97,17 @@ func (x *CustomerService) CreateAddress(ctx context.Context, in *pb.CreateAddres
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
+	if addr == nil {
+		return nil, status.Errorf(codes.NotFound, "address %s not found for customer %s", addressID, in.CustomerId)
+	}
+
 	return &pb.Address{
 		AddressId:   addr.AddressID,
-		AddressName: *addr.AddressName,
-		SubDistrict: *addr.SubDistrict,
-		District:    *addr.District,
-		Province:    *addr.Province,
-		PostalCode:  *addr.PostalCode,
+		AddressName: safeDeref(addr.AddressName),
+		SubDistrict: safeDeref(addr.SubDistrict),
+		District:    safeDeref(addr.District),
+		Province:    safeDeref(addr.Province),
+		PostalCode:  safeDeref(addr.PostalCode),
 	}, nil
 
 }
@@ -150,13 +154,13 @@ func (x *CustomerService) UpdateCustomerSocial(ctx context.Context, in *pb.Updat
 	return dbToProto(customer), nil
 }
 
-func (x *CustomerService) UpdateCustomerAddress(ctx context.Context, in *pb.UpdateCustomerAddressRequest) (*pb.Customer, error) {
+func (x *CustomerService) UpdateCustomerAddress(ctx context.Context, in *pb.UpdateCustomerAddressRequest) (*pb.Address, error) {
 
 	if in.Address == nil {
 		return nil, status.Error(codes.InvalidArgument, "address is required")
 	}
 
-	customerID, err := x.store.updateCustomerAddress(ctx, in.CustomerId,
+	addressID, err := x.store.updateCustomerAddress(ctx, in.CustomerId,
 		in.AddressId,
 		&dbAddress{
 			AddressName: &in.Address.AddressName,
@@ -170,22 +174,41 @@ func (x *CustomerService) UpdateCustomerAddress(ctx context.Context, in *pb.Upda
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	customer, err := x.store.getCustomer(ctx, customerID)
+	addr, err := x.store.getAddress(ctx, in.CustomerId, addressID)
 	if err != nil {
-		slog.Error("store get customer", "err", err)
+		slog.Error("store get address", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return dbToProto(customer), nil
+	if addr == nil {
+		return nil, status.Errorf(codes.NotFound, "address %s not found for customer %s", addressID, in.CustomerId)
+	}
+
+	return &pb.Address{
+		AddressId:   addr.AddressID,
+		AddressName: safeDeref(addr.AddressName),
+		SubDistrict: safeDeref(addr.SubDistrict),
+		District:    safeDeref(addr.District),
+		Province:    safeDeref(addr.Province),
+		PostalCode:  safeDeref(addr.PostalCode),
+	}, nil
 }
 
 func (x *CustomerService) DeleteCustomer(ctx context.Context, in *pb.DeleteCustomerRequest) (*emptypb.Empty, error) {
 
-	//TODO validate intput
-
-	err := x.store.remove(ctx, in.CustomerId)
+	err := x.store.delete(ctx, in.CustomerId)
 	if err != nil {
-		slog.Error("store remove customer", "err", err)
+		slog.Error("store delete customer", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (x *CustomerService) DeleteCustomerAddress(ctx context.Context, in *pb.DeleteCustomerAddressRequest) (*emptypb.Empty, error) {
+	err := x.store.deleteAddress(ctx, in.CustomerId, in.AddressId)
+	if err != nil {
+		slog.Error("store delete address customer", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
