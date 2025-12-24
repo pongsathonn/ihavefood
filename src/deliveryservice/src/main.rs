@@ -96,7 +96,7 @@ async fn init_merchant_client() -> Result<MerchantServiceClient<Channel>> {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    std::env::set_var("RUST_LOG", "info,lapin=warn,h2=debug");
+    std::env::set_var("RUST_LOG", "info,lapin=warn");
 
     env_logger::builder()
         .format_file(true)

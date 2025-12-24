@@ -8,7 +8,7 @@ use bytes::Buf;
 use chrono::Utc;
 use futures::StreamExt;
 use lapin::{options::*, types::FieldTable, BasicProperties, Connection, Consumer, ExchangeKind};
-use log::error;
+use log::{error, info};
 use prost::Message;
 use redis::AsyncCommands;
 use std::sync::Arc;
@@ -224,6 +224,8 @@ impl EventDispatcher {
 
     async fn handle_rider_created(&self, buf: impl Buf) -> Result<()> {
         let new_rider = SyncRiderCreated::decode(buf)?;
+
+        info!("TEST data: {:?}", new_rider);
 
         let username = new_rider
             .email
