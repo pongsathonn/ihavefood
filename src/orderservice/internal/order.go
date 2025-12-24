@@ -283,14 +283,15 @@ func (x *OrderService) prepareNewOrder(newOrder *pb.CreatePlaceOrderRequest) (*n
 		return nil, err
 	}
 
-	if _, err := x.coupon.RedeemCoupon(ctx, &pb.RedeemCouponRequest{
-		Code: newOrder.CouponCode,
-	}); err != nil {
-		return nil, fmt.Errorf("Failed to redeem coupon: %v", err)
+	if newOrder.CouponCode != "" {
+		if _, err := x.coupon.RedeemCoupon(ctx, &pb.RedeemCouponRequest{
+			Code: newOrder.CouponCode,
+		}); err != nil {
+			return nil, fmt.Errorf("Failed to redeem coupon: %v", err)
+		}
 	}
 
 	foodCost := calcFoodCost(merchant.Menu, newOrder.Items)
-
 	total := foodCost - newOrder.Discount
 
 	var items []*dbOrderItem
