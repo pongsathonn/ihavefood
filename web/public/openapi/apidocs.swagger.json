@@ -2,7 +2,6 @@
   "swagger": "2.0",
   "info": {
     "title": "IHAVEFOOD",
-    "description": "TODO",
     "version": "0.1"
   },
   "tags": [
@@ -25,9 +24,8 @@
       "name": "DeliveryService"
     }
   ],
-  "host": "localhost",
+  "host": "api-gateway-731964455549.asia-southeast1.run.app",
   "schemes": [
-    "http",
     "https"
   ],
   "consumes": [
@@ -54,7 +52,6 @@
         ]
       },
       "post": {
-        "summary": "AddCoupon creates a new coupon (type DISCOUNT or FREE_DELIVERY).",
         "operationId": "CouponService_AddCoupon",
         "responses": {
           "200": {
@@ -67,7 +64,7 @@
         "parameters": [
           {
             "name": "body",
-            "description": "NOTE: if type is FREE_DELIVERY, discount will be ignored",
+            "description": "Specify exactly one of: percent_discount or free_delivery",
             "in": "body",
             "required": true,
             "schema": {
@@ -168,41 +165,10 @@
         "tags": [
           "CustomerService"
         ]
-      },
-      "patch": {
-        "operationId": "CustomerService_UpdateCustomer",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/Customer"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "customerId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateCustomerBody"
-            }
-          }
-        ],
-        "tags": [
-          "CustomerService"
-        ]
       }
     },
     "/api/customers/{customerId}/address": {
       "post": {
-        "summary": "CreateAddress creates new address to exists uer customer.",
         "operationId": "CustomerService_CreateAddress",
         "responses": {
           "200": {
@@ -225,6 +191,137 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/CreateAddressBody"
+            }
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/customers/{customerId}/addresses/{addressId}": {
+      "delete": {
+        "operationId": "CustomerService_DeleteCustomerAddress",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      },
+      "patch": {
+        "operationId": "CustomerService_UpdateCustomerAddress",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Address"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateCustomerAddressBody"
+            }
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/customers/{customerId}/info": {
+      "patch": {
+        "operationId": "CustomerService_UpdateCustomerInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateCustomerInfoBody"
+            }
+          }
+        ],
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/customers/{customerId}/social": {
+      "patch": {
+        "operationId": "CustomerService_UpdateCustomerSocial",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/Customer"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateCustomerSocialBody"
             }
           }
         ],
@@ -612,31 +709,23 @@
   "definitions": {
     "AddCouponRequest": {
       "type": "object",
-      "example": {
-        "coupon_types": "COUPON_TYPE_DISCOUNT",
-        "discount": 40,
-        "expire_in_hour": 72,
-        "quantity": 50
-      },
       "properties": {
-        "couponTypes": {
-          "$ref": "#/definitions/CouponTypes"
-        },
-        "discount": {
-          "type": "integer",
-          "format": "int32"
-        },
         "expireInHour": {
           "type": "integer",
-          "format": "int32",
-          "description": "The coupon expiration time in hours from now.\nFor example expire_in_hour is 72 means the coupon will be expired\nin 3 days (72 hours) from now."
+          "format": "int32"
         },
         "quantity": {
           "type": "integer",
           "format": "int32"
+        },
+        "percentDiscount": {
+          "$ref": "#/definitions/PercentDiscount"
+        },
+        "freeDelivery": {
+          "$ref": "#/definitions/FreeDelivery"
         }
       },
-      "description": "NOTE: if type is FREE_DELIVERY, discount will be ignored"
+      "description": "Specify exactly one of: percent_discount or free_delivery"
     },
     "Address": {
       "type": "object",
@@ -689,37 +778,25 @@
     "Coupon": {
       "type": "object",
       "properties": {
-        "types": {
-          "$ref": "#/definitions/CouponTypes"
-        },
         "code": {
           "type": "string"
         },
-        "discount": {
-          "type": "integer",
-          "format": "int32",
-          "description": "The discount amount, required if coupon_type is COUPON_TYPE_DISCOUNT.\nThe server will ignore this field if coupon_type is COUPON_TYPE_FREE_DELIVERY."
-        },
-        "expiresIn": {
+        "expiresInHour": {
           "type": "string",
           "format": "int64",
-          "description": "Number of seconds until the coupon expires(UNIX)."
+          "description": "The coupon expiration time in hours from now.\nFor example expire_in_hour is 72 means the coupon will be expired\nin 3 days (72 hours) from now."
         },
         "quantityCount": {
           "type": "integer",
           "format": "int32"
+        },
+        "percentDiscount": {
+          "$ref": "#/definitions/PercentDiscount"
+        },
+        "freeDelivery": {
+          "$ref": "#/definitions/FreeDelivery"
         }
       }
-    },
-    "CouponTypes": {
-      "type": "string",
-      "enum": [
-        "COUPON_TYPE_UNSPECIFICED",
-        "COUPON_TYPE_DISCOUNT",
-        "COUPON_TYPE_FREE_DELIVERY"
-      ],
-      "default": "COUPON_TYPE_UNSPECIFICED",
-      "description": " - COUPON_TYPE_DISCOUNT: Discount is a fixed amount, not a percentage."
     },
     "CreateAddressBody": {
       "type": "object",
@@ -735,7 +812,7 @@
       },
       "properties": {
         "address": {
-          "$ref": "#/definitions/Address"
+          "$ref": "#/definitions/NewAddress"
         }
       }
     },
@@ -849,6 +926,7 @@
           }
         ],
         "coupon_code": "DISCOUNT10",
+        "discount": 10,
         "customer_address_id": "c912f252-4ceb-49e8-82eb-63ea6a61b8a2",
         "payment_methods": "PAYMENT_METHOD_CREDIT_CARD"
       },
@@ -871,6 +949,10 @@
         },
         "couponCode": {
           "type": "string"
+        },
+        "discount": {
+          "type": "integer",
+          "format": "int32"
         },
         "customerAddressId": {
           "type": "string"
@@ -926,6 +1008,9 @@
         "DELIVERY_STATUS_RIDER_DELIVERED"
       ],
       "default": "DELIVERY_STATUS_UNSPECIFIED"
+    },
+    "FreeDelivery": {
+      "type": "object"
     },
     "GetDeliveryFeeResponse": {
       "type": "object",
@@ -1001,7 +1086,7 @@
       "example": {
         "identifier": "somsak22@mail.com",
         "password": "Newpa$sword9",
-        "role": "CUSTOMER"
+        "role": "ROLES_CUSTOMER"
       },
       "properties": {
         "identifier": {
@@ -1197,6 +1282,16 @@
       ],
       "default": "PAYMENT_STATUS_UNSPECIFIED"
     },
+    "PercentDiscount": {
+      "type": "object",
+      "properties": {
+        "percent": {
+          "type": "integer",
+          "format": "int32",
+          "title": "1-100"
+        }
+      }
+    },
     "PlaceOrder": {
       "type": "object",
       "properties": {
@@ -1273,20 +1368,12 @@
         }
       }
     },
-    "RedeemCouponResponse": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean"
-        }
-      }
-    },
     "RegisterRequest": {
       "type": "object",
       "example": {
         "email": "somsak@example.com",
         "password": "Newpa$sword9",
-        "role": "CUSTOMER"
+        "role": "ROLES_CUSTOMER"
       },
       "properties": {
         "email": {
@@ -1377,11 +1464,46 @@
         }
       }
     },
-    "UpdateCustomerBody": {
+    "UpdateCustomerAddressBody": {
+      "type": "object",
+      "example": {
+        "customer_id": "0cf361e1-4b44-483d-a159-54dabdf7e814",
+        "address_id": "111361e1-2244-483d-2259-8888bdf7e814",
+        "address": {
+          "address_name": "Home",
+          "sub_district": "Suthep",
+          "district": "Mueang Chiang Mai",
+          "province": "Chiang Mai",
+          "postal_code": "50200"
+        }
+      },
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        }
+      }
+    },
+    "UpdateCustomerInfoBody": {
       "type": "object",
       "example": {
         "customer_id": "0cf361e1-4b44-483d-a159-54dabdf7e814",
         "new_username": "anurak_new",
+        "new_phone": "0812345678"
+      },
+      "properties": {
+        "newUsername": {
+          "type": "string"
+        },
+        "newPhone": {
+          "type": "string",
+          "title": "bytes new_picture = TODO;"
+        }
+      }
+    },
+    "UpdateCustomerSocialBody": {
+      "type": "object",
+      "example": {
+        "customer_id": "0cf361e1-4b44-483d-a159-54dabdf7e814",
         "new_social": {
           "facebook": "anurak.chiangmai",
           "instagram": "@anurak_insta",
@@ -1389,13 +1511,8 @@
         }
       },
       "properties": {
-        "newUsername": {
-          "type": "string",
-          "description": "username must has constraint for update\nsuch as update every XX months."
-        },
         "newSocial": {
-          "$ref": "#/definitions/Social",
-          "title": "bytes new_picture = 3;"
+          "$ref": "#/definitions/Social"
         }
       }
     },

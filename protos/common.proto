@@ -4,18 +4,16 @@ package ihavefood;
 import "protoc-gen-openapiv2/options/annotations.proto";
 option go_package =  "/genproto";
 
-
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "IHAVEFOOD"
-    description: "TODO"
+    description: ""
     version: "0.1"
   }
   consumes: "application/json"
   produces: "application/json"
 
-  host: "localhost"
-  schemes: HTTP
+  host: "api-gateway-731964455549.asia-southeast1.run.app"
   schemes: HTTPS
 
   security_definitions: {

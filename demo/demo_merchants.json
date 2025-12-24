@@ -2,7 +2,7 @@
   {
     "merchantName": "อร่อยดีตามสั่ง",
     "imageInfo": { "url": "images/res1c.png", "type": "image/jpg" },
-    "status": "OPEN",
+    "status": "STORE_STATUS_OPEN",
     "menu": [
       { "foodName": "ข้าวผัดหมู", "price": 50, "imageInfo": { "url": "images/khaopad_mu.png", "type": "image/jpg" } },
       { "foodName": "กระเพราหมูไข่ดาว", "price": 50, "imageInfo": { "url": "images/krapao_khaidaw.png", "type": "image/jpg" } },
@@ -21,7 +21,7 @@
   {
     "merchantName": "ป้าแดง ก๋วยเตี๋ยว",
     "imageInfo": { "url": "images/res2c.png", "type": "image/jpg" },
-    "status": "OPEN",
+    "status": "STORE_STATUS_OPEN",
     "menu": [
       { "foodName": "ก๋วยเตี๋ยวหมูน้ำใส", "price": 40, "imageInfo": { "url": "images/namsai_noodle.png", "type": "image/jpg" } },
       { "foodName": "ก๋วยเตี๋ยวต้มยำ", "price": 45, "imageInfo": { "url": "images/bame_tomyum.png", "type": "image/jpg" } },
@@ -38,27 +38,9 @@
     "email": "padang_noodle@example.com"
   },
   {
-    "merchantName": "ตำ ตำ ตำ",
-    "imageInfo": { "url": "images/res3c.png", "type": "image/jpg" },
-    "status": "CLOSED",
-    "menu": [
-      { "foodName": "ส้มตำไทย", "price": 50 },
-      { "foodName": "ไก่ย่าง", "price": 60 }
-    ],
-    "address": {
-      "addressName": "78 ถนนเจริญประเทศ",
-      "subDistrict": "ช้างม่อย",
-      "district": "เมืองเชียงใหม่",
-      "province": "เชียงใหม่",
-      "postalCode": "50000"
-    },
-    "phone": "0983456789",
-    "email": "tumtum@example.com"
-  },
-  {
     "merchantName": "ไก่จอมพลัง",
     "imageInfo": { "url": "images/res4c.png", "type": "image/jpg" },
-    "status": "OPEN",
+    "status": "STORE_STATUS_OPEN",
     "menu": [
       { "foodName": "ข้าวมันไก่ต้ม", "price": 50, "imageInfo": { "url": "images/chickken_tom.png", "type": "image/jpg" } },
       { "foodName": "ข้าวมันไก่ทอด", "price": 60, "imageInfo": { "url": "images/chicken_tod.png", "type": "image/jpg" } }
@@ -74,9 +56,27 @@
     "email": "kaijomphalang@example.com"
   },
   {
+    "merchantName": "ตำ ตำ ตำ",
+    "imageInfo": { "url": "images/res3c.png", "type": "image/jpg" },
+    "status": "STORE_STATUS_CLOSED",
+    "menu": [
+      { "foodName": "ส้มตำไทย", "price": 50 },
+      { "foodName": "ไก่ย่าง", "price": 60 }
+    ],
+    "address": {
+      "addressName": "78 ถนนเจริญประเทศ",
+      "subDistrict": "ช้างม่อย",
+      "district": "เมืองเชียงใหม่",
+      "province": "เชียงใหม่",
+      "postalCode": "50000"
+    },
+    "phone": "0983456789",
+    "email": "tumtum@example.com"
+  },
+  {
     "merchantName": "ปั่น ปั่น สดชื่น",
     "imageInfo": { "url": "images/res5c.png", "type": "image/jpg" },
-    "status": "OPEN",
+    "status": "STORE_STATUS_OPEN",
     "menu": [
       { "foodName": "น้ำส้มปั่น", "price": 35, "imageInfo": { "url": "images/namsom.png", "type": "image/jpg" } },
       { "foodName": "น้ำแตงโมปั่น", "price": 35, "imageInfo": { "url": "images/namtangmo.png", "type": "image/jpg" } }
@@ -94,11 +94,10 @@
   {
     "merchantName": "ใจดีสเต็ก",
     "imageInfo": { "url": "images/res6c.png", "type": "image/jpg" },
-    "status": "OPEN",
+    "status": "STORE_STATUS_OPEN",
     "menu": [
       { "foodName": "สเต็กเนื้อ", "price": 150, "imageInfo": { "url": "images/steak.png", "type": "image/jpg" } },
-      { "foodName": "สเต็กปลา", "price": 120, "imageInfo": { "url": "images/fish_steak.png", "type": "image/jpg" } },
-      { "foodName": "เฟรนช์ฟรายส์", "price": 50 }
+      { "foodName": "สเต็กปลา", "price": 120, "imageInfo": { "url": "images/fish_steak.png", "type": "image/jpg" } }
     ],
     "address": {
       "addressName": "33 ถนนนิมมานเหมินท์",

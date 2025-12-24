@@ -1,7 +1,7 @@
 {
     "email": "customer@example.com",
     "password": "Secret1.",
-    "role": "CUSTOMER",
+    "role": "ROLES_CUSTOMER",
     "address": {
         "address_name": "Arun House",
         "sub_district": "Suthep",

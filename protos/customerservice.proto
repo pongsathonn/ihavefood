@@ -24,7 +24,6 @@ service CustomerService {
         option (google.api.http) = {get: "/api/customers/{customer_id}"};
     }
     
-    // CreateAddress creates new address to exists uer customer.
     rpc CreateAddress(CreateAddressRequest) returns(Address){
         option (google.api.http) = {
             post: "/api/customers/{customer_id}/address"
@@ -46,7 +45,7 @@ service CustomerService {
       };
     }
     
-    rpc UpdateCustomerAddress(UpdateCustomerAddressRequest) returns (Customer) {
+    rpc UpdateCustomerAddress(UpdateCustomerAddressRequest) returns (Address) {
       option (google.api.http) = {
         patch: "/api/customers/{customer_id}/addresses/{address_id}"
         body: "*"
@@ -55,6 +54,10 @@ service CustomerService {
 
     rpc DeleteCustomer(DeleteCustomerRequest) returns(google.protobuf.Empty){
         option (google.api.http) = {delete: "/api/customers/{customer_id}"};
+    }
+
+    rpc DeleteCustomerAddress(DeleteCustomerAddressRequest) returns(google.protobuf.Empty){
+        option (google.api.http) = {delete: "/api/customers/{customer_id}/addresses/{address_id}"};
     }
 
 
@@ -95,7 +98,7 @@ message CreateAddressRequest {
     };    
 
     string customer_id = 1;
-    Address address = 2;
+    NewAddress address = 2;
 }
 
 message UpdateCustomerInfoRequest {
@@ -120,7 +123,7 @@ message UpdateCustomerSocialRequest {
 
 message UpdateCustomerAddressRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: "{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\",\"address_id\":\"addr-123\",\"address\":{\"address_name\":\"Home\",\"sub_district\":\"Suthep\",\"district\":\"Mueang Chiang Mai\",\"province\":\"Chiang Mai\",\"postal_code\":\"50200\"}}"
+    example: "{\"customer_id\":\"0cf361e1-4b44-483d-a159-54dabdf7e814\",\"address_id\":\"111361e1-2244-483d-2259-8888bdf7e814\",\"address\":{\"address_name\":\"Home\",\"sub_district\":\"Suthep\",\"district\":\"Mueang Chiang Mai\",\"province\":\"Chiang Mai\",\"postal_code\":\"50200\"}}"
   };
 
   string customer_id = 1;
@@ -134,5 +137,14 @@ message DeleteCustomerRequest {
     };
 
     string customer_id = 1;
-}
+} 
+
+message DeleteCustomerAddressRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      example: "{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"address_id\": \"e8d58539-a66e-4996-a92c-64c450086c8a\" }"
+    };
+
+    string customer_id = 1;
+    string address_id = 2;
+} 
 
