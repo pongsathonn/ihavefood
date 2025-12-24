@@ -734,7 +734,7 @@
         async function saveAddress(addrID, isNew = false) {
             isAddingNew = false;
 
-            const customerID = localStorage.getItem('customer_id');
+            const customerID = sessionStorage.getItem('customer_id');
 
             const addressLine = document.getElementById(`name-${addrID}`).value;
             const subDistrict = document.getElementById(`sub-${addrID}`).value;
@@ -853,11 +853,16 @@
 
             if (deleteBtn && confirm('Delete this address?')) {
 
-                const customerId = localStorage.getItem('customer_id');
+                const customerId = sessionStorage.getItem('customer_id');
+                const token = sessionStorage.getItem("token");
                 const addressId = deleteBtn.dataset.delete;
 
                 await fetch(`${serverUrl}/api/customers/${customerId}/addresses/${addressId}`, {
                     method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
                 });
                 addresses = addresses.filter(a => a.addressId !== addressId);
                 renderAddresses();
@@ -948,7 +953,7 @@
             const deliveryFees = {};
 
             for (const merchant of merchants) {
-                const customerId = localStorage.getItem("customer_id");
+                const customerId = sessionStorage.getItem("customer_id");
 
                 const defaultAddr = addresses.find(a => a.isDefault);
                 if (!defaultAddr) {
@@ -956,8 +961,8 @@
                     return;
                 }
                 const customerAddrId = defaultAddr.addressId;
-
                 const merchantId = merchant.merchantId
+                const token = sessionStorage.getItem("token");
 
                 const url =
                     `${serverUrl}/api/deliveries/fee` +
@@ -966,7 +971,10 @@
                         `&merchant_id=${merchantId}`;
                 const res = await fetch(url,{
                     method: "GET",
-                    headers: { "Accept": "application/json" }
+                    headers: { 
+                        "Accept": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
                 });
                 const { fee = 10 } = await res.json(); // Default to 10 instead of 0
                 deliveryFees[merchantId] = fee;
@@ -1017,9 +1025,9 @@
                     card.addEventListener('click', () => {
                         currentRestaurant = merchant;
 
-                        localStorage.setItem('selected_merchant_id', merchant.merchantId);
-                        localStorage.setItem('selected_merchant_name', merchant.merchantName);
-                        localStorage.setItem('delivery_fee', fee);
+                        sessionStorage.setItem('selected_merchant_id', merchant.merchantId);
+                        sessionStorage.setItem('selected_merchant_name', merchant.merchantName);
+                        sessionStorage.setItem('delivery_fee', fee);
 
                         cartDeliveryElement.textContent = `฿${fee}`;
 
@@ -1031,7 +1039,7 @@
                 }
                 restaurantsContainer.appendChild(card);
             }
-            localStorage.setItem('deliveryFees', JSON.stringify(deliveryFees));
+            sessionStorage.setItem('deliveryFees', JSON.stringify(deliveryFees));
         };
 
         const renderMenu = async (menu) => {
@@ -1100,8 +1108,8 @@
         const updateCartTotals = () => {
             const currentCart = localCart[currentRestaurant.merchantId] || [];
             const food = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const couponPercent = localStorage.getItem('coupon_percent');
-            const deliveryFee =  Number(localStorage.getItem('delivery_fee'));
+            const couponPercent = sessionStorage.getItem('coupon_percent');
+            const deliveryFee =  Number(sessionStorage.getItem('delivery_fee'));
             let discountAmount = 0;
 
             cartFoodElement.textContent = `฿${food.toFixed(2)}`;
@@ -1134,7 +1142,7 @@
                 cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
                 discountRow.classList.add('hidden');
             }
-            localStorage.setItem('discount', discountAmount);
+            sessionStorage.setItem('discount', discountAmount);
 
             const total = food + deliveryFee - discountAmount;
             cartTotalElement.textContent = `฿${total.toFixed(2)}`;
@@ -1214,9 +1222,9 @@
 
         const buildOrderPayload = () => {
             const restaurantId = currentRestaurant.merchantId;
-            const customerId = localStorage.getItem('customer_id');
-            const appliedCoupon = localStorage.getItem('applied_coupon');
-            const discount = Number(localStorage.getItem('discount'));
+            const customerId = sessionStorage.getItem('customer_id');
+            const appliedCoupon = sessionStorage.getItem('applied_coupon');
+            const discount = Number(sessionStorage.getItem('discount'));
 
 
             const defaultAddr = addresses.find(a => a.isDefault);
@@ -1247,10 +1255,13 @@
         };
 
         const updateAddress = async (payload) => {
+
+            const token = sessionStorage.getItem("token");
             const res = await fetch(`${serverUrl}/api/customers/${payload.customer_id}/addresses/${payload.address_id}`, {
                 method: "PATCH",
                 headers: {
                     "Accept": "application/json",
+                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
@@ -1265,10 +1276,13 @@
         };
 
         const createAddress = async (payload) => {
+
+            const token = sessionStorage.getItem("token");
             const res = await fetch(`${serverUrl}/api/customers/${payload.customer_id}/address`, {
                 method: "POST",
                 headers: {
                     "Accept": "application/json",
+                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
@@ -1284,10 +1298,12 @@
 
         const createPlaceOrder = async (orderPayload) => {
 
+            const token = sessionStorage.getItem("token");
             const res = await fetch(`${serverUrl}/api/orders/place_order`, {
                 method: "POST",
                 headers: {
                     "Accept": "application/json",
+                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(orderPayload)
@@ -1297,7 +1313,6 @@
                 const errorText = await res.text();
                 throw new Error(`Failed to create order: ${errorText}`);
             }
-
             return await res.json();
         };
 
@@ -1367,9 +1382,14 @@
         };
 
         const fetchCustomer = async (customerID) => {
+
+            const token = sessionStorage.getItem("token");
             const customer = await fetch(`${serverUrl}/api/customers/${customerID}`, {
                 method: "GET",
-                headers: { "Accept": "application/json" }
+                headers: { 
+                    "Accept": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
             });
 
             if (!customer.ok) {
@@ -1423,7 +1443,7 @@
 
         signoutButton.addEventListener('click', () => {
             isUserAuthenticated = false;
-            localStorage.clear();
+            sessionStorage.clear();
             showSection('auth-section');
         });
 
@@ -1435,12 +1455,12 @@
             }
 
             const total = Number(cartTotalElement.textContent.replace('฿', ''));
-            localStorage.setItem('total', total);
+            sessionStorage.setItem('total', total);
             const orderPayload = buildOrderPayload()
 
             try {
                 const place_order = await createPlaceOrder(orderPayload);
-                localStorage.setItem("place_order", JSON.stringify(place_order));
+                sessionStorage.setItem("place_order", JSON.stringify(place_order));
 
                 const restaurantId = currentRestaurant.merchantId;
                 localCart[restaurantId] = [];
@@ -1469,11 +1489,11 @@
         trackOrderButton.addEventListener('click', () => {
             hideModal();
 
-            const order = JSON.parse(localStorage.getItem("place_order"));
+            const order = JSON.parse(sessionStorage.getItem("place_order"));
             if (!order) return;
 
             trackingOrderId.textContent = `#${order.orderId}`;
-            trackingRestaurantName.textContent = localStorage.getItem('selected_merchant_name');
+            trackingRestaurantName.textContent = sessionStorage.getItem('selected_merchant_name');
 
             const tempRestaurant = {};
             currentRestaurant.menu.forEach(item => {
@@ -1495,7 +1515,7 @@
                 });
             }
 
-            const total = localStorage.getItem('total');
+            const total = sessionStorage.getItem('total');
             trackingOrderTotal.textContent = `฿${total}`;
             showSection('order-tracking-section');
         });
@@ -1540,14 +1560,14 @@
                 couponApplied = true;
                 couponStatus.textContent = coupon.message;
                 couponStatus.className = 'text-sm mt-2 text-pink-600';
-                localStorage.setItem("applied_coupon", couponCode);
-                localStorage.setItem("coupon_percent", coupon.percent);
+                sessionStorage.setItem("applied_coupon", couponCode);
+                sessionStorage.setItem("coupon_percent", coupon.percent);
             } else {
                 couponApplied = false;
                 couponStatus.textContent = 'Invalid coupon code. Please try again.';
                 couponStatus.className = 'text-sm mt-2 text-red-500';
-                localStorage.setItem("applied_coupon", "");
-                localStorage.setItem("coupon_percent", 0);
+                sessionStorage.setItem("applied_coupon", "");
+                sessionStorage.setItem("coupon_percent", 0);
             }
 
             updateCartTotals();
@@ -1653,6 +1673,7 @@
             try {
                 const loginResponse = await login(auth, pass);
                 const accessToken = loginResponse.accessToken;
+                sessionStorage.setItem("token", accessToken);
                 const payload = decodeJwt(accessToken);
 
                 if (!payload || !payload.ID) {
@@ -1662,9 +1683,10 @@
 
                 const customerIdFromToken = payload.ID;
                 const customer = await fetchCustomer(customerIdFromToken); 
-                localStorage.setItem("customer_id", customer.customerId);
+                sessionStorage.setItem("customer_id", customer.customerId);
 
-                // localStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
+
+                // sessionStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
 
 
                 addresses = customer.addresses || [];
@@ -1739,10 +1761,10 @@
             const perfEntries = performance.getEntriesByType("navigation");
             const navType = perfEntries[0]?.type || performance.navigation.type;
 
-            if (navType === "reload" || navType === 1) { // 1 = reload in older browsers
-                console.log("Page was refreshed — clearing localStorage");
-                localStorage.clear();
-            }
+            // if (navType === "reload" || navType === 1) { // 1 = reload in older browsers
+            //     console.log("Page was refreshed — clearing sessionStorage");
+            //     localStorage.clear();
+            // }
         });
 
 
