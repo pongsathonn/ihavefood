@@ -112,57 +112,127 @@ func (nm *NewMerchant) FromProto(req *pb.CreateMerchantRequest) *NewMerchant {
 	}
 }
 
-func (dm *DbMerchant) IntoProto() *pb.Merchant {
-	if dm == nil {
+// func (dm *DbMerchant) IntoProto() *pb.Merchant {
+// 	if dm == nil {
+// 		return nil
+// 	}
+//
+// 	menuItems := make([]*pb.MenuItem, 0, len(dm.Menu))
+// 	for _, m := range dm.Menu {
+// 		var img *pb.ImageInfo
+// 		if m.ImageInfo != nil {
+// 			img = &pb.ImageInfo{
+// 				Url:  m.ImageInfo.Url,
+// 				Type: m.ImageInfo.Type,
+// 			}
+// 		}
+// 		menuItems = append(menuItems, &pb.MenuItem{
+// 			ItemId:    m.ItemID,
+// 			FoodName:  m.FoodName,
+// 			Price:     m.Price,
+// 			ImageInfo: img,
+// 		})
+// 	}
+//
+// 	var addr *pb.Address
+// 	if dm.Address != nil {
+// 		addr = &pb.Address{
+// 			AddressId:   dm.Address.AddressID,
+// 			AddressName: dm.Address.AddressName,
+// 			SubDistrict: dm.Address.SubDistrict,
+// 			District:    dm.Address.District,
+// 			Province:    dm.Address.Province,
+// 			PostalCode:  dm.Address.PostalCode,
+// 		}
+// 	}
+//
+// 	var img *pb.ImageInfo
+// 	if dm.ImageInfo != nil {
+// 		img = &pb.ImageInfo{
+// 			Url:  dm.ImageInfo.Url,
+// 			Type: dm.ImageInfo.Type,
+// 		}
+// 	}
+//
+// 	status, ok := pb.StoreStatus_value[dm.Status]
+// 	if !ok {
+// 		return nil
+// 	}
+//
+// 	return &pb.Merchant{
+// 		MerchantId:   dm.ID,
+// 		MerchantName: dm.Name,
+// 		Menu:         menuItems,
+// 		Address:      addr,
+// 		Phone:        dm.Phone,
+// 		Email:        dm.Email,
+// 		ImageInfo:    img,
+// 		Status:       pb.StoreStatus(status),
+// 	}
+// }
+
+func DbToProto(merchant *DbMerchant) *pb.Merchant {
+	if merchant == nil {
 		return nil
 	}
 
-	menuItems := make([]*pb.MenuItem, 0, len(dm.Menu))
-	for _, m := range dm.Menu {
+	var menu []*pb.MenuItem
+	for _, dbItem := range merchant.Menu {
 		var img *pb.ImageInfo
-		if m.ImageInfo != nil {
+		if dbItem.ImageInfo != nil {
 			img = &pb.ImageInfo{
-				Url:  m.ImageInfo.Url,
-				Type: m.ImageInfo.Type,
+				Url:  dbItem.ImageInfo.Url,
+				Type: dbItem.ImageInfo.Type,
 			}
 		}
-		menuItems = append(menuItems, &pb.MenuItem{
-			ItemId:    m.ItemID,
-			FoodName:  m.FoodName,
-			Price:     m.Price,
+
+		menu = append(menu, &pb.MenuItem{
+			ItemId:    dbItem.ItemID,
+			FoodName:  dbItem.FoodName,
+			Price:     dbItem.Price,
 			ImageInfo: img,
 		})
 	}
 
-	var addr *pb.Address
-	if dm.Address != nil {
-		addr = &pb.Address{
-			AddressId:   dm.Address.AddressID,
-			AddressName: dm.Address.AddressName,
-			SubDistrict: dm.Address.SubDistrict,
-			District:    dm.Address.District,
-			Province:    dm.Address.Province,
-			PostalCode:  dm.Address.PostalCode,
+	var address *pb.Address
+	if merchant.Address != nil {
+		address = &pb.Address{
+			AddressId:   merchant.Address.AddressID,
+			AddressName: merchant.Address.AddressName,
+			SubDistrict: merchant.Address.SubDistrict,
+			District:    merchant.Address.District,
+			Province:    merchant.Address.Province,
+			PostalCode:  merchant.Address.PostalCode,
 		}
 	}
 
-	var img *pb.ImageInfo
-	if dm.ImageInfo != nil {
-		img = &pb.ImageInfo{
-			Url:  dm.ImageInfo.Url,
-			Type: dm.ImageInfo.Type,
+	var imageInfo *pb.ImageInfo
+	if merchant.ImageInfo != nil {
+		imageInfo = &pb.ImageInfo{
+			Url:  merchant.ImageInfo.Url,
+			Type: merchant.ImageInfo.Type,
 		}
 	}
 
-	status := pb.StoreStatus(pb.StoreStatus_value[dm.Status])
+	var status pb.StoreStatus
+
+	switch merchant.Status {
+	case "STORE_STATUS_OPEN":
+		status = pb.StoreStatus_STORE_STATUS_OPEN
+	case "STORE_STATUS_CLOSED":
+		status = pb.StoreStatus_STORE_STATUS_CLOSED
+	default:
+		status = pb.StoreStatus_STORE_STATUS_UNSPECIFIED
+	}
+
 	return &pb.Merchant{
-		MerchantId:   dm.ID,
-		MerchantName: dm.Name,
-		Menu:         menuItems,
-		Address:      addr,
-		Phone:        dm.Phone,
-		Email:        dm.Email,
-		ImageInfo:    img,
+		MerchantId:   merchant.ID,
+		MerchantName: merchant.Name,
+		Menu:         menu,
+		ImageInfo:    imageInfo,
+		Address:      address,
+		Phone:        merchant.Phone,
+		Email:        merchant.Email,
 		Status:       status,
 	}
 }

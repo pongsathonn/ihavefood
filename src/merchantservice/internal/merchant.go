@@ -91,7 +91,7 @@ func (x *MerchantService) CreateMerchant(ctx context.Context, in *pb.CreateMerch
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return merchant.IntoProto(), nil
+	return DbToProto(merchant), nil
 }
 
 func (x *MerchantService) UpdateMerchant(ctx context.Context, in *pb.UpdateMerchantRequest) (*pb.Merchant, error) {
@@ -199,64 +199,4 @@ func (x *MerchantService) HandlePlaceOrder(msg amqp.Delivery) error {
 	)
 
 	return nil
-}
-
-func DbToProto(merchant *DbMerchant) *pb.Merchant {
-	if merchant == nil {
-		return nil
-	}
-
-	var menu []*pb.MenuItem
-	for _, dbItem := range merchant.Menu {
-		var img *pb.ImageInfo
-		if dbItem.ImageInfo != nil {
-			img = &pb.ImageInfo{
-				Url:  dbItem.ImageInfo.Url,
-				Type: dbItem.ImageInfo.Type,
-			}
-		}
-
-		menu = append(menu, &pb.MenuItem{
-			ItemId:    dbItem.ItemID,
-			FoodName:  dbItem.FoodName,
-			Price:     dbItem.Price,
-			ImageInfo: img,
-		})
-	}
-
-	var address *pb.Address
-	if merchant.Address != nil {
-		address = &pb.Address{
-			AddressId:   merchant.Address.AddressID,
-			AddressName: merchant.Address.AddressName,
-			SubDistrict: merchant.Address.SubDistrict,
-			District:    merchant.Address.District,
-			Province:    merchant.Address.Province,
-			PostalCode:  merchant.Address.PostalCode,
-		}
-	}
-
-	var imageInfo *pb.ImageInfo
-	if merchant.ImageInfo != nil {
-		imageInfo = &pb.ImageInfo{
-			Url:  merchant.ImageInfo.Url,
-			Type: merchant.ImageInfo.Type,
-		}
-	}
-
-	var status pb.StoreStatus
-	if v, ok := pb.StoreStatus_value[merchant.Status]; ok {
-		status = pb.StoreStatus(v)
-	}
-
-	return &pb.Merchant{
-		MerchantId:   merchant.ID,
-		MerchantName: merchant.Name,
-		Menu:         menu,
-		ImageInfo:    imageInfo,
-		Address:      address,
-		Phone:        merchant.Phone,
-		Email:        merchant.Email,
-		Status:       status,
-	}
 }
