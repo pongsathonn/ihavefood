@@ -157,8 +157,9 @@ func Run() error {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("DELETE /api/*", auth.Authz(gwmux))
-	mux.Handle("/api/*", auth.Authn(gwmux))
+	mux.Handle("GET /api/merchants", gwmux)
+	mux.Handle("DELETE /api/", auth.Authz(gwmux))
+	mux.Handle("/api/", auth.Authn(gwmux))
 	mux.Handle("/", gwmux)
 
 	port := os.Getenv("PORT")
