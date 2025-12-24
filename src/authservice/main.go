@@ -21,7 +21,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	_ "github.com/lib/pq"
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 	"github.com/pongsathonn/ihavefood/src/authservice/internal"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -199,9 +198,9 @@ func main() {
 		internal.NewRabbitMQ(initAMQPCon()),
 	)
 
-	if err := auth.CreateDemoUsers(); err != nil {
-		slog.Error("Failed to create Demo Users", "err", err)
-	}
+	// if err := auth.CreateDemoUsers(); err != nil {
+	// 	slog.Error("Failed to create Demo Users", "err", err)
+	// }
 
 	startGRPCServer(auth)
 }

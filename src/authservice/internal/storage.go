@@ -3,7 +3,10 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
+
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type storage struct {
@@ -159,6 +162,10 @@ func (s *storage) Create(ctx context.Context, newAuth *dbNewAuthCredentials) (*d
 		&auth.CreateTime,
 		&auth.UpdateTime,
 	); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, ErrDuplicate
+		}
 		return nil, err
 	}
 
@@ -195,6 +202,10 @@ func (s *storage) CreateTx(ctx context.Context, tx *sql.Tx, newAuth *dbNewAuthCr
 		&auth.CreateTime,
 		&auth.UpdateTime,
 	); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, ErrDuplicate
+		}
 		return nil, err
 	}
 

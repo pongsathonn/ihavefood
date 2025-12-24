@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,6 +20,8 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
+
+var ErrDuplicate = errors.New("duplicate key")
 
 type AuthStorer interface {
 	Begin() (*sql.Tx, error)
@@ -80,12 +81,10 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		PhoneNumber: nil,
 	})
 	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+		if errors.Is(err, ErrDuplicate) {
 			slog.Error("database unique_violation:", "err", err)
 			return nil, status.Error(codes.AlreadyExists, "email or phone number already exists")
 		}
-
 		slog.Error("storage create new auth", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
