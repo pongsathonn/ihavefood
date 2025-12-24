@@ -267,8 +267,8 @@ const file_common_proto_rawDesc = "" +
 	"\x06Social\x12\x1a\n" +
 	"\bfacebook\x18\x01 \x01(\tR\bfacebook\x12\x1c\n" +
 	"\tinstagram\x18\x02 \x01(\tR\tinstagram\x12\x12\n" +
-	"\x04line\x18\x03 \x01(\tR\x04lineB\xc3\x01\x92A\xb4\x01\x12\x16\n" +
-	"\tIHAVEFOOD\x12\x04TODO2\x030.1\x1a\tlocalhost*\x02\x01\x022\x10application/json:\x10application/jsonZY\n" +
+	"\x04line\x18\x03 \x01(\tR\x04lineB\xe3\x01\x92A\xd4\x01\x12\x10\n" +
+	"\tIHAVEFOOD2\x030.1\x1a0api-gateway-731964455549.asia-southeast1.run.app*\x01\x022\x10application/json:\x10application/jsonZY\n" +
 	"W\n" +
 	"\x06bearer\x12M\b\x02\x128Authentication token, prefixed by Bearer: Bearer <token>\x1a\rAuthorization \x02b\f\n" +
 	"\n" +

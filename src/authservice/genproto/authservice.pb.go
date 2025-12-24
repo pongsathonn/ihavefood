@@ -624,17 +624,17 @@ const file_authservice_proto_rawDesc = "" +
 	"\vcreate_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\xbf\x01\n" +
+	"updateTime\"\xc5\x01\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12$\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:T\x92AQ2O{\"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"role\": \"CUSTOMER\"}\"\xc9\x01\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:Z\x92AW2U{\"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"role\": \"ROLES_CUSTOMER\"}\"\xcf\x01\n" +
 	"\fLoginRequest\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x01 \x01(\tR\n" +
 	"identifier\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12$\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:W\x92AT2R{\"identifier\": \"somsak22@mail.com\", \"password\": \"Newpa$sword9\",\"role\": \"CUSTOMER\"}\"Q\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:]\x92AZ2X{\"identifier\": \"somsak22@mail.com\", \"password\": \"Newpa$sword9\",\"role\": \"ROLES_CUSTOMER\"}\"Q\n" +
 	"\rLoginResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
 	"\n" +

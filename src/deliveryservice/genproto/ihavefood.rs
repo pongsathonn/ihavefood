@@ -2371,9 +2371,11 @@ pub struct CreatePlaceOrderRequest {
     pub items: ::prost::alloc::vec::Vec<OrderItem>,
     #[prost(string, tag = "5")]
     pub coupon_code: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
+    #[prost(int32, tag = "6")]
+    pub discount: i32,
+    #[prost(string, tag = "7")]
     pub customer_address_id: ::prost::alloc::string::String,
-    #[prost(enumeration = "PaymentMethods", tag = "7")]
+    #[prost(enumeration = "PaymentMethods", tag = "8")]
     pub payment_methods: i32,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
