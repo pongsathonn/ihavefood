@@ -12,9 +12,11 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}', '.']
 
+
 # Push the image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}']
+
 
 # Deploy image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -32,16 +34,16 @@ steps:
     - '--set-env-vars=COUPON_URI=$_COUPON_URI'
     - '--set-env-vars=CUSTOMER_URI=$_CUSTOMER_URI'
     - '--set-env-vars=MERCHANT_URI=$_MERCHANT_URI'
+
     - '--set-secrets=RBMQ_USER=RBMQ_USER:latest'
     - '--set-secrets=RBMQ_PASS=RBMQ_PASS:latest'
     - '--set-secrets=RBMQ_HOST=RBMQ_HOST:latest'
+
     - '--set-secrets=MONGO_USER=MONGO_USER:latest'
     - '--set-secrets=MONGO_PASS=MONGO_PASS:latest'
     - '--set-secrets=MONGO_HOST=MONGO_HOST:latest'
     - '--set-secrets=MONGO_CLUSTER=MONGO_CLUSTER:latest'
-
-
-
+    - '--set-secrets=REDIS_URL=REDIS_URL:latest'
 
 images:
 - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}'

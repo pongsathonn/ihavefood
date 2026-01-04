@@ -26,7 +26,8 @@ pub mod ihavefood {
 }
 
 fn init_redis_pool() -> Result<redis::Client> {
-    let client = redis::Client::open("redis://10.123.136.115:6379/")?;
+    let url = dotenv::var("REDIS_URL")?;
+    let client = redis::Client::open(url)?;
     let mut conn = client.get_connection()?;
     redis::cmd("PING").query::<String>(&mut conn)?;
     info!("Redis connection successful!");
