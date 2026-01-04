@@ -2,21 +2,20 @@ package internal
 
 import (
 	"context"
-	"database/sql"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 )
 
-func NewCustomerStorage(db *sql.DB) *customerStorage {
-	return &customerStorage{db: db}
+func NewCustomerStorage(pool *pgxpool.Pool) *customerStorage {
+	return &customerStorage{pool: pool}
 }
 
 type customerStorage struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
 func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, error) {
-	customerRows, err := s.db.QueryContext(ctx, `
+	customerRows, err := s.pool.Query(ctx, `
 		SELECT customer_id, username, facebook, instagram, line, create_time, update_time
 		FROM customers
 	`)
@@ -61,7 +60,7 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 		FROM addresses
 		WHERE customer_id =  ANY($1)
 	`
-	addressRows, err := s.db.QueryContext(ctx, query, pq.Array(customerIDs))
+	addressRows, err := s.pool.Query(ctx, query, customerIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +105,7 @@ func (s *customerStorage) listCustomers(ctx context.Context) ([]*dbCustomer, err
 
 func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*dbCustomer, error) {
 	var customer dbCustomer
-	if err := s.db.QueryRowContext(ctx, `
+	if err := s.pool.QueryRow(ctx, `
 		SELECT 
 			customer_id,username,email,facebook,instagram,line,create_time,update_time
 		FROM customers 
@@ -125,7 +124,7 @@ func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*
 		return nil, err
 	}
 
-	addressRows, err := s.db.QueryContext(ctx, `
+	addressRows, err := s.pool.Query(ctx, `
 		SELECT
 			address_id,
 			address_name,
@@ -167,7 +166,7 @@ func (s *customerStorage) getCustomer(ctx context.Context, customerID string) (*
 
 func (s *customerStorage) getAddress(ctx context.Context, customerID, addressID string) (*dbAddress, error) {
 	var addr dbAddress
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
         SELECT 
             address_id,
             address_name,
@@ -195,7 +194,7 @@ func (s *customerStorage) getAddress(ctx context.Context, customerID, addressID 
 
 func (s *customerStorage) create(ctx context.Context, newCustomer *dbNewCustomer) (string, error) {
 
-	res := s.db.QueryRowContext(ctx, `
+	res := s.pool.QueryRow(ctx, `
 		INSERT INTO customers(
 			customer_id,
 			username,
@@ -219,7 +218,7 @@ func (s *customerStorage) create(ctx context.Context, newCustomer *dbNewCustomer
 
 func (s *customerStorage) createAddress(ctx context.Context, customerID string, newAddress *dbAddress) (string, error) {
 
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
     INSERT INTO addresses (
         customer_id,
         address_name,
@@ -248,7 +247,7 @@ func (s *customerStorage) createAddress(ctx context.Context, customerID string, 
 }
 
 func (s *customerStorage) updateCustomerInfo(ctx context.Context, customerID, username, phone string) (string, error) {
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
     UPDATE customers
     SET
       username = COALESCE(NULLIF($2, ''), username),
@@ -270,7 +269,7 @@ func (s *customerStorage) updateCustomerInfo(ctx context.Context, customerID, us
 
 func (s *customerStorage) updateCustomerSocial(ctx context.Context, customerID string, social *dbSocial) (string, error) {
 
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
     UPDATE customers
     SET
       facebook  = COALESCE(NULLIF($2,''), facebook),
@@ -295,7 +294,7 @@ func (s *customerStorage) updateCustomerSocial(ctx context.Context, customerID s
 
 func (s *customerStorage) updateCustomerAddress(ctx context.Context, customerID, addressID string, addr *dbAddress) (string, error) {
 
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
     UPDATE addresses
     SET
       address_name = COALESCE(NULLIF($3,''), address_name),
@@ -324,14 +323,14 @@ func (s *customerStorage) updateCustomerAddress(ctx context.Context, customerID,
 }
 
 func (s *customerStorage) delete(ctx context.Context, customerID string) error {
-	if _, err := s.db.ExecContext(ctx, `DELETE FROM customers WHERE customer_id=$1`, customerID); err != nil {
+	if _, err := s.pool.Exec(ctx, `DELETE FROM customers WHERE customer_id=$1`, customerID); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *customerStorage) deleteAddress(ctx context.Context, customerID, addressID string) error {
-	if _, err := s.db.ExecContext(ctx, `DELETE FROM addresses WHERE customer_id=$1 AND address_id=$2`, customerID, addressID); err != nil {
+	if _, err := s.pool.Exec(ctx, `DELETE FROM addresses WHERE customer_id=$1 AND address_id=$2`, customerID, addressID); err != nil {
 		return err
 	}
 	return nil
