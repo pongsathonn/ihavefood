@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,12 +24,12 @@ import (
 var ErrDuplicate = errors.New("duplicate key")
 
 type AuthStorer interface {
-	Begin() (*sql.Tx, error)
+	Begin(ctx context.Context) (pgx.Tx, error)
 	ListAuths(context.Context) ([]*dbAuthCredentials, error)
 	GetAuth(ctx context.Context, authID uuid.UUID) (*dbAuthCredentials, error)
 	GetAuthByIdentifier(ctx context.Context, iden string) (*dbAuthCredentials, error)
 	Create(ctx context.Context, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error)
-	CreateTx(ctx context.Context, tx *sql.Tx, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error)
+	CreateTx(ctx context.Context, tx pgx.Tx, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error)
 	Delete(ctx context.Context, authID uuid.UUID) error
 }
 
@@ -67,12 +67,12 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	tx, err := x.store.Begin()
+	tx, err := x.store.Begin(ctx)
 	if err != nil {
 		slog.Error("begin transaction", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(ctx)
 
 	auth, err := x.store.CreateTx(ctx, tx, &dbNewAuthCredentials{
 		Email:       in.Email,
@@ -94,7 +94,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		slog.Error("commit transaction", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 
@@ -133,7 +133,7 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	if err := ValidateStruct(in); err != nil {
 		var ve myValidatorErrs
 		if errors.As(err, &ve) {
-			return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("failed to login: %s", ve.Error()))
+			return nil, status.Errorf(codes.InvalidArgument, "failed to login: %s", ve.Error())
 		}
 		slog.Error("validate struct", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -141,10 +141,9 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 
 	auth, err := x.store.GetAuthByIdentifier(ctx, in.Identifier)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, status.Error(codes.Unauthenticated, "incorrect credentials")
 		}
-
 		slog.Error("storage get auth by identifier", "err", err)
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
@@ -318,7 +317,7 @@ func (x *AuthService) createNewToken(id string, role pb.Roles) (signedToken stri
 // verifyUserToken verifies the validity of a JWT token using the provided signing key.
 // It returns true if the token is valid, false otherwise, along with any error encountered.
 func (x *AuthService) verifyUserToken(tokenString string) (bool, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -334,8 +333,9 @@ func (x *AuthService) verifyUserToken(tokenString string) (bool, error) {
 
 	return true, nil
 }
+
 func (x *AuthService) verifyAdminToken(tokenString string) (bool, error) {
-	token, err := jwt.ParseWithClaims(tokenString, new(AuthClaims), func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, new(AuthClaims), func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

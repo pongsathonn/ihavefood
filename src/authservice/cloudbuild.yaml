@@ -25,7 +25,11 @@ steps:
     - '--platform=managed'
     - '--no-allow-unauthenticated'
     - '--set-env-vars=GCP_PROJECT_ID=$PROJECT_ID'
-    - '--set-secrets=PG_USER=PG_USER:latest,PG_PASS=PG_PASS:latest,AUTH_DB_NAME=AUTH_DB_NAME:latest,AUTH_DB_NAME=AUTH_DB_NAME:latest,RBMQ_USER=RBMQ_USER:latest,RBMQ_PASS=RBMQ_PASS:latest,RBMQ_HOST=RBMQ_HOST:latest,INSTANCE_CONNECTION_NAME=INSTANCE_CONNECTION_NAME:latest,JWT_SIGNING_KEY=JWT_SIGNING_KEY:latest'
+    - '--set-secrets=AUTH_DB_URL=AUTH_DB_URL:latest'
+    - '--set-secrets=RBMQ_USER=RBMQ_USER:latest'
+    - '--set-secrets=RBMQ_PASS=RBMQ_PASS:latest'
+    - '--set-secrets=RBMQ_HOST=RBMQ_HOST:latest'
+    - '--set-secrets=JWT_SIGNING_KEY=JWT_SIGNING_KEY:latest'
 
 images:
 - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}'

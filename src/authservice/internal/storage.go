@@ -2,28 +2,33 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type storage struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewStorage(db *sql.DB) *storage {
-	return &storage{db: db}
+func NewStorage(pool *pgxpool.Pool) *storage {
+	return &storage{pool: pool}
 }
 
-func (s *storage) Begin() (*sql.Tx, error) {
-	return s.db.Begin()
+func (s *storage) Begin(ctx context.Context) (pgx.Tx, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
 }
 
 func (s *storage) ListAuths(ctx context.Context) ([]*dbAuthCredentials, error) {
 
-	rows, err := s.db.QueryContext(ctx, `
+	rows, err := s.pool.Query(ctx, `
 		SELECT 
 			auth_id,
 			email,
@@ -64,7 +69,7 @@ func (s *storage) ListAuths(ctx context.Context) ([]*dbAuthCredentials, error) {
 
 func (s *storage) GetAuth(ctx context.Context, authID uuid.UUID) (*dbAuthCredentials, error) {
 
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
 		SELECT 
 			auth_id,
 			email,
@@ -98,7 +103,7 @@ func (s *storage) GetAuth(ctx context.Context, authID uuid.UUID) (*dbAuthCredent
 
 func (s *storage) GetAuthByIdentifier(ctx context.Context, iden string) (*dbAuthCredentials, error) {
 
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
 		SELECT 
 			id,
 			email,
@@ -136,7 +141,7 @@ func (s *storage) GetAuthByIdentifier(ctx context.Context, iden string) (*dbAuth
 // Create creates new auth credential and return its ID.
 func (s *storage) Create(ctx context.Context, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error) {
 
-	row := s.db.QueryRowContext(ctx, `
+	row := s.pool.QueryRow(ctx, `
 		INSERT INTO credentials(
 			email,
 			password,
@@ -173,9 +178,9 @@ func (s *storage) Create(ctx context.Context, newAuth *dbNewAuthCredentials) (*d
 }
 
 // Create creates new auth credential and return its ID.
-func (s *storage) CreateTx(ctx context.Context, tx *sql.Tx, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error) {
+func (s *storage) CreateTx(ctx context.Context, tx pgx.Tx, newAuth *dbNewAuthCredentials) (*dbAuthCredentials, error) {
 
-	row := tx.QueryRowContext(ctx, `
+	row := tx.QueryRow(ctx, `
 		INSERT INTO credentials(
 			email,
 			password,
@@ -217,7 +222,7 @@ func (s *storage) Delete(ctx context.Context, authID uuid.UUID) error {
 
 	query := `DELETE FROM credentials WHERE auth_id=$1`
 
-	if _, err := s.db.ExecContext(ctx, query, authID); err != nil {
+	if _, err := s.pool.Exec(ctx, query, authID); err != nil {
 		return err
 	}
 
