@@ -90,11 +90,7 @@ message GetDeliveryFeeResponse {
 }
 
 message ReportDeliveryStatusRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      example: "{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}"
-  };
-
-  // example: 1783de85-456a-4cca-8f7a-489750e21aa4
+  // example: "{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}"
   string order_id = 1;
   string rider_id = 2;
   DeliveryStatus status = 3;
