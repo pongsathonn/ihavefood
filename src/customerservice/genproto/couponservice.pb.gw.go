@@ -175,7 +175,7 @@ func RegisterCouponServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.CouponService/AddCoupon", runtime.WithHTTPPathPattern("/api/coupons"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.CouponService/AddCoupon", runtime.WithHTTPPathPattern("/api/admin/coupons"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -267,7 +267,7 @@ func RegisterCouponServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/ihavefood.CouponService/AddCoupon", runtime.WithHTTPPathPattern("/api/coupons"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/ihavefood.CouponService/AddCoupon", runtime.WithHTTPPathPattern("/api/admin/coupons"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -286,7 +286,7 @@ func RegisterCouponServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 var (
 	pattern_CouponService_ListCoupons_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "coupons"}, ""))
 	pattern_CouponService_GetCoupon_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "coupons", "code"}, ""))
-	pattern_CouponService_AddCoupon_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "coupons"}, ""))
+	pattern_CouponService_AddCoupon_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "admin", "coupons"}, ""))
 )
 
 var (

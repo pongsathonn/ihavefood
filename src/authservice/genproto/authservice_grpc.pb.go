@@ -22,8 +22,6 @@ const (
 	AuthService_Register_FullMethodName          = "/ihavefood.AuthService/Register"
 	AuthService_Login_FullMethodName             = "/ihavefood.AuthService/Login"
 	AuthService_UpdatePhoneNumber_FullMethodName = "/ihavefood.AuthService/UpdatePhoneNumber"
-	AuthService_VerifyUserToken_FullMethodName   = "/ihavefood.AuthService/VerifyUserToken"
-	AuthService_VerifyAdminToken_FullMethodName  = "/ihavefood.AuthService/VerifyAdminToken"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -38,10 +36,6 @@ type AuthServiceClient interface {
 	// Login sign in as customer, rider
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	UpdatePhoneNumber(ctx context.Context, in *UpdatePhoneNumberRequest, opts ...grpc.CallOption) (*UpdatePhoneNumberResponse, error)
-	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
-	VerifyUserToken(ctx context.Context, in *VerifyUserTokenRequest, opts ...grpc.CallOption) (*VerifyUserTokenResponse, error)
-	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
-	VerifyAdminToken(ctx context.Context, in *VerifyAdminTokenRequest, opts ...grpc.CallOption) (*VerifyAdminTokenResponse, error)
 }
 
 type authServiceClient struct {
@@ -82,26 +76,6 @@ func (c *authServiceClient) UpdatePhoneNumber(ctx context.Context, in *UpdatePho
 	return out, nil
 }
 
-func (c *authServiceClient) VerifyUserToken(ctx context.Context, in *VerifyUserTokenRequest, opts ...grpc.CallOption) (*VerifyUserTokenResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(VerifyUserTokenResponse)
-	err := c.cc.Invoke(ctx, AuthService_VerifyUserToken_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) VerifyAdminToken(ctx context.Context, in *VerifyAdminTokenRequest, opts ...grpc.CallOption) (*VerifyAdminTokenResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(VerifyAdminTokenResponse)
-	err := c.cc.Invoke(ctx, AuthService_VerifyAdminToken_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -114,10 +88,6 @@ type AuthServiceServer interface {
 	// Login sign in as customer, rider
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	UpdatePhoneNumber(context.Context, *UpdatePhoneNumberRequest) (*UpdatePhoneNumberResponse, error)
-	// verify token for role "customer,merchant,rider" returns true if token valid, otherwise false.
-	VerifyUserToken(context.Context, *VerifyUserTokenRequest) (*VerifyUserTokenResponse, error)
-	// verify token for role "admin,superadmin" returns true if token valid, otherwise false.
-	VerifyAdminToken(context.Context, *VerifyAdminTokenRequest) (*VerifyAdminTokenResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -136,12 +106,6 @@ func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*Lo
 }
 func (UnimplementedAuthServiceServer) UpdatePhoneNumber(context.Context, *UpdatePhoneNumberRequest) (*UpdatePhoneNumberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePhoneNumber not implemented")
-}
-func (UnimplementedAuthServiceServer) VerifyUserToken(context.Context, *VerifyUserTokenRequest) (*VerifyUserTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method VerifyUserToken not implemented")
-}
-func (UnimplementedAuthServiceServer) VerifyAdminToken(context.Context, *VerifyAdminTokenRequest) (*VerifyAdminTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method VerifyAdminToken not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -218,42 +182,6 @@ func _AuthService_UpdatePhoneNumber_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_VerifyUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyUserTokenRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).VerifyUserToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_VerifyUserToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).VerifyUserToken(ctx, req.(*VerifyUserTokenRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_VerifyAdminToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyAdminTokenRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).VerifyAdminToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_VerifyAdminToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).VerifyAdminToken(ctx, req.(*VerifyAdminTokenRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -272,14 +200,6 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePhoneNumber",
 			Handler:    _AuthService_UpdatePhoneNumber_Handler,
-		},
-		{
-			MethodName: "VerifyUserToken",
-			Handler:    _AuthService_VerifyUserToken_Handler,
-		},
-		{
-			MethodName: "VerifyAdminToken",
-			Handler:    _AuthService_VerifyAdminToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

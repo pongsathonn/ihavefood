@@ -7,7 +7,6 @@
 package genproto
 
 import (
-	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -477,7 +476,7 @@ func (x *GetDeliveryFeeResponse) GetFee() int32 {
 
 type ReportDeliveryStatusRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// example: 1783de85-456a-4cca-8f7a-489750e21aa4
+	// example: "{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}"
 	OrderId       string         `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
 	RiderId       string         `protobuf:"bytes,2,opt,name=rider_id,json=riderId,proto3" json:"rider_id,omitempty"`
 	Status        DeliveryStatus `protobuf:"varint,3,opt,name=status,proto3,enum=ihavefood.DeliveryStatus" json:"status,omitempty"`
@@ -540,7 +539,7 @@ var File_deliveryservice_proto protoreflect.FileDescriptor
 
 const file_deliveryservice_proto_rawDesc = "" +
 	"\n" +
-	"\x15deliveryservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xa6\x01\n" +
+	"\x15deliveryservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xa6\x01\n" +
 	"\n" +
 	"PickupInfo\x12\x1f\n" +
 	"\vpickup_code\x18\x01 \x01(\tR\n" +
@@ -569,11 +568,11 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\vmerchant_id\x18\x03 \x01(\tR\n" +
 	"merchantId\"*\n" +
 	"\x16GetDeliveryFeeResponse\x12\x10\n" +
-	"\x03fee\x18\x01 \x01(\x05R\x03fee\"\xdc\x01\n" +
+	"\x03fee\x18\x01 \x01(\x05R\x03fee\"\x86\x01\n" +
 	"\x1bReportDeliveryStatusRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\x121\n" +
-	"\x06status\x18\x03 \x01(\x0e2\x19.ihavefood.DeliveryStatusR\x06status:T\x92AQ2O{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}*\xc2\x01\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x19.ihavefood.DeliveryStatusR\x06status*\xc2\x01\n" +
 	"\x0eDeliveryStatus\x12\x1f\n" +
 	"\x1bDELIVERY_STATUS_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dDELIVERY_STATUS_RIDER_PENDING\x10\x01\x12\"\n" +

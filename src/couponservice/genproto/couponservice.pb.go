@@ -470,11 +470,11 @@ const file_couponservice_proto_rawDesc = "" +
 	"\x13ListCouponsResponse\x12+\n" +
 	"\acoupons\x18\x01 \x03(\v2\x11.ihavefood.CouponR\acoupons\")\n" +
 	"\x13RedeemCouponRequest\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code2\xe6\x02\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code2\xec\x02\n" +
 	"\rCouponService\x12[\n" +
 	"\vListCoupons\x12\x16.google.protobuf.Empty\x1a\x1e.ihavefood.ListCouponsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/api/coupons\x12X\n" +
-	"\tGetCoupon\x12\x1b.ihavefood.GetCouponRequest\x1a\x11.ihavefood.Coupon\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/coupons/{code}\x12T\n" +
-	"\tAddCoupon\x12\x1b.ihavefood.AddCouponRequest\x1a\x11.ihavefood.Coupon\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/api/coupons\x12H\n" +
+	"\tGetCoupon\x12\x1b.ihavefood.GetCouponRequest\x1a\x11.ihavefood.Coupon\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/coupons/{code}\x12Z\n" +
+	"\tAddCoupon\x12\x1b.ihavefood.AddCouponRequest\x1a\x11.ihavefood.Coupon\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/api/admin/coupons\x12H\n" +
 	"\fRedeemCoupon\x12\x1e.ihavefood.RedeemCouponRequest\x1a\x16.google.protobuf.Empty\"\x00B\vZ\t/genprotob\x06proto3"
 
 var (

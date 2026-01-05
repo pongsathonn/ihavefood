@@ -619,9 +619,9 @@ const file_customerservice_proto_rawDesc = "" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12\x1d\n" +
 	"\n" +
-	"address_id\x18\x02 \x01(\tR\taddressId:s\x92Ap2n{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"address_id\": \"e8d58539-a66e-4996-a92c-64c450086c8a\" }2\x83\b\n" +
-	"\x0fCustomerService\x12j\n" +
-	"\rListCustomers\x12\x1f.ihavefood.ListCustomersRequest\x1a .ihavefood.ListCustomersResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/api/customers\x12g\n" +
+	"address_id\x18\x02 \x01(\tR\taddressId:s\x92Ap2n{\"customer_id\": \"0cf361e1-4b44-483d-a159-54dabdf7e814\", \"address_id\": \"e8d58539-a66e-4996-a92c-64c450086c8a\" }2\x89\b\n" +
+	"\x0fCustomerService\x12p\n" +
+	"\rListCustomers\x12\x1f.ihavefood.ListCustomersRequest\x1a .ihavefood.ListCustomersResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/api/admin/customers\x12g\n" +
 	"\vGetCustomer\x12\x1d.ihavefood.GetCustomerRequest\x1a\x13.ihavefood.Customer\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/customers/{customer_id}\x12u\n" +
 	"\rCreateAddress\x12\x1f.ihavefood.CreateAddressRequest\x1a\x12.ihavefood.Address\"/\x82\xd3\xe4\x93\x02):\x01*\"$/api/customers/{customer_id}/address\x12}\n" +
 	"\x12UpdateCustomerInfo\x12$.ihavefood.UpdateCustomerInfoRequest\x1a\x13.ihavefood.Customer\",\x82\xd3\xe4\x93\x02&:\x01*2!/api/customers/{customer_id}/info\x12\x83\x01\n" +

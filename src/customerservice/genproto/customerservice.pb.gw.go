@@ -397,7 +397,7 @@ func RegisterCustomerServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.CustomerService/ListCustomers", runtime.WithHTTPPathPattern("/api/customers"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ihavefood.CustomerService/ListCustomers", runtime.WithHTTPPathPattern("/api/admin/customers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -595,7 +595,7 @@ func RegisterCustomerServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/ihavefood.CustomerService/ListCustomers", runtime.WithHTTPPathPattern("/api/customers"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/ihavefood.CustomerService/ListCustomers", runtime.WithHTTPPathPattern("/api/admin/customers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -731,7 +731,7 @@ func RegisterCustomerServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_CustomerService_ListCustomers_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "customers"}, ""))
+	pattern_CustomerService_ListCustomers_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "admin", "customers"}, ""))
 	pattern_CustomerService_GetCustomer_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "customers", "customer_id"}, ""))
 	pattern_CustomerService_CreateAddress_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "customers", "customer_id", "address"}, ""))
 	pattern_CustomerService_UpdateCustomerInfo_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "customers", "customer_id", "info"}, ""))

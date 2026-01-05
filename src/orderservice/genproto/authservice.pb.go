@@ -435,182 +435,6 @@ func (x *UpdatePhoneNumberResponse) GetAuth() *AuthCredentials {
 	return nil
 }
 
-type VerifyUserTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *VerifyUserTokenRequest) Reset() {
-	*x = VerifyUserTokenRequest{}
-	mi := &file_authservice_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *VerifyUserTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VerifyUserTokenRequest) ProtoMessage() {}
-
-func (x *VerifyUserTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_authservice_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VerifyUserTokenRequest.ProtoReflect.Descriptor instead.
-func (*VerifyUserTokenRequest) Descriptor() ([]byte, []int) {
-	return file_authservice_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *VerifyUserTokenRequest) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-type VerifyUserTokenResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *VerifyUserTokenResponse) Reset() {
-	*x = VerifyUserTokenResponse{}
-	mi := &file_authservice_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *VerifyUserTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VerifyUserTokenResponse) ProtoMessage() {}
-
-func (x *VerifyUserTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_authservice_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VerifyUserTokenResponse.ProtoReflect.Descriptor instead.
-func (*VerifyUserTokenResponse) Descriptor() ([]byte, []int) {
-	return file_authservice_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *VerifyUserTokenResponse) GetValid() bool {
-	if x != nil {
-		return x.Valid
-	}
-	return false
-}
-
-type VerifyAdminTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *VerifyAdminTokenRequest) Reset() {
-	*x = VerifyAdminTokenRequest{}
-	mi := &file_authservice_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *VerifyAdminTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VerifyAdminTokenRequest) ProtoMessage() {}
-
-func (x *VerifyAdminTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_authservice_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VerifyAdminTokenRequest.ProtoReflect.Descriptor instead.
-func (*VerifyAdminTokenRequest) Descriptor() ([]byte, []int) {
-	return file_authservice_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *VerifyAdminTokenRequest) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-type VerifyAdminTokenResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *VerifyAdminTokenResponse) Reset() {
-	*x = VerifyAdminTokenResponse{}
-	mi := &file_authservice_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *VerifyAdminTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VerifyAdminTokenResponse) ProtoMessage() {}
-
-func (x *VerifyAdminTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_authservice_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VerifyAdminTokenResponse.ProtoReflect.Descriptor instead.
-func (*VerifyAdminTokenResponse) Descriptor() ([]byte, []int) {
-	return file_authservice_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *VerifyAdminTokenResponse) GetValid() bool {
-	if x != nil {
-		return x.Valid
-	}
-	return false
-}
-
 var File_authservice_proto protoreflect.FileDescriptor
 
 const file_authservice_proto_rawDesc = "" +
@@ -643,27 +467,17 @@ const file_authservice_proto_rawDesc = "" +
 	"\aauth_id\x18\x01 \x01(\tR\x06authId\x12\x1b\n" +
 	"\tnew_phone\x18\x02 \x01(\tR\bnewPhone\"K\n" +
 	"\x19UpdatePhoneNumberResponse\x12.\n" +
-	"\x04auth\x18\x01 \x01(\v2\x1a.ihavefood.AuthCredentialsR\x04auth\";\n" +
-	"\x16VerifyUserTokenRequest\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"/\n" +
-	"\x17VerifyUserTokenResponse\x12\x14\n" +
-	"\x05valid\x18\x01 \x01(\bR\x05valid\"<\n" +
-	"\x17VerifyAdminTokenRequest\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"0\n" +
-	"\x18VerifyAdminTokenResponse\x12\x14\n" +
-	"\x05valid\x18\x01 \x01(\bR\x05valid*k\n" +
+	"\x04auth\x18\x01 \x01(\v2\x1a.ihavefood.AuthCredentialsR\x04auth*k\n" +
 	"\x05Roles\x12\x15\n" +
 	"\x11ROLES_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eROLES_CUSTOMER\x10\x01\x12\x0f\n" +
 	"\vROLES_RIDER\x10\x02\x12\x15\n" +
 	"\x11ROLES_SUPER_ADMIN\x10\x14\x12\x0f\n" +
-	"\vROLES_ADMIN\x10\x152\x8f\x04\n" +
+	"\vROLES_ADMIN\x10\x152\xd4\x02\n" +
 	"\vAuthService\x12b\n" +
 	"\bRegister\x12\x1a.ihavefood.RegisterRequest\x1a\x1a.ihavefood.AuthCredentials\"\x1e\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12W\n" +
 	"\x05Login\x12\x17.ihavefood.LoginRequest\x1a\x18.ihavefood.LoginResponse\"\x1b\x92A\x02b\x00\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12\x87\x01\n" +
-	"\x11UpdatePhoneNumber\x12#.ihavefood.UpdatePhoneNumberRequest\x1a$.ihavefood.UpdatePhoneNumberResponse\"'\x82\xd3\xe4\x93\x02!:\x01*2\x1c/auth/{auth_id}/phone-number\x12Z\n" +
-	"\x0fVerifyUserToken\x12!.ihavefood.VerifyUserTokenRequest\x1a\".ihavefood.VerifyUserTokenResponse\"\x00\x12]\n" +
-	"\x10VerifyAdminToken\x12\".ihavefood.VerifyAdminTokenRequest\x1a#.ihavefood.VerifyAdminTokenResponse\"\x00B\vZ\t/genprotob\x06proto3"
+	"\x11UpdatePhoneNumber\x12#.ihavefood.UpdatePhoneNumberRequest\x1a$.ihavefood.UpdatePhoneNumberResponse\"'\x82\xd3\xe4\x93\x02!:\x01*2\x1c/auth/{auth_id}/phone-numberB\vZ\t/genprotob\x06proto3"
 
 var (
 	file_authservice_proto_rawDescOnce sync.Once
@@ -678,7 +492,7 @@ func file_authservice_proto_rawDescGZIP() []byte {
 }
 
 var file_authservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_authservice_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_authservice_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_authservice_proto_goTypes = []any{
 	(Roles)(0),                        // 0: ihavefood.Roles
 	(*AuthCredentials)(nil),           // 1: ihavefood.AuthCredentials
@@ -687,34 +501,26 @@ var file_authservice_proto_goTypes = []any{
 	(*LoginResponse)(nil),             // 4: ihavefood.LoginResponse
 	(*UpdatePhoneNumberRequest)(nil),  // 5: ihavefood.UpdatePhoneNumberRequest
 	(*UpdatePhoneNumberResponse)(nil), // 6: ihavefood.UpdatePhoneNumberResponse
-	(*VerifyUserTokenRequest)(nil),    // 7: ihavefood.VerifyUserTokenRequest
-	(*VerifyUserTokenResponse)(nil),   // 8: ihavefood.VerifyUserTokenResponse
-	(*VerifyAdminTokenRequest)(nil),   // 9: ihavefood.VerifyAdminTokenRequest
-	(*VerifyAdminTokenResponse)(nil),  // 10: ihavefood.VerifyAdminTokenResponse
-	(*timestamppb.Timestamp)(nil),     // 11: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),     // 7: google.protobuf.Timestamp
 }
 var file_authservice_proto_depIdxs = []int32{
-	0,  // 0: ihavefood.AuthCredentials.role:type_name -> ihavefood.Roles
-	11, // 1: ihavefood.AuthCredentials.create_time:type_name -> google.protobuf.Timestamp
-	11, // 2: ihavefood.AuthCredentials.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
-	0,  // 4: ihavefood.LoginRequest.role:type_name -> ihavefood.Roles
-	1,  // 5: ihavefood.UpdatePhoneNumberResponse.auth:type_name -> ihavefood.AuthCredentials
-	2,  // 6: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
-	3,  // 7: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
-	5,  // 8: ihavefood.AuthService.UpdatePhoneNumber:input_type -> ihavefood.UpdatePhoneNumberRequest
-	7,  // 9: ihavefood.AuthService.VerifyUserToken:input_type -> ihavefood.VerifyUserTokenRequest
-	9,  // 10: ihavefood.AuthService.VerifyAdminToken:input_type -> ihavefood.VerifyAdminTokenRequest
-	1,  // 11: ihavefood.AuthService.Register:output_type -> ihavefood.AuthCredentials
-	4,  // 12: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
-	6,  // 13: ihavefood.AuthService.UpdatePhoneNumber:output_type -> ihavefood.UpdatePhoneNumberResponse
-	8,  // 14: ihavefood.AuthService.VerifyUserToken:output_type -> ihavefood.VerifyUserTokenResponse
-	10, // 15: ihavefood.AuthService.VerifyAdminToken:output_type -> ihavefood.VerifyAdminTokenResponse
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0, // 0: ihavefood.AuthCredentials.role:type_name -> ihavefood.Roles
+	7, // 1: ihavefood.AuthCredentials.create_time:type_name -> google.protobuf.Timestamp
+	7, // 2: ihavefood.AuthCredentials.update_time:type_name -> google.protobuf.Timestamp
+	0, // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
+	0, // 4: ihavefood.LoginRequest.role:type_name -> ihavefood.Roles
+	1, // 5: ihavefood.UpdatePhoneNumberResponse.auth:type_name -> ihavefood.AuthCredentials
+	2, // 6: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
+	3, // 7: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
+	5, // 8: ihavefood.AuthService.UpdatePhoneNumber:input_type -> ihavefood.UpdatePhoneNumberRequest
+	1, // 9: ihavefood.AuthService.Register:output_type -> ihavefood.AuthCredentials
+	4, // 10: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
+	6, // 11: ihavefood.AuthService.UpdatePhoneNumber:output_type -> ihavefood.UpdatePhoneNumberResponse
+	9, // [9:12] is the sub-list for method output_type
+	6, // [6:9] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_authservice_proto_init() }
@@ -728,7 +534,7 @@ func file_authservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_authservice_proto_rawDesc), len(file_authservice_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
