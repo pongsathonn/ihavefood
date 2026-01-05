@@ -29,6 +29,8 @@ steps:
     - '--set-secrets=RBMQ_USER=RBMQ_USER:latest'
     - '--set-secrets=RBMQ_PASS=RBMQ_PASS:latest'
     - '--set-secrets=RBMQ_HOST=RBMQ_HOST:latest'
+
+    # created with `openssl rand -base64 32A`
     - '--set-secrets=JWT_SIGNING_KEY=JWT_SIGNING_KEY:latest'
 
 images:

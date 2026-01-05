@@ -111,16 +111,6 @@ func initAMQPCon() *amqp.Connection {
 
 }
 
-// created by $openssl rand -base64 32
-func initSigningKey() []byte {
-
-	key := os.Getenv("JWT_SIGNING_KEY")
-	if key == "" {
-		log.Fatal("missing JWT_SIGNING_KEY environment variable")
-	}
-	return []byte(key)
-}
-
 func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -136,6 +126,7 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
+	internal.LoadSigningKey()
 	internal.SetupValidator()
 
 	if err := initTimeZone(); err != nil {
@@ -148,14 +139,9 @@ func main() {
 	}
 
 	auth := internal.NewAuthService(
-		initSigningKey(),
 		internal.NewStorage(pool),
 		internal.NewRabbitMQ(initAMQPCon()),
 	)
-
-	// if err := auth.CreateDemoUsers(); err != nil {
-	// 	slog.Error("Failed to create Demo Users", "err", err)
-	// }
 
 	startGRPCServer(auth)
 }

@@ -8,12 +8,7 @@ import (
 	pb "github.com/pongsathonn/ihavefood/src/authservice/genproto"
 )
 
-// AuthClaims is custom claims use when
-// register new jwt claims.
 type AuthClaims struct {
-	// ID is used as unique identifier for Auth
-	// or Admin depending on the Role.
-	ID   string
 	Role pb.Roles `json:"role"`
 	jwt.RegisteredClaims
 }

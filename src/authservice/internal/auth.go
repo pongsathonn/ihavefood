@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"time"
@@ -21,7 +22,18 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var ErrDuplicate = errors.New("duplicate key")
+var (
+	signingKey   []byte
+	ErrDuplicate = errors.New("duplicate key")
+)
+
+func LoadSigningKey() {
+	key := os.Getenv("JWT_SIGNING_KEY")
+	if key == "" {
+		log.Fatal("missing JWT_SIGNING_KEY environment variable")
+	}
+	signingKey = []byte(key)
+}
 
 type AuthStorer interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
@@ -36,16 +48,14 @@ type AuthStorer interface {
 type AuthService struct {
 	pb.UnimplementedAuthServiceServer
 
-	signingKey []byte
-	store      AuthStorer
-	rabbitmq   *rabbitMQ
+	store    AuthStorer
+	rabbitmq *rabbitMQ
 }
 
-func NewAuthService(key []byte, store AuthStorer, rabbitmq *rabbitMQ) *AuthService {
+func NewAuthService(store AuthStorer, rabbitmq *rabbitMQ) *AuthService {
 	return &AuthService{
-		signingKey: key,
-		store:      store,
-		rabbitmq:   rabbitmq,
+		store:    store,
+		rabbitmq: rabbitmq,
 	}
 }
 
@@ -169,63 +179,6 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	}, nil
 }
 
-func (x *AuthService) VerifyUserToken(ctx context.Context, in *pb.VerifyUserTokenRequest) (*pb.VerifyUserTokenResponse, error) {
-
-	if in.AccessToken == "" {
-		return nil, status.Error(codes.InvalidArgument, "token must be provided")
-	}
-
-	if valid, err := x.verifyUserToken(in.AccessToken); !valid {
-		slog.Error("verify auth token", "err", err)
-		return nil, status.Error(codes.Unauthenticated, "invalid auth token")
-	}
-
-	return &pb.VerifyUserTokenResponse{Valid: true}, nil
-}
-
-func (x *AuthService) VerifyAdminToken(ctx context.Context, in *pb.VerifyAdminTokenRequest) (*pb.VerifyAdminTokenResponse, error) {
-
-	if in.AccessToken == "" {
-		return nil, status.Error(codes.InvalidArgument, "token must be provided")
-	}
-
-	if valid, err := x.verifyAdminToken(in.AccessToken); !valid {
-		slog.Error("verify admin token", "err", err)
-		return nil, status.Error(codes.Unauthenticated, "invalid admin token")
-	}
-	return &pb.VerifyAdminTokenResponse{Valid: true}, nil
-}
-
-// create super admin and demo user
-func (x *AuthService) CreateDemoUsers() error {
-
-	ctx := context.TODO()
-
-	adminEmail := os.Getenv("SUPER_ADMIN_EMAIL")
-	adminPass := os.Getenv("SUPER_ADMIN_PASS")
-
-	if adminEmail == "" || adminPass == "" {
-		return errors.New("some super admin environment variables are not set")
-	}
-
-	adminHash, err := hashPassword(adminPass)
-	if err != nil {
-		return errors.New("hashing super admin password failed")
-	}
-
-	_, err = x.store.Create(ctx, &dbNewAuthCredentials{
-		Email:       adminEmail,
-		HashedPass:  string(adminHash),
-		Role:        dbRoles(Roles_SUPER_ADMIN),
-		PhoneNumber: nil,
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth *dbAuthCredentials) error {
 	switch role {
 	case pb.Roles_ROLES_CUSTOMER:
@@ -294,10 +247,9 @@ func (x *AuthService) createNewToken(id string, role pb.Roles) (signedToken stri
 	exp := now.Add(30 * day)
 
 	claims := &AuthClaims{
-		ID:   id,
 		Role: role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   "authentication",
+			Subject:   id,
 			Issuer:    "auth service",
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(exp),
@@ -306,50 +258,12 @@ func (x *AuthService) createNewToken(id string, role pb.Roles) (signedToken stri
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	ss, err := token.SignedString(x.signingKey)
+	ss, err := token.SignedString(signingKey)
 	if err != nil {
 		return "", 0, err
 	}
 
 	return ss, exp.Unix(), nil
-}
-
-// verifyUserToken verifies the validity of a JWT token using the provided signing key.
-// It returns true if the token is valid, false otherwise, along with any error encountered.
-func (x *AuthService) verifyUserToken(tokenString string) (bool, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return x.signingKey, nil
-	})
-	if err != nil {
-		return false, err
-	}
-
-	if !token.Valid {
-		return false, errors.New("invalid user token")
-	}
-
-	return true, nil
-}
-
-func (x *AuthService) verifyAdminToken(tokenString string) (bool, error) {
-	token, err := jwt.ParseWithClaims(tokenString, new(AuthClaims), func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return x.signingKey, nil
-	})
-	if err != nil {
-		return false, err
-	}
-
-	if claims, _ := token.Claims.(*AuthClaims); claims.Role != pb.Roles_ROLES_ADMIN {
-		return false, errors.New("token claims do not have admin role")
-	}
-
-	return true, nil
 }
 
 func hashPassword(password string) ([]byte, error) {
