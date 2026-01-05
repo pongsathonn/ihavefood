@@ -7,7 +7,6 @@ option go_package =  "/genproto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-import "protoc-gen-openapiv2/options/annotations.proto";
 
 // ---------------------DELIVERY SERVICE---------------------------
 // Manages riders and delivery process.

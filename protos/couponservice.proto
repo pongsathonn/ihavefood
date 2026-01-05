@@ -30,7 +30,7 @@ service CouponService {
 
     rpc AddCoupon(AddCouponRequest) returns(Coupon){
         option (google.api.http) = {
-            post: "/api/coupons"
+            post: "/api/admin/coupons"
             body: "*"
         };
     }

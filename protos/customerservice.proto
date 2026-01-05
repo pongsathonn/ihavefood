@@ -16,7 +16,7 @@ service CustomerService {
 
     // ListCustomers shows all customers profile.
     rpc ListCustomers(ListCustomersRequest) returns(ListCustomersResponse){
-        option (google.api.http) = {get: "/api/customers"};
+        option (google.api.http) = {get: "/api/admin/customers"};
     }
 
     // GetCustomer shows a customer profile.
