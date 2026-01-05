@@ -9,7 +9,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -gcflags=all="-N -l" -o /customer
 
 FROM alpine:latest
 COPY --from=builder /customer /customer
-COPY --from=builder /src/customer/db/migrations /db/migrations
 
 CMD ["/customer"]
 
