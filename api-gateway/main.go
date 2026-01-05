@@ -6,9 +6,8 @@ import (
 )
 
 func main() {
-
+	server.LoadSigningkey()
 	if err := server.Run(); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
-
 }

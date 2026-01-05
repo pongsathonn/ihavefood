@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"net/http"
@@ -122,45 +121,15 @@ func newGateway() http.Handler {
 	return mux
 }
 
-func initAuthMiddleware() (*AuthMiddleware, error) {
-	ctx := context.Background()
-
-	authURI := os.Getenv("AUTH_URI")
-	tokenSource, err := idtoken.NewTokenSource(ctx, authURI)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create token source: %v", err)
-	}
-
-	parsedURL, err := url.Parse(authURI)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse AUTH_URI: %v", err)
-	}
-
-	authConn, err := grpc.NewClient(parsedURL.Host,
-		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")),
-		grpc.WithPerRPCCredentials(oauth.TokenSource{TokenSource: tokenSource}),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create auth client: %v", err)
-
-	}
-	return NewAuthMiddleware(pb.NewAuthServiceClient(authConn)), nil
-}
-
 func Run() error {
 
 	gwmux := newGateway()
 
-	auth, err := initAuthMiddleware()
-	if err != nil {
-		return err
-	}
-
-	mux := http.NewServeMux()
-	mux.Handle("GET /api/merchants", gwmux)
-	mux.Handle("DELETE /api/", auth.Authz(gwmux))
-	mux.Handle("/api/", auth.Authn(gwmux))
-	mux.Handle("/", gwmux)
+	router := http.NewServeMux()
+	router.Handle("GET /api/merchants", gwmux) // remove auth for testing. will add later.
+	router.Handle("/api/admin/", auth(gwmux))
+	router.Handle("/api/", auth(gwmux))
+	router.Handle("/", gwmux)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -169,7 +138,7 @@ func Run() error {
 
 	s := &http.Server{
 		Addr:    ":" + port,
-		Handler: prettierJSON(cors(mux)),
+		Handler: prettierJSON(cors(router)),
 	}
 
 	if err := s.ListenAndServe(); err != nil {

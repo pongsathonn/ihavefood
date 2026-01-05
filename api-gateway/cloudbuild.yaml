@@ -37,6 +37,8 @@ steps:
     - '--set-env-vars=CUSTOMER_URI=$_CUSTOMER_URI'
     - '--set-env-vars=ORDER_URI=$_ORDER_URI'
     - '--set-env-vars=DELIVERY_URI=$_DELIVERY_URI'
+    - '--set-secrets=JWT_SIGNING_KEY=JWT_SIGNING_KEY:latest'
+
 
 images:
 - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE_NAME}'

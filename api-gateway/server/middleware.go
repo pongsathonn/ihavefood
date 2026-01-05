@@ -1,118 +1,70 @@
 package server
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	pb "github.com/pongsathonn/ihavefood/api-gateway/genproto"
 )
 
 var (
+	signingKey []byte
+
 	ErrTokenInvalid = errors.New("token is invalid")
 )
 
-type AuthMiddleware struct {
-	clientAuth pb.AuthServiceClient
+type GatewayClaims struct {
+	Role pb.Roles `json:"role"`
+	jwt.RegisteredClaims
 }
 
-func NewAuthMiddleware(a pb.AuthServiceClient) *AuthMiddleware {
-	return &AuthMiddleware{clientAuth: a}
+func LoadSigningkey() {
+	key := os.Getenv("JWT_SIGNING_KEY")
+	if key == "" {
+		log.Fatal("missing JWT_SIGNING_KEY environment variable")
+	}
+	signingKey = []byte(key)
 }
 
-func (m *AuthMiddleware) Authn(next http.Handler) http.Handler {
+func auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		token, err := extractToken(r)
+		tokenStr, err := extractToken(r)
 		if err != nil {
 			log.Printf("extract token failed : %v\n", err)
 			http.Error(w, "failed to extract token", http.StatusBadRequest)
 			return
 		}
 
-		if valid, err := m.verifyUserToken(token); !valid {
+		token, err := jwt.ParseWithClaims(tokenStr, new(GatewayClaims), func(token *jwt.Token) (any, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return signingKey, nil
+		})
+		if err != nil {
 			log.Printf("validate token failed: %v\n", err)
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
-}
-
-// authz checks user permission to access resources
-//
-// TODO might implement Role based access control instead checkking only admin token
-func (m *AuthMiddleware) Authz(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		token, err := extractToken(r)
-		if err != nil {
-			log.Printf("extract token failed : %v\n", err)
-			http.Error(w, "failed to extract token", http.StatusBadRequest)
-			return
-		}
-
-		valid, err := m.verifyAdminToken(token)
-		if err != nil {
-			log.Printf("Token validation error: %v\n", err)
-			http.Error(w, "Token validation failed", http.StatusUnauthorized)
-			return
-		}
-
-		if !valid {
-			http.Error(w, "Access denied: You do not have the required permissions", http.StatusForbidden)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (m *AuthMiddleware) validateRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		if r.Method == http.MethodPost || r.Method == http.MethodPatch {
-			if r.Header.Get("Content-Type") != "application/json" {
-				http.Error(w, "invalid Content-Type, expected application/json", http.StatusBadRequest)
+		// check permission for resource under /admin
+		if strings.HasPrefix(r.URL.Path, "/api/admin/") {
+			claims, ok := token.Claims.(*GatewayClaims)
+			if !ok || claims.Role != pb.Roles_ROLES_ADMIN {
+				http.Error(w, "Access denied: You do not have the required permissions", http.StatusForbidden)
 				return
 			}
 		}
 
-		// TODO
-
 		next.ServeHTTP(w, r)
 	})
-}
-
-// validateToken checks if the provided token is valid by calling the AuthService.
-func (m *AuthMiddleware) verifyUserToken(token string) (bool, error) {
-
-	res, err := m.clientAuth.VerifyUserToken(context.TODO(), &pb.VerifyUserTokenRequest{
-		AccessToken: token,
-	})
-	if err != nil {
-		return false, err
-	}
-
-	return res.Valid, nil
-}
-
-// verifyAdminToken check if a Token is valid for admin role permission
-func (m *AuthMiddleware) verifyAdminToken(token string) (bool, error) {
-
-	res, err := m.clientAuth.VerifyAdminToken(
-		context.TODO(),
-		&pb.VerifyAdminTokenRequest{AccessToken: token},
-	)
-	if err != nil {
-		return false, err
-	}
-
-	return res.Valid, nil
 }
 
 // extractToken retrieves and splits the Authorization header, returning the token part.
@@ -129,3 +81,17 @@ func extractToken(r *http.Request) (string, error) {
 
 	return v[1], nil
 }
+
+// func validateRequest(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//
+// 		if r.Method == http.MethodPost || r.Method == http.MethodPatch {
+// 			if r.Header.Get("Content-Type") != "application/json" {
+// 				http.Error(w, "invalid Content-Type, expected application/json", http.StatusBadRequest)
+// 				return
+// 			}
+// 		}
+//
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
