@@ -9,7 +9,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -gcflags=all="-N -l" -o /auth
 
 FROM alpine:latest
 COPY --from=builder /auth /auth
-COPY --from=builder /src/auth/db/migrations /db/migrations
 CMD ["/auth"]
 
 
