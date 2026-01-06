@@ -69,5 +69,15 @@ echo "INFO: created coupons"
 
 sleep 1
 
+# ===========
+# manual command
+ # grpcurl \
+ #  -proto <SERVICE>.proto \
+ #  -d '{"TO":"DO"}' \
+ #  -authority <GCP_SERVICE>.run.app \
+ #  -H "authorization: Bearer $(gcloud auth print-identity-token)" \
+ #  <GCP_SERVICE>.run.app:443 \
+ #  ihavefood.Service/YourMethod
+
 # ==========================================================
 echo "Seeding script successful"
