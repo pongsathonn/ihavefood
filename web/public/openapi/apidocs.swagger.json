@@ -35,22 +35,7 @@
     "application/json"
   ],
   "paths": {
-    "/api/coupons": {
-      "get": {
-        "summary": "ListCoupons shows all coupons.",
-        "operationId": "CouponService_ListCoupons",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ListCouponsResponse"
-            }
-          }
-        },
-        "tags": [
-          "CouponService"
-        ]
-      },
+    "/api/admin/coupons": {
       "post": {
         "operationId": "CouponService_AddCoupon",
         "responses": {
@@ -72,6 +57,40 @@
             }
           }
         ],
+        "tags": [
+          "CouponService"
+        ]
+      }
+    },
+    "/api/admin/customers": {
+      "get": {
+        "summary": "ListCustomers shows all customers profile.",
+        "operationId": "CustomerService_ListCustomers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListCustomersResponse"
+            }
+          }
+        },
+        "tags": [
+          "CustomerService"
+        ]
+      }
+    },
+    "/api/coupons": {
+      "get": {
+        "summary": "ListCoupons shows all coupons.",
+        "operationId": "CouponService_ListCoupons",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListCouponsResponse"
+            }
+          }
+        },
         "tags": [
           "CouponService"
         ]
@@ -99,23 +118,6 @@
         ],
         "tags": [
           "CouponService"
-        ]
-      }
-    },
-    "/api/customers": {
-      "get": {
-        "summary": "ListCustomers shows all customers profile.",
-        "operationId": "CustomerService_ListCustomers",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/ListCustomersResponse"
-            }
-          }
-        },
-        "tags": [
-          "CustomerService"
         ]
       }
     },
@@ -383,7 +385,7 @@
         "parameters": [
           {
             "name": "orderId",
-            "description": "example: 1783de85-456a-4cca-8f7a-489750e21aa4",
+            "description": "example: \"{\\\"rider_id\\\": \\\"388b9219-8fd5-4164-a0ba-ed7ddf411966\\\",\\\"status\\\": \\\"RIDER_ACCEPTED\\\"}\"",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1389,10 +1391,6 @@
     },
     "ReportDeliveryStatusBody": {
       "type": "object",
-      "example": {
-        "rider_id": "388b9219-8fd5-4164-a0ba-ed7ddf411966",
-        "status": "RIDER_ACCEPTED"
-      },
       "properties": {
         "riderId": {
           "type": "string"
@@ -1573,22 +1571,6 @@
       "properties": {
         "auth": {
           "$ref": "#/definitions/AuthCredentials"
-        }
-      }
-    },
-    "VerifyAdminTokenResponse": {
-      "type": "object",
-      "properties": {
-        "valid": {
-          "type": "boolean"
-        }
-      }
-    },
-    "VerifyUserTokenResponse": {
-      "type": "object",
-      "properties": {
-        "valid": {
-          "type": "boolean"
         }
       }
     }

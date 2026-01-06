@@ -544,6 +544,8 @@
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+
+
         const firebaseConfig = {
             storageBucket: "ihavefood-ee231.firebasestorage.app",
         };
@@ -852,20 +854,29 @@
             }
 
             if (deleteBtn && confirm('Delete this address?')) {
-
                 const customerId = sessionStorage.getItem('customer_id');
                 const token = sessionStorage.getItem("token");
                 const addressId = deleteBtn.dataset.delete;
 
-                await fetch(`${serverUrl}/api/customers/${customerId}/addresses/${addressId}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
+                try {
+                    const res = await fetch(`${serverUrl}/api/customers/${customerId}/addresses/${addressId}`, {
+                        method: "DELETE",
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (!res.ok) {
+                        throw new Error('Failed to delete');
                     }
-                });
-                addresses = addresses.filter(a => a.addressId !== addressId);
-                renderAddresses();
+
+                    addresses = addresses.filter(a => a.addressId !== addressId);
+                    renderAddresses();
+                } catch (err) {
+                    alert('Could not delete address. Please try again.');
+                    console.error(err);
+                }
             }
 
         });
@@ -1675,16 +1686,15 @@
                 const accessToken = loginResponse.accessToken;
                 sessionStorage.setItem("token", accessToken);
                 const payload = decodeJwt(accessToken);
+                const customerId = payload.sub;
 
-                if (!payload || !payload.ID) {
+                if (!payload || !customerId) {
                     console.error('JWT payload is missing the required ID field.');
                     return; 
                 }
 
-                const customerIdFromToken = payload.ID;
-                const customer = await fetchCustomer(customerIdFromToken); 
+                const customer = await fetchCustomer(customerId); 
                 sessionStorage.setItem("customer_id", customer.customerId);
-
 
                 // sessionStorage.setItem("customer_addresses", JSON.stringify(customer.addresses));
 
@@ -1704,7 +1714,7 @@
                 showSection('restaurant-list');
 
             } catch (error) {
-                if (error.status === 400 ){
+                if (error.status === 401 ){
                     authStatus.textContent = "Login or password is invalid.";
                     authStatus.className = `text-sm mt-2 text-center text-red-500`;
                     return;
@@ -1772,7 +1782,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('loader').classList.remove('hidden');
+
             cachedData = await fetchMerchants();
+
             document.getElementById('loader').classList.add('hidden');
 
             if (!isUserAuthenticated) {
