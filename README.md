@@ -7,6 +7,7 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
 
 # Order Happy Path
 
+```
  │ Publisher    │     Routing Key           │           Queue              │ Subscriber │  ORDER STATUS  │   
  ├──────────────├───────────────────────────├──────────────────────────────├────────────├────────────────┤
  │              │                           │                              │            │  PENDING       │
@@ -22,6 +23,7 @@ ihavefood is a microservice food-delivery project written in Rust,Go.
  │              │                           │                              │            │  ONGOING       │
  │ Delivery     │ rider.delivered.event     │ order_status_update_queue    │ Order      │                │
  │              │                           │                              │            │  DELIVERED     │
+```
  
 
 
