@@ -179,6 +179,45 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 	}, nil
 }
 
+// CreateAdmin ignore input validation like password.
+func (x *AuthService) CreateAdmin(ctx context.Context, in *pb.CreateAdminRequest) (*pb.AuthCredentials, error) {
+
+	hashPass, err := hashPassword(in.Password)
+	if err != nil {
+		slog.Error("hashing password", "err", err)
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	auth, err := x.store.Create(ctx, &dbNewAuthCredentials{
+		Email:       in.Email,
+		HashedPass:  string(hashPass),
+		Role:        dbRoles(pb.Roles_ROLES_ADMIN),
+		PhoneNumber: nil,
+	})
+	if err != nil {
+		if errors.Is(err, ErrDuplicate) {
+			slog.Error("database unique_violation:", "err", err)
+			return nil, status.Error(codes.AlreadyExists, "email or phone number already exists")
+		}
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	phone := ""
+	if auth.PhoneNumber != nil {
+		phone = *auth.PhoneNumber
+	}
+
+	return &pb.AuthCredentials{
+		Id:         auth.ID,
+		Email:      auth.Email,
+		Phone:      phone,
+		Role:       pb.Roles(auth.Role),
+		CreateTime: timestamppb.New(auth.CreateTime),
+		UpdateTime: timestamppb.New(auth.UpdateTime),
+	}, nil
+
+}
+
 func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth *dbAuthCredentials) error {
 	switch role {
 	case pb.Roles_ROLES_CUSTOMER:
