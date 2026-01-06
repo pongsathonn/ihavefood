@@ -41,13 +41,7 @@ service AuthService {
         };
     }
 
-    // CreateAdmin required super admin role.
-    // rpc CreateAdmin(CreateAdminRequest) returns(UserCredentials){
-    //     option (google.api.http) = {
-    //         post: "/auth/admin" 
-    //         body: "*"
-    //     };
-    // }
+    rpc CreateAdmin(CreateAdminRequest) returns(AuthCredentials){}
 
     /*
         rpc ForgotPassword(ForgotPasswordRequest) returns(ForgotPasswordResponse) {}
@@ -110,9 +104,7 @@ message UpdatePhoneNumberResponse {
 }
 
 
-// message CreateAdminRequest {
-//    string email = 2;
-//    string password = 3;
-//    string phone = 4;
-// }
-//
+message CreateAdminRequest {
+   string email = 1;
+   string password = 2;
+}
