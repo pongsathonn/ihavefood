@@ -62,6 +62,8 @@ pub struct GetDeliveryFeeRequest {
     #[prost(string, tag = "3")]
     pub merchant_id: ::prost::alloc::string::String,
 }
+
+
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GetDeliveryFeeResponse {
@@ -71,7 +73,7 @@ pub struct GetDeliveryFeeResponse {
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReportDeliveryStatusRequest {
-    /// example: 1783de85-456a-4cca-8f7a-489750e21aa4
+    /// example: "{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}"
     #[prost(string, tag = "1")]
     pub order_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
@@ -143,6 +145,7 @@ pub mod delivery_service_client {
             Ok(Self::new(conn))
         }
     }
+
     impl<T> DeliveryServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,

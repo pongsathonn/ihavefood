@@ -286,11 +286,7 @@ func (x *LoginRequest) GetRole() Roles {
 }
 
 type LoginResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Access token. Valid for 30 days.
-	AccessToken string `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	// Number of seconds until the access token expires.
-	ExpiresIn     int64 `protobuf:"varint,2,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -323,20 +319,6 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *LoginResponse) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *LoginResponse) GetExpiresIn() int64 {
-	if x != nil {
-		return x.ExpiresIn
-	}
-	return 0
 }
 
 type UpdatePhoneNumberRequest struct {
@@ -510,11 +492,8 @@ const file_authservice_proto_rawDesc = "" +
 	"identifier\x18\x01 \x01(\tR\n" +
 	"identifier\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12$\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:]\x92AZ2X{\"identifier\": \"somsak22@mail.com\", \"password\": \"Newpa$sword9\",\"role\": \"ROLES_CUSTOMER\"}\"Q\n" +
-	"\rLoginResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
-	"\n" +
-	"expires_in\x18\x02 \x01(\x03R\texpiresIn\"P\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:]\x92AZ2X{\"identifier\": \"somsak22@mail.com\", \"password\": \"Newpa$sword9\",\"role\": \"ROLES_CUSTOMER\"}\"\x0f\n" +
+	"\rLoginResponse\"P\n" +
 	"\x18UpdatePhoneNumberRequest\x12\x17\n" +
 	"\aauth_id\x18\x01 \x01(\tR\x06authId\x12\x1b\n" +
 	"\tnew_phone\x18\x02 \x01(\tR\bnewPhone\"K\n" +
