@@ -88,12 +88,7 @@ message LoginRequest {
     Roles role = 3;
 }
 
-message LoginResponse {
-    // Access token. Valid for 30 days.
-    string access_token = 1;
-    // Number of seconds until the access token expires.
-    int64 expires_in = 2;
-}
+message LoginResponse {}
 
 message UpdatePhoneNumberRequest {
   string auth_id = 1;
