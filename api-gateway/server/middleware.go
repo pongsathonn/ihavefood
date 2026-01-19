@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -35,16 +36,16 @@ func LoadSigningkey() {
 func auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		tokenStr, err := extractToken(r)
+		cookie, err := r.Cookie("access-token")
 		if err != nil {
-			log.Printf("extract token failed : %v\n", err)
-			http.Error(w, "failed to extract token", http.StatusBadRequest)
+			slog.Error("unable to read cookie", "err", err)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(tokenStr, new(GatewayClaims), func(token *jwt.Token) (any, error) {
+		token, err := jwt.ParseWithClaims(cookie.Value, new(GatewayClaims), func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return signingKey, nil
 		})
@@ -66,32 +67,3 @@ func auth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// extractToken retrieves and splits the Authorization header, returning the token part.
-func extractToken(r *http.Request) (string, error) {
-	h := r.Header.Get("Authorization")
-	if h == "" {
-		return "", errors.New("no authorization in header")
-	}
-
-	v := strings.Split(h, " ")
-	if len(v) != 2 {
-		return "", errors.New("invalid authorization header format")
-	}
-
-	return v[1], nil
-}
-
-// func validateRequest(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//
-// 		if r.Method == http.MethodPost || r.Method == http.MethodPatch {
-// 			if r.Header.Get("Content-Type") != "application/json" {
-// 				http.Error(w, "invalid Content-Type, expected application/json", http.StatusBadRequest)
-// 				return
-// 			}
-// 		}
-//
-// 		next.ServeHTTP(w, r)
-// 	})
-// }

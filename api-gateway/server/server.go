@@ -5,6 +5,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"context"
 	"net/url"
@@ -15,6 +17,7 @@ import (
 	"log"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
@@ -27,7 +30,7 @@ func cors(h http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
 		w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -63,6 +66,7 @@ func newGateway() http.Handler {
 
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption("application/json+pretty", mars),
+		runtime.WithForwardResponseOption(setCookie),
 		// runtime.WithHealthzEndpoint(grpc_health_v1.NewHealthClient(cl)),
 	)
 
@@ -121,12 +125,48 @@ func newGateway() http.Handler {
 	return mux
 }
 
+func setCookie(ctx context.Context, w http.ResponseWriter, _ proto.Message) error {
+	md, ok := runtime.ServerMetadataFromContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	tokens := md.HeaderMD.Get("access-token")
+	exps := md.HeaderMD.Get("exp")
+
+	if len(tokens) == 0 {
+		return nil
+	}
+
+	token := tokens[0]
+
+	var maxAge int
+	if len(exps) > 0 {
+		if expUnix, err := strconv.ParseInt(exps[0], 10, 64); err == nil {
+			maxAge = int(expUnix - time.Now().Unix())
+		}
+	} else {
+		maxAge = 86400
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access-token",
+		Value:    token,
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+		Path:     "/",
+	})
+
+	return nil
+}
+
 func Run() error {
 
 	gwmux := newGateway()
 
 	router := http.NewServeMux()
-	router.Handle("GET /api/merchants", gwmux) // remove auth for testing. will add later.
 	router.Handle("/api/admin/", auth(gwmux))
 	router.Handle("/api/", auth(gwmux))
 	router.Handle("/", gwmux)
