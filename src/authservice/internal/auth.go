@@ -7,13 +7,16 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -126,19 +129,7 @@ func (x *AuthService) Register(ctx context.Context, in *pb.RegisterRequest) (*pb
 }
 
 // Login handles auth login. It verifies the provided credentials, generates a JWT token on success,
-// and returns it along with its expiration time. It returns an error if login fails or credentials are incorrect.
 func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
-
-	// For login with HTTP GET
-	// md, ok := metadata.FromIncomingContext(ctx)
-	// if !ok {
-	// 	return nil, status.Error(codes.Unknown, "missing metadata")
-	// }
-	// iden, password, err := extractBasicAuth(md["authorization"])
-	// if err != nil {
-	// 	slog.Error("authorization", "err", err)
-	// 	return nil, status.Error(codes.Unauthenticated, "invalid authorization")
-	// }
 
 	if err := ValidateStruct(in); err != nil {
 		var ve myValidatorErrs
@@ -173,10 +164,12 @@ func (x *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.Login
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return &pb.LoginResponse{
-		AccessToken: token,
-		ExpiresIn:   exp,
-	}, nil
+	grpc.SendHeader(ctx, metadata.Pairs(
+		"access-token", token,
+		"exp", strconv.FormatInt(exp.Unix(), 10),
+	))
+
+	return &pb.LoginResponse{}, nil
 }
 
 // CreateAdmin ignore input validation like password.
@@ -278,8 +271,7 @@ func (x *AuthService) dispatchCreation(ctx context.Context, role pb.Roles, auth 
 // }
 
 // createNewToken generates a new JWT token specific roles with an expiration time from the current time.
-// It returns the signed token string, its expiration time in Unix format, and any error encountered.
-func (x *AuthService) createNewToken(id string, role pb.Roles) (signedToken string, expiration int64, err error) {
+func (x *AuthService) createNewToken(id string, role pb.Roles) (signedToken string, expiration time.Time, err error) {
 
 	day := 24 * time.Hour
 	now := time.Now()
@@ -299,10 +291,10 @@ func (x *AuthService) createNewToken(id string, role pb.Roles) (signedToken stri
 
 	ss, err := token.SignedString(signingKey)
 	if err != nil {
-		return "", 0, err
+		return "", time.Time{}, err
 	}
 
-	return ss, exp.Unix(), nil
+	return ss, exp, nil
 }
 
 func hashPassword(password string) ([]byte, error) {
