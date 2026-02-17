@@ -11,8 +11,7 @@ import {
 import Autoplay from "embla-carousel-autoplay"
 import Image from "next/image";
 
-export const PromotionCard = () => {
-
+export default function PromotionCard() {
     const plugin = useRef(
         Autoplay({ delay: 2000, stopOnInteraction: true })
     )
