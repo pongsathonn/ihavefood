@@ -6,6 +6,7 @@ import {
     SetStateAction,
 } from 'react';
 import { MenuItem, Restaurant } from '@/app/lib/definitions';
+import { PaginationSimple } from './pagination';
 
 
 const renderMenu = (menu: MenuItem[]) => {
@@ -114,6 +115,9 @@ export default function FoodCategory({
                     <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 items-stretch">
                         {renderRestaurants({ restaurants })}
                     </div>
+                    <div className='pt-8'>
+                        <PaginationSimple />
+                    </div>
                 </section>
             ) : (
                 <section id="food-menu" className="bg-gray-50 p-6 rounded-3xl shadow-lg border border-gray-100">
@@ -132,6 +136,7 @@ export default function FoodCategory({
                     </div>
                 </section>
             )}
+
         </div>
     );
 }
