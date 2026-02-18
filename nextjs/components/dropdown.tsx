@@ -11,18 +11,33 @@ import {
     LogOutIcon,
     UserIcon,
     CreditCard,
+    AlignJustifyIcon,
+    Braces,
 } from "lucide-react"
 
 export default function DropdownMenuIcons() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost"
-                    className="bg-transparent border-slate-600 text-slate-200 hover:bg-slate-800 hover:text-white"
-                >Setting</Button>
+                <Button variant="ghost" className="bg-transparent border-slate-600 text-slate-200 hover:bg-slate-800 hover:text-white" >
+                    <AlignJustifyIcon />
+                </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="end">
                 <DropdownMenuItem>
+                    {/* 
+                    <div className="pr-16 justify-center">
+                        <IconButton
+                            icon="profile"
+                            showBadge={false}
+                            onClick={() => {
+                                setShowProfileMenu(true);
+                            }}
+                        >
+                            Profile
+                        </IconButton>
+                        {showProfileMenu && <ProfileMenu />}
+                    </div> */}
                     <UserIcon />
                     Profile
                 </DropdownMenuItem>
@@ -34,12 +49,16 @@ export default function DropdownMenuIcons() {
                     <CreditCard />
                     Payment
                 </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <Braces />
+                    OpenAPI
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
                     <LogOutIcon />
                     Log out
                 </DropdownMenuItem>
             </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu >
     )
 }
