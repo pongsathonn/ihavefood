@@ -62,8 +62,6 @@ pub struct GetDeliveryFeeRequest {
     #[prost(string, tag = "3")]
     pub merchant_id: ::prost::alloc::string::String,
 }
-
-
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GetDeliveryFeeResponse {
@@ -145,7 +143,6 @@ pub mod delivery_service_client {
             Ok(Self::new(conn))
         }
     }
-
     impl<T> DeliveryServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
@@ -236,11 +233,10 @@ pub mod delivery_service_client {
                 .insert(GrpcMethod::new("ihavefood.DeliveryService", "TrackingRider"));
             self.inner.server_streaming(req, path, codec).await
         }
-        /// GetDeliveryFee calculates the delivery fee from merchant to customer
-        /// using merchant ID and customer address ID.
+        /// GetDeliveryFee calculates the delivery fee
         ///
         /// Example:
-        ///      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+        ///      GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
         pub async fn get_delivery_fee(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDeliveryFeeRequest>,
@@ -320,11 +316,10 @@ pub mod delivery_service_server {
             tonic::Response<Self::TrackingRiderStream>,
             tonic::Status,
         >;
-        /// GetDeliveryFee calculates the delivery fee from merchant to customer
-        /// using merchant ID and customer address ID.
+        /// GetDeliveryFee calculates the delivery fee
         ///
         /// Example:
-        ///      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+        ///      GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
         async fn get_delivery_fee(
             &self,
             request: tonic::Request<super::GetDeliveryFeeRequest>,

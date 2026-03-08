@@ -539,7 +539,7 @@ var File_deliveryservice_proto protoreflect.FileDescriptor
 
 const file_deliveryservice_proto_rawDesc = "" +
 	"\n" +
-	"\x15deliveryservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xa6\x01\n" +
+	"\x15deliveryservice.proto\x12\tihavefood\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
 	"\n" +
 	"PickupInfo\x12\x1f\n" +
 	"\vpickup_code\x18\x01 \x01(\tR\n" +
@@ -578,10 +578,10 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\x1dDELIVERY_STATUS_RIDER_PENDING\x10\x01\x12\"\n" +
 	"\x1eDELIVERY_STATUS_RIDER_ACCEPTED\x10\x02\x12#\n" +
 	"\x1fDELIVERY_STATUS_RIDER_PICKED_UP\x10\x03\x12#\n" +
-	"\x1fDELIVERY_STATUS_RIDER_DELIVERED\x10\x042\xe4\x02\n" +
+	"\x1fDELIVERY_STATUS_RIDER_DELIVERED\x10\x042\xed\x02\n" +
 	"\x0fDeliveryService\x12V\n" +
-	"\rTrackingRider\x12\x1f.ihavefood.TrackingRiderRequest\x1a .ihavefood.TrackingRiderResponse\"\x000\x01\x12r\n" +
-	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x84\x01\n" +
+	"\rTrackingRider\x12\x1f.ihavefood.TrackingRiderRequest\x1a .ihavefood.TrackingRiderResponse\"\x000\x01\x12{\n" +
+	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/deliveries/delivery-fee\x12\x84\x01\n" +
 	"\x14ReportDeliveryStatus\x12&.ihavefood.ReportDeliveryStatusRequest\x1a\x16.google.protobuf.Empty\",\x82\xd3\xe4\x93\x02&:\x01*2!/api/deliveries/{order_id}/statusB\vZ\t/genprotob\x06proto3"
 
 var (

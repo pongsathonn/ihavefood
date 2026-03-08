@@ -229,7 +229,6 @@ type LoginRequest struct {
 	// Email, or Phone number
 	Identifier    string `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"`
 	Password      string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	Role          Roles  `protobuf:"varint,3,opt,name=role,proto3,enum=ihavefood.Roles" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -278,15 +277,10 @@ func (x *LoginRequest) GetPassword() string {
 	return ""
 }
 
-func (x *LoginRequest) GetRole() Roles {
-	if x != nil {
-		return x.Role
-	}
-	return Roles_ROLES_UNSPECIFIED
-}
-
 type LoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	ExpiresIn     int64                  `protobuf:"varint,2,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -319,6 +313,20 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
 	return file_authservice_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *LoginResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+func (x *LoginResponse) GetExpiresIn() int64 {
+	if x != nil {
+		return x.ExpiresIn
+	}
+	return 0
 }
 
 type UpdatePhoneNumberRequest struct {
@@ -486,14 +494,16 @@ const file_authservice_proto_rawDesc = "" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12$\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:Z\x92AW2U{\"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"role\": \"ROLES_CUSTOMER\"}\"\xcf\x01\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:Z\x92AW2U{\"email\": \"somsak@example.com\", \"password\": \"Newpa$sword9\", \"role\": \"ROLES_CUSTOMER\"}\"\x90\x01\n" +
 	"\fLoginRequest\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x01 \x01(\tR\n" +
 	"identifier\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12$\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x10.ihavefood.RolesR\x04role:]\x92AZ2X{\"identifier\": \"somsak22@mail.com\", \"password\": \"Newpa$sword9\",\"role\": \"ROLES_CUSTOMER\"}\"\x0f\n" +
-	"\rLoginResponse\"P\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword:D\x92AA2?{\"identifier\": \"somsak22@mail.com\", \"password\": \"Newpa$sword9\"}\"Q\n" +
+	"\rLoginResponse\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
+	"\n" +
+	"expires_in\x18\x02 \x01(\x03R\texpiresIn\"P\n" +
 	"\x18UpdatePhoneNumberRequest\x12\x17\n" +
 	"\aauth_id\x18\x01 \x01(\tR\x06authId\x12\x1b\n" +
 	"\tnew_phone\x18\x02 \x01(\tR\bnewPhone\"K\n" +
@@ -540,25 +550,24 @@ var file_authservice_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),     // 8: google.protobuf.Timestamp
 }
 var file_authservice_proto_depIdxs = []int32{
-	0,  // 0: ihavefood.AuthCredentials.role:type_name -> ihavefood.Roles
-	8,  // 1: ihavefood.AuthCredentials.create_time:type_name -> google.protobuf.Timestamp
-	8,  // 2: ihavefood.AuthCredentials.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
-	0,  // 4: ihavefood.LoginRequest.role:type_name -> ihavefood.Roles
-	1,  // 5: ihavefood.UpdatePhoneNumberResponse.auth:type_name -> ihavefood.AuthCredentials
-	2,  // 6: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
-	3,  // 7: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
-	5,  // 8: ihavefood.AuthService.UpdatePhoneNumber:input_type -> ihavefood.UpdatePhoneNumberRequest
-	7,  // 9: ihavefood.AuthService.CreateAdmin:input_type -> ihavefood.CreateAdminRequest
-	1,  // 10: ihavefood.AuthService.Register:output_type -> ihavefood.AuthCredentials
-	4,  // 11: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
-	6,  // 12: ihavefood.AuthService.UpdatePhoneNumber:output_type -> ihavefood.UpdatePhoneNumberResponse
-	1,  // 13: ihavefood.AuthService.CreateAdmin:output_type -> ihavefood.AuthCredentials
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0, // 0: ihavefood.AuthCredentials.role:type_name -> ihavefood.Roles
+	8, // 1: ihavefood.AuthCredentials.create_time:type_name -> google.protobuf.Timestamp
+	8, // 2: ihavefood.AuthCredentials.update_time:type_name -> google.protobuf.Timestamp
+	0, // 3: ihavefood.RegisterRequest.role:type_name -> ihavefood.Roles
+	1, // 4: ihavefood.UpdatePhoneNumberResponse.auth:type_name -> ihavefood.AuthCredentials
+	2, // 5: ihavefood.AuthService.Register:input_type -> ihavefood.RegisterRequest
+	3, // 6: ihavefood.AuthService.Login:input_type -> ihavefood.LoginRequest
+	5, // 7: ihavefood.AuthService.UpdatePhoneNumber:input_type -> ihavefood.UpdatePhoneNumberRequest
+	7, // 8: ihavefood.AuthService.CreateAdmin:input_type -> ihavefood.CreateAdminRequest
+	1, // 9: ihavefood.AuthService.Register:output_type -> ihavefood.AuthCredentials
+	4, // 10: ihavefood.AuthService.Login:output_type -> ihavefood.LoginResponse
+	6, // 11: ihavefood.AuthService.UpdatePhoneNumber:output_type -> ihavefood.UpdatePhoneNumberResponse
+	1, // 12: ihavefood.AuthService.CreateAdmin:output_type -> ihavefood.AuthCredentials
+	9, // [9:13] is the sub-list for method output_type
+	5, // [5:9] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_authservice_proto_init() }

@@ -39,7 +39,7 @@ type DeliveryServiceClient interface {
 	//
 	// Example:
 	//
-	//	GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+	//	GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
 	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
 	ReportDeliveryStatus(ctx context.Context, in *ReportDeliveryStatusRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -105,7 +105,7 @@ type DeliveryServiceServer interface {
 	//
 	// Example:
 	//
-	//	GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+	//	GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
 	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
 	ReportDeliveryStatus(context.Context, *ReportDeliveryStatusRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
