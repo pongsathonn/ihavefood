@@ -1,156 +1,196 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useFormStatus } from "react-dom";
-import React from 'react';
+import Link from 'next/link'
+import { useFormStatus } from 'react-dom'
+import React from 'react'
 
 interface ButtonProps {
-    children: React.ReactNode;
-    isSuccessful: boolean;
-    variant?: 'primary' | 'secondary' | 'danger';
+  children: React.ReactNode
+  isSuccessful: boolean
+  variant?: 'primary' | 'secondary' | 'danger'
 }
 
 export const MotorScooterIcon = ({
-    size = undefined,
-    color = '#000000',
-    strokeWidth = 2,
-    background = 'transparent',
-    opacity = 1,
-    rotation = 0,
-    shadow = 0,
-    flipHorizontal = false,
-    flipVertical = false,
-    padding = 2
+  size = undefined,
+  color = '#000000',
+  strokeWidth = 2,
+  background = 'transparent',
+  opacity = 1,
+  rotation = 0,
+  shadow = 0,
+  flipHorizontal = false,
+  flipVertical = false,
+  padding = 2,
 }) => {
-    const transforms = [];
-    if (rotation !== 0) transforms.push(`rotate(${rotation}deg)`);
-    if (flipHorizontal) transforms.push('scaleX(-1)');
-    if (flipVertical) transforms.push('scaleY(-1)');
+  const transforms = []
+  if (rotation !== 0) transforms.push(`rotate(${rotation}deg)`)
+  if (flipHorizontal) transforms.push('scaleX(-1)')
+  if (flipVertical) transforms.push('scaleY(-1)')
 
-    const viewBoxSize = 64 + (padding * 2);
-    const viewBox = `-4 6 ${viewBoxSize} ${viewBoxSize}`;
+  const viewBoxSize = 64 + padding * 2
+  const viewBox = `-4 6 ${viewBoxSize} ${viewBoxSize}`
 
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 inline-block align-middle"
-            viewBox={viewBox}
-            width={size}
-            height={size}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{
-                opacity,
-                transform: transforms.join(' ') || undefined,
-                filter: shadow > 0 ? `drop-shadow(0 ${shadow}px ${shadow * 2}px rgba(0,0,0,0.3))` : undefined,
-                backgroundColor: background !== 'transparent' ? background : undefined
-            }}
-        >
-            <ellipse cx="50.5" cy="56.944" fill="currentColor" rx=".469" ry=".477" /><path fill="currentColor" d="M54.411 36.418c.505-.346.839-.935.839-1.601v-3.845c0-1.058-.842-1.892-1.873-1.856l-22.502.826c-1.032.036-1.875.933-1.875 1.992v2.883c0 1.058.844 1.924 1.875 1.924h1.161l1.038 1.05c.066.07 1.903 2.06 1.903 6.2c0 1.866-1.726 3.384-3.846 3.384h-7.534c-.666-.732-1.831-4.442-1.831-10.623c0-6.344 2.395-9.595 2.419-9.627l.485-.645l.53.224c.325.16.71.19 1.064.023c.628-.301.9-1.059.607-1.701a1.23 1.23 0 0 0-.492-.527l-1.923-.834c-.153-1.231-1.014-2.214-2.168-2.403c-.229-.038-.498-.209-.518-.285C21.25 19.001 19.924 18 17.832 18h-2.885l-.021 1.525H13.9v.953c-.745 0-1.35 1.066-1.35 2.383c0 1.314.604 2.383 1.35 2.383v.953h1.025v1.525h2.016c-2.44 3.586-6.475 10.142-6.475 14.305q.001.269.046.535c-3.443.463-6.585 2.557-8.255 5.593c-.328.595-.343 1.262-.042 1.829c.471.889 1.419 1.176 2.89 1.339a7.7 7.7 0 0 0-.639 3.052c0 4.211 3.357 7.625 7.5 7.625c3.822 0 6.97-2.908 7.434-6.666h2.293c.24 0 .437.098.824.303c.544.287 1.29.68 2.369.68h18.373C44.104 59.586 47.021 62 50.5 62c3.48 0 6.396-2.414 7.241-5.684H62v-1.524c0-9.684-5.366-16.122-7.589-18.374m-24.367-4.571c-.033.002-.061.018-.094.021c.035-.516.453-.955.957-.975l22.536-.824c.488 0 .869.397.869.903v.05zM11.966 58.188c-2.072 0-3.75-1.708-3.75-3.813c0-1.046.422-1.982 1.095-2.668c.793.111 1.505.266 1.927.498c.496.273.939.61 1.408.967c.439.334.904.681 1.429.998a.472.472 0 0 0 .419.682c.174 0 .319-.1.4-.242q.36.168.769.305c-.26 1.847-1.808 3.273-3.697 3.273m38.534 0c-1.368 0-2.544-.757-3.195-1.871h.965a.5.5 0 0 0 .113.213a.46.46 0 0 0 .662 0a.46.46 0 0 0 .113-.213h2.686a.5.5 0 0 0 .113.213a.46.46 0 0 0 .662 0a.46.46 0 0 0 .113-.213h.964c-.651 1.114-1.827 1.871-3.196 1.871m-25.614-3.396c-1.393 0-1.93-.983-3.193-.983h-3.215c-3.494 0-4.461-1.805-6.525-2.945c-2.445-1.348-9.184-.516-8.387-1.963c1.611-2.93 4.941-4.909 8.387-4.909c.27 0 .535.019.799.043l-.002-.003s-.783-1.145-.783-2.004c0-5.275 7.908-15.83 7.908-15.83h-3.449v-6.672h1.406c.771 0 2.02.063 2.49 1.847c.216.819 1.021 1.229 1.574 1.362c-.545.301-.918.88-.918 1.555c0 .982.782 1.78 1.748 1.78c.09 0 .176-.013.262-.028v.157h.006s-2.729 3.62-2.729 10.555c0 6.715 1.395 12.148 3.117 12.148h7.748c2.956 0 5.346-2.194 5.346-4.909c0-4.587-2.048-6.959-2.316-7.25h18.394c.386.331 7.946 6.968 7.946 18.051H24.886z" /><path fill="currentColor" d="M47.076 38.727c-1.295-.119-2.65-.087-3.947.274c-1.291.362-2.516 1.026-3.498 1.97c-.971.947-1.717 2.141-2.09 3.441a9.3 9.3 0 0 0-.275 3.976a10.7 10.7 0 0 0 1.307 3.68c-.945-2.394-1.213-5.085-.348-7.419c.836-2.335 2.807-4.124 5.15-4.729c1.164-.341 2.391-.379 3.629-.295c1.234.081 2.457.329 3.654.683s2.359.853 3.471 1.452c1.125.58 2.191 1.28 3.195 2.08c-1.762-1.888-4.004-3.313-6.439-4.225c-1.217-.47-2.506-.745-3.809-.888" /><path fill="currentColor" d="M48.27 40.584c-1.215-.127-2.475-.127-3.713.125c-1.23.26-2.428.763-3.447 1.541c-1.006.784-1.842 1.826-2.299 3.03a7.6 7.6 0 0 0-.432 3.745a8.9 8.9 0 0 0 1.303 3.443c-.977-2.215-1.215-4.794-.209-6.895c.977-2.105 3.035-3.505 5.27-3.932c1.113-.246 2.279-.252 3.447-.161c1.166.075 2.318.31 3.457.607c1.137.31 2.246.737 3.314 1.257a19.3 19.3 0 0 1 3.102 1.807c-1.736-1.701-3.898-2.948-6.205-3.76a16 16 0 0 0-3.588-.807m-32.938 4.349a7.2 7.2 0 0 0-4.514.236a7.17 7.17 0 0 0-3.463 2.759a9.1 9.1 0 0 1 3.689-2.052c1.332-.368 2.734-.397 4.039-.024c1.311.35 2.504 1.106 3.469 2.105a9.15 9.15 0 0 1 2.104 3.697a7.24 7.24 0 0 0-1.555-4.186a7.35 7.35 0 0 0-3.769-2.535" /><ellipse cx="9.437" cy="54.375" fill="currentColor" rx=".469" ry=".477" /><path fill="currentColor" d="M9.847 55.854a.483.483 0 0 0 0 .676c.182.187.479.187.662 0s.184-.488 0-.676a.46.46 0 0 0-.662 0" /><ellipse cx="11.964" cy="56.944" fill="currentColor" rx=".469" ry=".477" /><path fill="currentColor" d="M13.421 55.855c-.184.186-.184.487 0 .674s.48.187.662 0a.477.477 0 0 0 0-.674a.464.464 0 0 0-.662 0m-3.574-3.634a.477.477 0 0 0 0 .673c.184.187.48.187.664 0a.48.48 0 0 0 0-.673a.46.46 0 0 0-.664 0" /><ellipse cx="11.966" cy="54.375" fill="currentColor" rx=".938" ry=".953" />
-        </svg>
-    );
-};
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6 inline-block align-middle"
+      viewBox={viewBox}
+      width={size}
+      height={size}
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{
+        opacity,
+        transform: transforms.join(' ') || undefined,
+        filter:
+          shadow > 0
+            ? `drop-shadow(0 ${shadow}px ${shadow * 2}px rgba(0,0,0,0.3))`
+            : undefined,
+        backgroundColor: background !== 'transparent' ? background : undefined,
+      }}
+    >
+      <ellipse cx="50.5" cy="56.944" fill="currentColor" rx=".469" ry=".477" />
+      <path
+        fill="currentColor"
+        d="M54.411 36.418c.505-.346.839-.935.839-1.601v-3.845c0-1.058-.842-1.892-1.873-1.856l-22.502.826c-1.032.036-1.875.933-1.875 1.992v2.883c0 1.058.844 1.924 1.875 1.924h1.161l1.038 1.05c.066.07 1.903 2.06 1.903 6.2c0 1.866-1.726 3.384-3.846 3.384h-7.534c-.666-.732-1.831-4.442-1.831-10.623c0-6.344 2.395-9.595 2.419-9.627l.485-.645l.53.224c.325.16.71.19 1.064.023c.628-.301.9-1.059.607-1.701a1.23 1.23 0 0 0-.492-.527l-1.923-.834c-.153-1.231-1.014-2.214-2.168-2.403c-.229-.038-.498-.209-.518-.285C21.25 19.001 19.924 18 17.832 18h-2.885l-.021 1.525H13.9v.953c-.745 0-1.35 1.066-1.35 2.383c0 1.314.604 2.383 1.35 2.383v.953h1.025v1.525h2.016c-2.44 3.586-6.475 10.142-6.475 14.305q.001.269.046.535c-3.443.463-6.585 2.557-8.255 5.593c-.328.595-.343 1.262-.042 1.829c.471.889 1.419 1.176 2.89 1.339a7.7 7.7 0 0 0-.639 3.052c0 4.211 3.357 7.625 7.5 7.625c3.822 0 6.97-2.908 7.434-6.666h2.293c.24 0 .437.098.824.303c.544.287 1.29.68 2.369.68h18.373C44.104 59.586 47.021 62 50.5 62c3.48 0 6.396-2.414 7.241-5.684H62v-1.524c0-9.684-5.366-16.122-7.589-18.374m-24.367-4.571c-.033.002-.061.018-.094.021c.035-.516.453-.955.957-.975l22.536-.824c.488 0 .869.397.869.903v.05zM11.966 58.188c-2.072 0-3.75-1.708-3.75-3.813c0-1.046.422-1.982 1.095-2.668c.793.111 1.505.266 1.927.498c.496.273.939.61 1.408.967c.439.334.904.681 1.429.998a.472.472 0 0 0 .419.682c.174 0 .319-.1.4-.242q.36.168.769.305c-.26 1.847-1.808 3.273-3.697 3.273m38.534 0c-1.368 0-2.544-.757-3.195-1.871h.965a.5.5 0 0 0 .113.213a.46.46 0 0 0 .662 0a.46.46 0 0 0 .113-.213h2.686a.5.5 0 0 0 .113.213a.46.46 0 0 0 .662 0a.46.46 0 0 0 .113-.213h.964c-.651 1.114-1.827 1.871-3.196 1.871m-25.614-3.396c-1.393 0-1.93-.983-3.193-.983h-3.215c-3.494 0-4.461-1.805-6.525-2.945c-2.445-1.348-9.184-.516-8.387-1.963c1.611-2.93 4.941-4.909 8.387-4.909c.27 0 .535.019.799.043l-.002-.003s-.783-1.145-.783-2.004c0-5.275 7.908-15.83 7.908-15.83h-3.449v-6.672h1.406c.771 0 2.02.063 2.49 1.847c.216.819 1.021 1.229 1.574 1.362c-.545.301-.918.88-.918 1.555c0 .982.782 1.78 1.748 1.78c.09 0 .176-.013.262-.028v.157h.006s-2.729 3.62-2.729 10.555c0 6.715 1.395 12.148 3.117 12.148h7.748c2.956 0 5.346-2.194 5.346-4.909c0-4.587-2.048-6.959-2.316-7.25h18.394c.386.331 7.946 6.968 7.946 18.051H24.886z"
+      />
+      <path
+        fill="currentColor"
+        d="M47.076 38.727c-1.295-.119-2.65-.087-3.947.274c-1.291.362-2.516 1.026-3.498 1.97c-.971.947-1.717 2.141-2.09 3.441a9.3 9.3 0 0 0-.275 3.976a10.7 10.7 0 0 0 1.307 3.68c-.945-2.394-1.213-5.085-.348-7.419c.836-2.335 2.807-4.124 5.15-4.729c1.164-.341 2.391-.379 3.629-.295c1.234.081 2.457.329 3.654.683s2.359.853 3.471 1.452c1.125.58 2.191 1.28 3.195 2.08c-1.762-1.888-4.004-3.313-6.439-4.225c-1.217-.47-2.506-.745-3.809-.888"
+      />
+      <path
+        fill="currentColor"
+        d="M48.27 40.584c-1.215-.127-2.475-.127-3.713.125c-1.23.26-2.428.763-3.447 1.541c-1.006.784-1.842 1.826-2.299 3.03a7.6 7.6 0 0 0-.432 3.745a8.9 8.9 0 0 0 1.303 3.443c-.977-2.215-1.215-4.794-.209-6.895c.977-2.105 3.035-3.505 5.27-3.932c1.113-.246 2.279-.252 3.447-.161c1.166.075 2.318.31 3.457.607c1.137.31 2.246.737 3.314 1.257a19.3 19.3 0 0 1 3.102 1.807c-1.736-1.701-3.898-2.948-6.205-3.76a16 16 0 0 0-3.588-.807m-32.938 4.349a7.2 7.2 0 0 0-4.514.236a7.17 7.17 0 0 0-3.463 2.759a9.1 9.1 0 0 1 3.689-2.052c1.332-.368 2.734-.397 4.039-.024c1.311.35 2.504 1.106 3.469 2.105a9.15 9.15 0 0 1 2.104 3.697a7.24 7.24 0 0 0-1.555-4.186a7.35 7.35 0 0 0-3.769-2.535"
+      />
+      <ellipse cx="9.437" cy="54.375" fill="currentColor" rx=".469" ry=".477" />
+      <path
+        fill="currentColor"
+        d="M9.847 55.854a.483.483 0 0 0 0 .676c.182.187.479.187.662 0s.184-.488 0-.676a.46.46 0 0 0-.662 0"
+      />
+      <ellipse
+        cx="11.964"
+        cy="56.944"
+        fill="currentColor"
+        rx=".469"
+        ry=".477"
+      />
+      <path
+        fill="currentColor"
+        d="M13.421 55.855c-.184.186-.184.487 0 .674s.48.187.662 0a.477.477 0 0 0 0-.674a.464.464 0 0 0-.662 0m-3.574-3.634a.477.477 0 0 0 0 .673c.184.187.48.187.664 0a.48.48 0 0 0 0-.673a.46.46 0 0 0-.664 0"
+      />
+      <ellipse
+        cx="11.966"
+        cy="54.375"
+        fill="currentColor"
+        rx=".938"
+        ry=".953"
+      />
+    </svg>
+  )
+}
 
 const ProfileIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6 inline-block aligh-middle"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="2"
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6 inline-block aligh-middle"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+    />
+  </svg>
+)
+
+export function SubmitButton({
+  children,
+  isSuccessful,
+  variant = 'primary',
+}: ButtonProps) {
+  const { pending } = useFormStatus()
+
+  const baseStyles =
+    'relative w-full rounded-xl px-4 py-3 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
+  const variants = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
+    danger: 'bg-red-600 text-white hover:bg-red-700',
+  }
+
+  return (
+    <button
+      aria-disabled={pending || isSuccessful}
+      className={`${baseStyles} ${variants[variant]}`}
+      disabled={pending || isSuccessful}
+      type={pending ? 'button' : 'submit'}
     >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-        />
-    </svg>
-);
+      {children}
 
-
-export function SubmitButton({ children, isSuccessful, variant = 'primary' }: ButtonProps) {
-    const { pending } = useFormStatus();
-
-    const baseStyles = "relative w-full rounded-xl px-4 py-3 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50";
-    const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700",
-        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
-        danger: "bg-red-600 text-white hover:bg-red-700",
-    };
-
-    return (
-        <button
-            aria-disabled={pending || isSuccessful}
-            className={`${baseStyles} ${variants[variant]}`}
-            disabled={pending || isSuccessful}
-            type={pending ? "button" : "submit"}
-        >
-            {children}
-
-            {(pending || isSuccessful) && (
-                <div className="absolute right-4 flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                </div>
-            )}
-        </button>
-    );
+      {(pending || isSuccessful) && (
+        <div className="absolute right-4 flex items-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        </div>
+      )}
+    </button>
+  )
 }
 
 export function ApiButton() {
-    return (
-        <Link
-            id="api-button"
-            href="/openapi/"
-            target="_blank"
-            className="fixed top-6 right-20 px-3 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition text-sm font-medium text-gray-700 flex items-center justify-center z-50"
-        >
-            OpenAPI
-        </Link>
-    );
+  return (
+    <Link
+      id="api-button"
+      href="/openapi/"
+      target="_blank"
+      className="fixed top-6 right-20 px-3 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition text-sm font-medium text-gray-700 flex items-center justify-center z-50"
+    >
+      OpenAPI
+    </Link>
+  )
 }
 
 export const IconButton = ({
-    icon,
-    showBadge,
-    isDisabled,
-    onClick,
-    children,
+  icon,
+  showBadge,
+  isDisabled,
+  onClick,
+  children,
 }: {
-    icon: "profile" | "tracking";
-    showBadge: boolean;
-    isDisabled?: boolean;
-    onClick?: () => void;
-    children?: React.ReactNode
+  icon: 'profile' | 'tracking'
+  showBadge: boolean
+  isDisabled?: boolean
+  onClick?: () => void
+  children?: React.ReactNode
 }) => {
-    const icons = {
-        profile: <ProfileIcon />,
-        tracking: <MotorScooterIcon />,
-    };
+  const icons = {
+    profile: <ProfileIcon />,
+    tracking: <MotorScooterIcon />,
+  }
 
-    return (
-        <button
-            onClick={onClick}
-            disabled={isDisabled}
-            className={`
+  return (
+    <button
+      onClick={onClick}
+      disabled={isDisabled}
+      className={`
                 p-4 rounded-full transition-all duration-300 z-50 shadow-sm
                 flex items-center justify-center group bg-gray-200 hover:bg-gray-300
                 disabled:opacity-30 active:scale-95 overflow-hidden
       `}
-        >
-            <span className="max-w-0 overflow-hidden opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-500 ease-in-out whitespace-nowrap text-[10px] uppercase font-bold">
-                {children}
-            </span>
-            {icons[icon]}
+    >
+      <span className="max-w-0 overflow-hidden opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-500 ease-in-out whitespace-nowrap text-[10px] uppercase font-bold">
+        {children}
+      </span>
+      {icons[icon]}
 
-            {showBadge && (
-                <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
-            )}
-
-        </button>
-    );
-};
-
+      {showBadge && (
+        <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+      )}
+    </button>
+  )
+}

@@ -1,345 +1,263 @@
-export default function Cart() {
-    return (
+'use client'
 
-        // Shopping Cart Section (Initially Hidden) 
-        <aside id="cart-aside" className="col-span-1 hidden">
-            <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 sticky top-40">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Cart</h2>
-                <div id="cart-items" className="min-h-[100px] mb-4">
-                    <p id="empty-cart-message" className="text-gray-500 italic text-sm">Your cart is empty.</p>
-                    {/* Cart items will be injected here by JavaScript  */}
-                </div>
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { Coupon, MenuItem } from '@/lib/types'
+import { Trash2 } from 'lucide-react'
+import { useState } from 'react'
 
-                {/* Coupon Section  */}
-                <div className="mt-4 mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Coupons</h3>
+export default function Cart({
+  cartItems,
+  deliveryFee,
+  coupons,
+  onRemoveMenuItem,
+}: {
+  cartItems: (MenuItem & { quantity: number })[]
+  deliveryFee: number
+  coupons: Coupon[]
+  onRemoveMenuItem: (itemId: string) => void
+}) {
+  const [couponInput, setCouponInput] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<string>('')
 
-                    <div className="flex flex-wrap gap-2 mt-2 mb-2">
-                        <button className="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300"
-                            data-coupon="SAVE10">SAVE10</button>
-                        <button className="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300"
-                            data-coupon="SAVE50">SAVE50</button>
-                        <button className="preset-coupon-btn bg-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-300"
-                            data-coupon="FREEDELIVERY">FREEDELIVERY</button>
+  const [couponMsg, setCouponMsg] = useState<
+    | {
+        text: string
+        type: 'error' | 'success'
+      }
+    | undefined
+  >(undefined)
+
+  const handleApplyCoupon = (code: string) => {
+    const trimmed = code.trim().toUpperCase()
+    const matched = coupons.find((c) => c.code === trimmed)
+
+    if (!matched) {
+      setCouponMsg({
+        text: 'Invalid coupon code. Please try again.',
+        type: 'error',
+      })
+      setAppliedCoupon('')
+      return
+    }
+
+    setAppliedCoupon(trimmed)
+    setCouponInput(trimmed)
+
+    if ('percentDiscount' in matched.couponDetails) {
+      const percent = matched.couponDetails.percentDiscount.percent
+      setDiscount(() => foodTotal * (percent / 100))
+      setCouponMsg({
+        text: `Coupon applied! You got ${percent}% off`,
+        type: 'success',
+      })
+    } else if ('freeDelivery' in matched.couponDetails) {
+      setDiscount(deliveryFee)
+      setCouponMsg({
+        text: `Coupon applied! Free Delivery.`,
+        type: 'success',
+      })
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    if (!appliedCoupon) return
+    setAppliedCoupon('')
+    setCouponInput('')
+    setCouponMsg(undefined)
+    setDiscount(0)
+  }
+
+  const foodTotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  )
+
+  // discount FREEDLEIVERY = deliveryFee
+  // discount coupon = calculate with coupon such as SAVE20 will make discount 20% of foodTotal(exclude delivery fee)
+  const [discount, setDiscount] = useState(0)
+  const total = foodTotal + deliveryFee - discount
+
+  return (
+    <aside className="col-span-1">
+      <Card className="sticky top-40 rounded-3xl shadow-lg border-gray-100">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-gray-800">
+            Your Cart
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {/* Cart Items List */}
+          <div className="min-h-25 ">
+            {cartItems.length <= 0 ? (
+              <p className="text-gray-500 italic text-sm">
+                Your cart is empty.
+              </p>
+            ) : (
+              cartItems.map((item) => {
+                return (
+                  <div
+                    key={item.itemId}
+                    className="flex justify-between items-center py-3 border-b border-gray-50 last:border-0"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm text-gray-800">
+                        {item.foodName}
+                        <span className="ml-2 text-muted-foreground font-normal">
+                          x{item.quantity || 1}
+                        </span>
+                      </span>
+                      <span className="text-xs text-amber-600 font-semibold">
+                        ฿
+                        {(
+                          (item.price || 0) * (item.quantity || 1)
+                        ).toLocaleString()}
+                      </span>
                     </div>
 
-                    <div className="flex items-center space-x-2 flex-nowrap">
-                        <input
-                            type="text"
-                            id="coupon-input"
-                            placeholder="Code"
-                            className="min-w-0 flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-sm"
-                        >
-                        </input>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onRemoveMenuItem(item.itemId)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />{' '}
+                    </Button>
+                  </div>
+                )
+              })
+            )}
+          </div>
 
-                        <button id="apply-coupon-btn"
-                            className="flex-shrink-0 bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-400 text-sm"
-                            disabled>
-                            Apply
-                        </button>
-                    </div>
-                    <p id="coupon-status" className="text-sm mt-2"></p>
-                </div>
+          {/* Coupon Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              Available Coupons
+            </h3>
 
-                <div className="border-t pt-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-lg font-semibold text-gray-800">Food:</span>
-                        <span id="cart-food" className="text-lg font-bold text-gray-600">฿0.00</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-lg font-semibold text-gray-800">Delivery Fee:</span>
-                        <span id="cart-delivery" className="text-lg font-bold text-gray-600">฿0.00</span>
-                    </div>
-                    <div id="discount-row" className="flex justify-between items-center mb-2 hidden">
-                        <span className="text-lg font-semibold text-gray-800">Discount:</span>
-                        <span id="cart-discount" className="text-lg font-bold text-red-500">-฿0.00</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="text-lg font-semibold text-gray-800">Total:</span>
-                        <span id="cart-total" className="text-xl font-bold text-pink-600">฿0.00</span>
-                    </div>
-                    <button id="order-button"
-                        className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-50 shadow-md disabled:bg-pink-400"
-                        disabled>
-                        Place Order
-                    </button>
-                </div>
+            <div className="flex flex-wrap gap-2">
+              {coupons.map((c) => {
+                const isApplied = appliedCoupon === c.code
+
+                return (
+                  <Badge
+                    key={c.code}
+                    variant="secondary"
+                    className={`px-3 py-1 transition-colors ${
+                      isApplied
+                        ? 'opacity-40 cursor-not-allowed'
+                        : 'cursor-pointer hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleApplyCoupon(c.code)}
+                  >
+                    {c.code}
+                  </Badge>
+                )
+              })}
             </div>
-        </aside>
-    )
+
+            <div className="flex gap-2">
+              <Input
+                placeholder={appliedCoupon ? appliedCoupon : 'Enter code'}
+                className="bg-gray-50/50"
+                type="text"
+                value={couponInput}
+                disabled={!!appliedCoupon}
+                onChange={(e) => {
+                  if (!appliedCoupon) {
+                    setCouponInput(e.target.value)
+                  }
+                }}
+              />
+              {appliedCoupon ? (
+                <Button
+                  variant="ghost"
+                  className="text-red-500 hover:text-red-500"
+                  size="sm"
+                  onClick={handleRemoveCoupon}
+                >
+                  Remove
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!couponInput.trim()}
+                  onClick={() => handleApplyCoupon(couponInput)}
+                >
+                  Apply
+                </Button>
+              )}
+            </div>
+
+            {couponMsg && (
+              <p
+                className={
+                  couponMsg.type === 'error' ? 'text-red-500' : 'text-green-500'
+                }
+              >
+                {couponMsg.text}
+              </p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Pricing Breakdown */}
+          <div className="space-y-2">
+            <PriceRow label="Food" amount={`฿${foodTotal}`} />
+            <PriceRow label="Delivery" amount={`฿${deliveryFee}`} />
+            <PriceRow label="Discount" amount={`-฿${discount}`} isDiscount />
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-lg font-bold text-gray-800">Total</span>
+              <span className="text-xl font-bold text-amber-600">฿{total}</span>
+            </div>
+          </div>
+        </CardContent>
+
+        <CardFooter>
+          <Button
+            size="lg"
+            className="w-full rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-md"
+            // onClick={() => handleOrderPlace()}
+          >
+            Order Now
+          </Button>
+        </CardFooter>
+      </Card>
+    </aside>
+  )
 }
 
-
-////////////////////////////////////////
-// const renderCart = () => {
-//     cartItemsContainer.innerHTML = '';
-//     const currentCart = localCart[currentRestaurant.merchantId] || [];
-
-//     if (currentCart.length === 0) {
-//         emptyCartMessage.style.display = 'block';
-//     } else {
-//         emptyCartMessage.style.display = 'none';
-//         currentCart.forEach(item => {
-//             const itemElement = document.createElement('div');
-//             itemElement.className = 'flex justify-between items-center py-2 border-b last:border-b-0 text-sm';
-//             itemElement.innerHTML = `
-//             <span>${item.foodName} <span class="text-gray-500">(${item.quantity})</span></span>
-//             <div class="flex items-center space-x-2">
-//                 <span class="font-semibold">฿${(item.price * item.quantity).toFixed(2)}</span>
-//                 <button class="remove-from-cart-btn text-red-500 hover:text-red-600 transition" data-item-id="${item.itemId}">
-//                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.038 21H7.962a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-//                     </svg>
-//                 </button>
-//             </div>
-//             `;
-//             cartItemsContainer.appendChild(itemElement);
-//         });
-//     }
-//     updateCartTotals();
-// };
-
-// const updateCartTotals = () => {
-//     const currentCart = localCart[currentRestaurant.merchantId] || [];
-//     const food = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-//     const couponPercent = sessionStorage.getItem('coupon_percent');
-//     const deliveryFee = Number(sessionStorage.getItem('delivery_fee'));
-//     let discountAmount = 0;
-
-//     cartFoodElement.textContent = `฿${food.toFixed(2)}`;
-
-//     if (couponApplied) {
-//         const couponCode = couponInput.value.trim().toUpperCase();
-//         if (couponCode === "FREEDELIVERY") {
-
-//             // cartDeliveryElement.textContent = `-฿${deliveryFee}`;
-//             // cartDeliveryElement.className = 'text-lg font-bold text-red-500';
-
-//             discountAmount = deliveryFee;
-//             discountRow.classList.remove('hidden');
-//             cartDiscountElement.textContent = `-฿${discountAmount}`;
-
-//         } else if (couponPercent > 0) {
-
-//             // Reset delivery display to normal
-//             // cartDeliveryElement.textContent = `฿${deliveryFee}`;
-//             // cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
-
-//             discountAmount = food * (couponPercent / 100);
-//             discountRow.classList.remove('hidden');
-//             cartDiscountElement.textContent = `-฿${discountAmount}`;
-//         }
-//     } else {
-//         // No coupon applied
-//         discountAmount = 0;
-//         cartDeliveryElement.textContent = `฿${deliveryFee}`;
-//         cartDeliveryElement.className = 'text-lg font-bold text-gray-600';
-//         discountRow.classList.add('hidden');
-//     }
-//     sessionStorage.setItem('discount', discountAmount);
-
-//     const total = food + deliveryFee - discountAmount;
-//     cartTotalElement.textContent = `฿${total.toFixed(2)}`;
-
-//     orderButton.disabled = food === 0 || isOrderPlaced;
-// };
-
-
-// const addToCart = (foodItem) => {
-
-//     const restaurantId = currentRestaurant.merchantId;
-//     if (!localCart[restaurantId]) {
-//         localCart[restaurantId] = [];
-//     }
-//     const currentCart = localCart[restaurantId];
-//     const existingItem = currentCart.find(item => item.itemId === foodItem.itemId);
-//     if (existingItem) {
-//         existingItem.quantity++;
-//     } else {
-//         currentCart.push({ ...foodItem, quantity: 1 });
-//     }
-
-//     renderCart();
-// };
-
-// const removeFromCart = (itemId) => {
-//     const restaurantId = currentRestaurant.merchantId;
-//     const currentCart = localCart[restaurantId] || [];
-//     const itemIndex = currentCart.findIndex(item => item.itemId === itemId);
-//     if (itemIndex !== -1) {
-//         const item = currentCart[itemIndex];
-//         if (item.quantity > 1) {
-//             item.quantity--;
-//         } else {
-//             currentCart.splice(itemIndex, 1);
-//         }
-//     }
-//     renderCart();
-// };
-
-
-
-
-
-
-///////////////////
-// const buildOrderPayload = () => {
-//     const restaurantId = currentRestaurant.merchantId;
-//     const customerId = sessionStorage.getItem('customer_id');
-//     const appliedCoupon = sessionStorage.getItem('applied_coupon');
-//     const discount = Number(sessionStorage.getItem('discount'));
-
-
-//     const defaultAddr = addresses.find(a => a.isDefault);
-//     if (!defaultAddr) {
-//         console.error('No default address found');
-//         return;
-//     }
-//     const customerAddressId = defaultAddr.addressId;
-
-//     const cartItems = (localCart[restaurantId] || []).map(item => ({
-//         item_id: item.itemId,
-//         quantity: item.quantity,
-//         note: item.note || ""
-//     }));
-
-//     const orderPayload = {
-//         request_id: crypto.randomUUID(),
-//         customer_id: customerId,
-//         merchant_id: restaurantId,
-//         items: cartItems,
-//         coupon_code: appliedCoupon,
-//         discount: discount,
-//         customer_address_id: customerAddressId,
-//         payment_methods: "PAYMENT_METHOD_CREDIT_CARD"
-//     };
-
-//     return orderPayload;
-// };
-
-/////////////////////////////
-// menuContainer.addEventListener('click', (event) => {
-//     const targetButton = event.target.closest('.add-to-cart-btn');
-//     if (targetButton) {
-//         const foodItem = JSON.parse(targetButton.dataset.item);
-//         addToCart(foodItem);
-//     }
-// });
-
-// cartItemsContainer.addEventListener('click', (event) => {
-//     const targetButton = event.target.closest('.remove-from-cart-btn');
-//     if (targetButton) {
-//         const itemId = targetButton.dataset.itemId;
-//         removeFromCart(itemId);
-//     }
-// });
-
-// couponInput.addEventListener('input', () => {
-//     applyCouponBtn.disabled = couponInput.value.trim() === '';
-// });
-
-// applyCouponBtn.addEventListener('click', () => {
-//     const couponCode = couponInput.value.trim().toUpperCase();
-
-//     const coupons = {
-//         'SAVE10': { percent: 10, message: 'Coupon applied! You got 10% off.' },
-//         'SAVE20': { percent: 20, message: 'Coupon applied! You got 20% off.' },
-//         'SAVE30': { percent: 30, message: 'Coupon applied! You got 30% off.' },
-//         'SAVE40': { percent: 40, message: 'Coupon applied! You got 40% off.' },
-//         'SAVE50': { percent: 50, message: 'Coupon applied! You got 50% off.' },
-//         'FREEDELIVERY': { percent: 0, message: 'Coupon applied! Delivery fee waived.' }
-//     };
-
-//     const coupon = coupons[couponCode];
-
-//     if (coupon) {
-//         couponApplied = true;
-//         couponStatus.textContent = coupon.message;
-//         couponStatus.className = 'text-sm mt-2 text-pink-600';
-//         sessionStorage.setItem("applied_coupon", couponCode);
-//         sessionStorage.setItem("coupon_percent", coupon.percent);
-//     } else {
-//         couponApplied = false;
-//         couponStatus.textContent = 'Invalid coupon code. Please try again.';
-//         couponStatus.className = 'text-sm mt-2 text-red-500';
-//         sessionStorage.setItem("applied_coupon", "");
-//         sessionStorage.setItem("coupon_percent", 0);
-//     }
-
-//     updateCartTotals();
-// });
-
-
-////////////////////////////////////////
-// orderButton.addEventListener('click', async () => {
-
-//     if (!isUserAuthenticated) {
-//         alert("Please sign in to place an order.");
-//         return;
-//     }
-
-//     const total = Number(cartTotalElement.textContent.replace('฿', ''));
-//     sessionStorage.setItem('total', total);
-//     const orderPayload = buildOrderPayload()
-
-//     try {
-//         const place_order = await createPlaceOrder(orderPayload);
-//         sessionStorage.setItem("place_order", JSON.stringify(place_order));
-
-//         const restaurantId = currentRestaurant.merchantId;
-//         localCart[restaurantId] = [];
-//         couponApplied = false;
-//         couponInput.value = '';
-//         couponStatus.textContent = '';
-//         applyCouponBtn.disabled = true;
-//         isOrderPlaced = true;
-
-//         renderCart();
-
-//         showModal();
-
-//         // Simulate status change
-//         setTimeout(() => setTrackingStep(2), 2000); // Food is being prepared
-//         setTimeout(() => setTrackingStep(3), 6000); // Rider is on the way
-//         setTimeout(() => setTrackingStep(4), 10000); // Delivered
-//     } catch (err) {
-//         console.error("Order failed:", err);
-//         alert("Failed to place an order. Please try again."); // or show a small popup/modal
-//     }
-// });
-
-
-///////////////////////////////////////////////////
-// trackOrderButton.addEventListener('click', () => {
-//     hideModal();
-
-//     const order = JSON.parse(sessionStorage.getItem("place_order"));
-//     if (!order) return;
-
-//     trackingOrderId.textContent = `#${order.orderId}`;
-//     trackingRestaurantName.textContent = sessionStorage.getItem('selected_merchant_name');
-
-//     const tempRestaurant = {};
-//     currentRestaurant.menu.forEach(item => {
-//         tempRestaurant[item.itemId] = item.foodName
-//     });
-
-
-//     if (order.items && Array.isArray(order.items)) {
-//         order.items.forEach(item => {
-
-//             const foodItemHtml = `
-//                 <div class="flex justify-between text-sm w-full">
-//                 <span>${tempRestaurant[item.itemId]}</span>
-//                 <span class="flex-shrink-0">x ${item.quantity}</span>
-//                 </div>
-//             `;
-
-//             trackingFoodItems.insertAdjacentHTML('beforeend', foodItemHtml);
-//         });
-//     }
-
-//     const total = sessionStorage.getItem('total');
-//     trackingOrderTotal.textContent = `฿${total}`;
-//     showSection('order-tracking-section');
-// });
+function PriceRow({
+  label,
+  amount,
+  isDiscount = false,
+}: {
+  label: string
+  amount: string
+  isDiscount?: boolean
+}) {
+  return (
+    <div className="flex justify-between text-sm">
+      <span className="font-medium text-gray-600">{label}:</span>
+      <span
+        className={
+          isDiscount ? 'font-bold text-red-500' : 'font-bold text-gray-800'
+        }
+      >
+        {amount}
+      </span>
+    </div>
+  )
+}
