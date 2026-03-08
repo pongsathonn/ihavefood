@@ -1,9 +1,16 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-    devIndicators: {
-        position: 'bottom-left',
-    },
-};
+  devIndicators: {
+    position: 'bottom-left',
+  },
+  images: {
+    remotePatterns: [
+      new URL(
+        'https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/images/**',
+      ),
+    ],
+  },
+}
 
-export default nextConfig;
+export default nextConfig
