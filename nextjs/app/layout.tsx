@@ -1,18 +1,23 @@
+import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
+import Header from '@/components/header'
 
 export default function RootLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode
+  children: React.ReactNode
 }) {
-    return (
-        <html lang="en" suppressHydrationWarning>
-            <title>IHAVEFOOD</title>
-            <body>
-                {children}
-            </body>
-        </html >
-    )
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>IHAVEFOOD</title>
+      </head>
+      <body>
+        <TooltipProvider>
+          <Header />
+          {children}
+        </TooltipProvider>
+      </body>
+    </html>
+  )
 }
-
-

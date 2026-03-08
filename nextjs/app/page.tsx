@@ -1,18 +1,11 @@
-import { redirect } from 'next/navigation';
-import { verifySession } from '@/app/lib/session';
+import { authentication } from '@/lib/session'
+import { redirect } from 'next/navigation'
+
 export default async function Page() {
+  const { isAuth } = await authentication()
+  if (!isAuth) {
+    redirect('/login')
+  }
 
-    const res = await verifySession()
-    if (!res.isAuth) {
-        redirect('/login');
-    }
-
-    return (
-        <>
-            <div >
-                HI FROM HOME
-            </div>
-        </>
-    )
+  redirect('/restaurants')
 }
-
