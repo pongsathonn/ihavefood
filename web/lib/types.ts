@@ -32,7 +32,7 @@ export const CustomerSchema = z.object({
   phone: z.string().optional(),
 
   social: SocialSchema.optional(),
-  addresses: z.array(AddressSchema),
+  addresses: z.array(AddressSchema).optional(),
 
   createTime: TimestampSchema,
 })
