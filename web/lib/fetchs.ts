@@ -61,7 +61,7 @@ export const getDeliveryFee = cache(async function (
     `${serverUrl}/api/deliveries/fee` +
     `?customer_id=${customerId}` +
     `&customer_address_id=${customerAddrId}` +
-    `&restaurant_id=${restaurantId}`
+    `&merchant_id=${restaurantId}`
   const res = await fetch(url, {
     method: 'GET',
     headers: {
@@ -74,7 +74,8 @@ export const getDeliveryFee = cache(async function (
     throw new Error(`Failed to get delivery fee: ${errorText}`)
   }
 
-  return res.json()
+  const data = await res.json()
+  return data.fee
 })
 
 export const listCoupons = cache(async function (): Promise<Coupon[]> {
