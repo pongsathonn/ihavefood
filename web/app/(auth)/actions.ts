@@ -13,7 +13,7 @@ const authFormSchema = z.object({
 const registerFormSchema = z.object({
   email: z.email(),
   password: z.string().min(6),
-  conrirmPassword: z.string().min(6),
+  confirmPassword: z.string().min(6),
   role: z.string().startsWith('ROLES'),
 })
 
@@ -98,7 +98,12 @@ export const register = async (
     const role = 'ROLES_CUSTOMER'
 
     if (password !== confirmPassword) return { status: 'password_mismatch' }
-    const validatedData = registerFormSchema.parse({ email, password, role })
+    const validatedData = registerFormSchema.parse({
+      email,
+      password,
+      confirmPassword,
+      role,
+    })
 
     await signUp(
       validatedData.email,
@@ -109,6 +114,7 @@ export const register = async (
     return { status: 'success' }
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error(error)
       return { status: 'invalid_data' }
     }
 
@@ -130,7 +136,7 @@ const signUp = async function (
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password, role: role }),
+    body: JSON.stringify({ email, password, role }),
   })
 
   if (!response.ok) {
