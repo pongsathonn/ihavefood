@@ -1,14 +1,8 @@
 'use client'
 
-import { register, RegisterActionState } from '@/app/lib/actions'
+import { register, RegisterActionState } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Field,
   FieldDescription,
@@ -17,97 +11,88 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect } from 'react'
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const router = useRouter()
 
-  const [email, setEmail] = useState('')
-  const [isSuccessful, setIsSuccessful] = useState(false)
-
-  const [state, formAction] = useActionState<RegisterActionState, FormData>(
+  const [state, signupAction] = useActionState<RegisterActionState, FormData>(
     register,
-    {
-      status: 'idle',
-    },
+    { status: 'idle' },
   )
 
-  // const { update: updateSession } = useSession();
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: router and updateSession are stable refs
   useEffect(() => {
     if (state.status === 'user_exists') {
-      // toast({ type: "error", description: "Account already exists!" });
-    } else if (state.status === 'failed') {
-      // toast({ type: "error", description: "Failed to create account!" });
+      console.error('Registration failed: User already exists.')
     } else if (state.status === 'invalid_data') {
-      // toast({
-      //     type: "error",
-      //     description: "Failed validating your submission!",
-      // });
+      console.warn('Form validation failed.')
+    } else if (state.status === 'failed') {
+      console.error('Registration failed: Server error.')
+    } else if (state.status === 'password_mismatch') {
+      console.error('Registration failed: Password mismatch.')
     } else if (state.status === 'success') {
-      // toast({ type: "success", description: "Account created successfully!" });
-      setIsSuccessful(true)
-      // updateSession();
+      console.log('Registration successful, redirecting...')
+      router.push('/')
       router.refresh()
     }
-  }, [state.status])
-
-  const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get('email') as string)
-    formAction(formData)
-  }
+  }, [state.status, router])
 
   return (
     <Card {...props}>
       <CardHeader>
         <CardTitle>Create an account</CardTitle>
-        <CardDescription>
+        {/*<CardDescription>
           Enter your information below to create your account
-        </CardDescription>
+        </CardDescription>*/}
       </CardHeader>
       <CardContent>
-        <form action={handleSubmit}>
+        <form action={signupAction}>
           <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="name">Full Name</FieldLabel>
-              <Input id="name" type="text" placeholder="John Doe" required />
-            </Field>
             <Field>
               <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="customer@example.com"
                 required
               />
-              <FieldDescription>
+              {/*<FieldDescription>
                 We&apos;ll use this to contact you. We will not share your email
                 with anyone else.
-              </FieldDescription>
+              </FieldDescription>*/}
             </Field>
             <Field>
               <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Input id="password" type="password" required />
-              <FieldDescription>
+              <Input
+                id="password"
+                type="password"
+                placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"
+                required
+              />
+              {/*<FieldDescription>
                 Must be at least 8 characters long.
-              </FieldDescription>
+              </FieldDescription>*/}
             </Field>
             <Field>
               <FieldLabel htmlFor="confirm-password">
                 Confirm Password
               </FieldLabel>
-              <Input id="confirm-password" type="password" required />
-              <FieldDescription>Please confirm your password.</FieldDescription>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"
+                required
+              />
+              {/*<FieldDescription>Please confirm your password.</FieldDescription>*/}
             </Field>
             <FieldGroup>
               <Field>
                 <Button type="submit">Create Account</Button>
-                <Button variant="outline" type="button">
+                {/*<Button variant="outline" type="button">
                   Sign up with Google
-                </Button>
+                </Button>*/}
                 <FieldDescription className="px-6 text-center">
-                  Already have an account? <a href="#">Sign in</a>
+                  Already have an account? <a href="login">Sign in</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>
