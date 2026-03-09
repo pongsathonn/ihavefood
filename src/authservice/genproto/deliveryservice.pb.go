@@ -474,6 +474,129 @@ func (x *GetDeliveryFeeResponse) GetFee() int32 {
 	return 0
 }
 
+type GetDeliveryEstimateRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	CustomerId        string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	CustomerAddressId string                 `protobuf:"bytes,2,opt,name=customer_address_id,json=customerAddressId,proto3" json:"customer_address_id,omitempty"`
+	MerchantId        string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GetDeliveryEstimateRequest) Reset() {
+	*x = GetDeliveryEstimateRequest{}
+	mi := &file_deliveryservice_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDeliveryEstimateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDeliveryEstimateRequest) ProtoMessage() {}
+
+func (x *GetDeliveryEstimateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_deliveryservice_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDeliveryEstimateRequest.ProtoReflect.Descriptor instead.
+func (*GetDeliveryEstimateRequest) Descriptor() ([]byte, []int) {
+	return file_deliveryservice_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetDeliveryEstimateRequest) GetCustomerId() string {
+	if x != nil {
+		return x.CustomerId
+	}
+	return ""
+}
+
+func (x *GetDeliveryEstimateRequest) GetCustomerAddressId() string {
+	if x != nil {
+		return x.CustomerAddressId
+	}
+	return ""
+}
+
+func (x *GetDeliveryEstimateRequest) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
+	}
+	return ""
+}
+
+type GetDeliveryEstimateResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Distance in kilometers (e.g., 5.25)
+	DistanceKm float64 `protobuf:"fixed64,1,opt,name=distance_km,json=distanceKm,proto3" json:"distance_km,omitempty"`
+	// The calculated fee (e.g., 15)
+	DeliveryFee int32 `protobuf:"varint,2,opt,name=delivery_fee,json=deliveryFee,proto3" json:"delivery_fee,omitempty"`
+	// Estimated time of arrival in minutes (e.g., 30)
+	EtaMinutes    int32 `protobuf:"varint,3,opt,name=eta_minutes,json=etaMinutes,proto3" json:"eta_minutes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDeliveryEstimateResponse) Reset() {
+	*x = GetDeliveryEstimateResponse{}
+	mi := &file_deliveryservice_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDeliveryEstimateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDeliveryEstimateResponse) ProtoMessage() {}
+
+func (x *GetDeliveryEstimateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_deliveryservice_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDeliveryEstimateResponse.ProtoReflect.Descriptor instead.
+func (*GetDeliveryEstimateResponse) Descriptor() ([]byte, []int) {
+	return file_deliveryservice_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetDeliveryEstimateResponse) GetDistanceKm() float64 {
+	if x != nil {
+		return x.DistanceKm
+	}
+	return 0
+}
+
+func (x *GetDeliveryEstimateResponse) GetDeliveryFee() int32 {
+	if x != nil {
+		return x.DeliveryFee
+	}
+	return 0
+}
+
+func (x *GetDeliveryEstimateResponse) GetEtaMinutes() int32 {
+	if x != nil {
+		return x.EtaMinutes
+	}
+	return 0
+}
+
 type ReportDeliveryStatusRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// example: "{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}"
@@ -486,7 +609,7 @@ type ReportDeliveryStatusRequest struct {
 
 func (x *ReportDeliveryStatusRequest) Reset() {
 	*x = ReportDeliveryStatusRequest{}
-	mi := &file_deliveryservice_proto_msgTypes[7]
+	mi := &file_deliveryservice_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -498,7 +621,7 @@ func (x *ReportDeliveryStatusRequest) String() string {
 func (*ReportDeliveryStatusRequest) ProtoMessage() {}
 
 func (x *ReportDeliveryStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_deliveryservice_proto_msgTypes[7]
+	mi := &file_deliveryservice_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -511,7 +634,7 @@ func (x *ReportDeliveryStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportDeliveryStatusRequest.ProtoReflect.Descriptor instead.
 func (*ReportDeliveryStatusRequest) Descriptor() ([]byte, []int) {
-	return file_deliveryservice_proto_rawDescGZIP(), []int{7}
+	return file_deliveryservice_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ReportDeliveryStatusRequest) GetOrderId() string {
@@ -568,7 +691,19 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\vmerchant_id\x18\x03 \x01(\tR\n" +
 	"merchantId\"*\n" +
 	"\x16GetDeliveryFeeResponse\x12\x10\n" +
-	"\x03fee\x18\x01 \x01(\x05R\x03fee\"\x86\x01\n" +
+	"\x03fee\x18\x01 \x01(\x05R\x03fee\"\x8e\x01\n" +
+	"\x1aGetDeliveryEstimateRequest\x12\x1f\n" +
+	"\vcustomer_id\x18\x01 \x01(\tR\n" +
+	"customerId\x12.\n" +
+	"\x13customer_address_id\x18\x02 \x01(\tR\x11customerAddressId\x12\x1f\n" +
+	"\vmerchant_id\x18\x03 \x01(\tR\n" +
+	"merchantId\"\x82\x01\n" +
+	"\x1bGetDeliveryEstimateResponse\x12\x1f\n" +
+	"\vdistance_km\x18\x01 \x01(\x01R\n" +
+	"distanceKm\x12!\n" +
+	"\fdelivery_fee\x18\x02 \x01(\x05R\vdeliveryFee\x12\x1f\n" +
+	"\veta_minutes\x18\x03 \x01(\x05R\n" +
+	"etaMinutes\"\x86\x01\n" +
 	"\x1bReportDeliveryStatusRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x19\n" +
 	"\brider_id\x18\x02 \x01(\tR\ariderId\x121\n" +
@@ -578,10 +713,11 @@ const file_deliveryservice_proto_rawDesc = "" +
 	"\x1dDELIVERY_STATUS_RIDER_PENDING\x10\x01\x12\"\n" +
 	"\x1eDELIVERY_STATUS_RIDER_ACCEPTED\x10\x02\x12#\n" +
 	"\x1fDELIVERY_STATUS_RIDER_PICKED_UP\x10\x03\x12#\n" +
-	"\x1fDELIVERY_STATUS_RIDER_DELIVERED\x10\x042\xed\x02\n" +
+	"\x1fDELIVERY_STATUS_RIDER_DELIVERED\x10\x042\xf6\x03\n" +
 	"\x0fDeliveryService\x12V\n" +
-	"\rTrackingRider\x12\x1f.ihavefood.TrackingRiderRequest\x1a .ihavefood.TrackingRiderResponse\"\x000\x01\x12{\n" +
-	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/deliveries/delivery-fee\x12\x84\x01\n" +
+	"\rTrackingRider\x12\x1f.ihavefood.TrackingRiderRequest\x1a .ihavefood.TrackingRiderResponse\"\x000\x01\x12r\n" +
+	"\x0eGetDeliveryFee\x12 .ihavefood.GetDeliveryFeeRequest\x1a!.ihavefood.GetDeliveryFeeResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/deliveries/fee\x12\x8f\x01\n" +
+	"\x13GetDeliveryEstimate\x12%.ihavefood.GetDeliveryEstimateRequest\x1a&.ihavefood.GetDeliveryEstimateResponse\")\x82\xd3\xe4\x93\x02#\x12!/api/deliveries/delivery-estimate\x12\x84\x01\n" +
 	"\x14ReportDeliveryStatus\x12&.ihavefood.ReportDeliveryStatusRequest\x1a\x16.google.protobuf.Empty\",\x82\xd3\xe4\x93\x02&:\x01*2!/api/deliveries/{order_id}/statusB\vZ\t/genprotob\x06proto3"
 
 var (
@@ -597,7 +733,7 @@ func file_deliveryservice_proto_rawDescGZIP() []byte {
 }
 
 var file_deliveryservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_deliveryservice_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_deliveryservice_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_deliveryservice_proto_goTypes = []any{
 	(DeliveryStatus)(0),                 // 0: ihavefood.DeliveryStatus
 	(*PickupInfo)(nil),                  // 1: ihavefood.PickupInfo
@@ -607,24 +743,28 @@ var file_deliveryservice_proto_goTypes = []any{
 	(*TrackingRiderResponse)(nil),       // 5: ihavefood.TrackingRiderResponse
 	(*GetDeliveryFeeRequest)(nil),       // 6: ihavefood.GetDeliveryFeeRequest
 	(*GetDeliveryFeeResponse)(nil),      // 7: ihavefood.GetDeliveryFeeResponse
-	(*ReportDeliveryStatusRequest)(nil), // 8: ihavefood.ReportDeliveryStatusRequest
-	(*timestamppb.Timestamp)(nil),       // 9: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),               // 10: google.protobuf.Empty
+	(*GetDeliveryEstimateRequest)(nil),  // 8: ihavefood.GetDeliveryEstimateRequest
+	(*GetDeliveryEstimateResponse)(nil), // 9: ihavefood.GetDeliveryEstimateResponse
+	(*ReportDeliveryStatusRequest)(nil), // 10: ihavefood.ReportDeliveryStatusRequest
+	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),               // 12: google.protobuf.Empty
 }
 var file_deliveryservice_proto_depIdxs = []int32{
 	2,  // 0: ihavefood.PickupInfo.pickup_location:type_name -> ihavefood.Point
 	2,  // 1: ihavefood.PickupInfo.drop_off_location:type_name -> ihavefood.Point
 	2,  // 2: ihavefood.TrackingRiderResponse.rider_location:type_name -> ihavefood.Point
-	9,  // 3: ihavefood.TrackingRiderResponse.update_time:type_name -> google.protobuf.Timestamp
+	11, // 3: ihavefood.TrackingRiderResponse.update_time:type_name -> google.protobuf.Timestamp
 	0,  // 4: ihavefood.ReportDeliveryStatusRequest.status:type_name -> ihavefood.DeliveryStatus
 	4,  // 5: ihavefood.DeliveryService.TrackingRider:input_type -> ihavefood.TrackingRiderRequest
 	6,  // 6: ihavefood.DeliveryService.GetDeliveryFee:input_type -> ihavefood.GetDeliveryFeeRequest
-	8,  // 7: ihavefood.DeliveryService.ReportDeliveryStatus:input_type -> ihavefood.ReportDeliveryStatusRequest
-	5,  // 8: ihavefood.DeliveryService.TrackingRider:output_type -> ihavefood.TrackingRiderResponse
-	7,  // 9: ihavefood.DeliveryService.GetDeliveryFee:output_type -> ihavefood.GetDeliveryFeeResponse
-	10, // 10: ihavefood.DeliveryService.ReportDeliveryStatus:output_type -> google.protobuf.Empty
-	8,  // [8:11] is the sub-list for method output_type
-	5,  // [5:8] is the sub-list for method input_type
+	8,  // 7: ihavefood.DeliveryService.GetDeliveryEstimate:input_type -> ihavefood.GetDeliveryEstimateRequest
+	10, // 8: ihavefood.DeliveryService.ReportDeliveryStatus:input_type -> ihavefood.ReportDeliveryStatusRequest
+	5,  // 9: ihavefood.DeliveryService.TrackingRider:output_type -> ihavefood.TrackingRiderResponse
+	7,  // 10: ihavefood.DeliveryService.GetDeliveryFee:output_type -> ihavefood.GetDeliveryFeeResponse
+	9,  // 11: ihavefood.DeliveryService.GetDeliveryEstimate:output_type -> ihavefood.GetDeliveryEstimateResponse
+	12, // 12: ihavefood.DeliveryService.ReportDeliveryStatus:output_type -> google.protobuf.Empty
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -641,7 +781,7 @@ func file_deliveryservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_deliveryservice_proto_rawDesc), len(file_deliveryservice_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

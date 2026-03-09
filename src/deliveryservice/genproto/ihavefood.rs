@@ -70,6 +70,29 @@ pub struct GetDeliveryFeeResponse {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDeliveryEstimateRequest {
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub customer_address_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub merchant_id: ::prost::alloc::string::String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct GetDeliveryEstimateResponse {
+    /// Distance in kilometers (e.g., 5.25)
+    #[prost(double, tag = "1")]
+    pub distance_km: f64,
+    /// The calculated fee (e.g., 15)
+    #[prost(int32, tag = "2")]
+    pub delivery_fee: i32,
+    /// Estimated time of arrival in minutes (e.g., 30)
+    #[prost(int32, tag = "3")]
+    pub eta_minutes: i32,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReportDeliveryStatusRequest {
     /// example: "{\"rider_id\": \"388b9219-8fd5-4164-a0ba-ed7ddf411966\",\"status\": \"RIDER_ACCEPTED\"}"
     #[prost(string, tag = "1")]
@@ -233,10 +256,13 @@ pub mod delivery_service_client {
                 .insert(GrpcMethod::new("ihavefood.DeliveryService", "TrackingRider"));
             self.inner.server_streaming(req, path, codec).await
         }
-        /// GetDeliveryFee calculates the delivery fee
+        /// GetDeliveryFee calculates the delivery fee from merchant to customer
+        /// using merchant ID and customer address ID.
         ///
         /// Example:
-        ///      GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+        ///      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+        ///
+        ///  @deprecated
         pub async fn get_delivery_fee(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDeliveryFeeRequest>,
@@ -259,6 +285,32 @@ pub mod delivery_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("ihavefood.DeliveryService", "GetDeliveryFee"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn get_delivery_estimate(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDeliveryEstimateRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetDeliveryEstimateResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/ihavefood.DeliveryService/GetDeliveryEstimate",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("ihavefood.DeliveryService", "GetDeliveryEstimate"),
+                );
             self.inner.unary(req, path, codec).await
         }
         pub async fn report_delivery_status(
@@ -316,15 +368,25 @@ pub mod delivery_service_server {
             tonic::Response<Self::TrackingRiderStream>,
             tonic::Status,
         >;
-        /// GetDeliveryFee calculates the delivery fee
+        /// GetDeliveryFee calculates the delivery fee from merchant to customer
+        /// using merchant ID and customer address ID.
         ///
         /// Example:
-        ///      GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+        ///      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+        ///
+        ///  @deprecated
         async fn get_delivery_fee(
             &self,
             request: tonic::Request<super::GetDeliveryFeeRequest>,
         ) -> std::result::Result<
             tonic::Response<super::GetDeliveryFeeResponse>,
+            tonic::Status,
+        >;
+        async fn get_delivery_estimate(
+            &self,
+            request: tonic::Request<super::GetDeliveryEstimateRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetDeliveryEstimateResponse>,
             tonic::Status,
         >;
         async fn report_delivery_status(
@@ -491,6 +553,55 @@ pub mod delivery_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = GetDeliveryFeeSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ihavefood.DeliveryService/GetDeliveryEstimate" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetDeliveryEstimateSvc<T: DeliveryService>(pub Arc<T>);
+                    impl<
+                        T: DeliveryService,
+                    > tonic::server::UnaryService<super::GetDeliveryEstimateRequest>
+                    for GetDeliveryEstimateSvc<T> {
+                        type Response = super::GetDeliveryEstimateResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetDeliveryEstimateRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as DeliveryService>::get_delivery_estimate(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = GetDeliveryEstimateSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

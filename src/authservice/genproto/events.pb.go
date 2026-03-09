@@ -608,7 +608,7 @@ var File_events_proto protoreflect.FileDescriptor
 
 const file_events_proto_rawDesc = "" +
 	"\n" +
-	"\fevents.proto\x12\tihavefood\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12orderservice.proto\"?\n" +
+	"\fevents.proto\x12\tihavefood\x1a\x12orderservice.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"?\n" +
 	"\x10OrderPlacedEvent\x12+\n" +
 	"\x05order\x18\x01 \x01(\v2\x15.ihavefood.PlaceOrderR\x05order\"\x90\x01\n" +
 	"\x15MerchantAcceptedEvent\x12\x19\n" +

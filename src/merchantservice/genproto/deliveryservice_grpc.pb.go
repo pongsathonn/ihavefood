@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	DeliveryService_TrackingRider_FullMethodName        = "/ihavefood.DeliveryService/TrackingRider"
 	DeliveryService_GetDeliveryFee_FullMethodName       = "/ihavefood.DeliveryService/GetDeliveryFee"
+	DeliveryService_GetDeliveryEstimate_FullMethodName  = "/ihavefood.DeliveryService/GetDeliveryEstimate"
 	DeliveryService_ReportDeliveryStatus_FullMethodName = "/ihavefood.DeliveryService/ReportDeliveryStatus"
 )
 
@@ -39,8 +40,11 @@ type DeliveryServiceClient interface {
 	//
 	// Example:
 	//
-	//	GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+	//	    GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+	//
+	//	@deprecated
 	GetDeliveryFee(ctx context.Context, in *GetDeliveryFeeRequest, opts ...grpc.CallOption) (*GetDeliveryFeeResponse, error)
+	GetDeliveryEstimate(ctx context.Context, in *GetDeliveryEstimateRequest, opts ...grpc.CallOption) (*GetDeliveryEstimateResponse, error)
 	ReportDeliveryStatus(ctx context.Context, in *ReportDeliveryStatusRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -81,6 +85,16 @@ func (c *deliveryServiceClient) GetDeliveryFee(ctx context.Context, in *GetDeliv
 	return out, nil
 }
 
+func (c *deliveryServiceClient) GetDeliveryEstimate(ctx context.Context, in *GetDeliveryEstimateRequest, opts ...grpc.CallOption) (*GetDeliveryEstimateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDeliveryEstimateResponse)
+	err := c.cc.Invoke(ctx, DeliveryService_GetDeliveryEstimate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *deliveryServiceClient) ReportDeliveryStatus(ctx context.Context, in *ReportDeliveryStatusRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
@@ -105,8 +119,11 @@ type DeliveryServiceServer interface {
 	//
 	// Example:
 	//
-	//	GET /api/deliveries/delivery-fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+	//	    GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+	//
+	//	@deprecated
 	GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error)
+	GetDeliveryEstimate(context.Context, *GetDeliveryEstimateRequest) (*GetDeliveryEstimateResponse, error)
 	ReportDeliveryStatus(context.Context, *ReportDeliveryStatusRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedDeliveryServiceServer()
 }
@@ -123,6 +140,9 @@ func (UnimplementedDeliveryServiceServer) TrackingRider(*TrackingRiderRequest, g
 }
 func (UnimplementedDeliveryServiceServer) GetDeliveryFee(context.Context, *GetDeliveryFeeRequest) (*GetDeliveryFeeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeliveryFee not implemented")
+}
+func (UnimplementedDeliveryServiceServer) GetDeliveryEstimate(context.Context, *GetDeliveryEstimateRequest) (*GetDeliveryEstimateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeliveryEstimate not implemented")
 }
 func (UnimplementedDeliveryServiceServer) ReportDeliveryStatus(context.Context, *ReportDeliveryStatusRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportDeliveryStatus not implemented")
@@ -177,6 +197,24 @@ func _DeliveryService_GetDeliveryFee_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeliveryService_GetDeliveryEstimate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeliveryEstimateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeliveryServiceServer).GetDeliveryEstimate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeliveryService_GetDeliveryEstimate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeliveryServiceServer).GetDeliveryEstimate(ctx, req.(*GetDeliveryEstimateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DeliveryService_ReportDeliveryStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReportDeliveryStatusRequest)
 	if err := dec(in); err != nil {
@@ -205,6 +243,10 @@ var DeliveryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeliveryFee",
 			Handler:    _DeliveryService_GetDeliveryFee_Handler,
+		},
+		{
+			MethodName: "GetDeliveryEstimate",
+			Handler:    _DeliveryService_GetDeliveryEstimate_Handler,
 		},
 		{
 			MethodName: "ReportDeliveryStatus",
