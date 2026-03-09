@@ -15,21 +15,37 @@ import Image from 'next/image'
 
 export default function PromotionCard() {
   const plugin = useRef(Autoplay({ delay: 2000, stopOnInteraction: true }))
-
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
   useEffect(() => {
     if (!api) {
       return
     }
+
+    const onSelect = () => {
+      setCurrent(api.selectedScrollSnap())
+    }
+
     setCurrent(api.selectedScrollSnap())
     api.on('select', () => {
       setCurrent(api.selectedScrollSnap())
     })
+
+    return () => {
+      api.off('select', onSelect)
+    }
   }, [api])
 
-  const FAKE_GRAY_IMAGE =
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/+9fPQAJJAN0f890HAAAAABJRU5ErkJggg=='
+  // const SKELETON_IMAGE =
+  //   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/+9fPQAJJAN0f890HAAAAABJRU5ErkJggg=='
+
+  const promoImages = [
+    'https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/promotions/promo1.png',
+    'https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/promotions/promo2.png',
+    'https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/promotions/promo3.png',
+    'https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/promotions/promo4.png',
+    'https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/promotions/promo5.png',
+  ]
 
   return (
     <Carousel
@@ -45,7 +61,7 @@ export default function PromotionCard() {
       onMouseLeave={plugin.current.reset}
     >
       <CarouselContent className="items-center py-12">
-        {Array.from({ length: 10 }).map((_, index) => (
+        {promoImages.map((img, index) => (
           <CarouselItem key={index} className="basis-full sm:basis-1/3">
             <div className="p-2">
               <Card
@@ -62,14 +78,16 @@ export default function PromotionCard() {
                         `}
               >
                 <CardContent className="absolute inset-0 flex items-center justify-center p-0">
-                  <span className="relative z-10 text-4xl font-semibold text-white">
+                  {/*<span className="relative z-10 text-4xl font-semibold text-white">
                     {index + 1}
-                  </span>
+                  </span>*/}
                   <Image
-                    src={FAKE_GRAY_IMAGE}
-                    alt="test"
+                    src={img}
+                    alt={`promotion ${index + 1}`}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 426px"
+                    priority={index === 0}
                   />
                 </CardContent>
               </Card>
