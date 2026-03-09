@@ -53,14 +53,16 @@ export default function Cart({
     setAppliedCoupon(trimmed)
     setCouponInput(trimmed)
 
-    if ('percentDiscount' in matched.couponDetails) {
-      const percent = matched.couponDetails.percentDiscount.percent
+    if (matched.percentDiscount) {
+      const percent = matched.percentDiscount.percent
       setDiscount(() => foodTotal * (percent / 100))
       setCouponMsg({
         text: `Coupon applied! You got ${percent}% off`,
         type: 'success',
       })
-    } else if ('freeDelivery' in matched.couponDetails) {
+    }
+
+    if (matched.freeDelivery) {
       setDiscount(deliveryFee)
       setCouponMsg({
         text: `Coupon applied! Free Delivery.`,

@@ -66,23 +66,18 @@ export const MenuItemSchema = z.object({
   imageInfo: ImageInfoSchema.optional(),
 })
 
-export const PercentDiscountSchema = z.object({
-  percent: z.number().min(1),
-})
-
-export const FreeDeliverySchema = z.object({})
-
-export const CouponDetailsSchema = z.union([
-  z.object({ percentDiscount: PercentDiscountSchema }),
-  z.object({ freeDelivery: FreeDeliverySchema }),
-])
-
 export const CouponSchema = z.object({
   code: z.string(),
-  expiresInHour: z.coerce.number(),
-  quantityCount: z.coerce.number(),
-  couponDetails: CouponDetailsSchema,
+  expiresAt: z.string(),
+  quantityCount: z.number(),
+  percentDiscount: z
+    .object({
+      percent: z.number().min(1),
+    })
+    .optional(),
+  freeDelivery: z.object({}).optional(),
 })
+export const CouponsArraySchema = z.array(CouponSchema)
 
 export const MerchantSchema = z
   .object({
