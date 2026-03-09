@@ -1,6 +1,6 @@
+import Header from '@/components/header'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
-import Header from '@/components/header'
 
 export default function RootLayout({
   children,

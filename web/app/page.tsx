@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation'
 
 export default async function Page() {
   const { isAuth } = await authentication()
-  if (!isAuth) {
-    redirect('/login')
+
+  if (isAuth) {
+    redirect('/restaurants')
   }
 
-  redirect('/restaurants')
+  redirect('/login')
 }
