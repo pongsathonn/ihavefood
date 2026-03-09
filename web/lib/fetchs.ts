@@ -45,20 +45,25 @@ export const getCustomer = cache(async function (): Promise<Customer> {
   return result.data
 })
 
-export const getDeliveryFee = cache(async function (
+export const getDeliveryEstimate = cache(async function (
   customerId: string,
   customerAddrId: string,
   restaurantId: string,
-): Promise<number> {
+): Promise<{
+  distance: number
+  deliveryFee: number
+  eta: number
+}> {
   const { isAuth } = await authentication()
   if (!isAuth) {
     throw new Error('Unauthorized')
   }
+
   const serverUrl = process.env.SERVER_URL
   if (!serverUrl) throw new Error('SERVER_URL is not defined')
   const token = await getSession()
   const url =
-    `${serverUrl}/api/deliveries/fee` +
+    `${serverUrl}/api/deliveries/delivery-estimate` +
     `?customer_id=${customerId}` +
     `&customer_address_id=${customerAddrId}` +
     `&merchant_id=${restaurantId}`
@@ -71,11 +76,16 @@ export const getDeliveryFee = cache(async function (
   })
   if (!res.ok) {
     const errorText = await res.text()
-    throw new Error(`Failed to get delivery fee: ${errorText}`)
+    throw new Error(`Failed to get delivery estimate: ${errorText}`)
   }
 
-  const data = await res.json()
-  return data.fee
+  const { distanceKm, deliveryFee, etaMinutes } = await res.json()
+
+  return {
+    distance: distanceKm,
+    deliveryFee: deliveryFee,
+    eta: etaMinutes,
+  }
 })
 
 export const listCoupons = cache(async function (): Promise<Coupon[]> {
@@ -96,9 +106,11 @@ export const listCoupons = cache(async function (): Promise<Coupon[]> {
 
   if (!res.ok) {
     const errorText = await res.text()
-    throw new Error(`Failed to list restaurants: ${errorText}`)
+    throw new Error(`Failed to list coupons: ${errorText}`)
   }
+
   const jsonCoupons = (await res.json()).coupons
+
   const results = CouponSchema.array().safeParse(jsonCoupons)
   if (!results.success) {
     throw results.error

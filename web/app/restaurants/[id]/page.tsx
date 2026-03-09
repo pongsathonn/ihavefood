@@ -1,7 +1,7 @@
 import MenuList from '@/components/menu-list'
 import {
   getCustomer,
-  getDeliveryFee,
+  getDeliveryEstimate,
   getRestaurant,
   listCoupons,
 } from '@/lib/fetchs'
@@ -27,10 +27,17 @@ export default async function Page({
       'default_address_id',
     )?.value
     if (!defaultAddrId) throw new Error('default address not found')
-    fee = await getDeliveryFee(customer.customerId, defaultAddrId, id)
+    const res = await getDeliveryEstimate(
+      customer.customerId,
+      defaultAddrId,
+      id,
+    )
+    fee = res.deliveryFee
   } catch (err) {
     if (err instanceof Error) console.error(err.message)
   }
+
+  if (!fee) throw new Error('delivery fee undefined')
 
   try {
     const [coupons, restaurant] = await Promise.all([
