@@ -6,9 +6,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      new URL(
-        'https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/images/**',
-      ),
+      new URL('https://wadpgqajugnhnkf9.public.blob.vercel-storage.com/**'),
     ],
   },
 }
