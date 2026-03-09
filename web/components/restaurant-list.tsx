@@ -108,6 +108,7 @@ function RestaurantCard({ restaurant }: { restaurant: RestaurantWithEst }) {
         <Image
           src={restaurant.imageInfo.url}
           alt={restaurant.restaurantName}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           fill
           className="object-cover"
         />
@@ -121,7 +122,8 @@ function RestaurantCard({ restaurant }: { restaurant: RestaurantWithEst }) {
         <div className="flex" style={{ display: isClosed ? 'none' : 'block' }}>
           <p className="text-sm text-gray-500 flex items-center gap-2 whitespace-nowrap">
             <span>
-              Delivery: <span className="text-red-700">฿20.00</span>
+              Delivery:{' '}
+              <span className="text-red-700">฿ {restaurant.deliveryFee}</span>
             </span>
             <span className="text-gray-300">|</span>
             <span className="truncate">
