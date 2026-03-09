@@ -1,13 +1,8 @@
 'use server'
 
-import { getCustomer, getDeliveryFee, listRestaurants } from '@/lib/fetchs'
+import { getCustomer, getDeliveryEstimate, listRestaurants } from '@/lib/fetchs'
 import { authentication, getCustomerId, getSession } from '@/lib/session'
-import {
-  Address,
-  AddressSchema,
-  Restaurant,
-  RestaurantWithEst,
-} from '@/lib/types'
+import { Address, AddressSchema, RestaurantWithEst } from '@/lib/types'
 import { cookies } from 'next/headers'
 
 export type NewAddress = {
@@ -27,21 +22,24 @@ export const getNearbyRestaurants = async function (
 
   const customer = await getCustomer()
   if (!customer) throw new Error('customer not found')
+
+  // TODO: fix n+1 problem
+  // Move estimation logic into the batch 'listRestaurants'
   const restaurants = nearRestaurants.map(async (r) => {
     try {
-      const fee = await getDeliveryFee(
+      const { distance, deliveryFee, eta } = await getDeliveryEstimate(
         customer.customerId,
         defaultAddr,
         r.restaurantId,
       )
-      const result = await attachDeliveryEstimate(r, fee)
-      return result
+
+      return { ...r, distance, deliveryFee, eta }
     } catch (error) {
       console.error(
         `Failed to get fee for restaurant ${r.restaurantId}:`,
         error,
       )
-      return attachDeliveryEstimate(r, 0)
+      return { ...r, distance: 0, deliveryFee: 0, eta: 0 }
     }
   })
 
@@ -89,27 +87,4 @@ export const createCustomerAddress = async function (
   ;(await cookies()).set('default_address_id', createdAddr.addressId)
 
   return createdAddr
-}
-
-export const attachDeliveryEstimate = async function (
-  restaurant: Restaurant,
-  deliveryFee: number,
-): Promise<RestaurantWithEst> {
-  const baseDistance = (deliveryFee - 10) / 1.6
-  const randomVariation = Math.random() * 2 - 1
-
-  const distance = Number(
-    Math.max(0, Math.min(25, baseDistance + randomVariation)).toFixed(2),
-  )
-
-  const baseEta = Math.round((distance / 30) * 60)
-  const etaVariation = Math.floor(Math.random() * 10) - 5
-  const eta = Math.max(1, Math.min(60, baseEta + etaVariation))
-
-  return {
-    ...restaurant,
-    distance,
-    deliveryFee,
-    eta,
-  }
 }
