@@ -1,10 +1,12 @@
 'use client'
 
+import { NewAddress } from '@/app/restaurants/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { Address } from '@/lib/types'
 import { Edit2, Loader2, Navigation, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 
@@ -17,7 +19,11 @@ const EMPTY_ADDRESS = {
 }
 const MAP_ZOOM = 18
 
-const AddressPrompt = (handleConfirmAddr: () => void) => {
+const AddressPrompt = ({
+  onConfirmAddress,
+}: {
+  onConfirmAddress: (addr: NewAddress) => Promise<Address>
+}) => {
   const [loading, setLoading] = useState(false)
   const [hasDetected, setHasDetected] = useState(false)
   const [address, setAddress] = useState(EMPTY_ADDRESS)
@@ -43,8 +49,24 @@ const AddressPrompt = (handleConfirmAddr: () => void) => {
     setHasDetected(false)
   }
 
-  const { subDistrict, district, province, postalCode } = address
+  const handleConfirmAddress = async () => {
+    try {
+      setLoading(true)
+      await onConfirmAddress({
+        addressName: address.addressName,
+        district: address.district,
+        postalCode: address.postalCode,
+        province: address.province,
+        subDistrict: address.subDistrict,
+      })
+    } catch (error) {
+      console.error(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
+  const { subDistrict, district, province, postalCode } = address
   const mapUrl = `https://maps.google.com/maps?q=${subDistrict},${district},${province},${postalCode}&z=${MAP_ZOOM}&output=embed`
 
   return (
@@ -85,10 +107,10 @@ const AddressPrompt = (handleConfirmAddr: () => void) => {
               <CardFooter className="border-t pt-6 bg-muted/5">
                 <Button
                   className="w-full font-bold shadow-md"
-                  disabled={!address.addressName}
-                  onSubmit={handleConfirmAddr}
+                  disabled={!address.addressName || loading}
+                  onClick={handleConfirmAddress}
                 >
-                  Confirm & Save
+                  {loading ? 'Saving...' : 'Confirm & Save'}
                 </Button>
               </CardFooter>
             )}
