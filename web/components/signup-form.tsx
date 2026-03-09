@@ -53,6 +53,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="customer@example.com"
                 required
               />
@@ -65,7 +66,9 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               <FieldLabel htmlFor="password">Password</FieldLabel>
               <Input
                 id="password"
+                name="passwordc"
                 type="password"
+                autoComplete="new-password"
                 placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"
                 required
               />
@@ -79,7 +82,9 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               </FieldLabel>
               <Input
                 id="confirm-password"
+                name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"
                 required
               />

@@ -10,6 +10,13 @@ const authFormSchema = z.object({
   password: z.string().min(6),
 })
 
+const registerFormSchema = z.object({
+  email: z.email(),
+  password: z.string().min(6),
+  conrirmPassword: z.string().min(6),
+  role: z.string().startsWith('ROLES'),
+})
+
 export type LoginActionState = {
   status: 'idle' | 'in_progress' | 'success' | 'failed' | 'invalid_data'
 }
@@ -58,65 +65,88 @@ const signIn = async function (email: string, password: string): Promise<void> {
   }
 
   const token = await response.json()
-
-  if (!token.accessToken || !token.expiresIn) {
+  if (!token.accessToken || !token.expiresAt) {
+    throw new Error('Malformed auth response from server')
+  }
+  if (!token.accessToken || !token.expiresAt) {
     throw new Error('Malformed auth response from server')
   }
 
-  const expiresAt = Number(token.expiresIn)
-  if (isNaN(expiresAt)) throw new Error('Invalid token expiration')
-
-  await createSession(token.accessToken, new Date(expiresAt * 1000))
+  const expiresAt = new Date(token.expiresAt)
+  await createSession(token.accessToken, expiresAt)
 }
 
-// export type RegisterActionState = {
-//   status:
-//     | 'idle'
-//     | 'in_progress'
-//     | 'success'
-//     | 'failed'
-//     | 'user_exists'
-//     | 'invalid_data'
-// }
+export type RegisterActionState = {
+  status:
+    | 'idle'
+    | 'in_progress'
+    | 'success'
+    | 'failed'
+    | 'password_mismatch'
+    | 'user_exists'
+    | 'invalid_data'
+}
 
-// export const register = async (
-//   _: RegisterActionState,
-//   formData: FormData,
-// ): Promise<RegisterActionState> => {
-//   try {
-//     const validatedData = authFormSchema.parse({
-//       email: formData.get('email'),
-//       password: formData.get('password'),
-//     })
+export const register = async (
+  _: RegisterActionState,
+  formData: FormData,
+): Promise<RegisterActionState> => {
+  try {
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirm-password') as string
+    const role = 'ROLES_CUSTOMER'
 
-//     const [user] = await getUser(validatedData.email)
-//     // fetch getauthbyidentifier
+    if (password !== confirmPassword) return { status: 'password_mismatch' }
+    const validatedData = registerFormSchema.parse({ email, password, role })
 
-//     if (user) {
-//       return { status: 'user_exists' } as RegisterActionState
-//     }
-//     await createUser(validatedData.email, validatedData.password)
-//     await signUp('credentials', {
-//       email: validatedData.email,
-//       password: validatedData.password,
-//       redirect: false,
-//     })
+    await signUp(
+      validatedData.email,
+      validatedData.password,
+      validatedData.role,
+    )
 
-//     return { status: 'success' }
-//   } catch (error) {
-//     if (error instanceof z.ZodError) {
-//       return { status: 'invalid_data' }
-//     }
+    return { status: 'success' }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { status: 'invalid_data' }
+    }
 
-//     return { status: 'failed' }
-//   }
-// }
+    return { status: 'failed' }
+  }
+}
+
+const signUp = async function (
+  email: string,
+  password: string,
+  role: string,
+): Promise<void> {
+  const serverUrl = process.env.SERVER_URL
+  if (!serverUrl) throw new Error('SERVER_URL is not defined')
+
+  const response = await fetch(`${serverUrl}/auth/register`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password, role: role }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message ?? `Register failed: ${response.status}`)
+  }
+
+  // await response.json()
+}
 
 export async function logout() {
   try {
     await deleteSession()
     return true
   } catch (error) {
+    console.log(error)
     return false
   }
 }
