@@ -5,8 +5,6 @@ import RestaurantList from '@/components/restaurant-list'
 import { cookies } from 'next/headers'
 
 export default async function Page() {
-  // const promotions = PromotionImages()
-
   const defaultAddrId: string | undefined = (await cookies()).get(
     'default_address_id',
   )?.value
