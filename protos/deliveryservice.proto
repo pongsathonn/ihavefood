@@ -2,90 +2,107 @@ syntax = "proto3";
 
 package ihavefood;
 
-option go_package =  "/genproto";
-
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "/genproto";
 
 // ---------------------DELIVERY SERVICE---------------------------
 // Manages riders and delivery process.
 service DeliveryService {
+  // TrackingRider provides real-time updates on the current rider location.
+  rpc TrackingRider(TrackingRiderRequest) returns (stream TrackingRiderResponse) {}
 
-    // TrackingRider provides real-time updates on the current rider location. 
-    rpc TrackingRider(TrackingRiderRequest) returns(stream TrackingRiderResponse){}
+  // GetDeliveryFee calculates the delivery fee from merchant to customer
+  // using merchant ID and customer address ID.
+  //
+  // Example:
+  //      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
+  //
+  //  @deprecated
+  rpc GetDeliveryFee(GetDeliveryFeeRequest) returns (GetDeliveryFeeResponse) {
+    option (google.api.http) = {get: "/api/deliveries/fee"};
+  }
 
-    // GetDeliveryFee calculates the delivery fee from merchant to customer
-    // using merchant ID and customer address ID.
-    // 
-    // Example:
-    //      GET /api/deliveries/fee?customer_id=1111&customer_address_id=2222&merchant_id=5555
-    rpc GetDeliveryFee(GetDeliveryFeeRequest) returns(GetDeliveryFeeResponse) {
-        option (google.api.http) = { 
-            get: "/api/deliveries/fee"
-        };
-    }
+  rpc GetDeliveryEstimate(GetDeliveryEstimateRequest) returns (GetDeliveryEstimateResponse) {
+    option (google.api.http) = {get: "/api/deliveries/delivery-estimate"};
+  }
 
-    rpc ReportDeliveryStatus(ReportDeliveryStatusRequest)returns(google.protobuf.Empty){
-        option (google.api.http) = {
-            patch: "/api/deliveries/{order_id}/status" 
-            body: "*"
-        };
-    }
+  rpc ReportDeliveryStatus(ReportDeliveryStatusRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      patch: "/api/deliveries/{order_id}/status"
+      body: "*"
+    };
+  }
 }
 
-
 message PickupInfo {
-    // pickup_code is a simplified code used for identifying an order 
-    // for the rider. use three digit i.e 712 , 415
-    string pickup_code = 1;
-    // Merchant address
-    Point pickup_location = 2; 
-    // Customer address
-    Point drop_off_location = 3;
+  // pickup_code is a simplified code used for identifying an order
+  // for the rider. use three digit i.e 712 , 415
+  string pickup_code = 1;
+  // Merchant address
+  Point pickup_location = 2;
+  // Customer address
+  Point drop_off_location = 3;
 }
 
 enum DeliveryStatus {
-    DELIVERY_STATUS_UNSPECIFIED = 0;
-    DELIVERY_STATUS_RIDER_PENDING = 1;
-    DELIVERY_STATUS_RIDER_ACCEPTED = 2;
-    DELIVERY_STATUS_RIDER_PICKED_UP = 3;
-    DELIVERY_STATUS_RIDER_DELIVERED = 4;
+  DELIVERY_STATUS_UNSPECIFIED = 0;
+  DELIVERY_STATUS_RIDER_PENDING = 1;
+  DELIVERY_STATUS_RIDER_ACCEPTED = 2;
+  DELIVERY_STATUS_RIDER_PICKED_UP = 3;
+  DELIVERY_STATUS_RIDER_DELIVERED = 4;
 }
 
 message Point {
-    // The latitude in degrees. It must be in the range [-90.0, +90.0].
-    double latitude = 1;
-    // The longitude in degrees. It must be in the range [-180.0, +180.0].
-    double longitude = 2;
+  // The latitude in degrees. It must be in the range [-90.0, +90.0].
+  double latitude = 1;
+  // The longitude in degrees. It must be in the range [-180.0, +180.0].
+  double longitude = 2;
 }
 
 message Rider {
-    string rider_id = 1;
-    string name = 2;
-    string email = 3;
-    string phone = 4;
+  string rider_id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
 }
 
 message TrackingRiderRequest {
-    string rider_id = 1;
+  string rider_id = 1;
 }
 
 message TrackingRiderResponse {
-    string rider_id = 1;
-    Point rider_location = 2;
-    // The timestamp of the most recent update to the rider's location.
-    google.protobuf.Timestamp update_time = 3;
+  string rider_id = 1;
+  Point rider_location = 2;
+  // The timestamp of the most recent update to the rider's location.
+  google.protobuf.Timestamp update_time = 3;
 }
 
 message GetDeliveryFeeRequest {
-    string customer_id = 1;
-    string customer_address_id = 2;
-    string merchant_id = 3;
+  string customer_id = 1;
+  string customer_address_id = 2;
+  string merchant_id = 3;
 }
 
 message GetDeliveryFeeResponse {
-    int32 fee =1;
+  int32 fee = 1;
+}
+
+message GetDeliveryEstimateRequest {
+  string customer_id = 1;
+  string customer_address_id = 2;
+  string merchant_id = 3;
+}
+
+message GetDeliveryEstimateResponse {
+  // Distance in kilometers (e.g., 5.25)
+  double distance_km = 1;
+  // The calculated fee (e.g., 15)
+  int32 delivery_fee = 2;
+  // Estimated time of arrival in minutes (e.g., 30)
+  int32 eta_minutes = 3;
 }
 
 message ReportDeliveryStatusRequest {
