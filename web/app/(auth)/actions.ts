@@ -69,48 +69,48 @@ const signIn = async function (email: string, password: string): Promise<void> {
   await createSession(token.accessToken, new Date(expiresAt * 1000))
 }
 
-export type RegisterActionState = {
-  status:
-    | 'idle'
-    | 'in_progress'
-    | 'success'
-    | 'failed'
-    | 'user_exists'
-    | 'invalid_data'
-}
+// export type RegisterActionState = {
+//   status:
+//     | 'idle'
+//     | 'in_progress'
+//     | 'success'
+//     | 'failed'
+//     | 'user_exists'
+//     | 'invalid_data'
+// }
 
-export const register = async (
-  _: RegisterActionState,
-  formData: FormData,
-): Promise<RegisterActionState> => {
-  try {
-    const validatedData = authFormSchema.parse({
-      email: formData.get('email'),
-      password: formData.get('password'),
-    })
+// export const register = async (
+//   _: RegisterActionState,
+//   formData: FormData,
+// ): Promise<RegisterActionState> => {
+//   try {
+//     const validatedData = authFormSchema.parse({
+//       email: formData.get('email'),
+//       password: formData.get('password'),
+//     })
 
-    const [user] = await getUser(validatedData.email)
-    // fetch getauthbyidentifier
+//     const [user] = await getUser(validatedData.email)
+//     // fetch getauthbyidentifier
 
-    if (user) {
-      return { status: 'user_exists' } as RegisterActionState
-    }
-    await createUser(validatedData.email, validatedData.password)
-    await signUp('credentials', {
-      email: validatedData.email,
-      password: validatedData.password,
-      redirect: false,
-    })
+//     if (user) {
+//       return { status: 'user_exists' } as RegisterActionState
+//     }
+//     await createUser(validatedData.email, validatedData.password)
+//     await signUp('credentials', {
+//       email: validatedData.email,
+//       password: validatedData.password,
+//       redirect: false,
+//     })
 
-    return { status: 'success' }
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { status: 'invalid_data' }
-    }
+//     return { status: 'success' }
+//   } catch (error) {
+//     if (error instanceof z.ZodError) {
+//       return { status: 'invalid_data' }
+//     }
 
-    return { status: 'failed' }
-  }
-}
+//     return { status: 'failed' }
+//   }
+// }
 
 export async function logout() {
   try {
