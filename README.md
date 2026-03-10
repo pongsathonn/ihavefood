@@ -35,4 +35,3 @@ writing html/css. Deploy with Vercel, which integrates well with the framework.
 - [ ] Add unit tests, load tests and performance testing
 - [ ] Implement rider status feature in the web UI
 - [ ] Error handling in Next.js
-- [ ] Refactor typescript code cleaner
