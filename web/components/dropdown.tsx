@@ -46,7 +46,8 @@ export default function DropdownMenuIcons() {
         <DropdownMenuItem
           variant="destructive"
           className="cursor-pointer"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault()
             startTransition(async () => {
               await logout()
             })

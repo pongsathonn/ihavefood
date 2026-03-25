@@ -1,6 +1,7 @@
 'use server'
 
 import { createSession, deleteSession } from '@/lib/session'
+import { cookies } from 'next/headers'
 import { z } from 'zod'
 
 // @source https://github.com/vercel/ai-chatbot
@@ -150,6 +151,10 @@ const signUp = async function (
 export async function logout() {
   try {
     await deleteSession()
+
+    const cookieStore = await cookies()
+    cookieStore.delete('default_address_id')
+
     return true
   } catch (error) {
     console.log(error)

@@ -1,5 +1,6 @@
 'use client'
 
+import { createPlaceOrder } from '@/app/restaurants/[id]/actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,15 +13,20 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Coupon, MenuItem } from '@/lib/types'
-import { Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { Loader2, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { AlertConfirm } from './alert-dialog'
 
 export default function Cart({
+  restaurantId,
   cartItems,
   deliveryFee,
   coupons,
   onRemoveMenuItem,
 }: {
+  restaurantId: string,
   cartItems: (MenuItem & { quantity: number })[]
   deliveryFee: number
   coupons: Coupon[]
@@ -28,14 +34,24 @@ export default function Cart({
 }) {
   const [couponInput, setCouponInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<string>('')
-
+  const [isItemAdd, setIsItemAdd] = useState(false)
+  const [isPending, setIsPending] = useState(false);
   const [couponMsg, setCouponMsg] = useState<
     | {
-        text: string
-        type: 'error' | 'success'
-      }
+      text: string
+      type: 'error' | 'success'
+    }
     | undefined
   >(undefined)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      setIsItemAdd(true)
+    } else {
+      setIsItemAdd(false)
+    }
+  }, [cartItems])
 
   const handleApplyCoupon = (code: string) => {
     const trimmed = code.trim().toUpperCase()
@@ -85,9 +101,36 @@ export default function Cart({
   )
 
   // discount FREEDLEIVERY = deliveryFee
-  // discount coupon = calculate with coupon such as SAVE20 will make discount 20% of foodTotal(exclude delivery fee)
+  // discount coupon = calculate with coupon such as SAVE20 will make discount 
+  // 20% of foodTotal(exclude delivery fee)
   const [discount, setDiscount] = useState(0)
   const total = foodTotal + deliveryFee - discount
+
+  const items = cartItems.map((item) => ({
+    itemId: item.itemId,
+    quantity: item.quantity,
+    note: 'TODO',
+  }))
+
+
+  const handleOrderPlace = async () => {
+    setIsPending(true);
+
+    try {
+      const res = await createPlaceOrder({
+        restaurantId: restaurantId,
+        cartItems: items,
+        appliedCoupon: appliedCoupon,
+        discount: discount,
+      })
+      toast.success("Order placed successfully")
+      router.push("/dashboard/tracking")
+    } catch (error) {
+      setIsPending(false)
+      toast.error("Failed to order. please try again")
+    }
+  }
+
 
   return (
     <aside className="col-span-1">
@@ -155,11 +198,10 @@ export default function Cart({
                   <Badge
                     key={c.code}
                     variant="secondary"
-                    className={`px-3 py-1 transition-colors ${
-                      isApplied
-                        ? 'opacity-40 cursor-not-allowed'
-                        : 'cursor-pointer hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 transition-colors ${isApplied
+                      ? 'opacity-40 cursor-not-allowed'
+                      : 'cursor-pointer hover:bg-gray-200'
+                      }`}
                     onClick={() => handleApplyCoupon(c.code)}
                   >
                     {c.code}
@@ -195,13 +237,15 @@ export default function Cart({
                   variant="outline"
                   size="sm"
                   disabled={!couponInput.trim()}
-                  onClick={() => handleApplyCoupon(couponInput)}
+                  onClick={() => {
+                    handleApplyCoupon(couponInput)
+
+                  }}
                 >
                   Apply
                 </Button>
               )}
             </div>
-
             {couponMsg && (
               <p
                 className={
@@ -228,16 +272,20 @@ export default function Cart({
         </CardContent>
 
         <CardFooter>
-          <Button
-            size="lg"
-            className="w-full rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-md"
-            // onClick={() => handleOrderPlace()}
-          >
-            Order Now
-          </Button>
+          <AlertConfirm
+            isItemAdd={isItemAdd}
+            handleOrderPlace={handleOrderPlace}
+          />
         </CardFooter>
       </Card>
-    </aside>
+
+      {isPending && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+          <Loader2 className="h-12 w-12 animate-spin text-emerald-500" />
+          <p className="mt-4 font-bold text-white text-lg">Placing your order...</p>
+        </div>
+      )}
+    </aside >
   )
 }
 

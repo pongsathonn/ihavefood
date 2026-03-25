@@ -63,6 +63,7 @@ export default function MenuList({
         </div>
         <div className="w-full md:w-80 lg:w-96 shrink-0">
           <Cart
+            restaurantId={restaurant.restaurantId}
             deliveryFee={deliveryFee}
             coupons={coupons}
             cartItems={cartItems}

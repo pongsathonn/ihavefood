@@ -995,7 +995,7 @@
           "type": "string"
         },
         "paymentMethods": {
-          "$ref": "#/definitions/PaymentMethods"
+          "$ref": "#/definitions/PaymentMethod"
         }
       }
     },
@@ -1030,7 +1030,10 @@
         },
         "updateTime": {
           "type": "string",
-          "format": "date-time",
+          "format": "date-time"
+        },
+        "defaultAddressId": {
+          "type": "string",
           "title": "bytes picture = 10;"
         }
       }
@@ -1159,7 +1162,16 @@
       }
     },
     "LoginResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "MenuItem": {
       "type": "object",
@@ -1309,7 +1321,7 @@
       ],
       "default": "ORDER_STATUS_UNSPECIFIED"
     },
-    "PaymentMethods": {
+    "PaymentMethod": {
       "type": "string",
       "enum": [
         "PAYMENT_METHOD_UNSPECIFIED",
@@ -1386,7 +1398,7 @@
           "type": "string"
         },
         "paymentMethods": {
-          "$ref": "#/definitions/PaymentMethods"
+          "$ref": "#/definitions/PaymentMethod"
         },
         "paymentStatus": {
           "$ref": "#/definitions/PaymentStatus"

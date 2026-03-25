@@ -9,6 +9,17 @@ import 'server-only'
 const client = new SecretManagerServiceClient()
 let cachedKey: string | undefined = undefined
 
+export const getDefaultAddressId = cache(
+  async (): Promise<string | undefined> => {
+    return (await cookies()).get('default_address_id')?.value
+  },
+)
+
+export async function updateDefaultAddressId(defaultAddressId: string) {
+  const cookieStore = await cookies()
+  cookieStore.set('default_address_id', defaultAddressId)
+}
+
 export const getCustomerId = cache(async (): Promise<string> => {
   const cookie = (await cookies()).get('session')?.value
   if (!cookie) throw new Error('No session')

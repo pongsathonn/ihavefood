@@ -17,7 +17,7 @@ const SocialSchema = z.object({
 const TimestampSchema = z.iso.datetime()
 
 export const AddressSchema = z.object({
-  addressId: z.uuid({ version: 'v4' }),
+  addressId: z.uuidv4(),
   addressName: z.string(),
   subDistrict: z.string(),
   district: z.string(),
@@ -26,14 +26,13 @@ export const AddressSchema = z.object({
 })
 
 export const CustomerSchema = z.object({
-  customerId: z.uuid({ version: 'v4' }),
+  customerId: z.uuidv4(),
   username: z.string(),
   email: z.email(),
   phone: z.string().optional(),
-
+  defaultAddressId: z.uuidv4().optional(),
   social: SocialSchema.optional(),
   addresses: z.array(AddressSchema).optional(),
-
   createTime: TimestampSchema,
 })
 
@@ -49,7 +48,7 @@ export const PaymentMethodSchema = z.enum([
 ])
 
 export const SessionPayloadSchema = z.object({
-  userId: z.uuid({ version: 'v4' }),
+  userId: z.uuidv4(),
   accessToken: z.string(),
   role: Role,
 })
@@ -60,7 +59,7 @@ export const ImageInfoSchema = z.object({
 })
 
 export const MenuItemSchema = z.object({
-  itemId: z.uuid({ version: 'v4' }),
+  itemId: z.uuidv4(),
   foodName: z.string(),
   price: z.number().nonnegative(),
   imageInfo: ImageInfoSchema.optional(),
@@ -81,7 +80,7 @@ export const CouponsArraySchema = z.array(CouponSchema)
 
 export const MerchantSchema = z
   .object({
-    merchantId: z.uuid({ version: 'v4' }),
+    merchantId: z.uuidv4(),
     merchantName: z.string(),
     imageInfo: ImageInfoSchema,
     status: MerchantStatusSchema,
@@ -101,27 +100,65 @@ export const MerchantSchema = z
     email: v.email,
   }))
 
+export const PaymentStatusSchema = z.nativeEnum({
+  PAYMENT_STATUS_UNSPECIFIED: 0,
+  PAYMENT_STATUS_PENDING: 1,
+  PAYMENT_STATUS_PAID: 2,
+});
+
+export const OrderStatusSchema = z.nativeEnum({
+  ORDER_STATUS_UNSPECIFIED: 0,
+  ORDER_STATUS_PENDING: 1,
+  ORDER_STATUS_PREPARING_ORDER: 2,
+  ORDER_STATUS_FINDING_RIDER: 3,
+  ORDER_STATUS_WAIT_FOR_PICKUP: 4,
+  ORDER_STATUS_ONGOING: 5,
+  ORDER_STATUS_DELIVERED: 6,
+  ORDER_STATUS_CANCELLED: 7,
+});
+
+export const OrderItem = z.object({
+  itemId: z.uuidv4(),
+  quantity: z.number().int().min(1),
+  note: z.string().optional().or(z.literal('')),
+});
+
 export const PlaceOrderSchema = z
   .object({
-    requestId: z.uuid({ version: 'v4' }),
-    customerId: z.uuid({ version: 'v4' }),
-    merchantId: z.uuid({ version: 'v4' }),
-    items: z.array(MenuItemSchema),
-    couponCode: z.string().optional(),
-    discount: z.number().min(0),
-    customerAddressId: z.string(),
-    paymentMethods: PaymentMethodSchema,
+    requestId: z.uuidv4(),
+    orderId: z.uuidv4(),
+    customerId: z.uuidv4(),
+    merchantId: z.uuidv4(),
+    items: z.array(OrderItem),
+    couponCode: z.string().optional().nullable(),
+    couponDiscount: z.number().optional(),
+    deliveryFee: z.number().min(0),
+    total: z.number().min(0),
+    customerAddress: AddressSchema,
+    merchantAddress: AddressSchema,
+    customerPhone: z.string().optional(),
+    paymentMethods: PaymentMethodSchema.or(z.string()),
+    paymentStatus: PaymentStatusSchema.default(0),
+    orderStatus: OrderStatusSchema.default(0),
   })
   .transform((v) => ({
     requestId: v.requestId,
+    orderId: v.orderId,
     customerId: v.customerId,
     restaurantId: v.merchantId,
     items: v.items,
     couponCode: v.couponCode,
-    discount: v.discount,
-    customerAddressId: v.customerAddressId,
+    discount: v.couponDiscount,
+    deliveryFee: v.deliveryFee,
+    total: v.total,
+    customerAddress: v.customerAddress,
+    merchantAddress: v.merchantAddress,
+    customerPhone: v.customerPhone,
     paymentMethods: v.paymentMethods,
-  }))
+    paymentStatus: v.paymentStatus,
+    orderStatus: v.orderStatus,
+  }));
+
 
 // NOTE: naming
 // Merchant used in Backend to represent Restaurant, Retail Shop and other stores.

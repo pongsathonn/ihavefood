@@ -179,7 +179,6 @@ export const listRestaurants = cache(async function (): Promise<Restaurant[]> {
   return results.data
 })
 
-// Write operations belong to 'use server'
 // export const updateAddress = cache(async function ({
 //   customerId,
 //   addressId,
@@ -214,30 +213,5 @@ export const listRestaurants = cache(async function (): Promise<Restaurant[]> {
 //     throw new Error(`Failed to update customer address: ${errorText}`)
 //   }
 
-//   return res.json()
-// })
-
-// export const createPlaceOrder = cache(async function (order: PlaceOrder) {
-//   const { isAuth } = await authentication()
-//   if (!isAuth) {
-//     throw new Error('Unauthorized')
-//   }
-//   const serverUrl = process.env.SERVER_URL
-//   if (!serverUrl) throw new Error('SERVER_URL is not defined')
-//   const token = getSession()
-//   const res = await fetch(`${serverUrl}/api/orders/place_order`, {
-//     method: 'POST',
-//     headers: {
-//       Accept: 'application/json',
-//       Cookie: `session=${token}`,
-//       'Content-Type': 'application/json',
-//     },
-//     body: JSON.stringify(order),
-//   })
-
-//   if (!res.ok) {
-//     const errorText = await res.text()
-//     throw new Error(`Failed to create order: ${errorText}`)
-//   }
 //   return res.json()
 // })
