@@ -72,21 +72,18 @@ const AddressPrompt = ({
   return (
     <div className="flex w-full items-center justify-center p-4">
       <Card
-        className={`overflow-hidden transition-all duration-500 shadow-xl border-border ${
-          hasDetected ? 'max-w-2xl' : 'w-fit border-dashed'
-        }`}
+        className={`overflow-hidden transition-all duration-500 shadow-xl border-border ${hasDetected ? 'max-w-2xl' : 'w-fit border-dashed'
+          }`}
       >
         <div
-          className={`flex flex-col ${
-            hasDetected ? 'md:flex-row max-h-full' : ''
-          }`}
+          className={`flex flex-col ${hasDetected ? 'md:flex-row max-h-full' : ''
+            }`}
         >
           {hasDetected && <MapPreview mapUrl={mapUrl} />}
 
           <div
-            className={`flex flex-col bg-card ${
-              hasDetected ? 'md:w-[40%]' : 'w-full py-10'
-            }`}
+            className={`flex flex-col bg-card ${hasDetected ? 'md:w-[40%]' : 'w-full py-10'
+              }`}
           >
             <CardContent className="flex-1 space-y-6">
               {!hasDetected ? (
@@ -136,13 +133,7 @@ const MapPreview = ({ mapUrl }: { mapUrl: string }) => {
   )
 }
 
-const DetectLocation = ({
-  loading,
-  onDetect,
-}: {
-  loading: boolean
-  onDetect: () => void
-}) => {
+const DetectLocation = ({ loading, onDetect, }: { loading: boolean, onDetect: () => void }) => {
   return (
     <div className="flex flex-col items-center justify-center">
       <p className="text-lg font-medium text-muted-foreground py-4">

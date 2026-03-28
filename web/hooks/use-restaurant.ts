@@ -1,15 +1,14 @@
+import { RestaurantWithEst } from '@/lib/types'
 import { create } from 'zustand'
-import { Restaurant } from '@/lib/types'
-
-type RestaurantWithFee = Restaurant & { deliveryFee: number }
 
 type RestaurantState = {
-  restaurants: RestaurantWithFee[]
-  setRestaurants: (list: RestaurantWithFee[]) => void
-  getRestaurantById: (id: string) => RestaurantWithFee | undefined
+  restaurants: RestaurantWithEst[]
+  setRestaurants: (list: RestaurantWithEst[]) => void
+  getRestaurantById: (id: string) => RestaurantWithEst | undefined
 }
 
-export const useRestaurantWithFee = create<RestaurantState>((set, get) => ({
+
+export const useRestaurantWithEst = create<RestaurantState>((set, get) => ({
   restaurants: [],
   setRestaurants: (list) => set({ restaurants: list }),
   getRestaurantById: (id) =>

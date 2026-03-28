@@ -74,7 +74,7 @@ export const CouponSchema = z.object({
       percent: z.number().min(1),
     })
     .optional(),
-  freeDelivery: z.object({}).optional(),
+  freeDelivery: z.object().optional(),
 })
 export const CouponsArraySchema = z.array(CouponSchema)
 
@@ -100,13 +100,13 @@ export const MerchantSchema = z
     email: v.email,
   }))
 
-export const PaymentStatusSchema = z.nativeEnum({
+export const PaymentStatusSchema = z.enum({
   PAYMENT_STATUS_UNSPECIFIED: 0,
   PAYMENT_STATUS_PENDING: 1,
   PAYMENT_STATUS_PAID: 2,
 });
 
-export const OrderStatusSchema = z.nativeEnum({
+export const OrderStatusSchema = z.enum({
   ORDER_STATUS_UNSPECIFIED: 0,
   ORDER_STATUS_PENDING: 1,
   ORDER_STATUS_PREPARING_ORDER: 2,
@@ -116,6 +116,15 @@ export const OrderStatusSchema = z.nativeEnum({
   ORDER_STATUS_DELIVERED: 6,
   ORDER_STATUS_CANCELLED: 7,
 });
+
+export const DeliveryStatusSchema = z.enum({
+  DELIVERY_STATUS_UNSPECIFIED: 0,
+  DELIVERY_STATUS_RIDER_PENDING: 1,
+  DELIVERY_STATUS_RIDER_ACCEPTED: 2,
+  DELIVERY_STATUS_RIDER_PICKED_UP: 3,
+  DELIVERY_STATUS_RIDER_DELIVERED: 4,
+});
+
 
 export const OrderItem = z.object({
   itemId: z.uuidv4(),
@@ -173,4 +182,6 @@ export type Address = z.infer<typeof AddressSchema>
 export type MenuItem = z.infer<typeof MenuItemSchema>
 export type Restaurant = z.infer<typeof MerchantSchema>
 export type Customer = z.infer<typeof CustomerSchema>
+export type DeliveryStatus = z.infer<typeof DeliveryStatusSchema>
+export type OrderStatus = z.infer<typeof OrderStatusSchema>
 export type PlaceOrder = z.infer<typeof PlaceOrderSchema>
